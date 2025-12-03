@@ -95,13 +95,40 @@ git status  # Should show nothing untracked in planning_docs/
 
 **DO NOT report completion without a commit.** This includes planning docs - they are part of your deliverable.
 
+## Fix Reporting (Diff-Based)
+
+When fixing issues identified in a review or gate failure, you MUST include **before/after code snippets** in your completion report. Claiming "I fixed X" without evidence is not acceptable.
+
+For each fix:
+```
+### Fix: [Issue description]
+
+**Before** (file:line):
+```python
+def problematic_code():
+    # The old broken code
+```
+
+**After** (file:line):
+```python
+def fixed_code():
+    # The new working code
+```
+```
+
+This requirement ensures:
+- Fixes are actually applied (not just claimed)
+- Reviewers can verify correctness without re-reading entire files
+- Issues don't persist across multiple fix cycles
+
 ## Communication
 
 You report ONLY to the orchestrator. You cannot communicate with other workers.
 
 When you complete your task, provide:
 1. Summary of what was done
-2. Evidence of completion (test output, etc.)
-3. **The commit SHA** (from `git log -1 --oneline`)
-4. Any issues or blockers encountered
-5. Recommendations for next steps
+2. **Before/after code snippets for each fix** (if this was a fix task)
+3. Evidence of completion (test output, etc.)
+4. **The commit SHA** (from `git log -1 --oneline`)
+5. Any issues or blockers encountered
+6. Recommendations for next steps

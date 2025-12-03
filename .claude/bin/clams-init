@@ -79,6 +79,20 @@ CREATE TABLE IF NOT EXISTS test_runs (
     FOREIGN KEY (task_id) REFERENCES tasks(id)
 );
 
+-- Reviews (for multi-review gates)
+CREATE TABLE IF NOT EXISTS reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id TEXT NOT NULL,
+    artifact_type TEXT NOT NULL,  -- 'spec', 'proposal', 'code'
+    review_num INTEGER NOT NULL,  -- 1 or 2
+    reviewer_worker_id TEXT,
+    result TEXT NOT NULL,         -- 'approved', 'changes_requested'
+    issues_found TEXT,            -- JSON array of issues if any
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (task_id) REFERENCES tasks(id),
+    UNIQUE(task_id, artifact_type, review_num)
+);
+
 -- Violations (for pattern analysis)
 CREATE TABLE IF NOT EXISTS violations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -111,6 +125,8 @@ CREATE INDEX IF NOT EXISTS idx_tasks_spec_id ON tasks(spec_id);
 CREATE INDEX IF NOT EXISTS idx_phase_transitions_task ON phase_transitions(task_id);
 CREATE INDEX IF NOT EXISTS idx_test_runs_task ON test_runs(task_id);
 CREATE INDEX IF NOT EXISTS idx_violations_task ON violations(task_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_task ON reviews(task_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_artifact ON reviews(task_id, artifact_type);
 EOF
 
 echo "Database initialized successfully."

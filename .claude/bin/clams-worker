@@ -91,8 +91,36 @@ cmd_context() {
     done
 
     if [[ -n "$worktree_path" && -d "$worktree_path" ]]; then
+        # Get branch name from worktree
+        local branch_name
+        branch_name=$(cd "$worktree_path" && git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+
+        # Get main repo path
+        local main_repo
+        main_repo=$(cd "$worktree_path" && git worktree list --porcelain | grep -m1 '^worktree ' | sed 's/^worktree //')
+
         echo ""
-        echo "**Working Directory**: $worktree_path"
+        echo "---"
+        echo ""
+        echo "# Working Environment"
+        echo ""
+        echo "**IMPORTANT: Read this before making any changes.**"
+        echo ""
+        echo "| Setting | Value |"
+        echo "|---------|-------|"
+        echo "| Working Directory | \`$worktree_path\` |"
+        echo "| Branch | \`$branch_name\` |"
+        echo "| Main Repo | \`$main_repo\` |"
+        echo ""
+        echo "## Directory Rules"
+        echo ""
+        echo "- **Your code changes** go in: \`$worktree_path/src/\`"
+        echo "- **Your tests** go in: \`$worktree_path/tests/\`"
+        echo "- **Your planning docs** go in: \`$worktree_path/planning_docs/$task_id/\`"
+        echo "- **Your changelog** goes in: \`$worktree_path/changelog.d/$task_id.md\`"
+        echo ""
+        echo "**DO NOT** edit files in \`$main_repo\` unless explicitly instructed."
+        echo "Parent specs (SPEC-NNN.md) live in main and require explicit checkout."
         echo ""
 
         # Check for planning docs

@@ -73,6 +73,12 @@ cd .worktrees/SPEC-002-01 && .claude/bin/clams-status  # DON'T DO THIS
 .claude/bin/clams-worker complete <worker_id> # Mark worker complete
 .claude/bin/clams-worker fail <worker_id>     # Mark worker failed
 .claude/bin/clams-worker list                 # List active workers
+
+# Reviews (2x review gates)
+.claude/bin/clams-review record <task_id> <type> <result>  # Record a review
+.claude/bin/clams-review list <task_id>                    # List reviews for task
+.claude/bin/clams-review check <task_id> <type>            # Check if reviews pass
+.claude/bin/clams-review clear <task_id> [<type>]          # Clear reviews (restart cycle)
 ```
 
 ## Specialist Roles
@@ -83,10 +89,12 @@ Available in `.claude/roles/`:
 |------|------|-----------|
 | Planning | `planning.md` | Decompose specs into tasks |
 | Architect | `architect.md` | Design phase, technical proposals |
+| Spec Reviewer | `spec-reviewer.md` | Review specs (2x before human approval) |
+| Proposal Reviewer | `proposal-reviewer.md` | Review proposals (2x before implementation) |
 | Backend | `backend.md` | Server-side implementation |
 | Frontend | `frontend.md` | Client-side implementation |
 | QA | `qa.md` | Review, test, verify phases |
-| Reviewer | `reviewer.md` | Code review |
+| Reviewer | `reviewer.md` | Code review (2x before TEST phase) |
 | Debugger | `debugger.md` | Failure investigation |
 | Infra | `infra.md` | DevOps, deployment |
 | Doc Writer | `doc-writer.md` | Documentation batch job |
@@ -105,13 +113,43 @@ SPEC → DESIGN → IMPLEMENT → REVIEW → TEST → INTEGRATE → VERIFY → D
 
 | Transition | Requirements | Type |
 |------------|-------------|------|
-| SPEC → DESIGN | Spec complete and clear | Manual (Human) |
-| DESIGN → IMPLEMENT | Technical proposal exists, human approves | Semi-auto |
+| SPEC → DESIGN | 2 spec reviews approved, human approves | Semi-auto |
+| DESIGN → IMPLEMENT | Proposal exists, 2 proposal reviews approved, human approves | Semi-auto |
 | IMPLEMENT → REVIEW | Tests pass, linter clean, no untracked TODOs | Automated |
-| REVIEW → TEST | Reviewer reports APPROVED | Manual (Worker) |
+| REVIEW → TEST | 2 code reviews approved | Automated |
 | TEST → INTEGRATE | Full test suite passes | Automated |
 | INTEGRATE → VERIFY | Changelog exists, then merge | Semi-auto |
 | VERIFY → DONE | Tests on main, acceptance verified, no orphans | Manual (on main) |
+
+### Review Gates
+
+All artifacts require **2 approved reviews** before proceeding. If any reviewer requests changes:
+1. The author fixes the issues
+2. The review cycle **restarts from review #1**
+3. Both reviews must pass again
+
+This ensures:
+- Consistency and completeness
+- Clean, well-structured artifacts
+- Issues caught early (before human review or implementation)
+
+### Tiered Review Model
+
+Use a tiered approach to balance speed and thoroughness:
+
+| Review # | Model | Purpose |
+|----------|-------|---------|
+| 1st | haiku | Fast filter - catch obvious issues, structural problems |
+| 2nd | sonnet | Deep check - catch subtle issues, verify completeness |
+
+**Rationale**: Haiku is fast but may miss nuanced issues. Sonnet is thorough but slower. By using haiku first, we quickly catch easy problems. If haiku requests changes, we don't waste sonnet's time until those are fixed. Sonnet then provides the thorough final check.
+
+**Workflow**:
+1. Dispatch haiku reviewer
+2. If haiku finds major issues → author fixes → restart from step 1
+3. If haiku approves → dispatch sonnet reviewer
+4. If sonnet finds issues → author fixes → restart from step 1 (haiku again)
+5. If sonnet approves → gate passes
 
 ## Workflow
 
@@ -170,10 +208,28 @@ After worker completes:
 
 ### Phase-by-Phase Guide
 
+**SPEC → DESIGN** (after spec written)
+1. Dispatch Spec Reviewer #1
+2. If changes requested: author fixes, restart from step 1
+3. If approved: `.claude/bin/clams-review record TASK-XXX spec approved --worker W-xxx`
+4. Dispatch Spec Reviewer #2
+5. If changes requested: author fixes, restart from step 1
+6. If approved: `.claude/bin/clams-review record TASK-XXX spec approved --worker W-yyy`
+7. Run: `.claude/bin/clams-gate check TASK-XXX SPEC-DESIGN`
+8. Human approves spec
+9. Transition: `.claude/bin/clams-task transition TASK-XXX DESIGN --gate-result pass`
+
 **DESIGN → IMPLEMENT**
-- Architect writes `planning_docs/TASK-XXX/proposal.md`
-- Human approves design
-- Run: `.claude/bin/clams-gate check TASK-XXX DESIGN-IMPLEMENT`
+1. Architect writes `planning_docs/TASK-XXX/proposal.md`
+2. Dispatch Proposal Reviewer #1
+3. If changes requested: architect fixes, restart from step 2
+4. If approved: `.claude/bin/clams-review record TASK-XXX proposal approved --worker W-xxx`
+5. Dispatch Proposal Reviewer #2
+6. If changes requested: architect fixes, restart from step 2
+7. If approved: `.claude/bin/clams-review record TASK-XXX proposal approved --worker W-yyy`
+8. Run: `.claude/bin/clams-gate check TASK-XXX DESIGN-IMPLEMENT`
+9. Human approves design
+10. Transition: `.claude/bin/clams-task transition TASK-XXX IMPLEMENT --gate-result pass`
 
 **IMPLEMENT → REVIEW**
 - Implementer completes code and tests
@@ -181,10 +237,14 @@ After worker completes:
 - Gate checks: tests pass, linter clean, no untracked TODOs
 
 **REVIEW → TEST**
-- Dispatch Reviewer worker
-- Reviewer reports: APPROVED or CHANGES REQUESTED
-- If approved, update task notes: `.claude/bin/clams-task update TASK-XXX --notes "Review approved by W-xxx"`
-- Run: `.claude/bin/clams-gate check TASK-XXX REVIEW-TEST`
+1. Dispatch Code Reviewer #1
+2. If changes requested: implementer fixes, restart from step 1
+3. If approved: `.claude/bin/clams-review record TASK-XXX code approved --worker W-xxx`
+4. Dispatch Code Reviewer #2
+5. If changes requested: implementer fixes, restart from step 1
+6. If approved: `.claude/bin/clams-review record TASK-XXX code approved --worker W-yyy`
+7. Run: `.claude/bin/clams-gate check TASK-XXX REVIEW-TEST`
+8. Transition: `.claude/bin/clams-task transition TASK-XXX TEST --gate-result pass`
 
 **TEST → INTEGRATE**
 - Run full test suite: `.claude/bin/clams-gate check TASK-XXX TEST-INTEGRATE`

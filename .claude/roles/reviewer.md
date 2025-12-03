@@ -88,5 +88,15 @@ Blocking issues:
 Code must return to implementer for fixes.
 ```
 
-The orchestrator will record your verdict in the task notes and proceed accordingly.
+The orchestrator will record your verdict using:
+```bash
+.claude/bin/clams-review record {TASK_ID} code approved --worker {YOUR_WORKER_ID}
+```
+
+## Important Notes
+
+- This is review #{REVIEW_NUM} of 2 required reviews
+- If you request changes, the review cycle restarts from review #1 after fixes
+- Focus on correctness and security first, style second
+- Be thorough but practical - don't block on nitpicks
 

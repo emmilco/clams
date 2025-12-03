@@ -38,21 +38,22 @@ usage() {
 cmd_list() {
     echo "=== Gate Requirements by Transition ==="
     echo ""
-    echo "SPEC → DESIGN (manual)"
+    echo "SPEC → DESIGN (semi-automated)"
+    echo "  - [auto] 2 spec reviews with APPROVED status"
     echo "  - Human approves spec"
     echo ""
     echo "DESIGN → IMPLEMENT (semi-automated)"
-    echo "  - Human approves design"
     echo "  - [auto] Technical proposal exists in planning_docs/"
+    echo "  - [auto] 2 proposal reviews with APPROVED status"
+    echo "  - Human approves design"
     echo ""
     echo "IMPLEMENT → REVIEW (automated)"
     echo "  - [auto] Tests pass (check_tests.sh)"
     echo "  - [auto] Linter clean (check_linter.sh)"
     echo "  - [auto] No untracked TODOs (check_todos.sh)"
     echo ""
-    echo "REVIEW → TEST (manual)"
-    echo "  - Reviewer worker reports APPROVED"
-    echo "  - Record in task notes"
+    echo "REVIEW → TEST (automated)"
+    echo "  - [auto] 2 code reviews with APPROVED status"
     echo ""
     echo "TEST → INTEGRATE (automated)"
     echo "  - [auto] Full test suite passes (check_tests.sh)"
@@ -111,6 +112,37 @@ check_dir_not_empty() {
     fi
 }
 
+check_reviews() {
+    local task_id="$1"
+    local artifact_type="$2"
+    local required=2
+
+    echo "--- Gate: $artifact_type reviews (${required}x required) ---"
+
+    local approved_count
+    approved_count=$(sqlite3 "$DB_PATH" \
+        "SELECT COUNT(*) FROM reviews WHERE task_id = '$task_id' AND artifact_type = '$artifact_type' AND result = 'approved';")
+
+    if [[ "$approved_count" -ge "$required" ]]; then
+        echo "✓ $artifact_type reviews: PASS ($approved_count/$required approved)"
+        # Show review details
+        sqlite3 -header -column "$DB_PATH" \
+            "SELECT review_num, reviewer_worker_id, result, created_at FROM reviews
+             WHERE task_id = '$task_id' AND artifact_type = '$artifact_type'
+             ORDER BY review_num;" | sed 's/^/  /'
+        return 0
+    else
+        echo "✗ $artifact_type reviews: FAIL ($approved_count/$required approved)"
+        echo ""
+        echo "  Required: $required approved reviews"
+        echo "  Current:  $approved_count approved"
+        echo ""
+        echo "  Record reviews with:"
+        echo "    .claude/bin/clams-review record $task_id $artifact_type approved --worker <worker_id>"
+        return 1
+    fi
+}
+
 cmd_check() {
     local task_id="$1"
     local transition="$2"
@@ -138,18 +170,33 @@ cmd_check() {
 
     case "$transition" in
         SPEC-DESIGN)
-            echo "This transition requires HUMAN APPROVAL."
-            echo "Confirm the spec is complete and clear before proceeding."
+            echo "This transition requires HUMAN APPROVAL after reviews complete."
             echo ""
-            echo "No automated gates for this transition."
+            # Check for 2 spec reviews
+            if ! check_reviews "$task_id" "spec"; then
+                failed=1
+            fi
+            echo ""
+            if [[ $failed -eq 0 ]]; then
+                echo "Reviews complete. Human can now approve the spec."
+            fi
             ;;
 
         DESIGN-IMPLEMENT)
-            echo "This transition requires HUMAN APPROVAL of the design."
+            echo "This transition requires HUMAN APPROVAL after reviews complete."
             echo ""
             # Check for proposal
             if ! check_dir_not_empty "$worktree/planning_docs/$task_id" "Technical proposal exists"; then
                 failed=1
+            fi
+            echo ""
+            # Check for 2 proposal reviews
+            if ! check_reviews "$task_id" "proposal"; then
+                failed=1
+            fi
+            echo ""
+            if [[ $failed -eq 0 ]]; then
+                echo "Proposal and reviews complete. Human can now approve the design."
             fi
             ;;
 
@@ -169,10 +216,12 @@ cmd_check() {
             ;;
 
         REVIEW-TEST)
-            echo "This transition requires REVIEWER APPROVAL."
-            echo "The reviewer worker should report approval status."
+            echo "This transition requires 2 code reviews with APPROVED status."
             echo ""
-            echo "No additional automated gates."
+            # Check for 2 code reviews
+            if ! check_reviews "$task_id" "code"; then
+                failed=1
+            fi
             ;;
 
         TEST-INTEGRATE)
