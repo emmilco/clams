@@ -70,11 +70,16 @@ tests/
         ├── sample.ts
         ├── sample.js
         ├── sample.lua
-        ├── sample.yaml
-        ├── sample.json
+        ├── sample.rs
+        ├── sample.swift
+        ├── sample.java
+        ├── sample.c
+        ├── sample.cpp
+        ├── sample.sql
         ├── malformed.py
         ├── large_file.py
         ├── empty.py
+        ├── non_utf8.py
         └── binary.dat
 ```
 
@@ -99,7 +104,7 @@ class UnitType(Enum):
     CLASS = "class"
     METHOD = "method"
     MODULE = "module"
-    KEY = "key"  # YAML/JSON root keys
+    CONSTANT = "constant"  # Module-level named constants (e.g., Python ALL_CAPS)
 
 
 @dataclass
@@ -183,8 +188,12 @@ class CodeParser(ABC):
        ".ts": "typescript", ".tsx": "typescript",
        ".js": "javascript", ".jsx": "javascript",
        ".lua": "lua",
-       ".yaml": "yaml", ".yml": "yaml",
-       ".json": "json",
+       ".rs": "rust",
+       ".swift": "swift",
+       ".java": "java",
+       ".c": "c", ".h": "c",
+       ".cpp": "cpp", ".hpp": "cpp", ".cc": "cpp", ".cxx": "cpp",
+       ".sql": "sql",
    }
    ```
 
@@ -199,6 +208,12 @@ class CodeParser(ABC):
            "typescript": get_parser("typescript"),
            "javascript": get_parser("javascript"),
            "lua": get_parser("lua"),
+           "rust": get_parser("rust"),
+           "swift": get_parser("swift"),
+           "java": get_parser("java"),
+           "c": get_parser("c"),
+           "cpp": get_parser("cpp"),
+           "sql": get_parser("sql"),
        }
        self._languages = {k: get_language(k) for k in self._parsers}
    ```
@@ -213,8 +228,9 @@ class CodeParser(ABC):
    ```
 
 4. **Unit Extraction by Language**:
-   - **Python**: Query for `function_definition`, `class_definition`
+   - **Python**: Query for `function_definition`, `class_definition`, `assignment` (module-level with UPPER_CASE names)
      - Methods: functions inside classes
+     - Constants: Module-level assignments to ALL_CAPS names extracted as `UnitType.CONSTANT`
      - Qualified names: Use parent class name if present
      - Docstrings: First string literal in body
      - Complexity: Count if/elif/for/while/try/except/with/and/or/match/case nodes
@@ -227,9 +243,29 @@ class CodeParser(ABC):
      - LuaDoc: Extract `---` comments before unit
      - Complexity: Count if/elseif/for/while/repeat/and/or nodes
 
-   - **YAML/JSON**: Use stdlib parsers (yaml/json modules, not tree-sitter), extract root keys only
-     - Content: Serialize subtree back to string
-     - No complexity, no docstrings
+   - **Rust**: Query for `function_item`, `struct_item`, `enum_item`, `impl_item`, `trait_item`
+     - Doc comments: Extract `///` and `//!` style comments
+     - Complexity: Count if/else/match arms/for/while/loop/&&/||/? nodes
+
+   - **Swift**: Query for `function_declaration`, `class_declaration`, `struct_declaration`, `enum_declaration`, `protocol_declaration`, `extension_declaration`
+     - Doc comments: Extract `///` style comments
+     - Complexity: Count if/else/switch cases/for/while/guard/&&/||/?? nodes
+
+   - **Java**: Query for `class_declaration`, `interface_declaration`, `enum_declaration`, `method_declaration`, `constructor_declaration`
+     - Javadoc: Extract `/** */` comments immediately before unit
+     - Complexity: Count if/else/switch cases/for/while/do/try/catch/&&/||/?: nodes
+
+   - **C**: Query for `function_definition`, `struct_specifier`
+     - Doxygen: Extract `/** */` or `///` style comments
+     - Complexity: Count if/else/switch cases/for/while/do/&&/||/?: nodes
+
+   - **C++**: Query for `function_definition`, `class_specifier`, `namespace_definition`
+     - Doxygen: Extract `/** */` or `///` style comments
+     - Complexity: Count if/else/switch cases/for/while/do/&&/||/?: nodes
+
+   - **SQL**: Query for `create_table_statement`, `create_view_statement`, `create_function_statement`, `create_procedure_statement`
+     - Comments: Extract leading `--` or `/* */` comment blocks
+     - Complexity: N/A (set to None for SQL units)
 
 5. **Error Handling**:
    ```python
@@ -365,8 +401,8 @@ def _prepare_embedding_text(self, unit: SemanticUnit) -> str:
         parts.append(unit.docstring)
 
     content = unit.content
-    if len(content) > 2000:
-        content = content[:2000]
+    if len(content) > 4000:
+        content = content[:4000]
     parts.append(content)
 
     return "\n\n".join(parts)
@@ -692,15 +728,29 @@ class CodeIndexer:
 
         Called automatically from index_file() and index_directory() entry points.
         """
+        # Check if collection already exists first
+        try:
+            collections = await self.vector_store.list_collections()
+            if self.COLLECTION_NAME in collections:
+                logger.debug("collection_exists", name=self.COLLECTION_NAME)
+                return
+        except Exception as e:
+            logger.warning("collection_list_failed", error=str(e))
+            # Continue to creation attempt
+
+        # Create collection
         try:
             await self.vector_store.create_collection(
                 name=self.COLLECTION_NAME,
                 dimension=self.embedding_service.dimension,
             )
-        except (ValueError, Exception) as e:
-            # Collection may already exist - log and continue
-            logger.debug("collection_init", name=self.COLLECTION_NAME,
-                        status="already_exists_or_skipped", error=str(e))
+            logger.info("collection_created", name=self.COLLECTION_NAME)
+        except ValueError as e:
+            # Collection already exists (race condition)
+            if "already exists" in str(e).lower():
+                logger.debug("collection_exists", name=self.COLLECTION_NAME)
+            else:
+                raise
 ```
 
 ### SQLite Metadata: `indexed_files` table
@@ -751,7 +801,47 @@ BRANCH_TYPES = {
         "binary_expression",  # &&, ||
         "ternary_expression"  # ?:
     },
-    # ... similar for javascript, lua
+    "javascript": {
+        "if_statement", "for_statement", "while_statement", "do_statement",
+        "try_statement", "catch_clause", "switch_statement", "switch_case",
+        "binary_expression",  # &&, ||
+        "ternary_expression"  # ?:
+    },
+    "lua": {
+        "if_statement", "elseif_clause", "for_statement", "while_statement",
+        "repeat_statement", "binary_operator"  # and, or
+    },
+    "rust": {
+        "if_expression", "else_clause", "match_expression", "match_arm",
+        "for_expression", "while_expression", "loop_expression",
+        "binary_expression",  # &&, ||, ?
+    },
+    "swift": {
+        "if_statement", "else_clause", "switch_statement", "switch_case",
+        "for_statement", "while_statement", "guard_statement",
+        "binary_expression",  # &&, ||, ??
+        "ternary_expression"
+    },
+    "java": {
+        "if_statement", "else_clause", "switch_statement", "switch_case",
+        "for_statement", "while_statement", "do_statement",
+        "try_statement", "catch_clause",
+        "binary_expression",  # &&, ||
+        "ternary_expression"  # ?:
+    },
+    "c": {
+        "if_statement", "else_clause", "switch_statement", "case_statement",
+        "for_statement", "while_statement", "do_statement",
+        "binary_expression",  # &&, ||
+        "conditional_expression"  # ?:
+    },
+    "cpp": {
+        "if_statement", "else_clause", "switch_statement", "case_statement",
+        "for_statement", "while_statement", "do_statement",
+        "binary_expression",  # &&, ||
+        "conditional_expression"  # ?:
+    },
+    # SQL: complexity N/A
 }
 ```
 
@@ -794,16 +884,26 @@ logger.error("embedding_failed", batch_size=len(batch), error=str(e))
    - Test unsupported extension returns None
 
 2. **Parsing correctness** (per language):
-   - Python: Extract functions, classes, methods
+   - Python: Extract functions, classes, methods, module-level constants
    - TypeScript: Extract functions, classes, interfaces
    - JavaScript: Extract functions, arrow functions
    - Lua: Extract functions, local functions
-   - YAML/JSON: Extract root keys only
+   - Rust: Extract functions, structs, enums, impl blocks, traits
+   - Swift: Extract functions, classes, structs, enums, protocols, extensions
+   - Java: Extract classes, interfaces, enums, methods, constructors
+   - C: Extract functions, structs
+   - C++: Extract functions, classes, namespaces
+   - SQL: Extract tables, views, functions, procedures
 
 3. **Docstring extraction**:
    - Python: Triple-quoted strings
    - TypeScript/JavaScript: JSDoc comments
    - Lua: LuaDoc comments
+   - Rust: `///` and `//!` doc comments
+   - Swift: `///` doc comments
+   - Java: Javadoc comments
+   - C/C++: Doxygen comments
+   - SQL: Leading `--` or `/* */` comments
 
 4. **Complexity calculation**:
    - Simple function (complexity=1)
@@ -862,12 +962,16 @@ logger.error("embedding_failed", batch_size=len(batch), error=str(e))
 
 Create realistic sample files for each language:
 
-- **sample.py**: 5 functions, 2 classes with methods, docstrings, various complexity
+- **sample.py**: 5 functions, 2 classes with methods, module-level constants, docstrings, various complexity
 - **sample.ts**: Class, interface, functions, JSDoc comments
 - **sample.js**: Functions, arrow functions, JSDoc
 - **sample.lua**: Functions, local functions, methods (`:` syntax)
-- **sample.yaml**: Multi-level config (test only root keys extracted)
-- **sample.json**: Package.json style (test only root keys extracted)
+- **sample.rs**: Functions, structs, enums, impl blocks, traits, doc comments
+- **sample.swift**: Classes, structs, protocols, extensions, doc comments
+- **sample.java**: Classes, interfaces, methods, Javadoc comments
+- **sample.c**: Functions, structs, Doxygen comments
+- **sample.cpp**: Classes, namespaces, methods, Doxygen comments
+- **sample.sql**: CREATE TABLE, VIEW, FUNCTION statements with comments
 - **malformed.py**: Syntax error (unclosed bracket)
 - **large_file.py**: 5000+ lines (generate via script)
 - **empty.py**: Empty file
@@ -920,7 +1024,7 @@ Create realistic sample files for each language:
 **Pros**: Faster embedding, smaller vectors
 **Cons**: Poor search quality (misses implementation details)
 
-**Decision**: Embed signature + docstring + truncated content (2000 chars) for rich semantic search.
+**Decision**: Embed signature + docstring + truncated content (4000 chars) for rich semantic search.
 
 ### 4. Hash-based IDs instead of SHA-256
 
@@ -948,20 +1052,26 @@ None at this time. The spec is comprehensive and all design decisions have clear
 
 1. [ ] Create `indexers/base.py` with types and interfaces
 2. [ ] Create `indexers/utils.py` with ID generation and hashing
-3. [ ] Implement `TreeSitterParser` for Python
+3. [ ] Implement `TreeSitterParser` for Python (including module-level constants)
 4. [ ] Extend `TreeSitterParser` for TypeScript/JavaScript
 5. [ ] Extend `TreeSitterParser` for Lua
-6. [ ] Extend `TreeSitterParser` for YAML/JSON
-7. [ ] Implement `CodeIndexer` core logic
-8. [ ] Implement batch embedding
-9. [ ] Implement change detection
-10. [ ] Implement directory indexing
-11. [ ] Write unit tests for parser (each language)
-12. [ ] Write unit tests for indexer
-13. [ ] Write integration tests
-14. [ ] Create test fixtures
-15. [ ] Performance benchmarks
-16. [ ] Documentation (docstrings + examples)
+6. [ ] Extend `TreeSitterParser` for Rust
+7. [ ] Extend `TreeSitterParser` for Swift
+8. [ ] Extend `TreeSitterParser` for Java
+9. [ ] Extend `TreeSitterParser` for C
+10. [ ] Extend `TreeSitterParser` for C++
+11. [ ] Extend `TreeSitterParser` for SQL
+12. [ ] Implement `CodeIndexer` core logic
+13. [ ] Implement batch embedding (with 4000 char truncation)
+14. [ ] Implement change detection
+15. [ ] Implement directory indexing
+16. [ ] Implement proper collection initialization (check before create)
+17. [ ] Write unit tests for parser (each language)
+18. [ ] Write unit tests for indexer
+19. [ ] Write integration tests
+20. [ ] Create test fixtures for all 10 languages
+21. [ ] Performance benchmarks
+22. [ ] Documentation (docstrings + examples)
 
 ---
 
@@ -970,7 +1080,7 @@ None at this time. The spec is comprehensive and all design decisions have clear
 This proposal provides a complete implementation plan for CodeParser and CodeIndexer:
 
 - **Modular design**: Parser and indexer are separate, testable components
-- **Language support**: Python, TypeScript, JavaScript, Lua, YAML, JSON via tree-sitter
+- **Language support**: Python, TypeScript, JavaScript, Lua, Rust, Swift, Java, C, C++, SQL via tree-sitter
 - **Robust error handling**: Accumulates errors instead of failing fast
 - **Efficient change detection**: mtime + hash-based to minimize reindexing
 - **Batch processing**: 100-unit batches prevent memory issues

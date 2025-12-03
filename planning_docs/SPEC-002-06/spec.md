@@ -27,8 +27,8 @@ class UnitType(Enum):
     FUNCTION = "function"
     CLASS = "class"
     METHOD = "method"
-    MODULE = "module"
-    KEY = "key"  # For YAML/JSON root-level keys
+    MODULE = "module"      # Module-level docstring
+    CONSTANT = "constant"  # Module-level named assignments
 
 @dataclass
 class SemanticUnit:
@@ -68,14 +68,16 @@ class CodeParser(ABC):
 
         Returns language identifier or None if unsupported.
         Mapping: .py -> python, .ts -> typescript, .js -> javascript,
-                 .lua -> lua, .yaml/.yml -> yaml, .json -> json
+                 .lua -> lua, .rs -> rust, .swift -> swift,
+                 .java -> java, .c/.h -> c, .cpp/.hpp/.cc -> cpp,
+                 .sql -> sql
         """
         pass
 ```
 
 **Implementation**: `TreeSitterParser`
 - Uses `tree-sitter-languages` for bundled grammars
-- Supports: Python, TypeScript, JavaScript, Lua, YAML, JSON
+- Supports: Python, TypeScript, JavaScript, Lua, Rust, Swift, Java, C, C++, SQL
 - Extracts docstrings where available
 - Computes cyclomatic complexity for functions/methods
 - Uses `run_in_executor` for CPU-bound parsing
@@ -232,8 +234,10 @@ CREATE INDEX IF NOT EXISTS idx_indexed_files_project ON indexed_files(project);
 ## Language Support Details
 
 ### Python
-- **Units**: functions, classes, methods (module-level executable code is NOT indexed)
+- **Units**: functions, classes, methods, module docstrings, module-level constants
 - **Qualified names**: `module.ClassName.method_name` (module = file stem)
+- **Module docstring**: Extracted as `UnitType.MODULE` with name = file stem
+- **Constants**: Module-level assignments to UPPER_CASE names extracted as `UnitType.CONSTANT`
 - **Docstrings**: Extract via tree-sitter string node as first statement in body
 - **Complexity**: Count branch points (if, elif, for, while, try, except, with, and, or, match/case)
 
@@ -249,17 +253,35 @@ CREATE INDEX IF NOT EXISTS idx_indexed_files_project ON indexed_files(project);
 - **Docstrings**: LuaDoc comments (--- style) immediately preceding
 - **Complexity**: Count branch points (if, elseif, for, while, repeat, and, or)
 
-### YAML
-- **Units**: Root-level keys only (e.g., `services`, not `services.api.port`)
-- **Qualified names**: Key name (e.g., `services`)
-- **Content**: Full YAML subtree serialized as string
-- **Complexity**: N/A (always None)
+### Rust
+- **Units**: functions, structs, enums, impl blocks, traits, methods
+- **Qualified names**: `module::StructName::method_name`
+- **Docstrings**: `///` and `//!` doc comments
+- **Complexity**: Count branch points (if, else, match arms, for, while, loop, &&, ||, ?)
 
-### JSON
-- **Units**: Root-level keys only (e.g., `dependencies`, not `dependencies.axios`)
-- **Qualified names**: Key name (e.g., `dependencies`)
-- **Content**: Full JSON subtree serialized as string
-- **Complexity**: N/A (always None)
+### Swift
+- **Units**: functions, classes, structs, enums, protocols, extensions, methods
+- **Qualified names**: `Module.ClassName.methodName`
+- **Docstrings**: `///` doc comments
+- **Complexity**: Count branch points (if, else, switch cases, for, while, guard, &&, ||, ??)
+
+### Java
+- **Units**: classes, interfaces, enums, methods, constructors
+- **Qualified names**: `package.ClassName.methodName`
+- **Docstrings**: Javadoc comments (/** ... */)
+- **Complexity**: Count branch points (if, else, switch cases, for, while, do, try, catch, &&, ||, ?:)
+
+### C / C++
+- **Units**: functions, classes (C++), structs, methods (C++), namespaces (C++)
+- **Qualified names**: `namespace::ClassName::method_name` or `file.function_name`
+- **Docstrings**: Doxygen comments (/** ... */ or /// style)
+- **Complexity**: Count branch points (if, else, switch cases, for, while, do, &&, ||, ?:)
+
+### SQL
+- **Units**: CREATE TABLE, CREATE VIEW, CREATE FUNCTION, CREATE PROCEDURE, stored procedures
+- **Qualified names**: `schema.object_name` or just `object_name`
+- **Docstrings**: Leading comment blocks (-- or /* ... */)
+- **Complexity**: N/A (SQL complexity metrics differ significantly)
 
 ## Embedding Strategy
 
@@ -269,8 +291,10 @@ For each SemanticUnit, create an embedding from:
 
 {docstring if present, else empty}
 
-{content truncated to 2000 chars if longer}
+{content truncated to 4000 chars if longer}
 ```
+
+**Rationale**: 4000 chars covers ~100-150 lines of code, sufficient for most functions while maintaining embedding quality. Full content is stored in VectorStore payload for retrieval regardless of truncation.
 
 **Batching**: Embed units in batches of up to `EMBEDDING_BATCH_SIZE` (100) to avoid memory issues and respect any API limits.
 
@@ -301,15 +325,19 @@ All errors are recorded in `IndexingStats.errors` for caller inspection.
 ## Acceptance Criteria
 
 ### Functional
-1. Can parse Python files and extract functions, classes, methods
+1. Can parse Python files and extract functions, classes, methods, module docstrings, constants
 2. Can parse TypeScript/JavaScript files and extract functions, classes, methods, interfaces
 3. Can parse Lua files and extract functions
-4. Can parse YAML/JSON files and extract root-level keys only
-5. Index stores units in VectorStore with correct payloads
-6. Index tracks files in SQLite for change detection
-7. Reindexing only processes files where mtime OR content hash changed
-8. Reindexing deletes old entries before adding new ones (no orphans)
-9. Remove cleans up both VectorStore and SQLite
+4. Can parse Rust files and extract functions, structs, enums, impl blocks, traits, methods
+5. Can parse Swift files and extract functions, classes, structs, enums, protocols, methods
+6. Can parse Java files and extract classes, interfaces, enums, methods
+7. Can parse C/C++ files and extract functions, classes, structs, methods
+8. Can parse SQL files and extract tables, views, functions, procedures
+9. Index stores units in VectorStore with correct payloads
+10. Index tracks files in SQLite for change detection
+11. Reindexing only processes files where mtime OR content hash changed
+12. Reindexing deletes old entries before adding new ones (no orphans)
+13. Remove cleans up both VectorStore and SQLite
 
 ### Quality
 1. Handles malformed files: logs warning, skips, continues
@@ -344,12 +372,16 @@ Measured on M1 MacBook Pro, files <1000 lines, no syntax errors:
 
 ### Test Fixtures
 Create sample files in `tests/fixtures/code_samples/`:
-- `sample.py` - Python with functions, classes, methods, docstrings
+- `sample.py` - Python with functions, classes, methods, docstrings, module constants
 - `sample.ts` - TypeScript with classes, interfaces, JSDoc
 - `sample.js` - JavaScript with functions, arrow functions
 - `sample.lua` - Lua with functions, local functions, LuaDoc
-- `sample.yaml` - YAML configuration (test root-level extraction)
-- `sample.json` - JSON configuration (test root-level extraction)
+- `sample.rs` - Rust with functions, structs, enums, impl blocks, traits
+- `sample.swift` - Swift with classes, structs, protocols, extensions
+- `sample.java` - Java with classes, interfaces, methods, Javadoc
+- `sample.c` - C with functions, structs
+- `sample.cpp` - C++ with classes, methods, namespaces, Doxygen
+- `sample.sql` - SQL with CREATE TABLE, VIEW, FUNCTION statements
 - `malformed.py` - Syntax errors (partial extraction test)
 - `large_file.py` - 5000+ lines (memory test)
 - `empty.py` - Empty file
