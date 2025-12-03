@@ -136,6 +136,15 @@ class IndexingStats:
     duration_ms: int = 0
 
 
+class ParseError(Exception):
+    """Exception raised during code parsing."""
+    def __init__(self, error_type: str, message: str, file_path: str = ""):
+        self.error_type = error_type  # parse_error, encoding_error, io_error
+        self.message = message
+        self.file_path = file_path
+        super().__init__(f"{error_type}: {message}")
+
+
 class CodeParser(ABC):
     """Abstract interface for parsing code into semantic units."""
 
@@ -144,6 +153,9 @@ class CodeParser(ABC):
         """Parse a file and extract semantic units.
 
         Must use run_in_executor for CPU-bound tree-sitter parsing.
+
+        Raises:
+            ParseError: If file cannot be parsed (encoding, IO, or syntax error)
         """
         pass
 
@@ -422,6 +434,33 @@ def _find_files(
         files.append(str(path))
 
     return files
+
+def _should_exclude(self, path: str, patterns: list[str] | None) -> bool:
+    """Check if path matches any exclusion pattern.
+
+    Patterns use glob syntax:
+    - '**/node_modules/**' - exclude node_modules anywhere
+    - '**/__pycache__/**' - exclude Python cache dirs
+    - '**/vendor/**' - exclude vendor directories
+    - '*.min.js' - exclude minified JS files
+    - 'tests/**' - exclude tests directory at root
+
+    Example usage:
+        exclude_patterns=[
+            '**/node_modules/**',
+            '**/__pycache__/**',
+            '**/.*',  # hidden files/dirs
+            '**/*.min.js',
+        ]
+    """
+    if not patterns:
+        return False
+
+    from fnmatch import fnmatch
+    for pattern in patterns:
+        if fnmatch(path, pattern):
+            return True
+    return False
 ```
 
 ---
@@ -492,8 +531,27 @@ def detect_binary(path: str, sample_size: int = 8192) -> bool:
 
 **Notes**:
 - Use existing `VectorStore.upsert()` method
-- Collection initialized by indexer on first use
 - No changes needed to VectorStore interface
+
+**Collection Initialization**:
+```python
+class CodeIndexer:
+    COLLECTION_NAME = "code_units"
+
+    async def _ensure_collection(self) -> None:
+        """Create collection if it doesn't exist."""
+        try:
+            await self.vector_store.create_collection(
+                name=self.COLLECTION_NAME,
+                dimension=self.embedding_service.dimension,
+            )
+        except CollectionExistsError:
+            pass  # Already exists, that's fine
+
+    async def index_file(self, path: str, project: str) -> int:
+        await self._ensure_collection()  # Lazy init on first use
+        # ... rest of indexing logic
+```
 
 ### SQLite Metadata: `indexed_files` table
 
