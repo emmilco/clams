@@ -18,7 +18,7 @@ Claude Code agents face three interconnected problems:
 
 A modular MCP server providing:
 
-1. **Verified Memory** - Facts with lifecycle management and optional verification predicates
+1. **Persistent Memory** - Facts with lifecycle management
 2. **Semantic Code Search** - Find code by meaning, not paths (can't go stale)
 3. **Git History Intelligence** - Blame, churn, file history, commit search
 4. **Experience Learning** - GHAP tracking → embedding → clustering → emergent values
@@ -121,10 +121,10 @@ The value embedding ensures correct retrieval even if text is imperfect. The med
 │  │                         MCP TOOL INTERFACE                           │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                  │                                          │
-│  ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐    │
-│  │  Context  │ │   Value   │ │ Clusterer │ │  Searcher │ │  Verifier │    │
-│  │ Assembler │ │   Store   │ │           │ │           │ │           │    │
-│  └─────┬─────┘ └─────┬─────┘ └─────┬─────┘ └─────┬─────┘ └───────────┘    │
+│  ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐                   │
+│  │  Context  │ │   Value   │ │ Clusterer │ │  Searcher │                   │
+│  │ Assembler │ │   Store   │ │           │ │           │                   │
+│  └─────┬─────┘ └─────┬─────┘ └─────┬─────┘ └─────┬─────┘                   │
 │        └─────────────┴─────────────┴─────────────┘                         │
 │                                  │                                          │
 │  ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐                   │
@@ -157,7 +157,6 @@ The value embedding ensures correct retrieval even if text is imperfect. The med
 | Searcher | Query interface | Embedding, VectorStore |
 | Clusterer | HDBSCAN clustering | VectorStore |
 | Value Store | Validate and store agent-generated values | Clusterer, Embedding |
-| Verifier | Check claims against reality | File system |
 | Context Assembler | Format context for injection | Searcher |
 
 ---
@@ -273,8 +272,7 @@ learning-memory-server/
 │       │   │   ├── code.py
 │       │   │   ├── git.py
 │       │   │   ├── ghap.py
-│       │   │   ├── learning.py
-│       │   │   └── verification.py
+│       │   │   └── learning.py
 │       │   └── middleware.py
 │       ├── embedding/             # EmbeddingService
 │       ├── storage/               # VectorStore, SQLite
@@ -283,7 +281,6 @@ learning-memory-server/
 │       ├── search/                # Searcher
 │       ├── clustering/            # Clusterer
 │       ├── values/                # ValueStore
-│       ├── verification/          # Verifier
 │       └── context/               # ContextAssembler
 ├── tests/
 ├── pyproject.toml
@@ -678,52 +675,6 @@ def validate_value_candidate(self, text: str, cluster_id: str) -> ValidationResu
 
 ---
 
-### Verifier
-
-**Purpose**: Check claims against code reality.
-
-**Interface**:
-```python
-class Verifier:
-    def __init__(self, claims_path: str)
-
-    def load_claims(self) -> List[Claim]
-    def verify_claim(self, claim: Claim) -> VerificationResult
-    def verify_all(self) -> List[VerificationResult]
-    def get_failed_claims(self) -> List[VerificationResult]
-    def get_stale_claims(self, max_age_days: int = 30) -> List[Claim]
-```
-
-**Claim Structure**:
-```python
-@dataclass
-class Claim:
-    id: str
-    statement: str
-    predicate: str        # Shell command that returns 0 if true
-    on_failure: str       # "warn" | "remove" | "update"
-    category: str
-    last_verified: datetime
-    created_at: datetime
-```
-
-**Example Claims**:
-```yaml
-- id: "entry-point"
-  statement: "The entry point is src/main.py"
-  predicate: "test -f src/main.py"
-  on_failure: "warn"
-  category: "navigation"
-
-- id: "test-command"
-  statement: "Tests run with pytest"
-  predicate: "grep -q pytest pyproject.toml"
-  on_failure: "warn"
-  category: "workflow"
-```
-
----
-
 ### Context Assembler
 
 **Purpose**: Assemble and format context for injection into agent conversation.
@@ -746,7 +697,7 @@ class ContextAssembler:
 1. **Light Context** (session start):
    - Top values (high cluster size)
    - Recent events
-   - Verified facts
+   - Key memories
 
 2. **Rich Context** (after failure or on request):
    - Similar experiences with lessons
@@ -871,19 +822,6 @@ store_value(text: string, cluster_id: string, axis: string): Value
 
 // List emergent values
 list_values(axis?: string): Value[]
-```
-
-### Verification Tools
-
-```typescript
-// Verify a specific claim
-verify_claim(claim_id: string): VerificationResult
-
-// Verify all claims
-verify_all_claims(): VerificationResult[]
-
-// Get stale claims
-get_stale_claims(max_age_days?: number): Claim[]
 ```
 
 ---
@@ -1061,12 +999,10 @@ Return context string
 
 **Deliverables**:
 - Searcher (unified query interface)
-- Verifier (claims with predicates)
-- MCP tools for search, code, git, verification
+- MCP tools for memory, code, git, GHAP
 
 **Exit Criteria**:
 - Can search across all collections via MCP
-- Can verify claims and detect staleness
 - Integration tests with Claude Code
 
 ### Phase 4: Intelligence
@@ -1148,7 +1084,6 @@ Note: No LLM configuration needed—value formation is handled by the Claude Cod
 | Min experiences for clustering | 20 | Don't cluster until sufficient data |
 | Min cluster size | 5 | Minimum experiences per cluster |
 | Value validation threshold | median | Value must be closer to centroid than median member |
-| Stale claim age | 30 days | Flag claims not verified recently |
 | Cold storage threshold | Bronze | Move Bronze/Abandoned to cold storage |
 
 ---
@@ -1164,7 +1099,6 @@ Note: No LLM configuration needed—value formation is handled by the Claude Cod
 5. **Clustering**: Produces meaningful clusters from experiences
 6. **Value Formation**: Generated values are topically relevant
 7. **Context Retrieval**: Returns relevant context for situations
-8. **Verification**: Correctly identifies stale/invalid claims
 
 ### Performance
 
@@ -1275,6 +1209,11 @@ Note: No LLM configuration needed—value formation is handled by the Claude Cod
 
 ## Changelog
 
+### Version 1.5 (2025-12-03)
+- Removed Verifier module (claims with predicates) from scope
+- Verifier was tangential to core product concept (code/git indexing, GHAP tracking, clustering)
+- Can be reconsidered in future if fact verification becomes important
+
 ### Version 1.4 (2025-12-02)
 - Swapped Phase 5 and Phase 6: Integration now comes before Context Assembly
 - Launch core system first, add context injection after stabilization
@@ -1304,5 +1243,5 @@ Note: No LLM configuration needed—value formation is handled by the Claude Cod
 
 ---
 
-*Spec Version: 1.4*
-*Date: 2025-12-02*
+*Spec Version: 1.5*
+*Date: 2025-12-03*
