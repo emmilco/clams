@@ -16,7 +16,7 @@ from learning_memory_server.storage.qdrant import QdrantVectorStore
 @pytest.fixture
 async def mock_embedding_service():
     """Create a mock embedding service."""
-    return MockEmbedding(dimension=768)
+    return MockEmbedding()
 
 
 @pytest.fixture
