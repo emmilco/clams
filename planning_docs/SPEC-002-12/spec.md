@@ -11,7 +11,7 @@ Implement HDBSCAN clustering for experience embeddings to discover emergent patt
 - SPEC-002-03: VectorStore
 
 ### Required
-- scikit-learn (includes HDBSCAN implementation)
+- hdbscan (separate package, NOT part of scikit-learn)
 - numpy
 
 ## Components
@@ -145,17 +145,25 @@ class ExperienceClusterer:
         Args:
             axis: Axis name, one of:
                   - "full" (complete narrative)
-                  - "domain" (debugging, feature, etc.)
                   - "strategy" (systematic-elimination, etc.)
                   - "surprise" (unexpected outcomes)
                   - "root_cause" (why hypothesis was wrong)
+
+                  Note: "domain" is NOT a clustering axis. Domain is metadata on
+                  experiences that can be used to filter the "full" axis before
+                  clustering, but domain itself is not clustered independently.
 
         Returns:
             List of ClusterInfo for each cluster found
 
         Steps:
             1. Retrieve all embeddings for axis from VectorStore
-            2. Extract weights from confidence tiers (gold=1.0, silver=0.8, bronze=0.5)
+            2. Extract weights from confidence tiers:
+               - gold: 1.0
+               - silver: 0.8
+               - bronze: 0.5
+               - abandoned: 0.2
+               - missing/invalid: 0.5 (default to bronze weight)
             3. Run HDBSCAN clustering
             4. Compute weighted centroids
             5. Return ClusterInfo list
@@ -186,10 +194,10 @@ class ExperienceClusterer:
 Experiences are stored in VectorStore with these collections:
 
 ```python
-# Collection names by axis
+# Collection names by axis (4 axes total)
+# Note: "domain" is a metadata filter on experiences_full, not a separate axis
 AXIS_COLLECTIONS = {
     "full": "experiences_full",
-    "domain": "experiences_domain",
     "strategy": "experiences_strategy",
     "surprise": "experiences_surprise",
     "root_cause": "experiences_root_cause",
@@ -263,7 +271,7 @@ This ensures:
 | cluster() | <1s for 500 points | HDBSCAN on typical experience dataset |
 | compute_centroids() | <100ms | Simple weighted average |
 | cluster_axis() | <2s | Includes VectorStore retrieval + clustering |
-| cluster_all_axes() | <10s | 5 axes * 2s each, some parallel potential |
+| cluster_all_axes() | <8s | 4 axes * 2s each, some parallel potential |
 
 ### Scalability
 
@@ -351,7 +359,9 @@ async def test_multi_axis_clustering(qdrant_container, embedding_service):
     # Check all axes processed independently
 ```
 
-### Property-Based Tests (Optional)
+### Property-Based Tests (Required)
+
+Use `hypothesis` to verify clustering invariants hold for arbitrary inputs:
 
 ```python
 from hypothesis import given, strategies as st
@@ -373,6 +383,28 @@ def test_cluster_invariants(n_points, n_dim):
 
     # Invariant: Probabilities in [0, 1]
     assert np.all((result.probabilities >= 0) & (result.probabilities <= 1))
+
+@given(
+    n_points=st.integers(min_value=10, max_value=100),
+    weights=st.lists(st.floats(min_value=0.1, max_value=1.0), min_size=10, max_size=100),
+)
+def test_centroid_invariants(n_points, weights):
+    """Test centroid computation invariants."""
+    n_dim = 128
+    embeddings = np.random.randn(n_points, n_dim).astype(np.float32)
+    weights_array = np.array(weights[:n_points])
+    labels = np.random.randint(0, 5, size=n_points)  # 5 clusters
+    ids = [f"id_{i}" for i in range(n_points)]
+
+    clusters = clusterer.compute_centroids(embeddings, labels, ids, weights_array)
+
+    # Invariant: Centroid dimensionality matches input
+    for cluster in clusters:
+        assert cluster.centroid.shape == (n_dim,)
+
+    # Invariant: Member count matches size
+    for cluster in clusters:
+        assert len(cluster.member_ids) == cluster.size
 ```
 
 ## Acceptance Criteria
@@ -383,7 +415,7 @@ def test_cluster_invariants(n_points, n_dim):
 3. ✅ Noise points (-1 label) excluded from clusters
 4. ✅ ExperienceClusterer retrieves embeddings from VectorStore
 5. ✅ ExperienceClusterer applies confidence tier weights (gold=1.0, silver=0.8, bronze=0.5, abandoned=0.2)
-6. ✅ ExperienceClusterer clusters all 5 axes independently
+6. ✅ ExperienceClusterer clusters all 4 axes independently
 7. ✅ cluster_all_axes() returns dict with all axes
 8. ✅ Empty collections handled gracefully (raise ValueError)
 9. ✅ Invalid axis name raises ValueError
@@ -401,8 +433,9 @@ def test_cluster_invariants(n_points, n_dim):
 ### Performance
 1. ✅ Clustering 500 points completes in <1s
 2. ✅ Centroid computation completes in <100ms
-3. ✅ cluster_all_axes() completes in <10s
-4. ✅ No memory leaks with repeated clustering
+3. ✅ cluster_all_axes() completes in <8s
+4. ✅ Peak memory usage ≤150MB for 1000 embeddings (768-dim)
+5. ✅ No memory leaks with repeated clustering
 
 ### Testing
 1. ✅ Unit test coverage ≥ 90%
@@ -427,6 +460,6 @@ def test_cluster_invariants(n_points, n_dim):
 - Noise points (-1 label) are normal and expected for outliers
 - Cosine metric works well for normalized embeddings
 - Weights only affect centroid computation, not HDBSCAN algorithm itself
-- Each axis is clustered independently (no cross-axis constraints)
+- Each of the 4 axes is clustered independently (no cross-axis constraints)
 - All async operations use `await` consistently
 - Logging via `structlog` following existing codebase patterns
