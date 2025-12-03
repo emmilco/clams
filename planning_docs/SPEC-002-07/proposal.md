@@ -55,6 +55,8 @@ GitReaderError (base)
 ├── FileNotInRepoError       # File not tracked
 ├── BinaryFileError          # Binary file in blame
 └── ShallowCloneError        # Missing history (logged, returns available)
+
+GitAnalyzerError (base)      # High-level analysis errors
 ```
 
 **Implementation Notes**:
@@ -63,6 +65,7 @@ GitReaderError (base)
 - Blame via `repo.blame()` with line range grouping
 - Repository validation at init: check `.git` directory existence
 - `get_repo_root()` returns `repo.working_dir` (absolute path to repository root)
+  - Note: This is a synchronous method that returns a cached string path, no async wrapping needed
 
 #### 2. GitAnalyzer (analyzer.py)
 
@@ -127,7 +130,7 @@ Author: {author}"""
 - AuthorStats dataclass
 - BlameSearchResult dataclass
 - IndexingStats dataclass
-  - Note: commits_skipped counts already-indexed commits found during incremental indexing
+  - Note: commits_skipped counts commits that were already indexed (meaningful for force=True reindex operations; typically 0 for incremental)
 - IndexingError dataclass
 - GitReader ABC
 - GitAnalyzer class signature
@@ -218,7 +221,7 @@ async def index_commits(self, since=None, limit=None, force=False) -> IndexingSt
 
     # Get current state
     state = await self.metadata_store.get_git_index_state(
-        await self.git_reader.get_repo_root()
+        self.git_reader.get_repo_root()  # Sync method, no await
     )
 
     # Determine indexing mode
@@ -239,6 +242,8 @@ async def index_commits(self, since=None, limit=None, force=False) -> IndexingSt
 
         for commit in all_commits:
             if commit.sha == state.last_indexed_sha:
+                # Found last indexed commit - stop here
+                # commits_skipped stays 0 for incremental (we only index new commits)
                 break
             new_commits.append(commit)
         else:
@@ -268,7 +273,7 @@ async def _get_commits_to_index(self, since, limit):
 
 async def _index_commit_batch(self, commits, stats):
     """Index a batch of commits using batch embedding for performance."""
-    repo_path = await self.git_reader.get_repo_root()
+    repo_path = self.git_reader.get_repo_root()  # Sync method, no await
 
     # Process in batches of 50-100 for optimal embedding performance
     batch_size = 75
@@ -480,7 +485,7 @@ async def blame_search(
 
     # 1. Search for pattern in repo
     import subprocess
-    repo_root = await self.git_reader.get_repo_root()
+    repo_root = self.git_reader.get_repo_root()  # Sync method, no await
 
     cmd = ["rg", "--line-number", "--no-heading", pattern]
     if file_pattern:
@@ -488,15 +493,37 @@ async def blame_search(
 
     # Run in executor (subprocess is blocking)
     loop = asyncio.get_event_loop()
-    result = await loop.run_in_executor(
-        None,
-        lambda: subprocess.run(
-            cmd,
-            cwd=repo_root,
-            capture_output=True,
-            text=True,
-        ),
-    )
+    try:
+        result = await loop.run_in_executor(
+            None,
+            lambda: subprocess.run(
+                cmd,
+                cwd=repo_root,
+                capture_output=True,
+                text=True,
+            ),
+        )
+    except FileNotFoundError:
+        # ripgrep not installed
+        logger.error("ripgrep_not_found", command="rg", suggestion="Install ripgrep")
+        raise GitAnalyzerError(
+            "ripgrep (rg) not found. Install via: brew install ripgrep"
+        )
+    except Exception as e:
+        # Other subprocess errors (permissions, etc.)
+        logger.error("ripgrep_failed", error=str(e), command=cmd)
+        raise GitAnalyzerError(f"ripgrep search failed: {e}")
+
+    # Check for ripgrep errors
+    if result.returncode != 0 and result.returncode != 1:
+        # returncode 1 means no matches (expected), other codes are errors
+        logger.error(
+            "ripgrep_error",
+            returncode=result.returncode,
+            stderr=result.stderr,
+            command=cmd,
+        )
+        raise GitAnalyzerError(f"ripgrep error (code {result.returncode}): {result.stderr}")
 
     # Parse grep results
     matches: list[tuple[str, int]] = []  # (file_path, line_number)
