@@ -226,7 +226,7 @@ class CodeParser(ABC):
      - LuaDoc: Extract `---` comments before unit
      - Complexity: Count if/elseif/for/while/repeat/and/or nodes
 
-   - **YAML/JSON**: Parse with yaml/json stdlib, extract root keys only
+   - **YAML/JSON**: Use stdlib parsers (yaml/json modules, not tree-sitter), extract root keys only
      - Content: Serialize subtree back to string
      - No complexity, no docstrings
 
@@ -411,6 +411,17 @@ async def index_directory(
             stats.errors.append(error)
             logger.warning("file_index_failed", path=file_path, error=str(e))
 
+def _classify_error(self, error: Exception) -> str:
+    """Classify exception into error type for reporting."""
+    if isinstance(error, ParseError):
+        return error.error_type
+    elif isinstance(error, IOError):
+        return "io_error"
+    elif isinstance(error, UnicodeDecodeError):
+        return "encoding_error"
+    else:
+        return "unknown_error"
+
     stats.duration_ms = int((time.time() - start_time) * 1000)
     return stats
 
@@ -461,6 +472,79 @@ def _should_exclude(self, path: str, patterns: list[str] | None) -> bool:
         if fnmatch(path, pattern):
             return True
     return False
+
+async def remove_file(self, path: str, project: str) -> None:
+    """Remove all indexed units for a file.
+
+    Deletes both vector store entries and metadata.
+    """
+    await self._delete_file_units(path, project)
+    await self.metadata_store.delete_indexed_file(path, project)
+    logger.info("file_removed", path=path, project=project)
+
+async def remove_project(self, project: str) -> None:
+    """Remove all indexed units for a project.
+
+    Deletes both vector store entries and metadata.
+    """
+    # Get all files for this project
+    files = await self.metadata_store.list_indexed_files(project=project)
+
+    # Delete each file's units
+    for file_info in files:
+        await self._delete_file_units(file_info.file_path, project)
+
+    # Delete metadata
+    await self.metadata_store.delete_project(project)
+    logger.info("project_removed", project=project, files_count=len(files))
+
+async def get_indexing_stats(self, project: str | None = None) -> dict:
+    """Get indexing statistics.
+
+    Returns summary of indexed files, units, languages, etc.
+    """
+    files = await self.metadata_store.list_indexed_files(project=project)
+
+    total_files = len(files)
+    total_units = sum(f.unit_count for f in files)
+    languages = {}
+
+    for file_info in files:
+        lang = file_info.language or "unknown"
+        languages[lang] = languages.get(lang, 0) + 1
+
+    return {
+        "total_files": total_files,
+        "total_units": total_units,
+        "languages": languages,
+        "projects": len(set(f.project for f in files)) if project is None else 1,
+    }
+
+async def is_file_indexed(self, path: str, project: str) -> bool:
+    """Check if a file is indexed."""
+    file_info = await self.metadata_store.get_indexed_file(path, project)
+    return file_info is not None
+
+async def _delete_file_units(self, path: str, project: str) -> None:
+    """Delete all vector store entries for a file.
+
+    This is a helper method used during reindexing and file removal.
+    """
+    # Query vector store for all units from this file
+    results = await self.vector_store.query(
+        collection=self.COLLECTION_NAME,
+        filter={"file_path": path, "project": project},
+        limit=1000,  # Arbitrary large number
+    )
+
+    # Delete each unit
+    for result in results:
+        await self.vector_store.delete(
+            collection=self.COLLECTION_NAME,
+            id=result.id,
+        )
+
+    logger.debug("file_units_deleted", path=path, project=project, count=len(results))
 ```
 
 ---
@@ -545,8 +629,10 @@ class CodeIndexer:
                 name=self.COLLECTION_NAME,
                 dimension=self.embedding_service.dimension,
             )
-        except CollectionExistsError:
-            pass  # Already exists, that's fine
+        except (ValueError, Exception) as e:
+            # Collection may already exist - log and continue
+            logger.debug("collection_init", name=self.COLLECTION_NAME,
+                        status="already_exists_or_skipped", error=str(e))
 
     async def index_file(self, path: str, project: str) -> int:
         await self._ensure_collection()  # Lazy init on first use
@@ -722,6 +808,7 @@ Create realistic sample files for each language:
 - **large_file.py**: 5000+ lines (generate via script)
 - **empty.py**: Empty file
 - **binary.dat**: Binary file (e.g., PNG header bytes)
+- **non_utf8.py**: Latin-1 encoded file (for encoding detection testing)
 
 ---
 
