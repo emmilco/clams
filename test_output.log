@@ -1,0 +1,93 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.12, pytest-9.0.1, pluggy-1.6.0 -- /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-03/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-03
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.12.0, asyncio-1.3.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 30 items
+
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_create_collection PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_create_duplicate_collection PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_delete_collection PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_upsert_and_get PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_upsert_update PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_upsert_wrong_dimension PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_search_cosine_similarity PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_search_with_filters PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_delete PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_scroll PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_scroll_with_filters PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_count PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_count_with_filters PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_get_nonexistent PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_operations_on_nonexistent_collection PASSED
+tests/storage/test_qdrant.py::TestQdrantVectorStore::test_create_collection PASSED
+tests/storage/test_qdrant.py::TestQdrantVectorStore::test_delete_collection PASSED
+tests/storage/test_qdrant.py::TestQdrantVectorStore::test_upsert_and_get FAILED
+
+=================================== FAILURES ===================================
+__________________ TestQdrantVectorStore.test_upsert_and_get ___________________
+
+self = <tests.storage.test_qdrant.TestQdrantVectorStore object at 0x10a903500>
+store = <learning_memory_server.storage.qdrant.QdrantVectorStore object at 0x10b06bbc0>
+collection = 'test_collection'
+
+    async def test_upsert_and_get(
+        self, store: QdrantVectorStore, collection: str
+    ) -> None:
+        """Test inserting and retrieving a vector."""
+        vector = np.array([1.0, 2.0, 3.0], dtype=np.float32)
+        payload = {"text": "test", "category": "A"}
+    
+>       await store.upsert(collection, "id1", vector, payload)
+
+tests/storage/test_qdrant.py:76: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/learning_memory_server/storage/qdrant.py:75: in upsert
+    await self._client.upsert(
+.venv/lib/python3.12/site-packages/qdrant_client/async_qdrant_client.py:902: in upsert
+    return await self._client.upsert(
+.venv/lib/python3.12/site-packages/qdrant_client/async_qdrant_remote.py:1002: in upsert
+    await self.openapi_client.points_api.upsert_points(
+.venv/lib/python3.12/site-packages/qdrant_client/http/api/points_api.py:756: in upsert_points
+    return await self._build_for_upsert_points(
+.venv/lib/python3.12/site-packages/qdrant_client/http/api_client.py:184: in request
+    return await self.send(request, type_)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <qdrant_client.http.api_client.AsyncApiClient object at 0x10aa313d0>
+request = <Request('PUT', 'http://localhost:6333/collections/test_collection/points?wait=true')>
+type_ = <class 'qdrant_client.http.models.models.InlineResponse2005'>
+
+    async def send(self, request: Request, type_: Type[T]) -> T:
+        response = await self.middleware(request, self.send_inner)
+    
+        if response.status_code == 429:
+            retry_after_s = response.headers.get("Retry-After", None)
+            try:
+                resp = response.json()
+                message = resp["status"]["error"] if resp["status"] and resp["status"]["error"] else ""
+            except Exception:
+                message = ""
+    
+            if retry_after_s:
+                raise ResourceExhaustedResponse(message, retry_after_s)
+    
+        if response.status_code in [200, 201, 202]:
+            try:
+                return parse_as_type(response.json(), type_)
+            except ValidationError as e:
+                raise ResponseHandlingException(e)
+>       raise UnexpectedResponse.for_response(response)
+E       qdrant_client.http.exceptions.UnexpectedResponse: Unexpected Response: 400 (Bad Request)
+E       Raw response content:
+E       b'{"status":{"error":"Format error in JSON body: value id1 is not a valid point ID, valid values are either an unsigned integer or a UUID"},"time":0.0}'
+
+.venv/lib/python3.12/site-packages/qdrant_client/http/api_client.py:219: UnexpectedResponse
+=========================== short test summary info ============================
+FAILED tests/storage/test_qdrant.py::TestQdrantVectorStore::test_upsert_and_get
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+========================= 1 failed, 17 passed in 2.72s =========================

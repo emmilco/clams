@@ -1,5 +1,6 @@
 """Qdrant vector store implementation."""
 
+import uuid
 from typing import Any
 
 import numpy as np
@@ -7,6 +8,26 @@ from qdrant_client import AsyncQdrantClient
 from qdrant_client.http import models as qmodels
 
 from .base import SearchResult, StorageSettings, Vector, VectorStore
+
+# Namespace UUID for generating deterministic UUIDs from string IDs
+_NAMESPACE = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")  # UUID namespace for URLs
+
+
+def _to_qdrant_id(id: str) -> str:
+    """Convert a string ID to a valid Qdrant UUID.
+
+    Qdrant requires point IDs to be either unsigned integers or UUIDs.
+    This converts arbitrary string IDs to deterministic UUIDs.
+    """
+    # If already a valid UUID, use it
+    try:
+        uuid.UUID(id)
+        return id
+    except ValueError:
+        pass
+
+    # Generate a deterministic UUID from the string
+    return str(uuid.uuid5(_NAMESPACE, id))
 
 
 class QdrantVectorStore(VectorStore):
@@ -72,13 +93,14 @@ class QdrantVectorStore(VectorStore):
         payload: dict[str, Any],
     ) -> None:
         """Insert or update a vector."""
+        qdrant_id = _to_qdrant_id(id)
         await self._client.upsert(
             collection_name=collection,
             points=[
                 qmodels.PointStruct(
-                    id=id,
+                    id=qdrant_id,
                     vector=vector.tolist(),
-                    payload=payload,
+                    payload={**payload, "_original_id": id},
                 )
             ],
         )
@@ -105,9 +127,9 @@ class QdrantVectorStore(VectorStore):
 
         return [
             SearchResult(
-                id=str(result.id),
+                id=(result.payload or {}).get("_original_id", str(result.id)),
                 score=result.score,
-                payload=result.payload or {},
+                payload={k: v for k, v in (result.payload or {}).items() if k != "_original_id"},
                 vector=None,
             )
             for result in results
@@ -115,9 +137,10 @@ class QdrantVectorStore(VectorStore):
 
     async def delete(self, collection: str, id: str) -> None:
         """Delete a vector by ID."""
+        qdrant_id = _to_qdrant_id(id)
         await self._client.delete(
             collection_name=collection,
-            points_selector=qmodels.PointIdsList(points=[id]),
+            points_selector=qmodels.PointIdsList(points=[qdrant_id]),
         )
 
     async def scroll(
@@ -140,9 +163,9 @@ class QdrantVectorStore(VectorStore):
 
         return [
             SearchResult(
-                id=str(result.id),
+                id=(result.payload or {}).get("_original_id", str(result.id)),
                 score=0.0,
-                payload=result.payload or {},
+                payload={k: v for k, v in (result.payload or {}).items() if k != "_original_id"},
                 vector=(
                     np.array(result.vector, dtype=np.float32)
                     if with_vectors and result.vector is not None
@@ -170,9 +193,10 @@ class QdrantVectorStore(VectorStore):
         self, collection: str, id: str, with_vector: bool = False
     ) -> SearchResult | None:
         """Get a specific vector by ID."""
+        qdrant_id = _to_qdrant_id(id)
         results = await self._client.retrieve(
             collection_name=collection,
-            ids=[id],
+            ids=[qdrant_id],
             with_payload=True,
             with_vectors=with_vector,
         )
@@ -181,10 +205,11 @@ class QdrantVectorStore(VectorStore):
             return None
 
         result = results[0]
+        payload = result.payload or {}
         return SearchResult(
-            id=str(result.id),
+            id=payload.get("_original_id", str(result.id)),
             score=0.0,
-            payload=result.payload or {},
+            payload={k: v for k, v in payload.items() if k != "_original_id"},
             vector=(
                 np.array(result.vector, dtype=np.float32)
                 if with_vector and result.vector is not None
