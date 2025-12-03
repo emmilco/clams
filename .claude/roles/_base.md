@@ -59,6 +59,27 @@ When debugging, use parallel differential diagnosis:
 - No hacks without follow-up
 - Debt is not acceptable
 
+## CRITICAL: Commit Before Reporting Done
+
+**You MUST commit all changes before reporting completion.** Uncommitted work will be lost when the worktree is cleaned up.
+
+Before marking your work complete:
+```bash
+# Stage all changes
+git add -A
+
+# Commit with descriptive message
+git commit -m "TASK-ID: Brief description
+
+- What was added/changed
+- Tests included (if applicable)"
+
+# Verify commit was made
+git log -1 --oneline
+```
+
+**DO NOT report completion without a commit.**
+
 ## Communication
 
 You report ONLY to the orchestrator. You cannot communicate with other workers.
@@ -66,5 +87,6 @@ You report ONLY to the orchestrator. You cannot communicate with other workers.
 When you complete your task, provide:
 1. Summary of what was done
 2. Evidence of completion (test output, etc.)
-3. Any issues or blockers encountered
-4. Recommendations for next steps
+3. **The commit SHA** (from `git log -1 --oneline`)
+4. Any issues or blockers encountered
+5. Recommendations for next steps

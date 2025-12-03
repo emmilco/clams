@@ -10,8 +10,20 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CLAUDE_DIR="$(dirname "$SCRIPT_DIR")"
-DB_PATH="$CLAUDE_DIR/clams.db"
+BIN_DIR="$(dirname "$SCRIPT_DIR")/bin"
+
+# Use clams-common.sh to resolve to main repo database
+if [[ -f "$BIN_DIR/clams-common.sh" ]]; then
+    source "$BIN_DIR/clams-common.sh"
+else
+    # Fallback for standalone execution
+    CLAUDE_DIR="$(dirname "$SCRIPT_DIR")"
+    _LOCAL_REPO="$(dirname "$CLAUDE_DIR")"
+    MAIN_REPO=$(cd "$_LOCAL_REPO" && git worktree list --porcelain 2>/dev/null | head -1 | sed 's/worktree //')
+    MAIN_REPO="${MAIN_REPO:-$_LOCAL_REPO}"
+    CLAUDE_DIR="$MAIN_REPO/.claude"
+    DB_PATH="$CLAUDE_DIR/clams.db"
+fi
 
 WORKTREE="${1:-.}"
 TASK_ID="${2:-}"
@@ -177,6 +189,17 @@ run_pytest() {
 
     echo "Detected: Python (pytest)"
     echo ""
+
+    # Install package in editable mode before running tests
+    if [[ -f "pyproject.toml" ]]; then
+        echo "Installing package in editable mode..."
+        if command -v uv &> /dev/null; then
+            uv pip install -e ".[dev]" --quiet 2>/dev/null || uv pip install -e . --quiet 2>/dev/null || true
+        elif command -v pip &> /dev/null; then
+            pip install -e ".[dev]" --quiet 2>/dev/null || pip install -e . --quiet 2>/dev/null || true
+        fi
+        echo ""
+    fi
 
     # Try to run with JSON report first
     if python -c "import pytest_json_report" 2>/dev/null; then

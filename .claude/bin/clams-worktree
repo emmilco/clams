@@ -12,10 +12,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CLAUDE_DIR="$(dirname "$SCRIPT_DIR")"
-DB_PATH="$CLAUDE_DIR/clams.db"
-WORKTREE_DIR="$CLAUDE_DIR/worktrees"
-REPO_ROOT="$(dirname "$CLAUDE_DIR")"
+source "$SCRIPT_DIR/clams-common.sh"
 
 if [[ ! -f "$DB_PATH" ]]; then
     echo "Error: Database not found at $DB_PATH. Run clams-init first." >&2
@@ -51,7 +48,7 @@ cmd_create() {
     fi
 
     # Create worktree with new branch
-    cd "$REPO_ROOT"
+    cd "$MAIN_REPO"
     git worktree add "$worktree_path" -b "$task_id"
 
     # Create planning_docs and changelog.d directories for this task
@@ -74,7 +71,7 @@ cmd_remove() {
         exit 1
     fi
 
-    cd "$REPO_ROOT"
+    cd "$MAIN_REPO"
 
     # Remove worktree
     git worktree remove "$worktree_path" --force
@@ -91,7 +88,7 @@ cmd_remove() {
 }
 
 cmd_list() {
-    cd "$REPO_ROOT"
+    cd "$MAIN_REPO"
     echo "=== Git Worktrees ==="
     git worktree list
 
@@ -122,7 +119,7 @@ cmd_merge() {
         exit 1
     fi
 
-    cd "$REPO_ROOT"
+    cd "$MAIN_REPO"
 
     # Ensure we're on main and up to date
     git checkout main
@@ -150,7 +147,7 @@ EOF
 
     # Remove worktree
     git worktree remove "$worktree_path" --force
-    git branch -d "$task_id"
+    git branch -D "$task_id"
 
     # Clear worktree path in task record
     sqlite3 "$DB_PATH" "UPDATE tasks SET worktree_path = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = '$task_id';"

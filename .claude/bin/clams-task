@@ -17,8 +17,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CLAUDE_DIR="$(dirname "$SCRIPT_DIR")"
-DB_PATH="$CLAUDE_DIR/clams.db"
+source "$SCRIPT_DIR/clams-common.sh"
 
 if [[ ! -f "$DB_PATH" ]]; then
     echo "Error: Database not found at $DB_PATH. Run clams-init first." >&2
@@ -239,13 +238,16 @@ EOF
 cmd_delete() {
     local id="$1"
 
+    # Auto-backup before destructive operation
+    "$SCRIPT_DIR/clams-backup" auto 2>/dev/null || true
+
     # Check for worktree and remove if exists
     local worktree_path
     worktree_path=$(sqlite3 "$DB_PATH" "SELECT worktree_path FROM tasks WHERE id = '$id';")
 
     if [[ -n "$worktree_path" && -d "$worktree_path" ]]; then
         echo "Removing worktree: $worktree_path"
-        cd "$(dirname "$CLAUDE_DIR")"
+        cd "$MAIN_REPO"
         git worktree remove "$worktree_path" --force 2>/dev/null || true
         # Remove branch if it exists
         git branch -D "$id" 2>/dev/null || true

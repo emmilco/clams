@@ -14,8 +14,19 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CLAUDE_DIR="$(dirname "$SCRIPT_DIR")"
-DB_PATH="$CLAUDE_DIR/clams.db"
+
+# Source common config if available, otherwise detect main repo directly
+if [[ -f "$SCRIPT_DIR/clams-common.sh" ]]; then
+    source "$SCRIPT_DIR/clams-common.sh"
+else
+    # Fallback: detect main repo from worktree
+    _LOCAL_CLAUDE_DIR="$(dirname "$SCRIPT_DIR")"
+    _LOCAL_REPO="$(dirname "$_LOCAL_CLAUDE_DIR")"
+    MAIN_REPO=$(cd "$_LOCAL_REPO" && git worktree list --porcelain 2>/dev/null | head -1 | sed 's/worktree //')
+    MAIN_REPO="${MAIN_REPO:-$_LOCAL_REPO}"
+    CLAUDE_DIR="$MAIN_REPO/.claude"
+    DB_PATH="$CLAUDE_DIR/clams.db"
+fi
 
 if [[ ! -f "$DB_PATH" ]]; then
     echo "Error: Database not found at $DB_PATH. Run clams-init first." >&2

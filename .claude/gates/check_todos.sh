@@ -31,7 +31,7 @@ all_todos=$(grep -rn "TODO" . \
     --include="*.java" \
     --include="*.rb" \
     --include="*.sh" \
-    2>/dev/null | grep -v ".git" | grep -v "node_modules" | grep -v "__pycache__" || true)
+    2>/dev/null | grep -v ".git" | grep -v "node_modules" | grep -v "__pycache__" | grep -v ".venv" | grep -v "venv" | grep -v ".claude/gates" || true)
 
 if [[ -z "$all_todos" ]]; then
     echo "No TODO comments found"
