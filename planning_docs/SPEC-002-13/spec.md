@@ -38,7 +38,9 @@ class ValidationResult:
     similarity: Optional[float] = None  # 1 - cosine_distance if valid
     reason: Optional[str] = None  # Explanation if invalid
     candidate_distance: Optional[float] = None  # Distance to centroid
-    median_distance: Optional[float] = None  # Median member distance
+    mean_distance: Optional[float] = None  # Mean member distance
+    std_distance: Optional[float] = None  # Std dev of member distances
+    threshold: Optional[float] = None  # mean + 1*std (validation threshold)
 
 
 @dataclass
@@ -48,7 +50,8 @@ class Value:
     id: str  # Format: "value_{axis}_{cluster_label}_{timestamp}"
     text: str
     cluster_id: str
-    axis: str  # "full", "domain", "strategy", "surprise", "root_cause"
+    axis: str  # One of 4 clustering axes: "full", "strategy", "surprise", "root_cause"
+              # Note: "domain" is NOT an axis - it's a metadata filter on experiences
     embedding: Vector
     cluster_size: int
     created_at: str  # ISO 8601 timestamp
@@ -100,7 +103,7 @@ class ValueStore:
         """Get all clusters for a given axis.
 
         Args:
-            axis: Clustering axis ("full", "domain", "strategy", "surprise", "root_cause")
+            axis: Clustering axis ("full", "strategy", "surprise", "root_cause")
 
         Returns:
             List of ClusterInfo objects sorted by size (descending)
@@ -131,9 +134,9 @@ class ValueStore:
     ) -> ValidationResult:
         """Validate a value candidate against a cluster.
 
-        Validation logic: The candidate embedding must be closer to the
-        cluster centroid than the median member distance. This ensures
-        values are semantically grounded in the cluster.
+        Validation logic: The candidate embedding must be within 1 standard
+        deviation of the mean member distance to the centroid. This stricter
+        threshold ensures values are semantically central to the cluster.
 
         Args:
             text: Candidate value text
@@ -187,7 +190,7 @@ class ValueStore:
 
 ## Validation Logic
 
-The centroid distance validation ensures values are semantically grounded:
+The centroid distance validation ensures values are semantically central to the cluster:
 
 ```python
 async def validate_value_candidate(
@@ -208,15 +211,19 @@ async def validate_value_candidate(
         cosine_distance(m.embedding, cluster.centroid)
         for m in members
     ]
-    median_dist = np.median(member_dists)
+    mean_dist = np.mean(member_dists)
+    std_dist = np.std(member_dists)
+    threshold = mean_dist + std_dist  # 1 standard deviation
 
-    # Validate
-    if candidate_dist <= median_dist:
+    # Validate: candidate must be within 1 std dev of mean
+    if candidate_dist <= threshold:
         return ValidationResult(
             valid=True,
             similarity=1.0 - candidate_dist,
             candidate_distance=candidate_dist,
-            median_distance=median_dist
+            mean_distance=mean_dist,
+            std_distance=std_dist,
+            threshold=threshold
         )
     else:
         return ValidationResult(
@@ -224,10 +231,12 @@ async def validate_value_candidate(
             reason=(
                 f"Value too far from centroid "
                 f"(distance={candidate_dist:.3f}, "
-                f"median={median_dist:.3f})"
+                f"threshold={threshold:.3f} [mean={mean_dist:.3f} + 1*std={std_dist:.3f}])"
             ),
             candidate_distance=candidate_dist,
-            median_distance=median_dist
+            mean_distance=mean_dist,
+            std_distance=std_dist,
+            threshold=threshold
         )
 ```
 
@@ -236,7 +245,7 @@ async def validate_value_candidate(
 The typical workflow (triggered by user via `/retro` command):
 
 1. **Agent calls** `get_clusters(axis)` to see available clusters
-2. **Agent selects** a cluster to explore (e.g., largest cluster on "domain" axis)
+2. **Agent selects** a cluster to explore (e.g., largest cluster on "full" axis)
 3. **Agent calls** `get_cluster_members(cluster_id)` to read experiences
 4. **Agent analyzes** the experiences and generates a candidate value statement
 5. **Agent calls** `validate_value_candidate(text, cluster_id)`
@@ -259,7 +268,7 @@ Values are stored in the `values` collection in VectorStore with the following p
     "created_at": str,     # ISO 8601 timestamp
     "validation": {
         "candidate_distance": float,
-        "median_distance": float,
+        "mean_distance": float,
         "similarity": float
     }
 }
@@ -279,9 +288,9 @@ Values are stored in the `values` collection in VectorStore with the following p
    - Invalid axis or cluster_id raises `ValueError`
 
 2. **Validation**
-   - `validate_value_candidate(text, cluster_id)` correctly implements centroid distance validation
-   - Valid candidates return `ValidationResult` with `valid=True` and similarity score
-   - Invalid candidates return `ValidationResult` with `valid=False` and explanation
+   - `validate_value_candidate(text, cluster_id)` correctly implements 1-std-dev threshold validation
+   - Valid candidates (distance <= mean + 1*std) return `ValidationResult` with `valid=True`
+   - Invalid candidates return `ValidationResult` with `valid=False` and explanation including threshold
 
 3. **Storage**
    - `store_value(text, cluster_id, axis)` embeds and stores values in `values` collection
@@ -292,11 +301,11 @@ Values are stored in the `values` collection in VectorStore with the following p
    - Unit tests with mock embedding service and in-memory vector store
    - Integration tests with real Clusterer (SPEC-002-12)
    - Test cases:
-     - Valid value candidate (distance < median)
-     - Invalid value candidate (distance > median)
+     - Valid value candidate (distance <= mean + 1*std)
+     - Invalid value candidate (distance > mean + 1*std)
      - Multiple values per cluster
      - Filtering by axis
-     - Edge cases: empty clusters, single-member clusters
+     - Edge cases: empty clusters, single-member clusters, very tight clusters (low std)
 
 5. **Type Safety**
    - All public methods have full type hints
