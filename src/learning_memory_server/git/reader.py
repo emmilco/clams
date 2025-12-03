@@ -81,7 +81,13 @@ class GitPythonReader(GitReader):
 
             commits: list[Commit] = []
 
-            for git_commit in self.repo.iter_commits(**kwargs):
+            try:
+                commit_iter = self.repo.iter_commits(**kwargs)
+            except ValueError:
+                # Empty repository (no commits yet)
+                return []
+
+            for git_commit in commit_iter:
                 try:
                     # Extract commit data
                     sha = git_commit.hexsha
@@ -189,12 +195,17 @@ class GitPythonReader(GitReader):
             if not full_path.exists():
                 raise FileNotInRepoError(f"File not found: {file_path}")
 
-            # Check if file is binary
-            try:
-                with open(full_path, encoding="utf-8") as f:
-                    f.read()
-            except UnicodeDecodeError:
-                raise BinaryFileError(f"Cannot blame binary file: {file_path}")
+            # Check if file is binary (read first 8KB to detect)
+            with open(full_path, "rb") as f:
+                chunk = f.read(8192)
+                # Check for null bytes (common in binary files)
+                if b"\x00" in chunk:
+                    raise BinaryFileError(f"Cannot blame binary file: {file_path}")
+                # Try to decode as UTF-8
+                try:
+                    chunk.decode("utf-8")
+                except UnicodeDecodeError:
+                    raise BinaryFileError(f"Cannot blame binary file: {file_path}")
 
             # Get blame from git
             blame_entries: list[BlameEntry] = []

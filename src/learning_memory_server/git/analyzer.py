@@ -260,12 +260,14 @@ class GitAnalyzer:
             "message": commit.message,
             "author": commit.author,
             "author_email": commit.author_email,
-            "timestamp": commit.timestamp.isoformat(),
+            "timestamp": commit.timestamp.timestamp(),  # Store as Unix timestamp for range queries
+            "timestamp_iso": commit.timestamp.isoformat(),  # Keep ISO for display
             "files_changed": commit.files_changed,
             "file_count": len(commit.files_changed),
             "insertions": commit.insertions,
             "deletions": commit.deletions,
-            "indexed_at": datetime.now(UTC).isoformat(),
+            "indexed_at": datetime.now(UTC).timestamp(),
+            "indexed_at_iso": datetime.now(UTC).isoformat(),
             "repo_path": repo_path,
         }
 
@@ -326,7 +328,7 @@ class GitAnalyzer:
         if author:
             filters["author"] = author
         if since:
-            filters["timestamp"] = {"$gte": since.isoformat()}
+            filters["timestamp"] = {"$gte": since.timestamp()}
 
         # Search vector store
         results = await self.vector_store.search(
@@ -346,7 +348,7 @@ class GitAnalyzer:
                     message=p["message"],
                     author=p["author"],
                     author_email=p["author_email"],
-                    timestamp=datetime.fromisoformat(p["timestamp"]),
+                    timestamp=datetime.fromisoformat(p["timestamp_iso"]),
                     files_changed=p["files_changed"],
                     insertions=p["insertions"],
                     deletions=p["deletions"],

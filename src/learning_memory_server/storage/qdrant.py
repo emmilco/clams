@@ -42,7 +42,7 @@ class QdrantVectorStore(VectorStore):
         """Initialize Qdrant client.
 
         Args:
-            url: Qdrant server URL (defaults to settings)
+            url: Qdrant server URL (defaults to settings). Use ":memory:" for in-memory mode.
             api_key: Optional API key for authentication
             timeout: Request timeout in seconds
         """
@@ -50,11 +50,19 @@ class QdrantVectorStore(VectorStore):
         self._url = url or settings.qdrant_url
         self._api_key = api_key or settings.qdrant_api_key
         self._timeout = timeout or settings.qdrant_timeout
-        self._client = AsyncQdrantClient(
-            url=self._url,
-            api_key=self._api_key,
-            timeout=int(self._timeout),
-        )
+
+        # Handle in-memory mode
+        if self._url == ":memory:":
+            self._client = AsyncQdrantClient(
+                location=":memory:",
+                timeout=int(self._timeout),
+            )
+        else:
+            self._client = AsyncQdrantClient(
+                url=self._url,
+                api_key=self._api_key,
+                timeout=int(self._timeout),
+            )
 
     async def create_collection(
         self, name: str, dimension: int, distance: str = "cosine"
@@ -229,7 +237,12 @@ class QdrantVectorStore(VectorStore):
     def _build_filter(self, filters: dict[str, Any]) -> qmodels.Filter:
         """Build Qdrant filter from simple key-value pairs.
 
-        Supports equality matching on payload fields.
+        Supports:
+        - Equality matching: {"field": "value"}
+        - Range queries: {"field": {"$gte": value}}, {"field": {"$lte": value}}
+
+        Note: Range queries only work with numeric values (int, float).
+        Timestamps should be stored as Unix timestamps for range queries.
         """
         conditions: list[
             qmodels.FieldCondition
@@ -241,11 +254,43 @@ class QdrantVectorStore(VectorStore):
         ] = []
 
         for key, value in filters.items():
-            conditions.append(
-                qmodels.FieldCondition(
-                    key=key,
-                    match=qmodels.MatchValue(value=value),
+            # Handle range queries (numeric only)
+            if isinstance(value, dict):
+                if "$gte" in value:
+                    conditions.append(
+                        qmodels.FieldCondition(
+                            key=key,
+                            range=qmodels.Range(gte=value["$gte"]),
+                        )
+                    )
+                elif "$lte" in value:
+                    conditions.append(
+                        qmodels.FieldCondition(
+                            key=key,
+                            range=qmodels.Range(lte=value["$lte"]),
+                        )
+                    )
+                elif "$gt" in value:
+                    conditions.append(
+                        qmodels.FieldCondition(
+                            key=key,
+                            range=qmodels.Range(gt=value["$gt"]),
+                        )
+                    )
+                elif "$lt" in value:
+                    conditions.append(
+                        qmodels.FieldCondition(
+                            key=key,
+                            range=qmodels.Range(lt=value["$lt"]),
+                        )
+                    )
+            else:
+                # Simple equality match
+                conditions.append(
+                    qmodels.FieldCondition(
+                        key=key,
+                        match=qmodels.MatchValue(value=value),
+                    )
                 )
-            )
 
         return qmodels.Filter(must=conditions)
