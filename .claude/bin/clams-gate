@@ -1,0 +1,254 @@
+#!/usr/bin/env bash
+#
+# clams-gate: Run gate checks for phase transitions
+#
+# Usage:
+#   clams-gate check <task_id> <transition>
+#   clams-gate list
+#
+# Transitions: SPEC-DESIGN, DESIGN-IMPLEMENT, IMPLEMENT-REVIEW,
+#              REVIEW-TEST, TEST-INTEGRATE, INTEGRATE-VERIFY, VERIFY-DONE
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLAUDE_DIR="$(dirname "$SCRIPT_DIR")"
+DB_PATH="$CLAUDE_DIR/clams.db"
+GATES_DIR="$CLAUDE_DIR/gates"
+
+if [[ ! -f "$DB_PATH" ]]; then
+    echo "Error: Database not found at $DB_PATH. Run clams-init first." >&2
+    exit 1
+fi
+
+usage() {
+    echo "Usage:"
+    echo "  clams-gate check <task_id> <transition>   Run gate checks"
+    echo "  clams-gate list                           List transitions and their gates"
+    echo ""
+    echo "Transitions:"
+    echo "  SPEC-DESIGN       Human approves spec"
+    echo "  DESIGN-IMPLEMENT  Human approves design, proposal documented"
+    echo "  IMPLEMENT-REVIEW  Tests pass, linter clean"
+    echo "  REVIEW-TEST       Reviewer approved"
+    echo "  TEST-INTEGRATE    Full test suite passes"
+    echo "  INTEGRATE-VERIFY  Clean merge, suite passes, docs updated"
+    echo "  VERIFY-DONE       Acceptance verified, no orphans"
+    exit 1
+}
+
+cmd_list() {
+    echo "=== Gate Requirements by Transition ==="
+    echo ""
+    echo "SPEC → DESIGN (manual)"
+    echo "  - Human approves spec"
+    echo ""
+    echo "DESIGN → IMPLEMENT (semi-automated)"
+    echo "  - Human approves design"
+    echo "  - [auto] Technical proposal exists in planning_docs/"
+    echo ""
+    echo "IMPLEMENT → REVIEW (automated)"
+    echo "  - [auto] Tests pass (check_tests.sh)"
+    echo "  - [auto] Linter clean (check_linter.sh)"
+    echo "  - [auto] No untracked TODOs (check_todos.sh)"
+    echo ""
+    echo "REVIEW → TEST (manual)"
+    echo "  - Reviewer worker reports APPROVED"
+    echo "  - Record in task notes"
+    echo ""
+    echo "TEST → INTEGRATE (automated)"
+    echo "  - [auto] Full test suite passes (check_tests.sh)"
+    echo ""
+    echo "INTEGRATE → VERIFY (semi-automated)"
+    echo "  - [auto] Changelog entry exists (changelog.d/TASK-XXX.md)"
+    echo "  - Then run: clams-worktree merge TASK-XXX"
+    echo ""
+    echo "VERIFY → DONE (manual - worktree gone)"
+    echo "  - Run tests on main branch"
+    echo "  - Verify acceptance criteria met"
+    echo "  - Check for orphaned code"
+}
+
+run_gate() {
+    local name="$1"
+    local script="$2"
+    local worktree="$3"
+
+    echo "--- Gate: $name ---"
+    if "$GATES_DIR/$script" "$worktree"; then
+        echo "✓ $name: PASS"
+        return 0
+    else
+        echo "✗ $name: FAIL"
+        return 1
+    fi
+}
+
+check_file_exists() {
+    local path="$1"
+    local desc="$2"
+
+    echo "--- Gate: $desc ---"
+    if [[ -f "$path" ]]; then
+        echo "✓ $desc: PASS (found: $path)"
+        return 0
+    else
+        echo "✗ $desc: FAIL (not found: $path)"
+        return 1
+    fi
+}
+
+check_dir_not_empty() {
+    local path="$1"
+    local desc="$2"
+
+    echo "--- Gate: $desc ---"
+    if [[ -d "$path" ]] && [[ -n "$(ls -A "$path" 2>/dev/null)" ]]; then
+        echo "✓ $desc: PASS"
+        ls "$path"
+        return 0
+    else
+        echo "✗ $desc: FAIL (empty or missing: $path)"
+        return 1
+    fi
+}
+
+cmd_check() {
+    local task_id="$1"
+    local transition="$2"
+
+    # Get worktree path
+    local worktree
+    worktree=$(sqlite3 "$DB_PATH" "SELECT worktree_path FROM tasks WHERE id = '$task_id';")
+
+    if [[ -z "$worktree" ]]; then
+        echo "Error: Task not found or no worktree: $task_id" >&2
+        exit 1
+    fi
+
+    if [[ ! -d "$worktree" ]]; then
+        echo "Error: Worktree directory not found: $worktree" >&2
+        exit 1
+    fi
+
+    echo "=== Gate Check: $transition ==="
+    echo "Task: $task_id"
+    echo "Worktree: $worktree"
+    echo ""
+
+    local failed=0
+
+    case "$transition" in
+        SPEC-DESIGN)
+            echo "This transition requires HUMAN APPROVAL."
+            echo "Confirm the spec is complete and clear before proceeding."
+            echo ""
+            echo "No automated gates for this transition."
+            ;;
+
+        DESIGN-IMPLEMENT)
+            echo "This transition requires HUMAN APPROVAL of the design."
+            echo ""
+            # Check for proposal
+            if ! check_dir_not_empty "$worktree/planning_docs/$task_id" "Technical proposal exists"; then
+                failed=1
+            fi
+            ;;
+
+        IMPLEMENT-REVIEW)
+            echo ""
+            if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
+                failed=1
+            fi
+            echo ""
+            if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
+                failed=1
+            fi
+            echo ""
+            if ! run_gate "No untracked TODOs" "check_todos.sh" "$worktree"; then
+                failed=1
+            fi
+            ;;
+
+        REVIEW-TEST)
+            echo "This transition requires REVIEWER APPROVAL."
+            echo "The reviewer worker should report approval status."
+            echo ""
+            echo "No additional automated gates."
+            ;;
+
+        TEST-INTEGRATE)
+            echo ""
+            if ! run_gate "Full test suite passes" "check_tests.sh" "$worktree"; then
+                failed=1
+            fi
+            ;;
+
+        INTEGRATE-VERIFY)
+            # Check changelog entry exists
+            echo ""
+            if ! check_file_exists "$worktree/changelog.d/$task_id.md" "Changelog entry exists"; then
+                failed=1
+            fi
+            echo ""
+            echo "NOTE: Merge and post-merge tests handled by clams-worktree merge"
+            ;;
+
+        VERIFY-DONE)
+            echo "NOTE: VERIFY phase runs on main branch after merge."
+            echo "Worktree no longer exists - automated checks limited."
+            echo ""
+            echo "MANUAL CHECKS REQUIRED:"
+            echo "  1. Run tests on main: pytest -xvs"
+            echo "  2. Verify all acceptance criteria are met"
+            echo "  3. Check for orphaned code (unused imports, dead functions)"
+            echo ""
+            echo "If all checks pass, transition with:"
+            echo "  .claude/bin/clams-task transition $task_id DONE --gate-result pass"
+            exit 0
+            ;;
+
+        *)
+            echo "Unknown transition: $transition" >&2
+            echo ""
+            usage
+            ;;
+    esac
+
+    echo ""
+    echo "=========================================="
+    if [[ $failed -eq 0 ]]; then
+        echo "GATE RESULT: PASS"
+        echo ""
+        echo "Proceed with transition:"
+        echo "  .claude/bin/clams-task transition $task_id <next_phase> --gate-result pass"
+        exit 0
+    else
+        echo "GATE RESULT: FAIL"
+        echo ""
+        echo "Fix the failing gates before proceeding."
+        exit 1
+    fi
+}
+
+# Main
+if [[ $# -lt 1 ]]; then
+    usage
+fi
+
+command="$1"
+shift
+
+case "$command" in
+    check)
+        [[ $# -lt 2 ]] && usage
+        cmd_check "$@"
+        ;;
+    list)
+        cmd_list
+        ;;
+    *)
+        echo "Unknown command: $command" >&2
+        usage
+        ;;
+esac

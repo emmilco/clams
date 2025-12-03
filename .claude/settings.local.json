@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod:*)",
+      "Bash(/Users/elliotmilco/Documents/GitHub/clams/.claude/bin/clams-init:*)",
+      "Bash(.claude/bin/clams-task create:*)",
+      "Bash(.claude/bin/clams-task list:*)",
+      "Bash(.claude/bin/clams-task show:*)",
+      "Bash(.claude/bin/clams-task:*)",
+      "Bash(.claude/bin/clams-task delete:*)",
+      "Bash(.claude/bin/clams-worktree create:*)",
+      "Bash(.claude/bin/clams-worktree list:*)",
+      "Bash(.claude/bin/clams-worktree remove:*)",
+      "Bash(.claude/bin/clams-status:*)",
+      "Bash(.claude/bin/clams-worker prompt backend:*)",
+      "Bash(.claude/bin/clams-worker list:*)",
+      "Bash(.claude/bin/clams-gate list:*)",
+      "Bash(.claude/bin/clams-counter list:*)",
+      "Bash(.claude/bin/clams-counter:*)",
+      "Bash(.claude/bin/clams-counter get:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

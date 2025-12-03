@@ -1,0 +1,223 @@
+#!/usr/bin/env bash
+#
+# clams-worktree: Git worktree lifecycle management
+#
+# Usage:
+#   clams-worktree create <task_id>       Create worktree for task
+#   clams-worktree remove <task_id>       Remove worktree (no merge)
+#   clams-worktree list                   List all worktrees
+#   clams-worktree merge <task_id>        Merge to main and cleanup
+#   clams-worktree path <task_id>         Print worktree path
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLAUDE_DIR="$(dirname "$SCRIPT_DIR")"
+DB_PATH="$CLAUDE_DIR/clams.db"
+WORKTREE_DIR="$CLAUDE_DIR/worktrees"
+REPO_ROOT="$(dirname "$CLAUDE_DIR")"
+
+if [[ ! -f "$DB_PATH" ]]; then
+    echo "Error: Database not found at $DB_PATH. Run clams-init first." >&2
+    exit 1
+fi
+
+usage() {
+    echo "Usage:"
+    echo "  clams-worktree create <task_id>   Create worktree for task"
+    echo "  clams-worktree remove <task_id>   Remove worktree (no merge)"
+    echo "  clams-worktree list               List all worktrees"
+    echo "  clams-worktree merge <task_id>    Merge to main and cleanup"
+    echo "  clams-worktree path <task_id>     Print worktree path"
+    exit 1
+}
+
+cmd_create() {
+    local task_id="$1"
+    local worktree_path="$WORKTREE_DIR/$task_id"
+
+    # Verify task exists
+    local task_exists
+    task_exists=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM tasks WHERE id = '$task_id';")
+    if [[ "$task_exists" -eq 0 ]]; then
+        echo "Error: Task not found: $task_id" >&2
+        exit 1
+    fi
+
+    # Check if worktree already exists
+    if [[ -d "$worktree_path" ]]; then
+        echo "Error: Worktree already exists at $worktree_path" >&2
+        exit 1
+    fi
+
+    # Create worktree with new branch
+    cd "$REPO_ROOT"
+    git worktree add "$worktree_path" -b "$task_id"
+
+    # Create planning_docs and changelog.d directories for this task
+    mkdir -p "$worktree_path/planning_docs/$task_id"
+    mkdir -p "$worktree_path/changelog.d"
+
+    # Update task record with worktree path
+    sqlite3 "$DB_PATH" "UPDATE tasks SET worktree_path = '$worktree_path', updated_at = CURRENT_TIMESTAMP WHERE id = '$task_id';"
+
+    echo "Created worktree at: $worktree_path"
+    echo "Branch: $task_id"
+}
+
+cmd_remove() {
+    local task_id="$1"
+    local worktree_path="$WORKTREE_DIR/$task_id"
+
+    if [[ ! -d "$worktree_path" ]]; then
+        echo "Error: Worktree not found at $worktree_path" >&2
+        exit 1
+    fi
+
+    cd "$REPO_ROOT"
+
+    # Remove worktree
+    git worktree remove "$worktree_path" --force
+
+    # Delete branch if it exists
+    if git branch --list "$task_id" | grep -q "$task_id"; then
+        git branch -D "$task_id"
+    fi
+
+    # Clear worktree path in task record
+    sqlite3 "$DB_PATH" "UPDATE tasks SET worktree_path = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = '$task_id';"
+
+    echo "Removed worktree for: $task_id"
+}
+
+cmd_list() {
+    cd "$REPO_ROOT"
+    echo "=== Git Worktrees ==="
+    git worktree list
+
+    echo ""
+    echo "=== Task Worktrees ==="
+    sqlite3 -header -column "$DB_PATH" <<EOF
+SELECT id, phase, worktree_path
+FROM tasks
+WHERE worktree_path IS NOT NULL AND worktree_path != '';
+EOF
+}
+
+cmd_merge() {
+    local task_id="$1"
+    local worktree_path="$WORKTREE_DIR/$task_id"
+
+    if [[ ! -d "$worktree_path" ]]; then
+        echo "Error: Worktree not found at $worktree_path" >&2
+        exit 1
+    fi
+
+    # Check for merge lock (system DEGRADED)
+    local merge_lock
+    merge_lock=$(sqlite3 "$DB_PATH" "SELECT value FROM system_counters WHERE name = 'merge_lock';" 2>/dev/null || echo "0")
+    if [[ "$merge_lock" -gt 0 ]]; then
+        echo "Error: Merge lock is active (system DEGRADED)" >&2
+        echo "E2E tests must pass before merging. Run clams-status health for details." >&2
+        exit 1
+    fi
+
+    cd "$REPO_ROOT"
+
+    # Ensure we're on main and up to date
+    git checkout main
+    git pull origin main 2>/dev/null || true  # May fail if no remote
+
+    # Merge the task branch
+    echo "Merging $task_id into main..."
+    if ! git merge --no-ff "$task_id" -m "Merge task $task_id"; then
+        echo "Error: Merge failed. Resolve conflicts and try again." >&2
+        exit 1
+    fi
+
+    # Get the merge commit SHA
+    local merge_commit
+    merge_commit=$(git rev-parse HEAD)
+
+    # Record merge in database
+    sqlite3 "$DB_PATH" <<EOF
+INSERT INTO merge_log (task_id, merge_commit) VALUES ('$task_id', '$merge_commit');
+UPDATE system_counters SET value = value + 1 WHERE name = 'merges_since_e2e';
+UPDATE system_counters SET value = value + 1 WHERE name = 'merges_since_docs';
+EOF
+
+    echo "Merge complete: $merge_commit"
+
+    # Remove worktree
+    git worktree remove "$worktree_path" --force
+    git branch -d "$task_id"
+
+    # Clear worktree path in task record
+    sqlite3 "$DB_PATH" "UPDATE tasks SET worktree_path = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = '$task_id';"
+
+    echo "Cleaned up worktree and branch for: $task_id"
+
+    # Check batch job triggers
+    local merges_since_e2e
+    merges_since_e2e=$(sqlite3 "$DB_PATH" "SELECT value FROM system_counters WHERE name = 'merges_since_e2e';")
+    if [[ "$merges_since_e2e" -ge 12 ]]; then
+        echo ""
+        echo "*** BATCH JOB TRIGGER: $merges_since_e2e merges since last E2E run ***"
+        echo "*** Consider running E2E tests ***"
+    fi
+
+    local merges_since_docs
+    merges_since_docs=$(sqlite3 "$DB_PATH" "SELECT value FROM system_counters WHERE name = 'merges_since_docs';")
+    if [[ "$merges_since_docs" -ge 12 ]]; then
+        echo ""
+        echo "*** BATCH JOB TRIGGER: $merges_since_docs merges since last doc update ***"
+        echo "*** Consider updating documentation ***"
+    fi
+}
+
+cmd_path() {
+    local task_id="$1"
+    local worktree_path
+    worktree_path=$(sqlite3 "$DB_PATH" "SELECT worktree_path FROM tasks WHERE id = '$task_id';")
+
+    if [[ -z "$worktree_path" ]]; then
+        echo "Error: No worktree path for task: $task_id" >&2
+        exit 1
+    fi
+
+    echo "$worktree_path"
+}
+
+# Main
+if [[ $# -lt 1 ]]; then
+    usage
+fi
+
+command="$1"
+shift
+
+case "$command" in
+    create)
+        [[ $# -lt 1 ]] && usage
+        cmd_create "$@"
+        ;;
+    remove)
+        [[ $# -lt 1 ]] && usage
+        cmd_remove "$@"
+        ;;
+    list)
+        cmd_list
+        ;;
+    merge)
+        [[ $# -lt 1 ]] && usage
+        cmd_merge "$@"
+        ;;
+    path)
+        [[ $# -lt 1 ]] && usage
+        cmd_path "$@"
+        ;;
+    *)
+        echo "Unknown command: $command" >&2
+        usage
+        ;;
+esac

@@ -1,0 +1,188 @@
+#!/usr/bin/env bash
+#
+# clams-status: Query system state
+#
+# Usage:
+#   clams-status              Full status overview
+#   clams-status tasks        Tasks grouped by phase
+#   clams-status workers      Active workers
+#   clams-status merges       Recent merge log
+#   clams-status counters     System counters
+#   clams-status violations   Recent violations
+#   clams-status health       System health check
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLAUDE_DIR="$(dirname "$SCRIPT_DIR")"
+DB_PATH="$CLAUDE_DIR/clams.db"
+
+if [[ ! -f "$DB_PATH" ]]; then
+    echo "Error: Database not found at $DB_PATH. Run clams-init first." >&2
+    exit 1
+fi
+
+cmd_health() {
+    echo "=== System Health ==="
+
+    local merge_lock
+    merge_lock=$(sqlite3 "$DB_PATH" "SELECT value FROM system_counters WHERE name = 'merge_lock';" 2>/dev/null || echo "0")
+
+    local blocked_count
+    blocked_count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM tasks WHERE blocked_by IS NOT NULL AND blocked_by != '';")
+
+    local active_workers
+    active_workers=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM workers WHERE status = 'active';")
+
+    local merges_since_e2e
+    merges_since_e2e=$(sqlite3 "$DB_PATH" "SELECT value FROM system_counters WHERE name = 'merges_since_e2e';")
+
+    # Health determination
+    if [[ "$merge_lock" -gt 0 ]]; then
+        echo "Status: DEGRADED"
+        echo "Reason: Merge lock active (E2E failed)"
+        echo "Action: Fix E2E failures, then run: clams-counter reset merge_lock"
+    elif [[ "$blocked_count" -gt 0 ]]; then
+        echo "Status: DEGRADED"
+        echo "Reason: $blocked_count task(s) blocked"
+    elif [[ "$merges_since_e2e" -ge 12 ]]; then
+        echo "Status: ATTENTION"
+        echo "Reason: E2E tests due ($merges_since_e2e merges since last run)"
+    else
+        echo "Status: HEALTHY"
+    fi
+
+    echo ""
+    echo "Merge lock: $([ "$merge_lock" -gt 0 ] && echo "ACTIVE" || echo "inactive")"
+    echo "Active workers: $active_workers"
+    echo "Blocked tasks: $blocked_count"
+    echo "Merges since E2E: $merges_since_e2e"
+}
+
+cmd_tasks() {
+    echo "=== Tasks by Phase ==="
+
+    for phase in SPEC DESIGN IMPLEMENT REVIEW TEST INTEGRATE VERIFY DONE; do
+        local count
+        count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM tasks WHERE phase = '$phase';")
+
+        if [[ "$count" -gt 0 ]]; then
+            echo ""
+            echo "--- $phase ($count) ---"
+            sqlite3 -column "$DB_PATH" <<EOF
+SELECT id, title, assigned_specialist, blocked_by
+FROM tasks
+WHERE phase = '$phase'
+ORDER BY updated_at DESC;
+EOF
+        fi
+    done
+
+    local total
+    total=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM tasks;")
+    echo ""
+    echo "Total tasks: $total"
+}
+
+cmd_workers() {
+    echo "=== Workers ==="
+    sqlite3 -header -column "$DB_PATH" <<EOF
+SELECT id, specialist_type, current_task_id, status, started_at
+FROM workers
+ORDER BY status DESC, started_at DESC;
+EOF
+}
+
+cmd_merges() {
+    echo "=== Recent Merges (last 10) ==="
+    sqlite3 -header -column "$DB_PATH" <<EOF
+SELECT m.task_id, t.title, m.merge_commit, m.merged_at
+FROM merge_log m
+LEFT JOIN tasks t ON m.task_id = t.id
+ORDER BY m.merged_at DESC
+LIMIT 10;
+EOF
+}
+
+cmd_counters() {
+    echo "=== System Counters ==="
+    sqlite3 -header -column "$DB_PATH" "SELECT name, value FROM system_counters ORDER BY name;"
+}
+
+cmd_violations() {
+    echo "=== Recent Violations (last 10) ==="
+    sqlite3 -header -column "$DB_PATH" <<EOF
+SELECT task_id, worker_id, violation_type, description, detected_at
+FROM violations
+ORDER BY detected_at DESC
+LIMIT 10;
+EOF
+}
+
+cmd_worktrees() {
+    echo "=== Active Worktrees ==="
+    sqlite3 -header -column "$DB_PATH" <<EOF
+SELECT id, phase, title, worktree_path
+FROM tasks
+WHERE worktree_path IS NOT NULL AND worktree_path != ''
+ORDER BY updated_at DESC;
+EOF
+}
+
+cmd_full() {
+    cmd_health
+    echo ""
+    cmd_tasks
+    echo ""
+    cmd_counters
+    echo ""
+
+    local violation_count
+    violation_count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM violations;")
+    if [[ "$violation_count" -gt 0 ]]; then
+        echo ""
+        cmd_violations
+    fi
+}
+
+# Main
+command="${1:-}"
+
+case "$command" in
+    ""|full)
+        cmd_full
+        ;;
+    health)
+        cmd_health
+        ;;
+    tasks)
+        cmd_tasks
+        ;;
+    workers)
+        cmd_workers
+        ;;
+    worktrees)
+        cmd_worktrees
+        ;;
+    merges)
+        cmd_merges
+        ;;
+    counters)
+        cmd_counters
+        ;;
+    violations)
+        cmd_violations
+        ;;
+    *)
+        echo "Usage:"
+        echo "  clams-status              Full status overview"
+        echo "  clams-status health       System health check"
+        echo "  clams-status tasks        Tasks grouped by phase"
+        echo "  clams-status worktrees    Active worktrees"
+        echo "  clams-status workers      Active workers"
+        echo "  clams-status merges       Recent merge log"
+        echo "  clams-status counters     System counters"
+        echo "  clams-status violations   Recent violations"
+        exit 1
+        ;;
+esac

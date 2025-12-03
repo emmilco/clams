@@ -1,0 +1,301 @@
+#!/usr/bin/env bash
+#
+# clams-task: Task CRUD operations
+#
+# Usage:
+#   clams-task create <id> <title> [--spec <spec_id>]
+#   clams-task list [--phase <phase>] [--spec <spec_id>]
+#   clams-task show <id>
+#   clams-task update <id> --phase <phase>
+#   clams-task update <id> --specialist <specialist>
+#   clams-task update <id> --blocked-by <task_id>
+#   clams-task update <id> --notes <notes>
+#   clams-task update <id> --worktree <path>
+#   clams-task transition <id> <to_phase> [--gate-result <pass|fail>] [--gate-details <details>]
+#   clams-task delete <id>
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLAUDE_DIR="$(dirname "$SCRIPT_DIR")"
+DB_PATH="$CLAUDE_DIR/clams.db"
+
+if [[ ! -f "$DB_PATH" ]]; then
+    echo "Error: Database not found at $DB_PATH. Run clams-init first." >&2
+    exit 1
+fi
+
+usage() {
+    echo "Usage:"
+    echo "  clams-task create <id> <title> [--spec <spec_id>]"
+    echo "  clams-task list [--phase <phase>] [--spec <spec_id>]"
+    echo "  clams-task show <id>"
+    echo "  clams-task update <id> <--field value>..."
+    echo "  clams-task transition <id> <to_phase> [--gate-result <result>] [--gate-details <details>]"
+    echo "  clams-task delete <id>"
+    exit 1
+}
+
+cmd_create() {
+    local id="$1"
+    local title="$2"
+    shift 2
+
+    local spec_id=""
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --spec)
+                spec_id="$2"
+                shift 2
+                ;;
+            *)
+                echo "Unknown option: $1" >&2
+                usage
+                ;;
+        esac
+    done
+
+    sqlite3 "$DB_PATH" <<EOF
+INSERT INTO tasks (id, title, spec_id, phase)
+VALUES ('$id', '$(echo "$title" | sed "s/'/''/g")', $([ -n "$spec_id" ] && echo "'$spec_id'" || echo "NULL"), 'SPEC');
+EOF
+
+    echo "Created task: $id"
+}
+
+cmd_list() {
+    local phase=""
+    local spec_id=""
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --phase)
+                phase="$2"
+                shift 2
+                ;;
+            --spec)
+                spec_id="$2"
+                shift 2
+                ;;
+            *)
+                echo "Unknown option: $1" >&2
+                usage
+                ;;
+        esac
+    done
+
+    local where_clause=""
+    if [[ -n "$phase" ]]; then
+        where_clause="WHERE phase = '$phase'"
+    fi
+    if [[ -n "$spec_id" ]]; then
+        if [[ -n "$where_clause" ]]; then
+            where_clause="$where_clause AND spec_id = '$spec_id'"
+        else
+            where_clause="WHERE spec_id = '$spec_id'"
+        fi
+    fi
+
+    sqlite3 -header -column "$DB_PATH" <<EOF
+SELECT id, title, phase, assigned_specialist, blocked_by
+FROM tasks
+$where_clause
+ORDER BY created_at DESC;
+EOF
+}
+
+cmd_show() {
+    local id="$1"
+
+    echo "=== Task: $id ==="
+    sqlite3 -line "$DB_PATH" <<EOF
+SELECT * FROM tasks WHERE id = '$id';
+EOF
+
+    echo ""
+    echo "=== Phase History ==="
+    sqlite3 -header -column "$DB_PATH" <<EOF
+SELECT from_phase, to_phase, gate_result, transitioned_at
+FROM phase_transitions
+WHERE task_id = '$id'
+ORDER BY transitioned_at;
+EOF
+
+    echo ""
+    echo "=== Test Runs ==="
+    sqlite3 -header -column "$DB_PATH" <<EOF
+SELECT run_at, total_tests, passed, failed, errors, execution_time_seconds
+FROM test_runs
+WHERE task_id = '$id'
+ORDER BY run_at DESC
+LIMIT 5;
+EOF
+}
+
+cmd_update() {
+    local id="$1"
+    shift
+
+    local updates=()
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --phase)
+                updates+=("phase = '$2'")
+                shift 2
+                ;;
+            --specialist)
+                updates+=("assigned_specialist = '$2'")
+                shift 2
+                ;;
+            --blocked-by)
+                if [[ "$2" == "NULL" || "$2" == "null" || "$2" == "" ]]; then
+                    updates+=("blocked_by = NULL")
+                else
+                    updates+=("blocked_by = '$2'")
+                fi
+                shift 2
+                ;;
+            --notes)
+                updates+=("notes = '$(echo "$2" | sed "s/'/''/g")'")
+                shift 2
+                ;;
+            --worktree)
+                updates+=("worktree_path = '$2'")
+                shift 2
+                ;;
+            *)
+                echo "Unknown option: $1" >&2
+                usage
+                ;;
+        esac
+    done
+
+    if [[ ${#updates[@]} -eq 0 ]]; then
+        echo "No updates specified" >&2
+        usage
+    fi
+
+    local update_str
+    update_str=$(IFS=', '; echo "${updates[*]}")
+
+    sqlite3 "$DB_PATH" <<EOF
+UPDATE tasks
+SET $update_str, updated_at = CURRENT_TIMESTAMP
+WHERE id = '$id';
+EOF
+
+    echo "Updated task: $id"
+}
+
+cmd_transition() {
+    local id="$1"
+    local to_phase="$2"
+    shift 2
+
+    local gate_result=""
+    local gate_details=""
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --gate-result)
+                gate_result="$2"
+                shift 2
+                ;;
+            --gate-details)
+                gate_details="$2"
+                shift 2
+                ;;
+            *)
+                echo "Unknown option: $1" >&2
+                usage
+                ;;
+        esac
+    done
+
+    # Get current phase
+    local from_phase
+    from_phase=$(sqlite3 "$DB_PATH" "SELECT phase FROM tasks WHERE id = '$id';")
+
+    if [[ -z "$from_phase" ]]; then
+        echo "Error: Task not found: $id" >&2
+        exit 1
+    fi
+
+    # Record transition
+    sqlite3 "$DB_PATH" <<EOF
+INSERT INTO phase_transitions (task_id, from_phase, to_phase, gate_result, gate_details)
+VALUES ('$id', '$from_phase', '$to_phase',
+        $([ -n "$gate_result" ] && echo "'$gate_result'" || echo "NULL"),
+        $([ -n "$gate_details" ] && echo "'$(echo "$gate_details" | sed "s/'/''/g")'" || echo "NULL"));
+
+UPDATE tasks
+SET phase = '$to_phase', updated_at = CURRENT_TIMESTAMP
+WHERE id = '$id';
+EOF
+
+    echo "Transitioned $id: $from_phase -> $to_phase"
+}
+
+cmd_delete() {
+    local id="$1"
+
+    # Check for worktree and remove if exists
+    local worktree_path
+    worktree_path=$(sqlite3 "$DB_PATH" "SELECT worktree_path FROM tasks WHERE id = '$id';")
+
+    if [[ -n "$worktree_path" && -d "$worktree_path" ]]; then
+        echo "Removing worktree: $worktree_path"
+        cd "$(dirname "$CLAUDE_DIR")"
+        git worktree remove "$worktree_path" --force 2>/dev/null || true
+        # Remove branch if it exists
+        git branch -D "$id" 2>/dev/null || true
+    fi
+
+    sqlite3 "$DB_PATH" <<EOF
+DELETE FROM phase_transitions WHERE task_id = '$id';
+DELETE FROM test_runs WHERE task_id = '$id';
+DELETE FROM violations WHERE task_id = '$id';
+DELETE FROM merge_log WHERE task_id = '$id';
+DELETE FROM tasks WHERE id = '$id';
+EOF
+
+    echo "Deleted task: $id"
+}
+
+# Main
+if [[ $# -lt 1 ]]; then
+    usage
+fi
+
+command="$1"
+shift
+
+case "$command" in
+    create)
+        [[ $# -lt 2 ]] && usage
+        cmd_create "$@"
+        ;;
+    list)
+        cmd_list "$@"
+        ;;
+    show)
+        [[ $# -lt 1 ]] && usage
+        cmd_show "$@"
+        ;;
+    update)
+        [[ $# -lt 2 ]] && usage
+        cmd_update "$@"
+        ;;
+    transition)
+        [[ $# -lt 2 ]] && usage
+        cmd_transition "$@"
+        ;;
+    delete)
+        [[ $# -lt 1 ]] && usage
+        cmd_delete "$@"
+        ;;
+    *)
+        echo "Unknown command: $command" >&2
+        usage
+        ;;
+esac
