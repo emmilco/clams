@@ -1,0 +1,1 @@
+"""Result verification and validation."""
