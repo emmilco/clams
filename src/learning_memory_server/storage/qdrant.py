@@ -10,7 +10,7 @@ from qdrant_client.http import models as qmodels
 from .base import SearchResult, StorageSettings, Vector, VectorStore
 
 # Namespace UUID for generating deterministic UUIDs from string IDs
-_NAMESPACE = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")  # UUID namespace for URLs
+_NAMESPACE = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
 
 
 def _to_qdrant_id(id: str) -> str:
@@ -129,7 +129,11 @@ class QdrantVectorStore(VectorStore):
             SearchResult(
                 id=(result.payload or {}).get("_original_id", str(result.id)),
                 score=result.score,
-                payload={k: v for k, v in (result.payload or {}).items() if k != "_original_id"},
+                payload={
+                    k: v
+                    for k, v in (result.payload or {}).items()
+                    if k != "_original_id"
+                },
                 vector=None,
             )
             for result in results
@@ -165,7 +169,11 @@ class QdrantVectorStore(VectorStore):
             SearchResult(
                 id=(result.payload or {}).get("_original_id", str(result.id)),
                 score=0.0,
-                payload={k: v for k, v in (result.payload or {}).items() if k != "_original_id"},
+                payload={
+                    k: v
+                    for k, v in (result.payload or {}).items()
+                    if k != "_original_id"
+                },
                 vector=(
                     np.array(result.vector, dtype=np.float32)
                     if with_vectors and result.vector is not None

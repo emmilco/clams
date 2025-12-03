@@ -86,9 +86,12 @@ class TestQdrantVectorStore:
         result = await store.get(collection, "id1", with_vector=True)
         assert result is not None
         assert result.vector is not None
-        # Qdrant returns lists, convert for comparison
+        # Qdrant normalizes vectors for cosine distance, so compare normalized
         result_array = np.array(result.vector, dtype=np.float32)
-        np.testing.assert_array_almost_equal(result_array, vector, decimal=5)
+        expected_normalized = vector / np.linalg.norm(vector)
+        np.testing.assert_array_almost_equal(
+            result_array, expected_normalized, decimal=5
+        )
 
     async def test_upsert_update(
         self, store: QdrantVectorStore, collection: str
@@ -103,8 +106,12 @@ class TestQdrantVectorStore:
         result = await store.get(collection, "id1", with_vector=True)
         assert result is not None
         assert result.payload["version"] == 2
+        # Qdrant normalizes vectors for cosine distance
         result_array = np.array(result.vector, dtype=np.float32)
-        np.testing.assert_array_almost_equal(result_array, vector2, decimal=5)
+        expected_normalized = vector2 / np.linalg.norm(vector2)
+        np.testing.assert_array_almost_equal(
+            result_array, expected_normalized, decimal=5
+        )
 
     async def test_search_cosine_similarity(
         self, store: QdrantVectorStore, collection: str

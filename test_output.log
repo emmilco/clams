@@ -30,8 +30,8 @@ tests/storage/test_qdrant.py::TestQdrantVectorStore::test_upsert_and_get FAILED
 =================================== FAILURES ===================================
 __________________ TestQdrantVectorStore.test_upsert_and_get ___________________
 
-self = <tests.storage.test_qdrant.TestQdrantVectorStore object at 0x10a903500>
-store = <learning_memory_server.storage.qdrant.QdrantVectorStore object at 0x10b06bbc0>
+self = <tests.storage.test_qdrant.TestQdrantVectorStore object at 0x1094a5610>
+store = <learning_memory_server.storage.qdrant.QdrantVectorStore object at 0x10967b650>
 collection = 'test_collection'
 
     async def test_upsert_and_get(
@@ -41,53 +41,33 @@ collection = 'test_collection'
         vector = np.array([1.0, 2.0, 3.0], dtype=np.float32)
         payload = {"text": "test", "category": "A"}
     
->       await store.upsert(collection, "id1", vector, payload)
-
-tests/storage/test_qdrant.py:76: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-src/learning_memory_server/storage/qdrant.py:75: in upsert
-    await self._client.upsert(
-.venv/lib/python3.12/site-packages/qdrant_client/async_qdrant_client.py:902: in upsert
-    return await self._client.upsert(
-.venv/lib/python3.12/site-packages/qdrant_client/async_qdrant_remote.py:1002: in upsert
-    await self.openapi_client.points_api.upsert_points(
-.venv/lib/python3.12/site-packages/qdrant_client/http/api/points_api.py:756: in upsert_points
-    return await self._build_for_upsert_points(
-.venv/lib/python3.12/site-packages/qdrant_client/http/api_client.py:184: in request
-    return await self.send(request, type_)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-self = <qdrant_client.http.api_client.AsyncApiClient object at 0x10aa313d0>
-request = <Request('PUT', 'http://localhost:6333/collections/test_collection/points?wait=true')>
-type_ = <class 'qdrant_client.http.models.models.InlineResponse2005'>
-
-    async def send(self, request: Request, type_: Type[T]) -> T:
-        response = await self.middleware(request, self.send_inner)
+        await store.upsert(collection, "id1", vector, payload)
     
-        if response.status_code == 429:
-            retry_after_s = response.headers.get("Retry-After", None)
-            try:
-                resp = response.json()
-                message = resp["status"]["error"] if resp["status"] and resp["status"]["error"] else ""
-            except Exception:
-                message = ""
+        # Get without vector
+        result = await store.get(collection, "id1", with_vector=False)
+        assert result is not None
+        assert result.id == "id1"
+        assert result.payload == payload
+        assert result.vector is None
     
-            if retry_after_s:
-                raise ResourceExhaustedResponse(message, retry_after_s)
-    
-        if response.status_code in [200, 201, 202]:
-            try:
-                return parse_as_type(response.json(), type_)
-            except ValidationError as e:
-                raise ResponseHandlingException(e)
->       raise UnexpectedResponse.for_response(response)
-E       qdrant_client.http.exceptions.UnexpectedResponse: Unexpected Response: 400 (Bad Request)
-E       Raw response content:
-E       b'{"status":{"error":"Format error in JSON body: value id1 is not a valid point ID, valid values are either an unsigned integer or a UUID"},"time":0.0}'
+        # Get with vector
+        result = await store.get(collection, "id1", with_vector=True)
+        assert result is not None
+        assert result.vector is not None
+        # Qdrant returns lists, convert for comparison
+        result_array = np.array(result.vector, dtype=np.float32)
+>       np.testing.assert_array_almost_equal(result_array, vector, decimal=5)
+E       AssertionError: 
+E       Arrays are not almost equal to 5 decimals
+E       
+E       Mismatched elements: 3 / 3 (100%)
+E       Max absolute difference among violations: 2.1982164
+E       Max relative difference among violations: 0.7327388
+E        ACTUAL: array([0.26726, 0.53452, 0.80178], dtype=float32)
+E        DESIRED: array([1., 2., 3.], dtype=float32)
 
-.venv/lib/python3.12/site-packages/qdrant_client/http/api_client.py:219: UnexpectedResponse
+tests/storage/test_qdrant.py:91: AssertionError
 =========================== short test summary info ============================
 FAILED tests/storage/test_qdrant.py::TestQdrantVectorStore::test_upsert_and_get
 !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
-========================= 1 failed, 17 passed in 2.72s =========================
+========================= 1 failed, 17 passed in 0.70s =========================
