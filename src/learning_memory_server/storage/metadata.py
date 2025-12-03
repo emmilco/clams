@@ -50,6 +50,17 @@ class ProjectConfig:
     last_indexed: datetime | None
 
 
+@dataclass
+class GitIndexState:
+    """Represents git indexing state for a repository."""
+
+    id: int | None
+    repo_path: str
+    last_indexed_sha: str | None
+    last_indexed_at: datetime | None
+    commit_count: int
+
+
 class MetadataStore:
     """Async SQLite metadata storage with WAL mode for concurrent access."""
 
@@ -618,4 +629,69 @@ class MetadataStore:
             "DELETE FROM indexed_files WHERE project = ?", (name,)
         )
         await self._conn.execute("DELETE FROM projects WHERE name = ?", (name,))
+        await self._conn.commit()
+
+    # Git index state operations
+
+    async def get_git_index_state(self, repo_path: str) -> GitIndexState | None:
+        """Get indexing state for a repository.
+
+        Args:
+            repo_path: Absolute path to repository root
+
+        Returns:
+            GitIndexState or None if not found
+        """
+        if not self._conn:
+            raise RuntimeError("Database not initialized")
+
+        cursor = await self._conn.execute(
+            """
+            SELECT id, repo_path, last_indexed_sha, last_indexed_at, commit_count
+            FROM git_index_state
+            WHERE repo_path = ?
+            """,
+            (repo_path,),
+        )
+        row = await cursor.fetchone()
+
+        if not row:
+            return None
+
+        return GitIndexState(
+            id=row[0],
+            repo_path=row[1],
+            last_indexed_sha=row[2],
+            last_indexed_at=datetime.fromisoformat(row[3]) if row[3] else None,
+            commit_count=row[4],
+        )
+
+    async def update_git_index_state(
+        self, repo_path: str, last_sha: str, count: int
+    ) -> None:
+        """Update indexing state after indexing commits.
+
+        Args:
+            repo_path: Absolute path to repository root
+            last_sha: SHA of the last indexed commit
+            count: Number of commits indexed
+        """
+        if not self._conn:
+            raise RuntimeError("Database not initialized")
+
+        now = datetime.now()
+
+        await self._conn.execute(
+            """
+            INSERT INTO git_index_state (
+                repo_path, last_indexed_sha, last_indexed_at, commit_count
+            )
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(repo_path) DO UPDATE SET
+                last_indexed_sha=excluded.last_indexed_sha,
+                last_indexed_at=excluded.last_indexed_at,
+                commit_count=commit_count + excluded.commit_count
+            """,
+            (repo_path, last_sha, now.isoformat(), count),
+        )
         await self._conn.commit()
