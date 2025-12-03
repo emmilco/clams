@@ -1,7 +1,4 @@
-"""Tests for NomicEmbedding implementation.
-
-These tests may be skipped if the model is not available or takes too long to download.
-"""
+"""Tests for NomicEmbedding implementation."""
 
 import numpy as np
 import pytest
@@ -17,20 +14,14 @@ from learning_memory_server.embedding import (
 class TestNomicEmbedding:
     """Test suite for NomicEmbedding service.
 
-    Note: Tests marked as 'slow' may download model files on first run.
-    Use `pytest -m "not slow"` to skip these tests.
+    Note: Model files are downloaded on first run (~500MB).
+    Use `pytest -m "not slow"` to exclude these tests.
     """
 
     @pytest.fixture
     def nomic_service(self) -> NomicEmbedding:
-        """Create a NomicEmbedding instance for testing.
-
-        May raise EmbeddingModelError if model cannot be loaded.
-        """
-        try:
-            return NomicEmbedding()
-        except EmbeddingModelError:
-            pytest.skip("Nomic model not available")
+        """Create a NomicEmbedding instance for testing."""
+        return NomicEmbedding()
 
     def test_dimension(self, nomic_service: NomicEmbedding) -> None:
         """Test that dimension property returns 768."""
@@ -93,12 +84,9 @@ class TestNomicEmbedding:
             model_name="nomic-ai/nomic-embed-text-v1.5",
             cache_dir="/tmp/test_cache",
         )
-        try:
-            service = NomicEmbedding(settings)
-            assert service.settings.model_name == "nomic-ai/nomic-embed-text-v1.5"
-            assert service.settings.cache_dir == "/tmp/test_cache"
-        except EmbeddingModelError:
-            pytest.skip("Nomic model not available")
+        service = NomicEmbedding(settings)
+        assert service.settings.model_name == "nomic-ai/nomic-embed-text-v1.5"
+        assert service.settings.cache_dir == "/tmp/test_cache"
 
     def test_invalid_model_raises_error(self) -> None:
         """Test that invalid model name raises EmbeddingModelError."""

@@ -1,6 +1,9 @@
-"""Tests for QdrantVectorStore."""
+"""Tests for QdrantVectorStore.
 
-import os
+These tests require a running Qdrant instance at localhost:6333.
+Run with: docker run -p 6333:6333 qdrant/qdrant
+"""
+
 from collections.abc import AsyncIterator
 
 import numpy as np
@@ -8,13 +11,7 @@ import pytest
 
 from learning_memory_server.storage import QdrantVectorStore
 
-# Skip all tests if Docker is not available
 pytest_plugins = ("pytest_asyncio",)
-
-pytestmark = pytest.mark.skipif(
-    os.environ.get("SKIP_QDRANT_TESTS", "0") == "1",
-    reason="Qdrant tests skipped (set SKIP_QDRANT_TESTS=0 to enable)",
-)
 
 
 @pytest.fixture

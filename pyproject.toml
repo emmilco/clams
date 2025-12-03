@@ -20,6 +20,7 @@ dependencies = [
     "structlog",
     "pydantic-settings",
     "aiosqlite",
+    "einops>=0.8.1",
 ]
 
 [project.optional-dependencies]

@@ -248,6 +248,15 @@ run_pytest() {
     # Log to database
     log_test_results "$total" "$passed" "$failed" "$errors" "$skipped" "$duration" "$failed_tests_json"
 
+    # Fail if any tests were skipped - skipped tests hide bugs
+    if [[ "$skipped" -gt 0 ]]; then
+        echo ""
+        echo "FAIL: $skipped tests were skipped"
+        echo "Skipped tests are not allowed - they hide missing dependencies or broken code."
+        echo "Either fix the underlying issue or remove the test."
+        return 1
+    fi
+
     if [[ $exit_code -eq 0 ]]; then
         echo ""
         echo "PASS: All tests passed"
