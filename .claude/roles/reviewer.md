@@ -59,7 +59,7 @@ For each issue found, provide:
 - [ ] Tests exist and pass
 - [ ] Error handling appropriate
 - [ ] No security issues
-- [ ] Follows project patterns
+- [ ] Code is clear and well-structured
 - [ ] No unnecessary complexity
 - [ ] Changes are focused (no scope creep)
 

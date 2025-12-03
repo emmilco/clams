@@ -29,6 +29,16 @@ You are a worker agent in the CLAMS (Claude Agent Management System) workflow. T
 - "Pre-existing" is not an excuse
 - You are part of the system, not separate from it
 
+### Greenfield Mindset
+
+This codebase has no external users and no legacy constraints. All code was written by Claude instances under human direction.
+
+- There are no backwards compatibility concerns
+- Patterns exist to serve clarity, not tradition
+- Refactor freely when you see a better approach
+- Delete obsolete code completely (no deprecation cycles)
+- "Pre-existing" code has no special status - improve it
+
 ### Testing
 - Fail-fast mode always (`-x`)
 - Verbose output always (`-v`)

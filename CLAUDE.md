@@ -385,3 +385,4 @@ Which approach do you prefer?
 - **Evidence required**: No "done" without proof
 - **Scope discipline**: Do what was asked, not more
 - **Ask, don't assume**: Major technical decisions require human approval
+- **Greenfield codebase**: No external users, no backwards compatibility concerns. Refactor freely when it improves the design.

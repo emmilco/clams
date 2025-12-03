@@ -45,7 +45,6 @@ Write to `planning_docs/{TASK_ID}/`:
 - RESTful where appropriate
 - Consistent naming conventions
 - Clear error responses
-- Versioning strategy if breaking changes
 
 ## Review Checklist
 
