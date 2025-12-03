@@ -25,49 +25,68 @@ tests/storage/test_memory.py::TestInMemoryVectorStore::test_get_nonexistent PASS
 tests/storage/test_memory.py::TestInMemoryVectorStore::test_operations_on_nonexistent_collection PASSED
 tests/storage/test_qdrant.py::TestQdrantVectorStore::test_create_collection PASSED
 tests/storage/test_qdrant.py::TestQdrantVectorStore::test_delete_collection PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_upsert_and_get FAILED
+tests/storage/test_qdrant.py::TestQdrantVectorStore::test_upsert_and_get PASSED
+tests/storage/test_qdrant.py::TestQdrantVectorStore::test_upsert_update PASSED
+tests/storage/test_qdrant.py::TestQdrantVectorStore::test_search_cosine_similarity FAILED
 
 =================================== FAILURES ===================================
-__________________ TestQdrantVectorStore.test_upsert_and_get ___________________
+_____________ TestQdrantVectorStore.test_search_cosine_similarity ______________
 
-self = <tests.storage.test_qdrant.TestQdrantVectorStore object at 0x1094a5610>
-store = <learning_memory_server.storage.qdrant.QdrantVectorStore object at 0x10967b650>
+self = <tests.storage.test_qdrant.TestQdrantVectorStore object at 0x10b091c70>
+store = <learning_memory_server.storage.qdrant.QdrantVectorStore object at 0x10b0b2c30>
 collection = 'test_collection'
 
-    async def test_upsert_and_get(
+    async def test_search_cosine_similarity(
         self, store: QdrantVectorStore, collection: str
     ) -> None:
-        """Test inserting and retrieving a vector."""
-        vector = np.array([1.0, 2.0, 3.0], dtype=np.float32)
-        payload = {"text": "test", "category": "A"}
+        """Test cosine similarity search."""
+        # Insert some test vectors
+        vectors = [
+            (np.array([1.0, 0.0, 0.0], dtype=np.float32), {"label": "x"}),
+            (np.array([0.0, 1.0, 0.0], dtype=np.float32), {"label": "y"}),
+            (np.array([0.0, 0.0, 1.0], dtype=np.float32), {"label": "z"}),
+            (np.array([0.9, 0.1, 0.0], dtype=np.float32), {"label": "x-ish"}),
+        ]
     
-        await store.upsert(collection, "id1", vector, payload)
+        for i, (vec, payload) in enumerate(vectors):
+            await store.upsert(collection, f"id{i}", vec, payload)
     
-        # Get without vector
-        result = await store.get(collection, "id1", with_vector=False)
-        assert result is not None
-        assert result.id == "id1"
-        assert result.payload == payload
-        assert result.vector is None
-    
-        # Get with vector
-        result = await store.get(collection, "id1", with_vector=True)
-        assert result is not None
-        assert result.vector is not None
-        # Qdrant returns lists, convert for comparison
-        result_array = np.array(result.vector, dtype=np.float32)
->       np.testing.assert_array_almost_equal(result_array, vector, decimal=5)
-E       AssertionError: 
-E       Arrays are not almost equal to 5 decimals
-E       
-E       Mismatched elements: 3 / 3 (100%)
-E       Max absolute difference among violations: 2.1982164
-E       Max relative difference among violations: 0.7327388
-E        ACTUAL: array([0.26726, 0.53452, 0.80178], dtype=float32)
-E        DESIRED: array([1., 2., 3.], dtype=float32)
+        # Search for x-like vectors
+        query = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+>       results = await store.search(collection, query, limit=2)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-tests/storage/test_qdrant.py:91: AssertionError
+tests/storage/test_qdrant.py:133: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <learning_memory_server.storage.qdrant.QdrantVectorStore object at 0x10b0b2c30>
+collection = 'test_collection', query = array([1., 0., 0.], dtype=float32)
+limit = 2, filters = None
+
+    async def search(
+        self,
+        collection: str,
+        query: Vector,
+        limit: int = 10,
+        filters: dict[str, Any] | None = None,
+    ) -> list[SearchResult]:
+        """Search for similar vectors."""
+        # Convert filters to Qdrant filter format
+        qdrant_filter = self._build_filter(filters) if filters else None
+    
+>       results = await self._client.search(
+                        ^^^^^^^^^^^^^^^^^^^
+            collection_name=collection,
+            query_vector=query.tolist(),
+            limit=limit,
+            query_filter=qdrant_filter,
+            with_payload=True,
+            with_vectors=False,
+        )
+E       AttributeError: 'AsyncQdrantClient' object has no attribute 'search'
+
+src/learning_memory_server/storage/qdrant.py:119: AttributeError
 =========================== short test summary info ============================
-FAILED tests/storage/test_qdrant.py::TestQdrantVectorStore::test_upsert_and_get
+FAILED tests/storage/test_qdrant.py::TestQdrantVectorStore::test_search_cosine_similarity
 !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
-========================= 1 failed, 17 passed in 0.70s =========================
+========================= 1 failed, 19 passed in 0.93s =========================

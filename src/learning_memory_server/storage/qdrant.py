@@ -116,14 +116,15 @@ class QdrantVectorStore(VectorStore):
         # Convert filters to Qdrant filter format
         qdrant_filter = self._build_filter(filters) if filters else None
 
-        results = await self._client.search(
+        response = await self._client.query_points(
             collection_name=collection,
-            query_vector=query.tolist(),
+            query=query.tolist(),
             limit=limit,
             query_filter=qdrant_filter,
             with_payload=True,
             with_vectors=False,
         )
+        results = response.points
 
         return [
             SearchResult(
