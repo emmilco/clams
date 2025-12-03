@@ -269,11 +269,26 @@ class CodeParser(ABC):
 
 ### 2.3 CodeIndexer (`indexers/indexer.py`)
 
+**Required Imports**:
+```python
+from indexers.base import SemanticUnit, ParseError, IndexingError, IndexingStats
+from indexers.utils import generate_unit_id, compute_file_hash
+from embedding.service import EmbeddingModelError  # For embedding error handling
+from pathlib import Path
+from datetime import datetime
+import time
+import structlog
+
+logger = structlog.get_logger(__name__)
+```
+
 **Core Workflow**:
 
 ```python
 async def index_file(self, path: str, project: str) -> int:
     """Index a single file."""
+    # 0. Ensure collection exists (lazy initialization)
+    await self._ensure_collection()
 
     # 1. Check if reindex needed
     if not await self.needs_reindex(path, project):
@@ -355,6 +370,34 @@ def _prepare_embedding_text(self, unit: SemanticUnit) -> str:
     parts.append(content)
 
     return "\n\n".join(parts)
+
+def _build_payload(self, unit: SemanticUnit, project: str) -> dict:
+    """Build vector store payload from SemanticUnit."""
+    from datetime import datetime
+
+    return {
+        "project": project,
+        "file_path": unit.file_path,
+        "name": unit.name,
+        "qualified_name": unit.qualified_name,
+        "unit_type": unit.unit_type.value,
+        "signature": unit.signature,
+        "language": unit.language,
+        "start_line": unit.start_line,
+        "end_line": unit.end_line,
+        "line_count": unit.end_line - unit.start_line + 1,
+        "complexity": unit.complexity,
+        "has_docstring": unit.docstring is not None,
+        "indexed_at": datetime.utcnow().isoformat(),
+    }
+
+def _compute_file_hash(self, path: str) -> str:
+    """Compute SHA-256 hash of file contents.
+
+    Delegates to utility function compute_file_hash().
+    """
+    from indexers.utils import compute_file_hash
+    return compute_file_hash(path)
 ```
 
 **Change Detection**:
@@ -388,6 +431,9 @@ async def index_directory(
     exclude_patterns: list[str] | None = None,
 ) -> IndexingStats:
     """Index all supported files in directory."""
+    # Ensure collection exists (lazy initialization)
+    await self._ensure_collection()
+
     start_time = time.time()
     stats = IndexingStats(files_indexed=0, units_indexed=0, files_skipped=0)
 
@@ -415,155 +461,155 @@ async def index_directory(
     stats.duration_ms = int((time.time() - start_time) * 1000)
     return stats
 
-def _classify_error(self, error: Exception) -> str:
-    """Classify exception into error type for reporting."""
-    if isinstance(error, ParseError):
-        return error.error_type
-    elif isinstance(error, IOError):
-        return "io_error"
-    elif isinstance(error, UnicodeDecodeError):
-        return "encoding_error"
-    else:
-        return "unknown_error"
+    def _classify_error(self, error: Exception) -> str:
+        """Classify exception into error type for reporting."""
+        if isinstance(error, ParseError):
+            return error.error_type
+        elif isinstance(error, IOError):
+            return "io_error"
+        elif isinstance(error, UnicodeDecodeError):
+            return "encoding_error"
+        else:
+            return "unknown_error"
 
-def _find_files(
-    self, root: str, recursive: bool, exclude_patterns: list[str] | None
-) -> list[str]:
-    """Find all supported files in directory."""
-    supported_exts = {ext for ext in EXTENSION_MAP.keys()}
-    files = []
+    def _find_files(
+        self, root: str, recursive: bool, exclude_patterns: list[str] | None
+    ) -> list[str]:
+        """Find all supported files in directory."""
+        supported_exts = {ext for ext in EXTENSION_MAP.keys()}
+        files = []
 
-    root_path = Path(root)
-    pattern = "**/*" if recursive else "*"
+        root_path = Path(root)
+        pattern = "**/*" if recursive else "*"
 
-    for path in root_path.glob(pattern):
-        if not path.is_file():
-            continue
-        if path.suffix not in supported_exts:
-            continue
-        if self._should_exclude(str(path), exclude_patterns):
-            continue
-        files.append(str(path))
+        for path in root_path.glob(pattern):
+            if not path.is_file():
+                continue
+            if path.suffix not in supported_exts:
+                continue
+            if self._should_exclude(str(path), exclude_patterns):
+                continue
+            files.append(str(path))
 
-    return files
+        return files
 
-def _should_exclude(self, path: str, patterns: list[str] | None) -> bool:
-    """Check if path matches any exclusion pattern.
+    def _should_exclude(self, path: str, patterns: list[str] | None) -> bool:
+        """Check if path matches any exclusion pattern.
 
-    Patterns use glob syntax:
-    - '**/node_modules/**' - exclude node_modules anywhere
-    - '**/__pycache__/**' - exclude Python cache dirs
-    - '**/vendor/**' - exclude vendor directories
-    - '*.min.js' - exclude minified JS files
-    - 'tests/**' - exclude tests directory at root
+        Patterns use glob syntax:
+        - '**/node_modules/**' - exclude node_modules anywhere
+        - '**/__pycache__/**' - exclude Python cache dirs
+        - '**/vendor/**' - exclude vendor directories
+        - '*.min.js' - exclude minified JS files
+        - 'tests/**' - exclude tests directory at root
 
-    Example usage:
-        exclude_patterns=[
-            '**/node_modules/**',
-            '**/__pycache__/**',
-            '**/.*',  # hidden files/dirs
-            '**/*.min.js',
-        ]
-    """
-    if not patterns:
+        Example usage:
+            exclude_patterns=[
+                '**/node_modules/**',
+                '**/__pycache__/**',
+                '**/.*',  # hidden files/dirs
+                '**/*.min.js',
+            ]
+        """
+        if not patterns:
+            return False
+
+        from fnmatch import fnmatch
+        for pattern in patterns:
+            if fnmatch(path, pattern):
+                return True
         return False
 
-    from fnmatch import fnmatch
-    for pattern in patterns:
-        if fnmatch(path, pattern):
-            return True
-    return False
+    async def remove_file(self, path: str, project: str) -> int:
+        """Remove all indexed units for a file.
 
-async def remove_file(self, path: str, project: str) -> int:
-    """Remove all indexed units for a file.
+        Deletes both vector store entries and metadata.
+        Returns count of units removed.
+        """
+        # Count units before deletion
+        count = await self._count_file_units(path, project)
 
-    Deletes both vector store entries and metadata.
-    Returns count of units removed.
-    """
-    # Count units before deletion
-    count = await self._count_file_units(path, project)
+        await self._delete_file_units(path, project)
+        await self.metadata_store.delete_indexed_file(path, project)
+        logger.info("file_removed", path=path, project=project, units_removed=count)
 
-    await self._delete_file_units(path, project)
-    await self.metadata_store.delete_indexed_file(path, project)
-    logger.info("file_removed", path=path, project=project, units_removed=count)
+        return count
 
-    return count
+    async def remove_project(self, project: str) -> int:
+        """Remove all indexed units for a project.
 
-async def remove_project(self, project: str) -> int:
-    """Remove all indexed units for a project.
+        Deletes both vector store entries and metadata.
+        Returns count of files removed.
+        """
+        # Get all files for this project
+        files = await self.metadata_store.list_indexed_files(project=project)
 
-    Deletes both vector store entries and metadata.
-    Returns count of files removed.
-    """
-    # Get all files for this project
-    files = await self.metadata_store.list_indexed_files(project=project)
+        # Delete each file's units
+        for file_info in files:
+            await self._delete_file_units(file_info.file_path, project)
 
-    # Delete each file's units
-    for file_info in files:
-        await self._delete_file_units(file_info.file_path, project)
+        # Delete metadata
+        await self.metadata_store.delete_project(project)
+        logger.info("project_removed", project=project, files_count=len(files))
 
-    # Delete metadata
-    await self.metadata_store.delete_project(project)
-    logger.info("project_removed", project=project, files_count=len(files))
+        return len(files)
 
-    return len(files)
+    async def get_indexing_stats(self, project: str | None = None) -> dict:
+        """Get indexing statistics.
 
-async def get_indexing_stats(self, project: str | None = None) -> dict:
-    """Get indexing statistics.
+        Returns summary of indexed files, units, languages, etc.
+        """
+        files = await self.metadata_store.list_indexed_files(project=project)
 
-    Returns summary of indexed files, units, languages, etc.
-    """
-    files = await self.metadata_store.list_indexed_files(project=project)
+        total_files = len(files)
+        total_units = sum(f.unit_count for f in files)
+        languages = {}
 
-    total_files = len(files)
-    total_units = sum(f.unit_count for f in files)
-    languages = {}
+        for file_info in files:
+            lang = file_info.language or "unknown"
+            languages[lang] = languages.get(lang, 0) + 1
 
-    for file_info in files:
-        lang = file_info.language or "unknown"
-        languages[lang] = languages.get(lang, 0) + 1
+        return {
+            "total_files": total_files,
+            "total_units": total_units,
+            "languages": languages,
+            "projects": len(set(f.project for f in files)) if project is None else 1,
+        }
 
-    return {
-        "total_files": total_files,
-        "total_units": total_units,
-        "languages": languages,
-        "projects": len(set(f.project for f in files)) if project is None else 1,
-    }
+    async def is_file_indexed(self, path: str, project: str) -> bool:
+        """Check if a file is indexed."""
+        file_info = await self.metadata_store.get_indexed_file(path, project)
+        return file_info is not None
 
-async def is_file_indexed(self, path: str, project: str) -> bool:
-    """Check if a file is indexed."""
-    file_info = await self.metadata_store.get_indexed_file(path, project)
-    return file_info is not None
-
-async def _count_file_units(self, path: str, project: str) -> int:
-    """Count units for a file in the vector store."""
-    results = await self.vector_store.query(
-        collection=self.COLLECTION_NAME,
-        filter={"file_path": path, "project": project},
-        limit=1000,  # Arbitrary large number
-    )
-    return len(results)
-
-async def _delete_file_units(self, path: str, project: str) -> None:
-    """Delete all vector store entries for a file.
-
-    This is a helper method used during reindexing and file removal.
-    """
-    # Query vector store for all units from this file
-    results = await self.vector_store.query(
-        collection=self.COLLECTION_NAME,
-        filter={"file_path": path, "project": project},
-        limit=1000,  # Arbitrary large number
-    )
-
-    # Delete each unit
-    for result in results:
-        await self.vector_store.delete(
+    async def _count_file_units(self, path: str, project: str) -> int:
+        """Count units for a file in the vector store."""
+        results = await self.vector_store.query(
             collection=self.COLLECTION_NAME,
-            id=result.id,
+            filter={"file_path": path, "project": project},
+            limit=1000,  # Arbitrary large number
+        )
+        return len(results)
+
+    async def _delete_file_units(self, path: str, project: str) -> None:
+        """Delete all vector store entries for a file.
+
+        This is a helper method used during reindexing and file removal.
+        """
+        # Query vector store for all units from this file
+        results = await self.vector_store.query(
+            collection=self.COLLECTION_NAME,
+            filter={"file_path": path, "project": project},
+            limit=1000,  # Arbitrary large number
         )
 
-    logger.debug("file_units_deleted", path=path, project=project, count=len(results))
+        # Delete each unit
+        for result in results:
+            await self.vector_store.delete(
+                collection=self.COLLECTION_NAME,
+                id=result.id,
+            )
+
+        logger.debug("file_units_deleted", path=path, project=project, count=len(results))
 ```
 
 ---
@@ -642,7 +688,10 @@ class CodeIndexer:
     COLLECTION_NAME = "code_units"
 
     async def _ensure_collection(self) -> None:
-        """Create collection if it doesn't exist."""
+        """Create collection if it doesn't exist.
+
+        Called automatically from index_file() and index_directory() entry points.
+        """
         try:
             await self.vector_store.create_collection(
                 name=self.COLLECTION_NAME,
@@ -652,10 +701,6 @@ class CodeIndexer:
             # Collection may already exist - log and continue
             logger.debug("collection_init", name=self.COLLECTION_NAME,
                         status="already_exists_or_skipped", error=str(e))
-
-    async def index_file(self, path: str, project: str) -> int:
-        await self._ensure_collection()  # Lazy init on first use
-        # ... rest of indexing logic
 ```
 
 ### SQLite Metadata: `indexed_files` table
