@@ -27,152 +27,152 @@ tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_batch_single_item 
 tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_batch_multiple_items PASSED
 tests/embedding/test_nomic.py::TestNomicEmbedding::test_custom_settings PASSED
 tests/embedding/test_nomic.py::TestNomicEmbedding::test_invalid_model_raises_error PASSED
-tests/observation/test_collector.py::test_create_ghap 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_c340dd
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_5d3bf1
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_5d3bf1 strategy=systematic-elimination
+tests/observation/test_collector.py::test_create_ghap 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_f3d8b8
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_8528f2
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_8528f2 strategy=systematic-elimination
 PASSED
-tests/observation/test_collector.py::test_create_ghap_auto_starts_session 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_f1ab96
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_b07e85
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_b07e85 strategy=systematic-elimination
+tests/observation/test_collector.py::test_create_ghap_auto_starts_session 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_28628b
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_e696ec
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_e696ec strategy=systematic-elimination
 PASSED
-tests/observation/test_collector.py::test_create_ghap_when_active_raises 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_2f700d
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_7425fd
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_7425fd strategy=systematic-elimination
-2025-12-03 16:14:49 [warning  ] ghap_already_active            current_id=ghap_20251203_211449_7425fd
+tests/observation/test_collector.py::test_create_ghap_when_active_raises 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_3d3108
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_0dacd3
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_0dacd3 strategy=systematic-elimination
+2025-12-03 16:17:51 [warning  ] ghap_already_active            current_id=ghap_20251203_211751_0dacd3
 PASSED
-tests/observation/test_collector.py::test_update_ghap_changes_hypothesis 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_9898d3
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_eb1935
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_eb1935 strategy=systematic-elimination
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_eb1935
-2025-12-03 16:14:49 [info     ] ghap_updated                   ghap_id=ghap_20251203_211449_eb1935 hap_changed=True iteration=2
+tests/observation/test_collector.py::test_update_ghap_changes_hypothesis 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_8ccfc8
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_f1e54d
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_f1e54d strategy=systematic-elimination
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_f1e54d
+2025-12-03 16:17:51 [info     ] ghap_updated                   ghap_id=ghap_20251203_211751_f1e54d hap_changed=True iteration=2
 PASSED
-tests/observation/test_collector.py::test_update_ghap_changes_all_hap 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_8b9ab6
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_31f12d
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_31f12d strategy=systematic-elimination
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_31f12d
-2025-12-03 16:14:49 [info     ] ghap_updated                   ghap_id=ghap_20251203_211449_31f12d hap_changed=True iteration=2
+tests/observation/test_collector.py::test_update_ghap_changes_all_hap 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_92b187
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_6084d1
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_6084d1 strategy=systematic-elimination
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_6084d1
+2025-12-03 16:17:51 [info     ] ghap_updated                   ghap_id=ghap_20251203_211751_6084d1 hap_changed=True iteration=2
 PASSED
-tests/observation/test_collector.py::test_update_ghap_note_only 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_03fe35
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_2371b5
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_2371b5 strategy=systematic-elimination
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_2371b5
-2025-12-03 16:14:49 [info     ] ghap_updated                   ghap_id=ghap_20251203_211449_2371b5 hap_changed=False iteration=1
+tests/observation/test_collector.py::test_update_ghap_note_only 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_5677a9
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_066219
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_066219 strategy=systematic-elimination
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_066219
+2025-12-03 16:17:51 [info     ] ghap_updated                   ghap_id=ghap_20251203_211751_066219 hap_changed=False iteration=1
 PASSED
-tests/observation/test_collector.py::test_update_ghap_strategy_only 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_3e17c3
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_fa2d43
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_fa2d43 strategy=systematic-elimination
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_fa2d43
-2025-12-03 16:14:49 [info     ] ghap_updated                   ghap_id=ghap_20251203_211449_fa2d43 hap_changed=False iteration=1
+tests/observation/test_collector.py::test_update_ghap_strategy_only 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_3b0a96
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_371ff3
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_371ff3 strategy=systematic-elimination
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_371ff3
+2025-12-03 16:17:51 [info     ] ghap_updated                   ghap_id=ghap_20251203_211751_371ff3 hap_changed=False iteration=1
 PASSED
-tests/observation/test_collector.py::test_update_ghap_no_active_raises 2025-12-03 16:14:49 [warning  ] no_active_ghap_for_update
+tests/observation/test_collector.py::test_update_ghap_no_active_raises 2025-12-03 16:17:51 [warning  ] no_active_ghap_for_update
 PASSED
-tests/observation/test_collector.py::test_resolve_ghap_confirmed 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_91c3cc
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_8b3a59
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_8b3a59 strategy=systematic-elimination
-2025-12-03 16:14:49 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211449_8b3a59 iterations=1 status=confirmed tier=silver
+tests/observation/test_collector.py::test_resolve_ghap_confirmed 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_1d84a9
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_0b8878
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_0b8878 strategy=systematic-elimination
+2025-12-03 16:17:51 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211751_0b8878 iterations=1 status=confirmed tier=silver
 PASSED
-tests/observation/test_collector.py::test_resolve_ghap_auto_captured_gold 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_f12bdd
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_6f17fa
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_6f17fa strategy=systematic-elimination
-2025-12-03 16:14:49 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211449_6f17fa iterations=1 status=confirmed tier=gold
+tests/observation/test_collector.py::test_resolve_ghap_auto_captured_gold 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_343fb5
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_03ff8e
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_03ff8e strategy=systematic-elimination
+2025-12-03 16:17:51 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211751_03ff8e iterations=1 status=confirmed tier=gold
 PASSED
-tests/observation/test_collector.py::test_abandon_ghap 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_6f1673
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_14cf4e
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_14cf4e strategy=systematic-elimination
-2025-12-03 16:14:49 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211449_14cf4e iterations=1 status=abandoned tier=abandoned
+tests/observation/test_collector.py::test_abandon_ghap 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_776dca
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_a1d174
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_a1d174 strategy=systematic-elimination
+2025-12-03 16:17:51 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211751_a1d174 iterations=1 status=abandoned tier=abandoned
 PASSED
-tests/observation/test_collector.py::test_start_session 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_df7f85
+tests/observation/test_collector.py::test_start_session 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_f17279
 PASSED
-tests/observation/test_collector.py::test_start_session_archives_previous 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_05f215
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_ea2c2e
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_ea2c2e strategy=systematic-elimination
-2025-12-03 16:14:49 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211449_ea2c2e iterations=1 status=confirmed tier=silver
-2025-12-03 16:14:49 [info     ] session_archived               archive_file=20251203_session_20251203_211449_05f215.jsonl entry_count=1 session_id=session_20251203_211449_05f215
-2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_f75117
+tests/observation/test_collector.py::test_start_session_archives_previous 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_cb43f6
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_f0cb26
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_f0cb26 strategy=systematic-elimination
+2025-12-03 16:17:51 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211751_f0cb26 iterations=1 status=confirmed tier=silver
+2025-12-03 16:17:51 [info     ] session_archived               archive_file=20251203_session_20251203_211751_cb43f6.jsonl entry_count=1 session_id=session_20251203_211751_cb43f6
+2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_1e8f0d
 PASSED
-tests/observation/test_collector.py::test_end_session 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_de19fc
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_363868
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_363868 strategy=systematic-elimination
-2025-12-03 16:14:49 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211449_363868 iterations=1 status=confirmed tier=silver
-2025-12-03 16:14:49 [info     ] session_archived               archive_file=20251203_session_20251203_211449_de19fc.jsonl entry_count=1 session_id=session_20251203_211449_de19fc
-2025-12-03 16:14:49 [info     ] session_ended                  entries_archived=1 session_id=session_20251203_211449_de19fc
+tests/observation/test_collector.py::test_end_session 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_b928dc
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_56cd1d
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_56cd1d strategy=systematic-elimination
+2025-12-03 16:17:51 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211751_56cd1d iterations=1 status=confirmed tier=silver
+2025-12-03 16:17:51 [info     ] session_archived               archive_file=20251203_session_20251203_211751_b928dc.jsonl entry_count=1 session_id=session_20251203_211751_b928dc
+2025-12-03 16:17:51 [info     ] session_ended                  entries_archived=1 session_id=session_20251203_211751_b928dc
 PASSED
-tests/observation/test_collector.py::test_end_session_abandons_current 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_430b26
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_a407f3
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_a407f3 strategy=systematic-elimination
-2025-12-03 16:14:49 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211449_a407f3 iterations=1 status=abandoned tier=abandoned
-2025-12-03 16:14:49 [info     ] session_archived               archive_file=20251203_session_20251203_211449_430b26.jsonl entry_count=1 session_id=session_20251203_211449_430b26
-2025-12-03 16:14:49 [info     ] session_ended                  entries_archived=1 session_id=session_20251203_211449_430b26
+tests/observation/test_collector.py::test_end_session_abandons_current 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_05910f
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_0bfdf3
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_0bfdf3 strategy=systematic-elimination
+2025-12-03 16:17:51 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211751_0bfdf3 iterations=1 status=abandoned tier=abandoned
+2025-12-03 16:17:51 [info     ] session_archived               archive_file=20251203_session_20251203_211751_05910f.jsonl entry_count=1 session_id=session_20251203_211751_05910f
+2025-12-03 16:17:51 [info     ] session_ended                  entries_archived=1 session_id=session_20251203_211751_05910f
 PASSED
-tests/observation/test_collector.py::test_has_orphaned_entry 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_2913ae
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_6a5790
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_6a5790 strategy=systematic-elimination
-2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_c76242
+tests/observation/test_collector.py::test_has_orphaned_entry 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_1dca21
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_d3b68e
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_d3b68e strategy=systematic-elimination
+2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_1b6809
 PASSED
-tests/observation/test_collector.py::test_adopt_orphan 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_a99ec8
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_e8616c
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_e8616c strategy=systematic-elimination
-2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_a70967
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_e8616c
-2025-12-03 16:14:49 [info     ] orphan_adopted                 ghap_id=ghap_20251203_211449_e8616c new_session_id=session_20251203_211449_a70967
+tests/observation/test_collector.py::test_adopt_orphan 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_fb377c
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_34761a
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_34761a strategy=systematic-elimination
+2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_5f8cba
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_34761a
+2025-12-03 16:17:51 [info     ] orphan_adopted                 ghap_id=ghap_20251203_211751_34761a new_session_id=session_20251203_211751_5f8cba
 PASSED
-tests/observation/test_collector.py::test_abandon_orphan 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_3c28d5
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_f2f322
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_f2f322 strategy=systematic-elimination
-2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_3769f8
-2025-12-03 16:14:49 [info     ] entry_archived_to_session      archive_file=20251203_session_20251203_211449_3c28d5.jsonl ghap_id=ghap_20251203_211449_f2f322 session_id=session_20251203_211449_3c28d5
-2025-12-03 16:14:49 [info     ] orphan_abandoned               ghap_id=ghap_20251203_211449_f2f322 original_session_id=session_20251203_211449_3c28d5
+tests/observation/test_collector.py::test_abandon_orphan 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_005b8f
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_6d69a8
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_6d69a8 strategy=systematic-elimination
+2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_1b2bc7
+2025-12-03 16:17:51 [info     ] entry_archived_to_session      archive_file=20251203_session_20251203_211751_005b8f.jsonl ghap_id=ghap_20251203_211751_6d69a8 session_id=session_20251203_211751_005b8f
+2025-12-03 16:17:51 [info     ] orphan_abandoned               ghap_id=ghap_20251203_211751_6d69a8 original_session_id=session_20251203_211751_005b8f
 PASSED
 tests/observation/test_collector.py::test_increment_tool_count PASSED
-tests/observation/test_collector.py::test_should_check_in 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_98d658
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_9a57fd
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_9a57fd strategy=systematic-elimination
+tests/observation/test_collector.py::test_should_check_in 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_0b7f1d
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_d34351
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_d34351 strategy=systematic-elimination
 PASSED
 tests/observation/test_collector.py::test_reset_tool_count PASSED
 tests/observation/test_collector.py::test_tool_count_persists PASSED
-tests/observation/test_collector.py::test_full_session_lifecycle 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_53030f
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_53efa8
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_53efa8 strategy=systematic-elimination
-2025-12-03 16:14:49 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211449_53efa8 iterations=1 status=confirmed tier=silver
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_ab01e9
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_ab01e9 strategy=systematic-elimination
-2025-12-03 16:14:49 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211449_ab01e9 iterations=1 status=confirmed tier=silver
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_9f2ab7
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_9f2ab7 strategy=systematic-elimination
-2025-12-03 16:14:49 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211449_9f2ab7 iterations=1 status=confirmed tier=silver
-2025-12-03 16:14:49 [info     ] session_archived               archive_file=20251203_session_20251203_211449_53030f.jsonl entry_count=3 session_id=session_20251203_211449_53030f
-2025-12-03 16:14:49 [info     ] session_ended                  entries_archived=3 session_id=session_20251203_211449_53030f
+tests/observation/test_collector.py::test_full_session_lifecycle 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_60b88a
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_89f00a
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_89f00a strategy=systematic-elimination
+2025-12-03 16:17:51 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211751_89f00a iterations=1 status=confirmed tier=silver
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_4127e0
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_4127e0 strategy=systematic-elimination
+2025-12-03 16:17:51 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211751_4127e0 iterations=1 status=confirmed tier=silver
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_48e7d3
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_48e7d3 strategy=systematic-elimination
+2025-12-03 16:17:51 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211751_48e7d3 iterations=1 status=confirmed tier=silver
+2025-12-03 16:17:51 [info     ] session_archived               archive_file=20251203_session_20251203_211751_60b88a.jsonl entry_count=3 session_id=session_20251203_211751_60b88a
+2025-12-03 16:17:51 [info     ] session_ended                  entries_archived=3 session_id=session_20251203_211751_60b88a
 PASSED
-tests/observation/test_collector.py::test_state_survives_restart 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_facf50
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_56d5fb
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_56d5fb strategy=systematic-elimination
+tests/observation/test_collector.py::test_state_survives_restart 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_1d63b7
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_ddcc97
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_ddcc97 strategy=systematic-elimination
 PASSED
-tests/observation/test_collector.py::test_multiple_iterations 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_212c7b
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_512f0b
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_512f0b strategy=systematic-elimination
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_512f0b
-2025-12-03 16:14:49 [info     ] ghap_updated                   ghap_id=ghap_20251203_211449_512f0b hap_changed=True iteration=2
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_512f0b
-2025-12-03 16:14:49 [info     ] ghap_updated                   ghap_id=ghap_20251203_211449_512f0b hap_changed=True iteration=3
+tests/observation/test_collector.py::test_multiple_iterations 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_881f37
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_d2414f
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_d2414f strategy=systematic-elimination
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_d2414f
+2025-12-03 16:17:51 [info     ] ghap_updated                   ghap_id=ghap_20251203_211751_d2414f hap_changed=True iteration=2
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_d2414f
+2025-12-03 16:17:51 [info     ] ghap_updated                   ghap_id=ghap_20251203_211751_d2414f hap_changed=True iteration=3
 PASSED
-tests/observation/test_collector.py::test_text_truncation 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_13df41
-2025-12-03 16:14:49 [warning  ] text_truncated                 max_len=10000 original_len=15000
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_c1c88b
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_c1c88b strategy=systematic-elimination
+tests/observation/test_collector.py::test_text_truncation 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_ff32bf
+2025-12-03 16:17:51 [warning  ] text_truncated                 max_len=10000 original_len=15000
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_315832
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_315832 strategy=systematic-elimination
 PASSED
-tests/observation/test_collector.py::test_corrupted_current_ghap_recovery 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_279dc0
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_c903b6
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_c903b6 strategy=systematic-elimination
-2025-12-03 16:14:49 [error    ] corrupted_ghap_backed_up       backup=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-518/test_corrupted_current_ghap_re0/journal/current_ghap.corrupted.1764796489 error='Expecting value: line 1 column 1 (char 0)' file=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-518/test_corrupted_current_ghap_re0/journal/current_ghap.json
+tests/observation/test_collector.py::test_corrupted_current_ghap_recovery 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_eeaf1f
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_dcdab1
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_dcdab1 strategy=systematic-elimination
+2025-12-03 16:17:51 [error    ] corrupted_ghap_backed_up       backup=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-519/test_corrupted_current_ghap_re0/journal/current_ghap.corrupted.1764796671 error='Expecting value: line 1 column 1 (char 0)' file=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-519/test_corrupted_current_ghap_re0/journal/current_ghap.json
 PASSED
-tests/observation/test_collector.py::test_corrupted_session_entries_recovery 2025-12-03 16:14:49 [info     ] session_started                session_id=session_20251203_211449_5ef9a3
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_4b7ef8
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_4b7ef8 strategy=systematic-elimination
-2025-12-03 16:14:49 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211449_4b7ef8 iterations=1 status=confirmed tier=silver
-2025-12-03 16:14:49 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211449_aea48e
-2025-12-03 16:14:49 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211449_aea48e strategy=systematic-elimination
-2025-12-03 16:14:49 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211449_aea48e iterations=1 status=confirmed tier=silver
-2025-12-03 16:14:49 [warning  ] corrupt_entry_skipped          error='Expecting value: line 1 column 1 (char 0)' line_num=2
+tests/observation/test_collector.py::test_corrupted_session_entries_recovery 2025-12-03 16:17:51 [info     ] session_started                session_id=session_20251203_211751_29df33
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_6d5d7d
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_6d5d7d strategy=systematic-elimination
+2025-12-03 16:17:51 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211751_6d5d7d iterations=1 status=confirmed tier=silver
+2025-12-03 16:17:51 [debug    ] ghap_saved                     ghap_id=ghap_20251203_211751_c17619
+2025-12-03 16:17:51 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251203_211751_c17619 strategy=systematic-elimination
+2025-12-03 16:17:51 [info     ] ghap_resolved                  ghap_id=ghap_20251203_211751_c17619 iterations=1 status=confirmed tier=silver
+2025-12-03 16:17:51 [warning  ] corrupt_entry_skipped          error='Expecting value: line 1 column 1 (char 0)' line_num=2
 PASSED
 tests/observation/test_models.py::test_root_cause_serialization PASSED
 tests/observation/test_models.py::test_lesson_serialization PASSED
@@ -198,18 +198,18 @@ tests/observation/test_utils.py::test_atomic_write_overwrites_existing PASSED
 tests/observation/test_utils.py::test_atomic_write_cleans_up_temp_on_error PASSED
 tests/observation/test_utils.py::test_truncate_text_short PASSED
 tests/observation/test_utils.py::test_truncate_text_exact_limit PASSED
-tests/observation/test_utils.py::test_truncate_text_too_long 2025-12-03 16:14:49 [warning  ] text_truncated                 max_len=100 original_len=200
+tests/observation/test_utils.py::test_truncate_text_too_long 2025-12-03 16:17:51 [warning  ] text_truncated                 max_len=100 original_len=200
 PASSED
-tests/observation/test_utils.py::test_truncate_text_unicode 2025-12-03 16:14:49 [warning  ] text_truncated                 max_len=50 original_len=1000
+tests/observation/test_utils.py::test_truncate_text_unicode 2025-12-03 16:17:51 [warning  ] text_truncated                 max_len=50 original_len=1000
 PASSED
 tests/server/test_config.py::test_default_settings PASSED
 tests/server/test_config.py::test_env_override PASSED
 tests/server/test_config.py::test_settings_immutable PASSED
-tests/server/test_main.py::test_create_server 2025-12-03 16:14:49 [info     ] tools.registered               tool_count=1
-2025-12-03 16:14:49 [info     ] server.created                 server_name=learning-memory-server
+tests/server/test_main.py::test_create_server 2025-12-03 16:17:51 [info     ] tools.registered               tool_count=1
+2025-12-03 16:17:51 [info     ] server.created                 server_name=learning-memory-server
 PASSED
-tests/server/test_main.py::test_server_has_ping_tool 2025-12-03 16:14:49 [info     ] tools.registered               tool_count=1
-2025-12-03 16:14:49 [info     ] server.created                 server_name=learning-memory-server
+tests/server/test_main.py::test_server_has_ping_tool 2025-12-03 16:17:51 [info     ] tools.registered               tool_count=1
+2025-12-03 16:17:51 [info     ] server.created                 server_name=learning-memory-server
 PASSED
 tests/storage/test_memory.py::TestInMemoryVectorStore::test_create_collection PASSED
 tests/storage/test_memory.py::TestInMemoryVectorStore::test_create_duplicate_collection PASSED
@@ -265,4 +265,4 @@ tests/storage/test_qdrant.py::TestQdrantVectorStore::test_distance_metrics PASSE
 tests/test_placeholder.py::test_placeholder PASSED
 tests/test_placeholder.py::test_fixture PASSED
 
-======================== 131 passed in 61.67s (0:01:01) ========================
+============================= 131 passed in 28.81s =============================
