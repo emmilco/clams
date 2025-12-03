@@ -20,7 +20,9 @@ You are a worker agent in the CLAMS (Claude Agent Management System) workflow. T
 - Partial work is not done
 
 ### State Management
-- Write working notes to planning_docs/{TASK_ID}/
+- Write working notes to `planning_docs/{TASK_ID}/`
+- These docs persist on main after merge as design rationale
+- Required docs vary by role (spec.md, proposal.md, decisions.md, debug-log.md)
 - Reference your notes explicitly
 - Don't repeat yourself or contradict yourself
 
@@ -75,7 +77,7 @@ When debugging, use parallel differential diagnosis:
 
 Before marking your work complete:
 ```bash
-# Stage all changes
+# Stage all changes (code AND planning docs)
 git add -A
 
 # Commit with descriptive message
@@ -86,9 +88,12 @@ git commit -m "TASK-ID: Brief description
 
 # Verify commit was made
 git log -1 --oneline
+
+# Verify planning docs are committed
+git status  # Should show nothing untracked in planning_docs/
 ```
 
-**DO NOT report completion without a commit.**
+**DO NOT report completion without a commit.** This includes planning docs - they are part of your deliverable.
 
 ## Communication
 

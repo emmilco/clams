@@ -49,6 +49,7 @@ Write to `planning_docs/{TASK_ID}/`:
 ## Review Checklist
 
 Before passing to implementation:
+- [ ] `proposal.md` written and committed
 - [ ] All requirements addressed in design
 - [ ] No ambiguous decisions left
 - [ ] Implementation path is clear
