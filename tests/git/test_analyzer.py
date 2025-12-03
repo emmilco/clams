@@ -1,13 +1,13 @@
 """Tests for GitAnalyzer."""
 
 import tempfile
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import git
 import pytest
 
-from learning_memory_server.embedding.mock import MockEmbeddingService
+from learning_memory_server.embedding.mock import MockEmbedding
 from learning_memory_server.git import GitAnalyzer, GitPythonReader
 from learning_memory_server.storage.metadata import MetadataStore
 from learning_memory_server.storage.qdrant import QdrantVectorStore
@@ -16,7 +16,7 @@ from learning_memory_server.storage.qdrant import QdrantVectorStore
 @pytest.fixture
 async def mock_embedding_service():
     """Create a mock embedding service."""
-    return MockEmbeddingService(dimension=768)
+    return MockEmbedding(dimension=768)
 
 
 @pytest.fixture
@@ -166,7 +166,7 @@ class TestGitAnalyzer:
             )
 
             # Index with since parameter set to 1 year ago (should get all commits)
-            one_year_ago = datetime.now(timezone.utc) - timedelta(days=365)
+            one_year_ago = datetime.now(UTC) - timedelta(days=365)
             stats = await analyzer.index_commits(since=one_year_ago)
 
             # Should index the commit (it's recent)
@@ -204,7 +204,7 @@ class TestGitAnalyzer:
         await analyzer.index_commits()
 
         # Search for commits since 1 hour ago (should get all recent commits)
-        one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
+        one_hour_ago = datetime.now(UTC) - timedelta(hours=1)
         results = await analyzer.search_commits("hello", since=one_hour_ago, limit=5)
 
         assert len(results) > 0
@@ -273,7 +273,9 @@ class TestGitAnalyzer:
         repo_path, _ = test_repo
 
         # Search only in file1.py
-        results = await analyzer.blame_search("hello", file_pattern="file1.py", limit=10)
+        results = await analyzer.blame_search(
+            "hello", file_pattern="file1.py", limit=10
+        )
 
         assert len(results) > 0
         for result in results:
@@ -288,7 +290,7 @@ class TestGitAnalyzer:
             message="Test commit message",
             author="Test Author",
             author_email="test@example.com",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             files_changed=["file1.py", "file2.py"],
             insertions=10,
             deletions=5,
@@ -313,7 +315,7 @@ class TestGitAnalyzer:
             message="Test commit",
             author="Test Author",
             author_email="test@example.com",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             files_changed=many_files,
             insertions=10,
             deletions=5,
@@ -372,7 +374,7 @@ async def test_integration_with_real_repo():
         vector_store = QdrantVectorStore(url=":memory:")
         await vector_store.create_collection("commits", dimension=768)
 
-        embedding_service = MockEmbeddingService(dimension=768)
+        embedding_service = MockEmbedding(dimension=768)
 
         # Create analyzer
         reader = GitPythonReader(repo_path)

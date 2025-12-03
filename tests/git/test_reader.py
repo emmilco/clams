@@ -1,7 +1,7 @@
 """Tests for GitReader implementations."""
 
 import tempfile
-from datetime import datetime, timezone
+from datetime import UTC
 from pathlib import Path
 
 import git
@@ -132,7 +132,7 @@ class TestGitPythonReader:
         assert commit.author == "Test User"
         assert commit.author_email == "test@example.com"
         assert "test.txt" in commit.files_changed
-        assert commit.timestamp.tzinfo == timezone.utc
+        assert commit.timestamp.tzinfo == UTC
 
     async def test_get_commits_multiple_commits(self, multi_commit_repo):
         """Test get_commits with multiple commits."""
@@ -192,7 +192,7 @@ class TestGitPythonReader:
         assert entry.author_email == "test@example.com"
         assert entry.line_start == 1
         assert entry.content == "Hello, World!"
-        assert entry.timestamp.tzinfo == timezone.utc
+        assert entry.timestamp.tzinfo == UTC
 
     async def test_get_blame_nonexistent_file(self, single_commit_repo):
         """Test get_blame on nonexistent file."""
@@ -247,7 +247,7 @@ class TestGitPythonReader:
         commits = await reader.get_commits()
         for commit in commits:
             assert commit.timestamp.tzinfo is not None
-            assert commit.timestamp.tzinfo == timezone.utc
+            assert commit.timestamp.tzinfo == UTC
 
     async def test_blame_timezone_aware(self, single_commit_repo):
         """Test that all blame timestamps are timezone-aware."""
@@ -257,7 +257,7 @@ class TestGitPythonReader:
         blame_entries = await reader.get_blame("test.txt")
         for entry in blame_entries:
             assert entry.timestamp.tzinfo is not None
-            assert entry.timestamp.tzinfo == timezone.utc
+            assert entry.timestamp.tzinfo == UTC
 
     async def test_files_changed_relative_paths(self, multi_commit_repo):
         """Test that files_changed contains relative paths."""
@@ -292,7 +292,7 @@ async def test_integration_with_real_repo():
             assert len(commit.sha) == 40
             assert commit.message
             assert commit.author
-            assert commit.timestamp.tzinfo == timezone.utc
+            assert commit.timestamp.tzinfo == UTC
 
         # Test get_head_sha
         head_sha = await reader.get_head_sha()
