@@ -1,0 +1,12 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.6, pytest-8.4.2, pluggy-1.6.0 -- /Users/elliotmilco/.pyenv/versions/3.13.6/bin/python3.13
+cachedir: .pytest_cache
+rootdir: /Users/elliotmilco/Documents/GitHub/clams/.claude/worktrees/SPEC-TEST-001-01
+plugins: asyncio-1.2.0, xdist-3.8.0, timeout-2.4.0, anyio-4.10.0, cov-7.0.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 2 items
+
+tests/test_greet.py::test_greet_happy_path PASSED
+tests/test_greet.py::test_greet_missing_name PASSED
+
+============================== 2 passed in 0.01s ===============================
