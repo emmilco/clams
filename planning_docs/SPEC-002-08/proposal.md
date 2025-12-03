@@ -17,11 +17,51 @@ We need a local GHAP (Goal-Hypothesis-Action-Prediction) state machine to track 
 
 ```
 observation/
-├── __init__.py          # Public exports
+├── __init__.py          # Public exports (see below)
 ├── collector.py         # ObservationCollector class
 ├── models.py            # Dataclasses (GHAPEntry, Outcome, etc.)
 ├── exceptions.py        # Custom exceptions
 └── utils.py             # ID generation, atomic writes
+
+**`__init__.py` exports:**
+```python
+"""Observation collection module for GHAP state tracking."""
+
+from .collector import ObservationCollector
+from .models import (
+    Domain,
+    Strategy,
+    OutcomeStatus,
+    ConfidenceTier,
+    RootCause,
+    Lesson,
+    HistoryEntry,
+    Outcome,
+    GHAPEntry,
+)
+from .exceptions import (
+    GHAPError,
+    GHAPAlreadyActiveError,
+    NoActiveGHAPError,
+    JournalCorruptedError,
+)
+
+__all__ = [
+    "ObservationCollector",
+    "Domain",
+    "Strategy",
+    "OutcomeStatus",
+    "ConfidenceTier",
+    "RootCause",
+    "Lesson",
+    "HistoryEntry",
+    "Outcome",
+    "GHAPEntry",
+    "GHAPError",
+    "GHAPAlreadyActiveError",
+    "NoActiveGHAPError",
+    "JournalCorruptedError",
+]
 ```
 
 The solution implements a **file-based state machine** using JSON for persistence. All operations are async using `aiofiles` for non-blocking I/O, consistent with the existing codebase patterns.
@@ -35,7 +75,30 @@ The solution implements a **file-based state machine** using JSON for persistenc
 - `RootCause`, `Lesson`, `HistoryEntry` dataclasses
 - `Outcome`, `GHAPEntry` dataclasses
 - JSON serialization/deserialization methods (from_dict, to_dict)
-- DateTime handling (UTC timezone-aware)
+- DateTime handling: **UTC timezone-aware throughout**
+
+**Datetime Strategy**:
+All datetime fields use UTC timezone-aware datetimes:
+```python
+from datetime import datetime, timezone
+
+# Creation
+created_at = datetime.now(timezone.utc)
+
+# Serialization (ISO 8601 with 'Z' suffix)
+def to_dict(self) -> dict:
+    return {"created_at": self.created_at.isoformat().replace("+00:00", "Z")}
+
+# Deserialization
+def from_dict(cls, data: dict) -> Self:
+    # Handle both 'Z' suffix and '+00:00' format
+    ts = data["created_at"].replace("Z", "+00:00")
+    return cls(created_at=datetime.fromisoformat(ts))
+```
+
+**Note**: The existing codebase uses timezone-naive datetimes in some places (e.g., metadata.py).
+This module establishes UTC-aware as the standard for new code. Conversion happens at boundaries
+if needed when integrating with existing components.
 
 **`exceptions.py`** - Error types
 - `GHAPError` (base)
@@ -113,22 +176,39 @@ Resolved entries are stored in JSONL (JSON Lines) format - one complete JSON obj
 - **Metadata files** (session_id, tool_count) are tiny → separate for clarity
 - **Archive** keeps historical data without cluttering active files
 
-#### 4. Corruption Recovery Strategy
+#### 4. Corruption and I/O Error Recovery Strategy
 
 ```python
 async def _load_current_ghap(self) -> GHAPEntry | None:
-    """Load with automatic corruption recovery."""
+    """Load with automatic corruption and I/O error recovery."""
     try:
         # Normal load path
-        content = await aiofiles.read(path)
+        async with aiofiles.open(path) as f:
+            content = await f.read()
         return GHAPEntry.from_json(content)
+    except FileNotFoundError:
+        return None  # No active GHAP
     except (json.JSONDecodeError, KeyError, TypeError) as e:
         # Backup corrupted file and reset
         backup = path.with_suffix(f".corrupted.{int(time.time())}")
         os.rename(path, backup)
         logger.error("Corrupted GHAP backed up", backup=str(backup), error=str(e))
         return None
+    except PermissionError as e:
+        logger.error("Permission denied reading GHAP", path=str(path), error=str(e))
+        raise JournalCorruptedError(f"Cannot read journal: {e}")
+    except OSError as e:
+        # Disk full, I/O error, etc.
+        logger.error("I/O error reading GHAP", path=str(path), error=str(e))
+        raise JournalCorruptedError(f"Journal I/O error: {e}")
 ```
+
+**I/O Error Handling Strategy**:
+- **FileNotFoundError**: Normal case (no active GHAP), return None
+- **PermissionError**: Raise `JournalCorruptedError` - user must fix permissions
+- **OSError (disk full, etc.)**: Raise `JournalCorruptedError` - user must free space
+- **JSON corruption**: Backup file, reset to clean state, log error
+- All errors logged with structured context for debugging
 
 **Rationale**:
 - **Fail-safe** - Corruption doesn't crash the system
@@ -147,6 +227,22 @@ async def start_session(self) -> str:
     2. Archive previous session's entries (if any)
     3. Write new session ID
     4. Return session ID
+    """
+
+async def end_session(self) -> list[GHAPEntry]:
+    """
+    End session and archive entries.
+
+    Archive filename format: {YYYYMMDD}_{session_id}.jsonl
+    Example: 20251203_session_20251203_140000_abc123.jsonl
+
+    Steps:
+    1. If current GHAP exists, abandon with reason "session ended"
+    2. Read all entries from session_entries.jsonl
+    3. Write to archive/{YYYYMMDD}_{session_id}.jsonl
+    4. Clear session_entries.jsonl
+    5. Clear .session_id
+    6. Return all archived entries
     """
 ```
 
@@ -245,17 +341,38 @@ def compute_confidence_tier(entry: GHAPEntry) -> ConfidenceTier:
     Simple rule-based assignment:
     - ABANDONED if outcome.status == ABANDONED
     - GOLD if outcome.auto_captured == True
-    - SILVER otherwise
+    - SILVER otherwise (all manual resolutions start as SILVER)
 
-    Note: BRONZE tier assigned later by ObservationPersister
-    during quality assessment (tautology detection, etc.)
+    BRONZE tier is NOT assigned here. It is assigned later by
+    ObservationPersister (SPEC-002-14) during quality assessment:
+    - Persister uses embeddings to detect tautologies (hypothesis ≈ prediction)
+    - Persister may downgrade SILVER → BRONZE based on semantic analysis
+    - This keeps Collector simple and server-independent
     """
+
+    if entry.outcome.status == OutcomeStatus.ABANDONED:
+        return ConfidenceTier.ABANDONED
+
+    if entry.outcome.auto_captured:
+        return ConfidenceTier.GOLD
+
+    # All manual resolutions start as SILVER
+    # May be downgraded to BRONZE by Persister during quality assessment
+    return ConfidenceTier.SILVER
 ```
+
+**Tier Assignment Summary**:
+| Tier | Assigned By | Criteria |
+|------|-------------|----------|
+| ABANDONED | Collector | `outcome.status == ABANDONED` |
+| GOLD | Collector | `outcome.auto_captured == True` |
+| SILVER | Collector | All other resolutions (default) |
+| BRONZE | Persister | SILVER entries with poor quality (tautology, vague) |
 
 **Rationale**:
 - **Separation of concerns** - Collector captures data, Persister assesses quality
-- **No dependencies** - No need for embeddings or semantic analysis
-- **Fast** - Simple boolean checks
+- **No dependencies** - Collector has no need for embeddings or semantic analysis
+- **Fast** - Simple boolean checks at collection time
 - **Upgradeable** - Can refine quality heuristics in Persister without changing Collector
 
 #### Orphan Handling
