@@ -190,6 +190,7 @@ class CodeParser(ABC):
 
 2. **Parser Initialization**: Load tree-sitter grammars on init
    ```python
+   from tree_sitter import Node  # For type hints
    from tree_sitter_languages import get_parser, get_language
 
    def __init__(self):
@@ -411,6 +412,9 @@ async def index_directory(
             stats.errors.append(error)
             logger.warning("file_index_failed", path=file_path, error=str(e))
 
+    stats.duration_ms = int((time.time() - start_time) * 1000)
+    return stats
+
 def _classify_error(self, error: Exception) -> str:
     """Classify exception into error type for reporting."""
     if isinstance(error, ParseError):
@@ -421,9 +425,6 @@ def _classify_error(self, error: Exception) -> str:
         return "encoding_error"
     else:
         return "unknown_error"
-
-    stats.duration_ms = int((time.time() - start_time) * 1000)
-    return stats
 
 def _find_files(
     self, root: str, recursive: bool, exclude_patterns: list[str] | None
@@ -473,19 +474,26 @@ def _should_exclude(self, path: str, patterns: list[str] | None) -> bool:
             return True
     return False
 
-async def remove_file(self, path: str, project: str) -> None:
+async def remove_file(self, path: str, project: str) -> int:
     """Remove all indexed units for a file.
 
     Deletes both vector store entries and metadata.
+    Returns count of units removed.
     """
+    # Count units before deletion
+    count = await self._count_file_units(path, project)
+
     await self._delete_file_units(path, project)
     await self.metadata_store.delete_indexed_file(path, project)
-    logger.info("file_removed", path=path, project=project)
+    logger.info("file_removed", path=path, project=project, units_removed=count)
 
-async def remove_project(self, project: str) -> None:
+    return count
+
+async def remove_project(self, project: str) -> int:
     """Remove all indexed units for a project.
 
     Deletes both vector store entries and metadata.
+    Returns count of files removed.
     """
     # Get all files for this project
     files = await self.metadata_store.list_indexed_files(project=project)
@@ -497,6 +505,8 @@ async def remove_project(self, project: str) -> None:
     # Delete metadata
     await self.metadata_store.delete_project(project)
     logger.info("project_removed", project=project, files_count=len(files))
+
+    return len(files)
 
 async def get_indexing_stats(self, project: str | None = None) -> dict:
     """Get indexing statistics.
@@ -524,6 +534,15 @@ async def is_file_indexed(self, path: str, project: str) -> bool:
     """Check if a file is indexed."""
     file_info = await self.metadata_store.get_indexed_file(path, project)
     return file_info is not None
+
+async def _count_file_units(self, path: str, project: str) -> int:
+    """Count units for a file in the vector store."""
+    results = await self.vector_store.query(
+        collection=self.COLLECTION_NAME,
+        filter={"file_path": path, "project": project},
+        limit=1000,  # Arbitrary large number
+    )
+    return len(results)
 
 async def _delete_file_units(self, path: str, project: str) -> None:
     """Delete all vector store entries for a file.
