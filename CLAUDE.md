@@ -133,23 +133,21 @@ This ensures:
 - Clean, well-structured artifacts
 - Issues caught early (before human review or implementation)
 
-### Tiered Review Model
+### Review Model
 
-Use a tiered approach to balance speed and thoroughness:
+Use **sonnet** for all reviews to ensure thorough, high-quality feedback.
 
 | Review # | Model | Purpose |
 |----------|-------|---------|
-| 1st | haiku | Fast filter - catch obvious issues, structural problems |
-| 2nd | sonnet | Deep check - catch subtle issues, verify completeness |
-
-**Rationale**: Haiku is fast but may miss nuanced issues. Sonnet is thorough but slower. By using haiku first, we quickly catch easy problems. If haiku requests changes, we don't waste sonnet's time until those are fixed. Sonnet then provides the thorough final check.
+| 1st | sonnet | Catch issues, verify structure and completeness |
+| 2nd | sonnet | Independent verification, catch anything missed |
 
 **Workflow**:
-1. Dispatch haiku reviewer
-2. If haiku finds major issues → author fixes → restart from step 1
-3. If haiku approves → dispatch sonnet reviewer
-4. If sonnet finds issues → author fixes → restart from step 1 (haiku again)
-5. If sonnet approves → gate passes
+1. Dispatch sonnet reviewer #1
+2. If changes requested → author fixes → restart from step 1
+3. If approved → dispatch sonnet reviewer #2
+4. If changes requested → author fixes → restart from step 1
+5. If both approve → gate passes
 
 ## Workflow
 
