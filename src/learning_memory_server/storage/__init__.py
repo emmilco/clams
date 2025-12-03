@@ -2,13 +2,18 @@
 
 from .base import SearchResult, StorageSettings, Vector, VectorStore
 from .memory import InMemoryVectorStore
+from .metadata import CallGraphEntry, IndexedFile, MetadataStore, ProjectConfig
 from .qdrant import QdrantVectorStore
 
 __all__ = [
-    "Vector",
-    "SearchResult",
-    "VectorStore",
-    "StorageSettings",
+    "CallGraphEntry",
+    "IndexedFile",
     "InMemoryVectorStore",
+    "MetadataStore",
+    "ProjectConfig",
     "QdrantVectorStore",
+    "SearchResult",
+    "StorageSettings",
+    "Vector",
+    "VectorStore",
 ]

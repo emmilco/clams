@@ -1,1 +1,1 @@
-"""Tests for vector storage implementations."""
+"""Tests for storage implementations."""
