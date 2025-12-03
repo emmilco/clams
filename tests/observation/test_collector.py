@@ -1,6 +1,5 @@
 """Tests for ObservationCollector."""
 
-import json
 from pathlib import Path
 
 import pytest
@@ -108,7 +107,7 @@ async def test_update_ghap_changes_hypothesis(
     collector: ObservationCollector,
 ) -> None:
     """Test updating hypothesis pushes to history."""
-    entry = await collector.create_ghap(
+    await collector.create_ghap(
         domain=Domain.DEBUGGING,
         strategy=Strategy.SYSTEMATIC_ELIMINATION,
         goal="Fix test",
@@ -153,7 +152,7 @@ async def test_update_ghap_changes_all_hap(collector: ObservationCollector) -> N
 
 async def test_update_ghap_note_only(collector: ObservationCollector) -> None:
     """Test updating with only note doesn't create history entry."""
-    entry = await collector.create_ghap(
+    await collector.create_ghap(
         domain=Domain.DEBUGGING,
         strategy=Strategy.SYSTEMATIC_ELIMINATION,
         goal="Fix test",
@@ -388,7 +387,7 @@ async def test_has_orphaned_entry(collector: ObservationCollector) -> None:
     )
 
     # Start new session (without resolving)
-    session2 = await collector.start_session()
+    await collector.start_session()
 
     # Should detect orphan
     has_orphan = await collector.has_orphaned_entry()
@@ -402,7 +401,7 @@ async def test_has_orphaned_entry(collector: ObservationCollector) -> None:
 async def test_adopt_orphan(collector: ObservationCollector) -> None:
     """Test adopting orphaned entry."""
     # Create entry in first session
-    session1 = await collector.start_session()
+    await collector.start_session()
     entry = await collector.create_ghap(
         domain=Domain.DEBUGGING,
         strategy=Strategy.SYSTEMATIC_ELIMINATION,
@@ -432,7 +431,7 @@ async def test_abandon_orphan(
 ) -> None:
     """Test abandoning orphaned entry."""
     # Create entry in first session
-    session1 = await collector.start_session()
+    await collector.start_session()
     entry = await collector.create_ghap(
         domain=Domain.DEBUGGING,
         strategy=Strategy.SYSTEMATIC_ELIMINATION,
@@ -443,7 +442,7 @@ async def test_abandon_orphan(
     )
 
     # Start new session
-    session2 = await collector.start_session()
+    await collector.start_session()
 
     # Abandon orphan
     abandoned = await collector.abandon_orphan("Session crashed")
@@ -537,7 +536,7 @@ async def test_full_session_lifecycle(
 ) -> None:
     """Test complete session from start to end."""
     # Start session
-    session_id = await collector.start_session()
+    await collector.start_session()
 
     # Create and resolve multiple GHAPs
     for i in range(3):

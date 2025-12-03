@@ -1,8 +1,6 @@
 """Tests for observation data models."""
 
-from datetime import datetime, timezone
-
-import pytest
+from datetime import UTC, datetime
 
 from learning_memory_server.observation.models import (
     ConfidenceTier,
@@ -57,7 +55,7 @@ def test_lesson_optional_takeaway() -> None:
 
 def test_history_entry_serialization() -> None:
     """Test HistoryEntry to_dict and from_dict."""
-    ts = datetime.now(timezone.utc)
+    ts = datetime.now(UTC)
     entry = HistoryEntry(
         timestamp=ts,
         hypothesis="H1",
@@ -81,7 +79,7 @@ def test_history_entry_serialization() -> None:
 
 def test_outcome_serialization() -> None:
     """Test Outcome to_dict and from_dict."""
-    ts = datetime.now(timezone.utc)
+    ts = datetime.now(UTC)
     outcome = Outcome(
         status=OutcomeStatus.CONFIRMED,
         result="Success",
@@ -104,7 +102,7 @@ def test_outcome_serialization() -> None:
 
 def test_ghap_entry_minimal_serialization() -> None:
     """Test GHAPEntry serialization with minimal fields."""
-    ts = datetime.now(timezone.utc)
+    ts = datetime.now(UTC)
     entry = GHAPEntry(
         id="ghap_20251203_140000_abc123",
         session_id="session_20251203_140000_xyz789",
@@ -157,7 +155,7 @@ def test_ghap_entry_minimal_serialization() -> None:
 
 def test_ghap_entry_full_serialization() -> None:
     """Test GHAPEntry serialization with all fields."""
-    ts = datetime.now(timezone.utc)
+    ts = datetime.now(UTC)
     entry = GHAPEntry(
         id="ghap_20251203_140000_abc123",
         session_id="session_20251203_140000_xyz789",

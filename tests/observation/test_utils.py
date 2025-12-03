@@ -1,7 +1,6 @@
 """Tests for observation utilities."""
 
-import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -66,7 +65,7 @@ def test_compute_confidence_tier_abandoned() -> None:
     entry = GHAPEntry(
         id="test",
         session_id="test",
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
         domain=Domain.DEBUGGING,
         strategy=Strategy.SYSTEMATIC_ELIMINATION,
         goal="goal",
@@ -76,7 +75,7 @@ def test_compute_confidence_tier_abandoned() -> None:
         outcome=Outcome(
             status=OutcomeStatus.ABANDONED,
             result="reason",
-            captured_at=datetime.now(timezone.utc),
+            captured_at=datetime.now(UTC),
             auto_captured=False,
         ),
     )
@@ -89,7 +88,7 @@ def test_compute_confidence_tier_gold() -> None:
     entry = GHAPEntry(
         id="test",
         session_id="test",
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
         domain=Domain.DEBUGGING,
         strategy=Strategy.SYSTEMATIC_ELIMINATION,
         goal="goal",
@@ -99,7 +98,7 @@ def test_compute_confidence_tier_gold() -> None:
         outcome=Outcome(
             status=OutcomeStatus.CONFIRMED,
             result="success",
-            captured_at=datetime.now(timezone.utc),
+            captured_at=datetime.now(UTC),
             auto_captured=True,
         ),
     )
@@ -112,7 +111,7 @@ def test_compute_confidence_tier_silver() -> None:
     entry = GHAPEntry(
         id="test",
         session_id="test",
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
         domain=Domain.DEBUGGING,
         strategy=Strategy.SYSTEMATIC_ELIMINATION,
         goal="goal",
@@ -122,7 +121,7 @@ def test_compute_confidence_tier_silver() -> None:
         outcome=Outcome(
             status=OutcomeStatus.CONFIRMED,
             result="success",
-            captured_at=datetime.now(timezone.utc),
+            captured_at=datetime.now(UTC),
             auto_captured=False,
         ),
     )
@@ -135,7 +134,7 @@ def test_compute_confidence_tier_no_outcome() -> None:
     entry = GHAPEntry(
         id="test",
         session_id="test",
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
         domain=Domain.DEBUGGING,
         strategy=Strategy.SYSTEMATIC_ELIMINATION,
         goal="goal",
