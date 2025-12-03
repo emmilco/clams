@@ -130,10 +130,10 @@ async def atomic_write(path: Path, content: str) -> None:
     """Write atomically: temp file → fsync → rename."""
     temp_path = path.with_suffix(path.suffix + ".tmp")
     try:
-        async with aiofiles.open(temp_path, "w", encoding="utf-8") as f:
+        async with aiofiles.open(temp_path, "w", encoding="utf-8", errors="replace") as f:
             await f.write(content)
             await f.flush()
-            os.fsync(f.fileno())
+            os.fsync(f.fileno())  # Note: fsync behavior with aiofiles may vary by platform
         os.rename(temp_path, path)
     except Exception:
         if temp_path.exists():
@@ -142,6 +142,34 @@ async def atomic_write(path: Path, content: str) -> None:
 ```
 
 **Rationale**: The rename operation is atomic on POSIX systems, ensuring readers never see partial writes. If a crash occurs during write, the original file remains intact.
+
+**Platform Note**: The `os.fsync(f.fileno())` call ensures data is written to disk before rename, but behavior with aiofiles may vary across platforms. On most POSIX systems this works reliably. On Windows or with some virtual filesystems, fsync semantics may differ.
+
+#### Write Error Handling
+
+All write operations handle failures gracefully:
+
+```python
+async def _save_current_ghap(self, entry: GHAPEntry) -> None:
+    """Save current GHAP with error handling."""
+    path = self.journal_dir / "current_ghap.json"
+    try:
+        await atomic_write(path, json.dumps(entry.to_dict(), indent=2))
+        logger.info("ghap_saved", ghap_id=entry.id)
+    except PermissionError as e:
+        logger.error("permission_denied_writing_ghap", path=str(path), error=str(e))
+        raise JournalCorruptedError(f"Cannot write journal: {e}")
+    except OSError as e:
+        # Disk full, I/O error, etc.
+        logger.error("io_error_writing_ghap", path=str(path), error=str(e))
+        raise JournalCorruptedError(f"Journal write failed: {e}")
+```
+
+**Write Error Strategy**:
+- **PermissionError**: Raise `JournalCorruptedError` - user must fix permissions
+- **OSError (disk full, etc.)**: Raise `JournalCorruptedError` - user must free space
+- **Temp file cleanup**: Handled by `atomic_write()` on any exception
+- All failures logged with structured context for debugging
 
 #### 2. JSON Line Format for Entries
 
@@ -183,7 +211,7 @@ async def _load_current_ghap(self) -> GHAPEntry | None:
     """Load with automatic corruption and I/O error recovery."""
     try:
         # Normal load path
-        async with aiofiles.open(path) as f:
+        async with aiofiles.open(path, "r", encoding="utf-8", errors="replace") as f:
             content = await f.read()
         return GHAPEntry.from_json(content)
     except FileNotFoundError:
@@ -210,11 +238,49 @@ async def _load_current_ghap(self) -> GHAPEntry | None:
 - **JSON corruption**: Backup file, reset to clean state, log error
 - All errors logged with structured context for debugging
 
+**UTF-8 Error Handling**: All `aiofiles.open()` calls use `encoding="utf-8", errors="replace"` to handle non-UTF8 bytes. Invalid byte sequences are replaced with U+FFFD (replacement character) rather than raising exceptions, ensuring files remain readable even if corrupted with binary data.
+
 **Rationale**:
 - **Fail-safe** - Corruption doesn't crash the system
 - **Evidence preservation** - Corrupted files saved for debugging
 - **Automatic recovery** - System continues with clean state
 - **Logging** - All corruption events logged for investigation
+
+#### JSONL Resilient Parsing
+
+For JSONL files (session entries), parsing is done line-by-line with per-line error recovery:
+
+```python
+async def _load_session_entries(self) -> list[GHAPEntry]:
+    """Load entries from JSONL with line-level error recovery."""
+    entries = []
+    path = self.journal_dir / "session_entries.jsonl"
+
+    if not path.exists():
+        return []
+
+    async with aiofiles.open(path, "r", encoding="utf-8", errors="replace") as f:
+        line_num = 0
+        async for line in f:
+            line_num += 1
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entries.append(GHAPEntry.from_dict(json.loads(line)))
+            except (json.JSONDecodeError, KeyError, ValueError) as e:
+                logger.warning("corrupt_entry_skipped",
+                    line_num=line_num, error=str(e))
+    return entries
+```
+
+**JSONL Error Recovery Strategy**:
+- **Per-line parsing**: Each line parsed independently
+- **Skip corrupted lines**: Invalid lines are logged and skipped, not fatal
+- **Continue loading**: Remaining valid entries are loaded successfully
+- **Warning logs**: All skipped lines logged with line number and error
+
+**Rationale**: JSONL format allows graceful degradation - a single corrupted line doesn't invalidate the entire session history. This is especially important after crashes or disk errors.
 
 #### 5. Session Management
 
@@ -674,7 +740,7 @@ Future enhancements (v2+):
    - **Recommendation**: Persist to file. Prevents spurious check-ins after restart when GHAP is still active.
 
 3. **Validation Strictness**: Should we raise errors for very long text (>10k chars) or silently truncate?
-   - **Recommendation**: Truncate with warning log. Better UX than failing the operation.
+   - **Recommendation**: Truncate with warning log. Better UX than failing the operation. Example: `logger.warning("text_truncated", field="goal", original_len=len(text), max_len=10000)`
 
 4. **Timestamp Precision**: ISO 8601 format includes microseconds. Needed for sorting?
    - **Recommendation**: Keep microseconds. Helps with debugging and uniqueness in rare cases.
