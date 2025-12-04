@@ -85,7 +85,10 @@ def _render_template(self, template: str, entry: GHAPEntry) -> str:
 
     Optional sections are removed if the field is None or empty.
 
-    Limitation: Does not support nested brackets.
+    Limitations:
+    - Does not support nested brackets (e.g., [[inner]]).
+    - Nested brackets will fail gracefully by not matching the pattern.
+    - Current templates don't require nesting, so this is acceptable.
     """
     import re
 
@@ -183,8 +186,11 @@ def _extract_fields(self, entry: GHAPEntry) -> dict[str, str]:
     # Optional fields
     if entry.surprise:
         fields["surprise"] = entry.surprise
-    if entry.lesson and entry.lesson.what_worked:
-        fields["lesson_what_worked"] = entry.lesson.what_worked
+    if entry.lesson:
+        if entry.lesson.what_worked:
+            fields["lesson_what_worked"] = entry.lesson.what_worked
+        if entry.lesson.takeaway:
+            fields["lesson_takeaway"] = entry.lesson.takeaway
     if entry.root_cause:
         fields["root_cause_category"] = entry.root_cause.category
         fields["root_cause_description"] = entry.root_cause.description
@@ -211,8 +217,11 @@ async def ensure_collections(self) -> None:
     """Ensure all axis collections exist.
 
     Creates collections if they don't exist. Safe to call multiple times.
+
     Note: VectorStore.create_collection() raises ValueError if collection
-    already exists, so we catch that specifically.
+    already exists. This is the documented behavior observed in the codebase
+    (see indexers/indexer.py lines 58-61) and matches both InMemoryVectorStore
+    and QdrantVectorStore implementations.
     """
     axes = ["full", "strategy", "surprise", "root_cause"]
     dimension = self._embedding_service.dimension  # 768 for Nomic
@@ -232,6 +241,7 @@ async def ensure_collections(self) -> None:
             )
         except ValueError as e:
             # Collection already exists - this is expected and safe
+            # ValueError is the documented exception for duplicate collections
             self._logger.debug(
                 "collection_already_exists",
                 collection=collection_name,
@@ -296,7 +306,13 @@ async def persist(self, entry: GHAPEntry) -> None:
 
 ```python
 def _determine_axes(self, entry: GHAPEntry) -> dict[str, str]:
-    """Determine which axes to embed based on entry state."""
+    """Determine which axes to embed based on entry state.
+
+    Edge case handling:
+    - If root_cause exists but surprise is None, skip both surprise and
+      root_cause axes (root_cause axis template requires surprise text).
+      This is logged as a warning since it indicates incomplete data.
+    """
     axes = {
         "full": TEMPLATE_FULL,
         "strategy": TEMPLATE_STRATEGY,
@@ -306,8 +322,16 @@ def _determine_axes(self, entry: GHAPEntry) -> dict[str, str]:
     if entry.outcome.status == OutcomeStatus.FALSIFIED:
         if entry.surprise:  # Must have surprise text
             axes["surprise"] = TEMPLATE_SURPRISE
-        if entry.root_cause:  # Must have root_cause object
-            axes["root_cause"] = TEMPLATE_ROOT_CAUSE
+            if entry.root_cause:  # Must have root_cause object
+                axes["root_cause"] = TEMPLATE_ROOT_CAUSE
+        elif entry.root_cause:
+            # Root cause exists but no surprise text - skip both axes
+            # This is a data quality issue that should be logged
+            self._logger.warning(
+                "root_cause_without_surprise",
+                ghap_id=entry.id,
+                note="Skipping root_cause axis (requires surprise text)",
+            )
 
     return axes
 ```
@@ -320,7 +344,8 @@ def _build_metadata(self, entry: GHAPEntry) -> dict[str, Any]:
     return {
         "ghap_id": entry.id,
         "session_id": entry.session_id,
-        "created_at": entry.created_at.timestamp(),  # Unix epoch seconds
+        # Timestamps are float (Unix epoch with fractional seconds)
+        "created_at": entry.created_at.timestamp(),
         "captured_at": entry.outcome.captured_at.timestamp(),
         "domain": entry.domain.value,
         "strategy": entry.strategy.value,
@@ -482,6 +507,21 @@ def test_very_long_field_values():
 
 def test_concurrent_persist_calls():
     """Verify concurrent calls to persist() are idempotent (same entry)."""
+
+def test_nested_brackets_in_template():
+    """Verify graceful failure/error for nested optional sections [[inner]]."""
+
+def test_special_regex_chars_in_field_values():
+    """Verify template handles regex special chars in field values: [ ] { } ( ) . * + ? ^ $ \\ |"""
+
+def test_all_confidence_tier_values():
+    """Verify metadata construction for all ConfidenceTier enum values (gold, silver, bronze, abandoned)."""
+
+def test_literal_template_syntax_in_fields():
+    """Verify fields containing literal text like '{field}' or '[optional]' are rendered correctly."""
+
+def test_root_cause_without_surprise():
+    """Verify root_cause axis is skipped when root_cause exists but surprise is None (logs warning)."""
 ```
 
 ### 7.2 Integration Tests
