@@ -29,6 +29,8 @@ dependencies = [
 dev = [
     "pytest",
     "pytest-asyncio",
+    "pytest-mock",
+    "hypothesis",
     "ruff",
     "mypy",
 ]
@@ -51,7 +53,7 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["structlog", "mcp.*", "aiofiles"]
+module = ["structlog", "mcp.*", "aiofiles", "hdbscan"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
