@@ -302,6 +302,30 @@ sqlite3 -header -column .claude/clams.db \
 
 Full test output is saved to `test_output.log` in the worktree.
 
+### Monitoring Gate Checks and Tests
+
+**Do NOT use BashOutput to poll gate/test status.** BashOutput truncates long output and may show stale "running" status even after completion.
+
+Instead, **read the log file directly**:
+
+```bash
+# Check test progress/results - read last 50 lines of test log
+Read tool: .worktrees/{TASK_ID}/test_output.log (offset from end)
+
+# Or check the full gate output if needed
+Read tool: .worktrees/{TASK_ID}/test_output.log
+```
+
+**Recommended pattern for gate checks:**
+1. Run gate check in **foreground** (not background) - they typically complete in 30-60 seconds
+2. If the command appears to hang or output is truncated, read `test_output.log` directly
+3. The log file contains complete, untruncated output
+
+**Why this matters:**
+- BashOutput truncates at ~30000 characters - gate results at the end get cut off
+- BashOutput status can show "running" for completed processes
+- The log file is always complete and accurate
+
 ### Integration
 
 When task reaches INTEGRATE:
