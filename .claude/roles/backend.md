@@ -31,7 +31,7 @@ You are the Backend Developer. Your role is server-side implementation.
 Before requesting review:
 ```bash
 # Run tests in fail-fast verbose mode with logging
-pytest -xvs 2>&1 | tee test_output.log
+pytest -vvsx 2>&1 | tee test_output.log
 # Or for other languages, equivalent approach
 ```
 

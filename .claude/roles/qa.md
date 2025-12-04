@@ -36,7 +36,7 @@ When running the full test suite:
 
 ```bash
 # Run full suite (excluding E2E)
-pytest -xvs --ignore=tests/e2e 2>&1 | tee test_output.log
+pytest -vvsx --ignore=tests/e2e 2>&1 | tee test_output.log
 ```
 
 ### Test Phase Checklist
@@ -52,7 +52,7 @@ pytest -xvs --ignore=tests/e2e 2>&1 | tee test_output.log
 
 When verifying after integration:
 
-1. **Run tests on main**: `pytest -xvs`
+1. **Run tests on main**: `pytest -vvsx`
 2. **Check** acceptance criteria one by one against the merged code
 3. **Verify** no orphaned code (unused functions, dead imports)
 4. **Confirm** documentation updated if behavior changed

@@ -206,11 +206,11 @@ run_pytest() {
         pip install -e ".[dev]" --quiet 2>/dev/null || pip install -e . --quiet 2>/dev/null || true
         echo ""
 
-        pytest -xvs --ignore=tests/e2e 2>&1 | tee test_output.log || exit_code=$?
+        pytest -vvsx --ignore=tests/e2e 2>&1 | tee test_output.log || exit_code=$?
         read -r total passed failed errors skipped duration <<< "$(parse_pytest_text test_output.log)"
     else
         # No pyproject.toml, just run pytest
-        pytest -xvs --ignore=tests/e2e 2>&1 | tee test_output.log || exit_code=$?
+        pytest -vvsx --ignore=tests/e2e 2>&1 | tee test_output.log || exit_code=$?
         read -r total passed failed errors skipped duration <<< "$(parse_pytest_text test_output.log)"
     fi
 

@@ -267,7 +267,7 @@ After worker completes:
 - Transition: `.claude/bin/clams-task transition TASK-XXX VERIFY --gate-result pass`
 
 **VERIFY → DONE** (runs on main branch, worktree is gone)
-- Run tests on main: `pytest -xvs`
+- Run tests on main: `pytest -vvsx`
 - Dispatch QA/Product worker to verify acceptance criteria
 - Manually check for orphaned code (grep for dead imports, unused functions)
 - QA confirms all criteria met

@@ -30,7 +30,7 @@ You are the Planning Agent. Your role is to decompose specifications into sized,
 ## Output Format
 
 For each task, specify:
-- **ID**: Unique identifier (e.g., SPEC-001-TASK-01)
+- **ID**: Unique identifier (e.g., SPEC-001-01)
 - **Title**: Clear, action-oriented title
 - **Specialist**: Which role should implement
 - **Dependencies**: Other task IDs this depends on (or "none")

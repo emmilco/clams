@@ -42,8 +42,7 @@ This codebase has no external users and no legacy constraints. All code was writ
 - "Pre-existing" code has no special status - improve it
 
 ### Testing
-- Fail-fast mode always (`-x`)
-- Verbose output always (`-v`)
+- Use `-vvsx` flags: very verbose (`-vv`), no capture (`-s`), fail-fast (`-x`)
 - Log to file always (`2>&1 | tee test_output.log`)
 - First failure gets full attention
 
