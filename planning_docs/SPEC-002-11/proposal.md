@@ -102,16 +102,20 @@ logger = structlog.get_logger()
 
 
 class ServiceContainer:
-    """Container for shared services used by MCP tools."""
+    """Container for shared services used by MCP tools.
+
+    Services that depend on incomplete specs (SPEC-002-06, 07, 09) are optional
+    and initialized lazily when needed.
+    """
 
     def __init__(
         self,
         embedding_service: EmbeddingService,
         vector_store: VectorStore,
         metadata_store: MetadataStore,
-        code_indexer: CodeIndexer,
-        git_analyzer: GitAnalyzer,
-        searcher: Searcher,
+        code_indexer: CodeIndexer | None = None,
+        git_analyzer: GitAnalyzer | None = None,
+        searcher: Searcher | None = None,
     ):
         self.embedding_service = embedding_service
         self.vector_store = vector_store
@@ -124,6 +128,10 @@ class ServiceContainer:
 def initialize_services(settings: ServerSettings) -> ServiceContainer:
     """Initialize all services for MCP tools.
 
+    Core services (embedding, vector, metadata) are always initialized.
+    Optional services (code, git, search) are only initialized if their
+    dependencies (SPEC-002-06, 07, 09) are complete.
+
     Args:
         settings: Server configuration
 
@@ -132,23 +140,26 @@ def initialize_services(settings: ServerSettings) -> ServiceContainer:
     """
     logger.info("services.initializing")
 
-    # Core infrastructure
+    # Core infrastructure (always available)
     embedding_service = NomicEmbedding(model_name=settings.embedding_model)
     vector_store = QdrantVectorStore(url=settings.qdrant_url)
     metadata_store = MetadataStore(db_path=settings.db_path)
 
-    # Code indexing
-    code_parser = TreeSitterParser()
-    code_indexer = CodeIndexer(
-        parser=code_parser,
-        embedding_service=embedding_service,
-        vector_store=vector_store,
-        metadata_store=metadata_store,
-    )
+    # Code indexing (optional - depends on SPEC-002-06)
+    code_indexer = None
+    try:
+        code_parser = TreeSitterParser()
+        code_indexer = CodeIndexer(
+            parser=code_parser,
+            embedding_service=embedding_service,
+            vector_store=vector_store,
+            metadata_store=metadata_store,
+        )
+        logger.info("code.initialized")
+    except Exception as e:
+        logger.warning("code.init_failed", error=str(e))
 
-    # Git analysis (initialized lazily - only when first git tool is called)
-    # Rationale: Not all users will use git tools, so avoid git repo detection overhead
-    git_reader = None
+    # Git analysis (optional - depends on SPEC-002-07)
     git_analyzer = None
     if settings.repo_path:
         try:
@@ -163,13 +174,21 @@ def initialize_services(settings: ServerSettings) -> ServiceContainer:
         except Exception as e:
             logger.warning("git.init_failed", error=str(e))
 
-    # Search service
-    searcher = Searcher(
-        embedding_service=embedding_service,
-        vector_store=vector_store,
-    )
+    # Search service (optional - depends on SPEC-002-09)
+    searcher = None
+    try:
+        searcher = Searcher(
+            embedding_service=embedding_service,
+            vector_store=vector_store,
+        )
+        logger.info("searcher.initialized")
+    except Exception as e:
+        logger.warning("searcher.init_failed", error=str(e))
 
-    logger.info("services.initialized")
+    logger.info("services.initialized",
+        has_code=code_indexer is not None,
+        has_git=git_analyzer is not None,
+        has_searcher=searcher is not None)
 
     return ServiceContainer(
         embedding_service=embedding_service,
@@ -223,17 +242,11 @@ from learning_memory_server.server.tools import ServiceContainer
 logger = structlog.get_logger()
 
 # Valid memory categories (from SPEC-001)
-VALID_CATEGORIES = {"preference", "fact", "event", "workflow", "context"}
+VALID_CATEGORIES = {"preference", "fact", "event", "workflow", "context", "error", "decision"}
 
 
-class MemoryToolError(Exception):
-    """Base error for memory tool failures."""
-    pass
-
-
-class ValidationError(MemoryToolError):
-    """Input validation failed."""
-    pass
+# Import shared error classes from spec
+from learning_memory_server.errors import MCPError, ValidationError, StorageError
 
 
 def register_memory_tools(server: Server, services: ServiceContainer) -> None:
@@ -275,18 +288,20 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
                 f"Must be one of: {', '.join(sorted(VALID_CATEGORIES))}"
             )
 
-        # Truncate content if too long
+        # Validate content length
         max_length = 10_000
         if len(content) > max_length:
-            logger.warning("memory.content_truncated",
-                original_len=len(content), max_len=max_length)
-            content = content[:max_length]
+            raise ValidationError(
+                f"Content too long ({len(content)} chars). "
+                f"Maximum allowed is {max_length} characters."
+            )
 
-        # Clamp importance to valid range
+        # Validate importance range
         if not 0.0 <= importance <= 1.0:
-            logger.warning("memory.importance_clamped",
-                original=importance, clamped=max(0.0, min(1.0, importance)))
-            importance = max(0.0, min(1.0, importance))
+            raise ValidationError(
+                f"Importance {importance} out of range. "
+                f"Must be between 0.0 and 1.0."
+            )
 
         tags = tags or []
 
@@ -321,7 +336,7 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
 
         except Exception as e:
             logger.error("memory.store_failed", error=str(e), exc_info=True)
-            raise MemoryToolError(f"Failed to store memory: {e}") from e
+            raise MCPError(f"Failed to store memory: {e}") from e
 
 
     @server.call_tool()
@@ -363,11 +378,11 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
             query_embedding = await services.embedding_service.embed(query)
 
             # Build filters
+            # NOTE: Advanced operators like $gte may not be supported by all
+            # VectorStore implementations. For now, we filter post-search.
             filters = {}
             if category:
                 filters["category"] = category
-            if min_importance > 0.0:
-                filters["importance"] = {"$gte": min_importance}
 
             # Search
             results = await services.vector_store.search(
@@ -376,6 +391,13 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
                 limit=limit,
                 filters=filters if filters else None,
             )
+
+            # Post-filter by importance if needed
+            if min_importance > 0.0:
+                results = [
+                    r for r in results
+                    if r.payload.get("importance", 0.0) >= min_importance
+                ]
 
             # Format results
             formatted = [
@@ -392,7 +414,7 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
 
         except Exception as e:
             logger.error("memory.retrieve_failed", error=str(e), exc_info=True)
-            raise MemoryToolError(f"Failed to retrieve memories: {e}") from e
+            raise MCPError(f"Failed to retrieve memories: {e}") from e
 
 
     @server.call_tool()
@@ -425,11 +447,11 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
 
         try:
             # Build filters
+            # NOTE: Advanced operators like $in may not be supported by all
+            # VectorStore implementations. We filter post-scroll for tags.
             filters = {}
             if category:
                 filters["category"] = category
-            if tags:
-                filters["tags"] = {"$in": tags}
 
             # Get count first
             total = await services.vector_store.count(
@@ -438,13 +460,25 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
             )
 
             # Scroll through results
+            # NOTE: VectorStore.scroll() doesn't support offset parameter.
+            # We fetch more results and slice them manually for pagination.
+            fetch_limit = offset + limit
             results = await services.vector_store.scroll(
                 collection="memories",
-                limit=limit,
-                offset=offset,
+                limit=fetch_limit,
                 filters=filters if filters else None,
                 with_vectors=False,
             )
+
+            # Post-filter by tags if needed (ANY match)
+            if tags:
+                results = [
+                    r for r in results
+                    if any(tag in r.payload.get("tags", []) for tag in tags)
+                ]
+
+            # Apply pagination manually
+            results = results[offset:offset + limit]
 
             # Sort by created_at descending
             sorted_results = sorted(
@@ -465,7 +499,7 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
 
         except Exception as e:
             logger.error("memory.list_failed", error=str(e), exc_info=True)
-            raise MemoryToolError(f"Failed to list memories: {e}") from e
+            raise MCPError(f"Failed to list memories: {e}") from e
 
 
     @server.call_tool()
@@ -499,11 +533,11 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
 **Key Design Decisions**:
 
 1. **UUID for IDs**: Random UUIDs ensure uniqueness without coordination
-2. **Truncation over rejection**: Long content truncated with warning, not rejected
-3. **Clamping over rejection**: Out-of-range values clamped, not rejected
-4. **Soft delete failure**: delete_memory returns `deleted: false` instead of raising error
-5. **Structured logging**: All operations logged with context for debugging
-6. **Timezone-aware timestamps**: All datetimes are UTC with timezone info
+2. **Strict validation**: Content length and importance range validated with helpful errors (no silent truncation/clamping per spec line 741)
+3. **Soft delete failure**: delete_memory returns `deleted: false` instead of raising error
+4. **Structured logging**: All operations logged with context for debugging
+5. **Timezone-aware timestamps**: All datetimes are UTC with timezone info
+6. **Post-filtering for advanced operators**: Since VectorStore doesn't guarantee support for operators like `$gte` and `$in`, we filter results after retrieval
 
 ---
 
@@ -521,18 +555,16 @@ from learning_memory_server.server.tools import ServiceContainer
 logger = structlog.get_logger()
 
 
-class CodeToolError(Exception):
-    """Base error for code tool failures."""
-    pass
-
-
-class ValidationError(CodeToolError):
-    """Input validation failed."""
-    pass
+# Import shared error classes from spec
+from learning_memory_server.errors import MCPError, ValidationError, StorageError
 
 
 def register_code_tools(server: Server, services: ServiceContainer) -> None:
-    """Register code tools with MCP server."""
+    """Register code tools with MCP server.
+
+    If CodeIndexer is not available (SPEC-002-06 incomplete), tools will be
+    registered but return helpful errors.
+    """
 
     @server.call_tool()
     async def index_codebase(
@@ -551,6 +583,13 @@ def register_code_tools(server: Server, services: ServiceContainer) -> None:
             Indexing statistics
         """
         logger.info("code.index", directory=directory, project=project)
+
+        # Check if code indexer is available
+        if not services.code_indexer:
+            raise MCPError(
+                "Code indexing not available. "
+                "CodeIndexer service not initialized (SPEC-002-06 may be incomplete)."
+            )
 
         try:
             # Validate directory exists
@@ -593,7 +632,7 @@ def register_code_tools(server: Server, services: ServiceContainer) -> None:
             raise
         except Exception as e:
             logger.error("code.index_failed", error=str(e), exc_info=True)
-            raise CodeToolError(f"Failed to index codebase: {e}") from e
+            raise MCPError(f"Failed to index codebase: {e}") from e
 
 
     @server.call_tool()
@@ -615,6 +654,13 @@ def register_code_tools(server: Server, services: ServiceContainer) -> None:
             Search results with scores
         """
         logger.info("code.search", query=query[:50], project=project)
+
+        # Check if code indexer is available
+        if not services.code_indexer:
+            raise MCPError(
+                "Code search not available. "
+                "CodeIndexer service not initialized (SPEC-002-06 may be incomplete)."
+            )
 
         # Clamp limit
         limit = max(1, min(50, limit))
@@ -657,7 +703,7 @@ def register_code_tools(server: Server, services: ServiceContainer) -> None:
 
         except Exception as e:
             logger.error("code.search_failed", error=str(e), exc_info=True)
-            raise CodeToolError(f"Failed to search code: {e}") from e
+            raise MCPError(f"Failed to search code: {e}") from e
 
 
     @server.call_tool()
@@ -678,12 +724,20 @@ def register_code_tools(server: Server, services: ServiceContainer) -> None:
         """
         logger.info("code.find_similar", snippet_len=len(snippet))
 
-        # Truncate snippet if too long
+        # Check if code indexer is available
+        if not services.code_indexer:
+            raise MCPError(
+                "Code similarity search not available. "
+                "CodeIndexer service not initialized (SPEC-002-06 may be incomplete)."
+            )
+
+        # Validate snippet length
         max_length = 5_000
         if len(snippet) > max_length:
-            logger.warning("code.snippet_truncated",
-                original_len=len(snippet), max_len=max_length)
-            snippet = snippet[:max_length]
+            raise ValidationError(
+                f"Snippet too long ({len(snippet)} chars). "
+                f"Maximum allowed is {max_length} characters."
+            )
 
         # Clamp limit
         limit = max(1, min(50, limit))
@@ -722,16 +776,17 @@ def register_code_tools(server: Server, services: ServiceContainer) -> None:
 
         except Exception as e:
             logger.error("code.find_similar_failed", error=str(e), exc_info=True)
-            raise CodeToolError(f"Failed to find similar code: {e}") from e
+            raise MCPError(f"Failed to find similar code: {e}") from e
 ```
 
 **Key Design Decisions**:
 
 1. **Path validation**: Check directory exists before indexing
 2. **Error accumulation**: Individual file errors collected, not thrown
-3. **Snippet truncation**: Long snippets truncated for embedding performance
+3. **Strict snippet validation**: Long snippets rejected with ValidationError (no silent truncation per spec line 741)
 4. **Language normalization**: Language filter lowercased for consistency
 5. **Empty query handling**: Return empty results, not an error
+6. **Graceful degradation**: Tools registered even if CodeIndexer unavailable, but return helpful errors
 
 ---
 
@@ -750,24 +805,16 @@ from learning_memory_server.server.tools import ServiceContainer
 logger = structlog.get_logger()
 
 
-class GitToolError(Exception):
-    """Base error for git tool failures."""
-    pass
-
-
-class ValidationError(GitToolError):
-    """Input validation failed."""
-    pass
+# Import shared error classes from spec
+from learning_memory_server.errors import MCPError, ValidationError, StorageError
 
 
 def register_git_tools(server: Server, services: ServiceContainer) -> None:
-    """Register git tools with MCP server."""
+    """Register git tools with MCP server.
 
-    # Check if git analyzer is available
-    if not services.git_analyzer:
-        logger.warning("git.tools_disabled",
-            reason="git_analyzer_not_initialized")
-        return
+    Tools are registered even if GitAnalyzer is not available (SPEC-002-07
+    incomplete), but will return helpful errors when called.
+    """
 
     @server.call_tool()
     async def search_commits(
@@ -788,6 +835,13 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
             Matching commits with scores
         """
         logger.info("git.search_commits", query=query[:50], author=author)
+
+        # Check if git analyzer is available
+        if not services.git_analyzer:
+            raise MCPError(
+                "Git commit search not available. "
+                "GitAnalyzer service not initialized (SPEC-002-07 may be incomplete or no git repository detected)."
+            )
 
         # Clamp limit
         limit = max(1, min(50, limit))
@@ -838,7 +892,7 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
 
         except Exception as e:
             logger.error("git.search_commits_failed", error=str(e), exc_info=True)
-            raise GitToolError(f"Failed to search commits: {e}") from e
+            raise MCPError(f"Failed to search commits: {e}") from e
 
 
     @server.call_tool()
@@ -856,6 +910,13 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
             Commit history for the file
         """
         logger.info("git.file_history", path=path, limit=limit)
+
+        # Check if git analyzer is available
+        if not services.git_analyzer:
+            raise MCPError(
+                "Git file history not available. "
+                "GitAnalyzer service not initialized (SPEC-002-07 may be incomplete or no git repository detected)."
+            )
 
         # Clamp limit
         limit = max(1, min(500, limit))
@@ -889,7 +950,7 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
             raise ValidationError(f"File not found in repository: {path}") from e
         except Exception as e:
             logger.error("git.file_history_failed", error=str(e), exc_info=True)
-            raise GitToolError(f"Failed to get file history: {e}") from e
+            raise MCPError(f"Failed to get file history: {e}") from e
 
 
     @server.call_tool()
@@ -907,6 +968,13 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
             Files with highest churn
         """
         logger.info("git.churn_hotspots", days=days, limit=limit)
+
+        # Check if git analyzer is available
+        if not services.git_analyzer:
+            raise MCPError(
+                "Git churn analysis not available. "
+                "GitAnalyzer service not initialized (SPEC-002-07 may be incomplete or no git repository detected)."
+            )
 
         # Clamp parameters
         days = max(1, min(365, days))
@@ -939,7 +1007,7 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
 
         except Exception as e:
             logger.error("git.churn_failed", error=str(e), exc_info=True)
-            raise GitToolError(f"Failed to compute churn hotspots: {e}") from e
+            raise MCPError(f"Failed to compute churn hotspots: {e}") from e
 
 
     @server.call_tool()
@@ -953,6 +1021,13 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
             Author contribution statistics
         """
         logger.info("git.code_authors", path=path)
+
+        # Check if git analyzer is available
+        if not services.git_analyzer:
+            raise MCPError(
+                "Git author analysis not available. "
+                "GitAnalyzer service not initialized (SPEC-002-07 may be incomplete or no git repository detected)."
+            )
 
         try:
             # Delegate to GitAnalyzer
@@ -980,12 +1055,12 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
             raise ValidationError(f"File not found in repository: {path}") from e
         except Exception as e:
             logger.error("git.code_authors_failed", error=str(e), exc_info=True)
-            raise GitToolError(f"Failed to get code authors: {e}") from e
+            raise MCPError(f"Failed to get code authors: {e}") from e
 ```
 
 **Key Design Decisions**:
 
-1. **Graceful git disable**: If git_analyzer not initialized, skip registration with warning
+1. **Graceful degradation**: Tools registered even if GitAnalyzer unavailable, but return helpful errors
 2. **Date parsing**: Parse ISO date strings to datetime objects with validation
 3. **Parameter clamping**: Clamp days and limit to reasonable ranges
 4. **FileNotFoundError handling**: Convert to ValidationError for clearer messaging
@@ -1068,16 +1143,13 @@ async def test_store_memory_invalid_category(mock_server, mock_services):
 
 
 @pytest.mark.asyncio
-async def test_store_memory_truncates_long_content(mock_server, mock_services):
-    """Test content truncation for long inputs."""
+async def test_store_memory_rejects_long_content(mock_server, mock_services):
+    """Test validation error for content that's too long."""
     register_memory_tools(mock_server, mock_services)
-    mock_services.embedding_service.embed.return_value = [0.1] * 768
 
     long_content = "x" * 15_000
-    result = await store_memory(content=long_content, category="fact")
-
-    assert len(result["content"]) == 10_000
-    mock_services.embedding_service.embed.assert_called_once()
+    with pytest.raises(ValidationError, match="Content too long"):
+        await store_memory(content=long_content, category="fact")
 
 
 @pytest.mark.asyncio

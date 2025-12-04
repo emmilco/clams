@@ -45,7 +45,7 @@ Enable Claude Code agents to store and retrieve verified memories with semantic 
 ```python
 {
     "content": str,           # Required: Memory content (max 10,000 chars)
-    "category": str,          # Required: One of: preference, fact, event, workflow, context
+    "category": str,          # Required: One of: preference, fact, event, workflow, context, error, decision
     "importance": float,      # Optional: 0.0-1.0, default 0.5
     "tags": list[str],        # Optional: Tags for categorization
 }
@@ -71,9 +71,9 @@ Enable Claude Code agents to store and retrieve verified memories with semantic 
 5. Return memory record
 
 **Error Handling**:
-- Content too long (>10k chars): Truncate with warning
-- Invalid category: Raise ValueError with valid options
-- Importance out of range: Clamp to [0.0, 1.0] with warning
+- Content too long (>10k chars): Raise ValidationError with limit
+- Invalid category: Raise ValidationError with valid options
+- Importance out of range: Raise ValidationError with valid range [0.0, 1.0]
 - Embedding failure: Raise MCPError with details
 - Storage failure: Raise MCPError with details
 
@@ -117,8 +117,8 @@ Enable Claude Code agents to store and retrieve verified memories with semantic 
 
 **Error Handling**:
 - Empty query: Return empty results (not an error)
-- Invalid category: Raise ValueError with valid options
-- Limit out of range: Clamp to [1, 100] with warning
+- Invalid category: Raise ValidationError with valid options
+- Limit out of range: Raise ValidationError with valid range [1, 100]
 - Embedding failure: Raise MCPError
 - Search failure: Raise MCPError
 
@@ -160,8 +160,9 @@ Enable Claude Code agents to store and retrieve verified memories with semantic 
 3. Return results sorted by created_at (newest first)
 
 **Error Handling**:
-- Invalid category: Raise ValueError
-- Offset/limit negative: Clamp to 0
+- Invalid category: Raise ValidationError with valid options
+- Offset negative: Raise ValidationError (must be >= 0)
+- Limit out of range: Raise ValidationError with valid range [1, 200]
 - Storage failure: Raise MCPError
 
 #### delete_memory
@@ -290,8 +291,8 @@ Enable semantic code search and codebase indexing.
 
 **Error Handling**:
 - Empty query: Return empty results
-- Invalid language: Raise ValueError with supported languages
-- Limit out of range: Clamp to [1, 50]
+- Invalid language: Raise ValidationError with supported languages
+- Limit out of range: Raise ValidationError with valid range [1, 50]
 - Embedding failure: Raise MCPError
 - Search failure: Raise MCPError
 
@@ -326,7 +327,8 @@ Enable semantic code search and codebase indexing.
 
 **Error Handling**:
 - Empty snippet: Return empty results
-- Snippet too long (>5k chars): Truncate with warning
+- Snippet too long (>5k chars): Raise ValidationError with limit
+- Limit out of range: Raise ValidationError with valid range [1, 50]
 - Embedding failure: Raise MCPError
 - Search failure: Raise MCPError
 
@@ -383,8 +385,8 @@ Enable semantic commit search and churn analysis.
 
 **Error Handling**:
 - Empty query: Return empty results
-- Invalid date format: Raise ValueError
-- Invalid author filter: No error, just no matches
+- Invalid date format: Raise ValidationError with expected format
+- Limit out of range: Raise ValidationError with valid range [1, 50]
 - Embedding failure: Raise MCPError
 - Search failure: Raise MCPError
 
@@ -425,7 +427,7 @@ Enable semantic commit search and churn analysis.
 
 **Error Handling**:
 - File not in repo: Raise FileNotFoundError
-- Limit out of range: Clamp to [1, 500]
+- Limit out of range: Raise ValidationError with valid range [1, 500]
 - Git operation failure: Raise MCPError
 
 #### get_churn_hotspots
@@ -464,7 +466,8 @@ Enable semantic commit search and churn analysis.
 3. Return results sorted by change_count (descending)
 
 **Error Handling**:
-- Days/limit out of range: Clamp to valid ranges
+- Days out of range: Raise ValidationError with valid range [1, 365]
+- Limit out of range: Raise ValidationError with valid range [1, 50]
 - No git repository: Raise RepositoryNotFoundError
 - Git operation failure: Raise MCPError
 
@@ -734,8 +737,8 @@ async def test_memory_workflow_end_to_end():
 
 1. ✅ All tools handle edge cases gracefully (empty results, not found, etc.)
 2. ✅ Large payloads prevented via result limiting
-3. ✅ Long strings truncated with warnings logged
-4. ✅ Invalid inputs raise appropriate errors with helpful messages
+3. ✅ Invalid inputs rejected with ValidationError and helpful messages (no silent clamping)
+4. ✅ Content/snippet length limits enforced strictly
 5. ✅ Async operations never block event loop
 6. ✅ Structured logging for all operations (success and failure)
 
