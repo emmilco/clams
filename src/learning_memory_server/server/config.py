@@ -20,7 +20,7 @@ class ServerSettings(BaseSettings):
     qdrant_url: str = "http://localhost:6333"
 
     # Embedding configuration
-    embedding_model: str = "nomic-embed-text"
+    embedding_model: str = "nomic-ai/nomic-embed-text-v1.5"
     embedding_dimension: int = 768
 
     # Clustering configuration
@@ -29,6 +29,9 @@ class ServerSettings(BaseSettings):
 
     # GHAP collection configuration
     ghap_check_frequency: int = 10
+
+    # Git repository path (optional, for git tools)
+    repo_path: str | None = None
 
     # Logging configuration
     log_level: str = "INFO"
