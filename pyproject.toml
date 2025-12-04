@@ -62,3 +62,8 @@ testpaths = ["tests"]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
 ]
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.148.6",
+]
