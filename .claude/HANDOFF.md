@@ -1,127 +1,89 @@
-# Session Handoff - 2025-12-04 (Evening)
+# Session Handoff - 2025-12-04 (Night)
 
 ## Session Summary
 
-This session focused on **workflow improvements** and **fixing gate check issues**:
+This session focused on **fixing mypy/linter issues** and **advancing tasks through CODE_REVIEW**:
 
-1. **Discovered critical workflow bug**: SPEC-002-12 and SPEC-002-13 went through the entire pipeline without any actual implementation code - only documentation was committed
-2. **Renamed REVIEW phase to CODE_REVIEW** for clarity
-3. **Added implementation code check** to prevent docs-only changes from passing gates
-4. **Made transitions enforce review requirements** from database
-5. **Clarified ownership** at each phase (who runs gates, who transitions)
-6. **Started fixing mypy/linter issues** across worktrees (incomplete)
+1. **Fixed mypy issues** in SPEC-002-14, 15, 18, 19 (changed `# type: ignore[misc]` to `# type: ignore[untyped-decorator]`)
+2. **Fixed linter issues** via `ruff check --fix` and manual fixes
+3. **Passed IMPLEMENT-CODE_REVIEW gates** for all 4 tasks
+4. **Completed 2 code reviews** for SPEC-002-14, 15, 18, 19 (all approved)
+5. **Transitioned to INTEGRATE** for SPEC-002-15, 18, 19
+6. **Discovered critical model incompatibility** in SPEC-002-14 during merge
 
-## Critical Workflow Fixes Applied
+## CRITICAL: SPEC-002-14 Must Return to Architect
 
-### Phase Rename
-- `REVIEW` → `CODE_REVIEW` throughout the system
-- Updated: `clams-gate`, `clams-task`, `CLAUDE.md`, `reviewer.md`, database
+**SPEC-002-14 (ObservationPersister)** was set back to DESIGN phase because:
 
-### New Gate: Implementation Code Exists
-```
-IMPLEMENT → CODE_REVIEW now checks:
-  git diff main...HEAD --name-only -- src/ tests/
-```
-If no code changes in src/ or tests/, the gate **FAILS**.
+- The branch uses **Pydantic models** for GHAPEntry, Outcome, RootCause, Lesson
+- Main branch (from SPEC-002-08) uses **dataclass models** with different structure
+- Key structural differences:
+  - Main: `entry.surprise`, `entry.root_cause`, `entry.lesson` are on GHAPEntry directly
+  - SPEC-002-14: These were nested under `entry.outcome`
+  - Main: `Outcome.auto_captured`
+  - SPEC-002-14: `GHAPEntry.auto_captured`
+  - Main: Has `HistoryEntry` class and `history: list[HistoryEntry]` on GHAPEntry
+  - SPEC-002-14: No history tracking
 
-### Transition Enforcement
-`clams-task transition` now verifies reviews exist in DB before allowing:
-- SPEC → DESIGN: 2 approved spec reviews
-- DESIGN → IMPLEMENT: 2 approved proposal reviews
-- CODE_REVIEW → TEST: 2 approved code reviews
-
-### Ownership Clarification
-Workers now run their own transitions (gate check + transition command), except for human-approval gates.
+**Action Required**: Dispatch Architect to revise proposal for SPEC-002-14 to work with main's dataclass models. The persister.py and templates.py need to be rewritten to use the correct model structure.
 
 ## Active Tasks by Phase
 
-### IMPLEMENT (7 tasks - need gate checks)
-| Task | Title | Status |
-|------|-------|--------|
-| SPEC-002-14 | ObservationPersister | Mypy: 1 error fixed, needs re-check |
-| SPEC-002-15 | MCP tools GHAP/learning | Mypy: decorators partially fixed |
-| SPEC-002-18 | ContextAssembler | Mypy + linter issues need fixes |
-| SPEC-002-19 | Hook scripts | Mypy + linter issues need fixes |
-| SPEC-002-06 | CodeParser + CodeIndexer | Tests pass, needs full gate check |
-| SPEC-002-12 | Clusterer HDBSCAN | **No implementation - needs re-work** |
-| SPEC-002-13 | ValueStore | **No implementation - needs re-work** |
+### DESIGN (1 task - needs architect)
+| Task | Title | Action Needed |
+|------|-------|---------------|
+| SPEC-002-14 | ObservationPersister | **Architect must revise proposal to use main's dataclass models** |
 
-### CODE_REVIEW (1 task)
+### TEST (2 tasks)
 | Task | Title | Status |
 |------|-------|--------|
-| SPEC-002-11 | MCP tools memory/code/git | Awaiting reviewers |
+| SPEC-002-06 | CodeParser + CodeIndexer | Awaiting TEST-INTEGRATE gate |
+| SPEC-002-13 | ValueStore | Awaiting TEST-INTEGRATE gate |
+
+### INTEGRATE (5 tasks - ready for merge)
+| Task | Title | Status |
+|------|-------|--------|
+| SPEC-002-15 | MCP tools GHAP/learning | Ready to merge (gate passed) |
+| SPEC-002-18 | ContextAssembler | Ready to merge (gate passed) |
+| SPEC-002-19 | Hook scripts | Ready to merge (gate passed) |
+| SPEC-002-11 | MCP tools memory/code/git | Awaiting merge |
+| SPEC-002-12 | Clusterer HDBSCAN | Awaiting merge (NOTE: may have same issue as 14) |
 
 ### DONE (8 tasks)
 SPEC-002-01, 02, 03, 04, 05, 07, 08, 09
 
-## Work in Progress (Incomplete)
+## Friction Points This Session
 
-### Mypy/Linter Fixes Started But Not Complete
-Fixed in some worktrees:
-- `storage/qdrant.py:251`: Added `# type: ignore[arg-type]` for Filter variance
-- `server/tools/__init__.py`: Changed decorator type ignore to `# type: ignore[misc]`
+1. **Model architecture divergence** - SPEC-002-14 was developed with Pydantic models while SPEC-002-08 (already on main) uses dataclasses. This wasn't caught until merge time. **Recommendation**: Architect should verify model compatibility with main before finalizing proposals.
 
-Still need fixes:
-- SPEC-002-15: Multiple decorator type ignores in ghap.py, learning.py, search.py
-- SPEC-002-18: Linter issues (line too long, UTC alias)
-- SPEC-002-19: Linter issues (unused import, import order)
+2. **Merge conflicts require manual resolution** - The observation module has complex conflicts between dataclass and Pydantic implementations. Simple merge strategies don't work.
 
-### Common Mypy Pattern
-All MCP tools use `@server.call_tool()` which is untyped. Fix is:
-```python
-@server.call_tool()  # type: ignore[misc]
-```
+3. **Type ignore comments evolving** - The correct mypy ignore for MCP decorators is `# type: ignore[untyped-decorator]`, not `misc` or `no-untyped-call`. This pattern needs to be consistent across all tool files.
 
-## Friction Points
+4. **Background shell sessions accumulating** - Gate checks run in background but their status shows "running" even after completion. Use `BashOutput` or read log files directly.
 
-1. **Workflow let implementation-free tasks through** - Discovered SPEC-002-12/13 were "implemented" with only documentation. Root cause: gate checks ran full test suite (which passed because no new tests), didn't verify new code added.
+## Recommendations for Next Session
 
-2. **Phase naming confusion** - "REVIEW" phase was for code review, but spec/proposal reviews happen earlier. Renamed to CODE_REVIEW for clarity.
-
-3. **Transition enforcement was advisory** - `clams-task transition` accepted `--gate-result pass` without verifying reviews. Now enforces review count from database.
-
-4. **Mypy strict mode + untyped libraries** - MCP library decorators aren't typed, causing mypy --strict failures. Need type ignores.
+1. **Dispatch Architect for SPEC-002-14** immediately - have them update the proposal to specify using main's dataclass models
+2. **Merge SPEC-002-15, 18, 19** first (they have no model conflicts)
+3. **Check SPEC-002-12 for similar issues** before merging - it may also have model incompatibilities
+4. **Consider adding model compatibility check** to DESIGN phase gates
 
 ## Next Steps (Priority Order)
 
-1. **Complete mypy/linter fixes** for SPEC-002-14, 15, 18, 19:
-   - Replace `# type: ignore[no-untyped-call, misc]` with `# type: ignore[misc]` in all tool files
-   - Run `ruff check --fix` for auto-fixable linter issues
-   - Manual fixes for line length and other issues
-
-2. **Run gate checks** for tasks with fixed code:
-   ```bash
-   .claude/bin/clams-gate check SPEC-002-14 IMPLEMENT-CODE_REVIEW
-   # ... etc
-   ```
-
-3. **Re-implement SPEC-002-12 (Clusterer)** - Has spec/proposal but no code
-
-4. **Re-implement SPEC-002-13 (ValueStore)** - Depends on Clusterer, also needs code
-
-5. **Process CODE_REVIEW backlog** - SPEC-002-11 awaits code reviewers
-
-## Files Changed This Session
-
-### Main Repo
-- `CLAUDE.md` - Phase model, ownership, gate requirements
-- `.claude/bin/clams-gate` - IMPLEMENT-CODE_REVIEW checks for code
-- `.claude/bin/clams-task` - Transition enforcement
-- `.claude/roles/reviewer.md` - Step 1: verify code exists
-
-### Worktrees (partial mypy fixes)
-- `.worktrees/SPEC-002-14/src/learning_memory_server/storage/qdrant.py`
-- `.worktrees/SPEC-002-14/src/learning_memory_server/server/tools/__init__.py`
-- `.worktrees/SPEC-002-18/...` (same files)
-- `.worktrees/SPEC-002-19/...` (same files)
+1. **Dispatch Architect** for SPEC-002-14 to revise proposal
+2. **Merge SPEC-002-15, 18, 19** to main (run INTEGRATE-VERIFY gates + merge)
+3. **Run gate checks** for SPEC-002-06 and SPEC-002-13 (TEST-INTEGRATE)
+4. **Verify SPEC-002-11, 12** are merge-ready
+5. **Complete SPEC-002-14** after architect revision
 
 ## Database Backup
 
-Created: `.claude/backups/clams_session-wrapup-20251204-1416.db`
+Created: `.claude/backups/clams_auto_20251204_152026.db`
 
 ## System Health
 
 - Status: HEALTHY
 - Merge lock: inactive
 - Merges since E2E: 9 (threshold: 12)
-- Active workers: 4 → marked as session_ended
+- Active workers: 0 (marked as session_ended)
