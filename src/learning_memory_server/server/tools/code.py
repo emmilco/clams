@@ -23,7 +23,7 @@ def register_code_tools(server: Server, services: ServiceContainer) -> None:
         services: Initialized service container
     """
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def index_codebase(
         directory: str,
         project: str,
@@ -63,7 +63,7 @@ def register_code_tools(server: Server, services: ServiceContainer) -> None:
             # Index
             # Note: This will need the actual CodeIndexer interface
             # when SPEC-002-06 is complete
-            stats = await services.code_indexer.index_directory(
+            stats = await services.code_indexer.index_directory(  # type: ignore[attr-defined]
                 path=directory,
                 project=project,
                 recursive=recursive,
@@ -98,7 +98,7 @@ def register_code_tools(server: Server, services: ServiceContainer) -> None:
             logger.error("code.index_failed", error=str(e), exc_info=True)
             raise MCPError(f"Failed to index codebase: {e}") from e
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def search_code(
         query: str,
         project: str | None = None,
@@ -175,7 +175,7 @@ def register_code_tools(server: Server, services: ServiceContainer) -> None:
             logger.error("code.search_failed", error=str(e), exc_info=True)
             raise MCPError(f"Failed to search code: {e}") from e
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def find_similar_code(
         snippet: str,
         project: str | None = None,

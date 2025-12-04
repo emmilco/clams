@@ -236,6 +236,7 @@ class QdrantVectorStore(VectorStore):
             | qmodels.IsEmptyCondition
             | qmodels.IsNullCondition
             | qmodels.HasIdCondition
+            | qmodels.HasVectorCondition
             | qmodels.NestedCondition
             | qmodels.Filter
         ] = []

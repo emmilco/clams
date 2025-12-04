@@ -23,7 +23,7 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
         services: Initialized service container
     """
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def search_commits(
         query: str,
         author: str | None = None,
@@ -77,7 +77,7 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
 
         try:
             # Delegate to GitAnalyzer
-            commits = await services.git_analyzer.search_commits(
+            commits = await services.git_analyzer.search_commits(  # type: ignore[attr-defined]
                 query=query,
                 author=author,
                 since=since_dt,
@@ -109,7 +109,7 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
             logger.error("git.search_commits_failed", error=str(e), exc_info=True)
             raise MCPError(f"Failed to search commits: {e}") from e
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def get_file_history(
         path: str,
         limit: int = 100,
@@ -145,7 +145,7 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
 
         try:
             # Delegate to GitReader
-            commits = await services.git_analyzer.git_reader.get_file_history(
+            commits = await services.git_analyzer.git_reader.get_file_history(  # type: ignore[attr-defined]
                 file_path=path,
                 limit=limit,
             )
@@ -174,7 +174,7 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
             logger.error("git.file_history_failed", error=str(e), exc_info=True)
             raise MCPError(f"Failed to get file history: {e}") from e
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def get_churn_hotspots(
         days: int = 90,
         limit: int = 10,
@@ -214,7 +214,7 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
 
         try:
             # Delegate to GitAnalyzer
-            hotspots = await services.git_analyzer.get_churn_hotspots(
+            hotspots = await services.git_analyzer.get_churn_hotspots(  # type: ignore[attr-defined]
                 days=days,
                 limit=limit,
             )
@@ -241,7 +241,7 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
             logger.error("git.churn_failed", error=str(e), exc_info=True)
             raise MCPError(f"Failed to compute churn hotspots: {e}") from e
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def get_code_authors(path: str) -> dict[str, Any]:
         """Get author statistics for a file.
 
@@ -267,7 +267,7 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
 
         try:
             # Delegate to GitAnalyzer
-            authors = await services.git_analyzer.get_file_authors(file_path=path)
+            authors = await services.git_analyzer.get_file_authors(file_path=path)  # type: ignore[attr-defined]
 
             # Format results
             formatted = [

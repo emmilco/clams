@@ -32,7 +32,7 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
         services: Initialized service container
     """
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def store_memory(
         content: str,
         category: str,
@@ -114,7 +114,7 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
             logger.error("memory.store_failed", error=str(e), exc_info=True)
             raise MCPError(f"Failed to store memory: {e}") from e
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def retrieve_memories(
         query: str,
         limit: int = 10,
@@ -156,7 +156,7 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
             query_embedding = await services.embedding_service.embed(query)
 
             # Build filters
-            filters = {}
+            filters: dict[str, Any] = {}
             if category:
                 filters["category"] = category
             if min_importance > 0.0:
@@ -187,7 +187,7 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
             logger.error("memory.retrieve_failed", error=str(e), exc_info=True)
             raise MCPError(f"Failed to retrieve memories: {e}") from e
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def list_memories(
         category: str | None = None,
         tags: list[str] | None = None,
@@ -226,7 +226,7 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
 
         try:
             # Build filters
-            filters = {}
+            filters: dict[str, Any] = {}
             if category:
                 filters["category"] = category
             if tags:
@@ -274,7 +274,7 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
             logger.error("memory.list_failed", error=str(e), exc_info=True)
             raise MCPError(f"Failed to list memories: {e}") from e
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def delete_memory(memory_id: str) -> dict[str, bool]:
         """Delete a memory by ID.
 

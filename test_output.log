@@ -30,132 +30,132 @@ tests/embedding/test_nomic.py::TestNomicEmbedding::test_invalid_model_raises_err
 tests/server/test_config.py::test_default_settings PASSED
 tests/server/test_config.py::test_env_override PASSED
 tests/server/test_config.py::test_settings_immutable PASSED
-tests/server/test_main.py::test_create_server 2025-12-03 22:56:06 [info     ] services.initializing
-2025-12-03 22:56:09 [info     ] services.initialized           has_code=False has_git=False has_searcher=False
-2025-12-03 22:56:09 [info     ] tools.registered
-2025-12-03 22:56:09 [info     ] server.created                 server_name=learning-memory-server
+tests/server/test_main.py::test_create_server 2025-12-04 13:33:49 [info     ] services.initializing
+2025-12-04 13:33:52 [info     ] services.initialized           has_code=False has_git=False has_searcher=False
+2025-12-04 13:33:52 [info     ] tools.registered               has_code=False has_git=False has_searcher=False
+2025-12-04 13:33:52 [info     ] server.created                 server_name=learning-memory-server
 PASSED
-tests/server/test_main.py::test_server_has_ping_tool 2025-12-03 22:56:09 [info     ] services.initializing
-2025-12-03 22:56:12 [info     ] services.initialized           has_code=False has_git=False has_searcher=False
-2025-12-03 22:56:12 [info     ] tools.registered
-2025-12-03 22:56:12 [info     ] server.created                 server_name=learning-memory-server
+tests/server/test_main.py::test_server_has_ping_tool 2025-12-04 13:33:52 [info     ] services.initializing
+2025-12-04 13:33:55 [info     ] services.initialized           has_code=False has_git=False has_searcher=False
+2025-12-04 13:33:55 [info     ] tools.registered               has_code=False has_git=False has_searcher=False
+2025-12-04 13:33:55 [info     ] server.created                 server_name=learning-memory-server
 PASSED
-tests/server/tools/test_code.py::test_index_codebase_not_available 2025-12-03 22:56:12 [info     ] code.index                     directory=/tmp project=test
+tests/server/tools/test_code.py::test_index_codebase_not_available 2025-12-04 13:33:55 [info     ] code.index                     directory=/tmp project=test
 PASSED
-tests/server/tools/test_code.py::test_search_code_not_available 2025-12-03 22:56:12 [info     ] code.search                    project=None query=test
+tests/server/tools/test_code.py::test_search_code_not_available 2025-12-04 13:33:55 [info     ] code.search                    project=None query=test
 PASSED
-tests/server/tools/test_code.py::test_find_similar_code_not_available 2025-12-03 22:56:12 [info     ] code.find_similar              snippet_len=9
+tests/server/tools/test_code.py::test_find_similar_code_not_available 2025-12-04 13:33:55 [info     ] code.find_similar              snippet_len=9
 PASSED
-tests/server/tools/test_code.py::test_search_code_empty_query 2025-12-03 22:56:12 [info     ] code.search                    project=None query='   '
+tests/server/tools/test_code.py::test_search_code_empty_query 2025-12-04 13:33:55 [info     ] code.search                    project=None query='   '
 PASSED
-tests/server/tools/test_code.py::test_search_code_limit_validation 2025-12-03 22:56:12 [info     ] code.search                    project=None query=test
-2025-12-03 22:56:12 [info     ] code.search                    project=None query=test
+tests/server/tools/test_code.py::test_search_code_limit_validation 2025-12-04 13:33:55 [info     ] code.search                    project=None query=test
+2025-12-04 13:33:55 [info     ] code.search                    project=None query=test
 PASSED
-tests/server/tools/test_code.py::test_find_similar_code_snippet_too_long 2025-12-03 22:56:12 [info     ] code.find_similar              snippet_len=6000
+tests/server/tools/test_code.py::test_find_similar_code_snippet_too_long 2025-12-04 13:33:55 [info     ] code.find_similar              snippet_len=6000
 PASSED
-tests/server/tools/test_code.py::test_find_similar_code_empty_snippet 2025-12-03 22:56:12 [info     ] code.find_similar              snippet_len=3
+tests/server/tools/test_code.py::test_find_similar_code_empty_snippet 2025-12-04 13:33:55 [info     ] code.find_similar              snippet_len=3
 PASSED
-tests/server/tools/test_code.py::test_find_similar_code_limit_validation 2025-12-03 22:56:12 [info     ] code.find_similar              snippet_len=4
-2025-12-03 22:56:12 [info     ] code.find_similar              snippet_len=4
+tests/server/tools/test_code.py::test_find_similar_code_limit_validation 2025-12-04 13:33:55 [info     ] code.find_similar              snippet_len=4
+2025-12-04 13:33:55 [info     ] code.find_similar              snippet_len=4
 PASSED
-tests/server/tools/test_code.py::test_index_codebase_directory_not_found 2025-12-03 22:56:12 [info     ] code.index                     directory=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-533/test_index_codebase_directory_0/nonexistent project=test
+tests/server/tools/test_code.py::test_index_codebase_directory_not_found 2025-12-04 13:33:55 [info     ] code.index                     directory=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-553/test_index_codebase_directory_0/nonexistent project=test
 PASSED
-tests/server/tools/test_code.py::test_index_codebase_not_a_directory 2025-12-03 22:56:12 [info     ] code.index                     directory=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-533/test_index_codebase_not_a_dire0/test.txt project=test
+tests/server/tools/test_code.py::test_index_codebase_not_a_directory 2025-12-04 13:33:55 [info     ] code.index                     directory=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-553/test_index_codebase_not_a_dire0/test.txt project=test
 PASSED
-tests/server/tools/test_code.py::test_search_code_with_filters 2025-12-03 22:56:12 [info     ] code.search                    project=test-project query='test function'
-2025-12-03 22:56:12 [info     ] code.searched                  count=1
+tests/server/tools/test_code.py::test_search_code_with_filters 2025-12-04 13:33:55 [info     ] code.search                    project=test-project query='test function'
+2025-12-04 13:33:55 [info     ] code.searched                  count=1
 PASSED
-tests/server/tools/test_code.py::test_find_similar_code_with_project_filter 2025-12-03 22:56:12 [info     ] code.find_similar              snippet_len=16
-2025-12-03 22:56:12 [info     ] code.similar_found             count=0
+tests/server/tools/test_code.py::test_find_similar_code_with_project_filter 2025-12-04 13:33:55 [info     ] code.find_similar              snippet_len=16
+2025-12-04 13:33:55 [info     ] code.similar_found             count=0
 PASSED
-tests/server/tools/test_git.py::test_search_commits_not_available 2025-12-03 22:56:12 [info     ] git.search_commits             author=None query=test
+tests/server/tools/test_git.py::test_search_commits_not_available 2025-12-04 13:33:55 [info     ] git.search_commits             author=None query=test
 PASSED
-tests/server/tools/test_git.py::test_get_file_history_not_available 2025-12-03 22:56:12 [info     ] git.file_history               limit=100 path=test.py
+tests/server/tools/test_git.py::test_get_file_history_not_available 2025-12-04 13:33:55 [info     ] git.file_history               limit=100 path=test.py
 PASSED
-tests/server/tools/test_git.py::test_get_churn_hotspots_not_available 2025-12-03 22:56:12 [info     ] git.churn_hotspots             days=90 limit=10
+tests/server/tools/test_git.py::test_get_churn_hotspots_not_available 2025-12-04 13:33:55 [info     ] git.churn_hotspots             days=90 limit=10
 PASSED
-tests/server/tools/test_git.py::test_get_code_authors_not_available 2025-12-03 22:56:12 [info     ] git.code_authors               path=test.py
+tests/server/tools/test_git.py::test_get_code_authors_not_available 2025-12-04 13:33:55 [info     ] git.code_authors               path=test.py
 PASSED
-tests/server/tools/test_git.py::test_search_commits_empty_query 2025-12-03 22:56:12 [info     ] git.search_commits             author=None query='   '
+tests/server/tools/test_git.py::test_search_commits_empty_query 2025-12-04 13:33:55 [info     ] git.search_commits             author=None query='   '
 PASSED
-tests/server/tools/test_git.py::test_search_commits_limit_validation 2025-12-03 22:56:12 [info     ] git.search_commits             author=None query=test
-2025-12-03 22:56:12 [info     ] git.search_commits             author=None query=test
+tests/server/tools/test_git.py::test_search_commits_limit_validation 2025-12-04 13:33:55 [info     ] git.search_commits             author=None query=test
+2025-12-04 13:33:55 [info     ] git.search_commits             author=None query=test
 PASSED
-tests/server/tools/test_git.py::test_search_commits_invalid_date_format 2025-12-03 22:56:12 [info     ] git.search_commits             author=None query=test
+tests/server/tools/test_git.py::test_search_commits_invalid_date_format 2025-12-04 13:33:55 [info     ] git.search_commits             author=None query=test
 PASSED
-tests/server/tools/test_git.py::test_get_file_history_limit_validation 2025-12-03 22:56:12 [info     ] git.file_history               limit=0 path=test.py
-2025-12-03 22:56:12 [info     ] git.file_history               limit=501 path=test.py
+tests/server/tools/test_git.py::test_get_file_history_limit_validation 2025-12-04 13:33:55 [info     ] git.file_history               limit=0 path=test.py
+2025-12-04 13:33:55 [info     ] git.file_history               limit=501 path=test.py
 PASSED
-tests/server/tools/test_git.py::test_get_file_history_file_not_found 2025-12-03 22:56:12 [info     ] git.file_history               limit=100 path=nonexistent.py
+tests/server/tools/test_git.py::test_get_file_history_file_not_found 2025-12-04 13:33:55 [info     ] git.file_history               limit=100 path=nonexistent.py
 PASSED
-tests/server/tools/test_git.py::test_get_churn_hotspots_days_validation 2025-12-03 22:56:12 [info     ] git.churn_hotspots             days=0 limit=10
-2025-12-03 22:56:12 [info     ] git.churn_hotspots             days=366 limit=10
+tests/server/tools/test_git.py::test_get_churn_hotspots_days_validation 2025-12-04 13:33:55 [info     ] git.churn_hotspots             days=0 limit=10
+2025-12-04 13:33:55 [info     ] git.churn_hotspots             days=366 limit=10
 PASSED
-tests/server/tools/test_git.py::test_get_churn_hotspots_limit_validation 2025-12-03 22:56:12 [info     ] git.churn_hotspots             days=90 limit=0
-2025-12-03 22:56:12 [info     ] git.churn_hotspots             days=90 limit=51
+tests/server/tools/test_git.py::test_get_churn_hotspots_limit_validation 2025-12-04 13:33:55 [info     ] git.churn_hotspots             days=90 limit=0
+2025-12-04 13:33:55 [info     ] git.churn_hotspots             days=90 limit=51
 PASSED
-tests/server/tools/test_git.py::test_get_code_authors_file_not_found 2025-12-03 22:56:12 [info     ] git.code_authors               path=nonexistent.py
+tests/server/tools/test_git.py::test_get_code_authors_file_not_found 2025-12-04 13:33:55 [info     ] git.code_authors               path=nonexistent.py
 PASSED
-tests/server/tools/test_memory.py::test_store_memory_success 2025-12-03 22:56:12 [info     ] memory.store                   category=fact importance=0.8
-2025-12-03 22:56:12 [info     ] memory.stored                  category=fact memory_id=78da95b4-7f06-4be2-9c00-0699d7ad78db
+tests/server/tools/test_memory.py::test_store_memory_success 2025-12-04 13:33:55 [info     ] memory.store                   category=fact importance=0.8
+2025-12-04 13:33:55 [info     ] memory.stored                  category=fact memory_id=0e22d810-17c4-4c05-8092-00756a98a808
 PASSED
-tests/server/tools/test_memory.py::test_store_memory_invalid_category 2025-12-03 22:56:12 [info     ] memory.store                   category=invalid importance=0.5
+tests/server/tools/test_memory.py::test_store_memory_invalid_category 2025-12-04 13:33:55 [info     ] memory.store                   category=invalid importance=0.5
 PASSED
-tests/server/tools/test_memory.py::test_store_memory_content_too_long 2025-12-03 22:56:12 [info     ] memory.store                   category=fact importance=0.5
+tests/server/tools/test_memory.py::test_store_memory_content_too_long 2025-12-04 13:33:55 [info     ] memory.store                   category=fact importance=0.5
 PASSED
-tests/server/tools/test_memory.py::test_store_memory_importance_out_of_range 2025-12-03 22:56:12 [info     ] memory.store                   category=fact importance=1.5
-2025-12-03 22:56:12 [info     ] memory.store                   category=fact importance=-0.1
+tests/server/tools/test_memory.py::test_store_memory_importance_out_of_range 2025-12-04 13:33:55 [info     ] memory.store                   category=fact importance=1.5
+2025-12-04 13:33:55 [info     ] memory.store                   category=fact importance=-0.1
 PASSED
-tests/server/tools/test_memory.py::test_store_memory_default_values 2025-12-03 22:56:12 [info     ] memory.store                   category=fact importance=0.5
-2025-12-03 22:56:12 [info     ] memory.stored                  category=fact memory_id=4ba1f345-ce54-4dd4-9695-00dabf83e1fc
+tests/server/tools/test_memory.py::test_store_memory_default_values 2025-12-04 13:33:55 [info     ] memory.store                   category=fact importance=0.5
+2025-12-04 13:33:55 [info     ] memory.stored                  category=fact memory_id=6d87eab4-0d39-4450-8f0b-2e518f7608f6
 PASSED
-tests/server/tools/test_memory.py::test_retrieve_memories_success 2025-12-03 22:56:12 [info     ] memory.retrieve                limit=10 query='test query'
-2025-12-03 22:56:12 [info     ] memory.retrieved               count=1
+tests/server/tools/test_memory.py::test_retrieve_memories_success 2025-12-04 13:33:55 [info     ] memory.retrieve                limit=10 query='test query'
+2025-12-04 13:33:55 [info     ] memory.retrieved               count=1
 PASSED
-tests/server/tools/test_memory.py::test_retrieve_memories_empty_query 2025-12-03 22:56:12 [info     ] memory.retrieve                limit=10 query='   '
+tests/server/tools/test_memory.py::test_retrieve_memories_empty_query 2025-12-04 13:33:55 [info     ] memory.retrieve                limit=10 query='   '
 PASSED
-tests/server/tools/test_memory.py::test_retrieve_memories_with_filters 2025-12-03 22:56:12 [info     ] memory.retrieve                limit=5 query=test
-2025-12-03 22:56:12 [info     ] memory.retrieved               count=0
+tests/server/tools/test_memory.py::test_retrieve_memories_with_filters 2025-12-04 13:33:55 [info     ] memory.retrieve                limit=5 query=test
+2025-12-04 13:33:55 [info     ] memory.retrieved               count=0
 PASSED
-tests/server/tools/test_memory.py::test_retrieve_memories_invalid_category 2025-12-03 22:56:12 [info     ] memory.retrieve                limit=10 query=test
+tests/server/tools/test_memory.py::test_retrieve_memories_invalid_category 2025-12-04 13:33:55 [info     ] memory.retrieve                limit=10 query=test
 PASSED
-tests/server/tools/test_memory.py::test_retrieve_memories_limit_validation 2025-12-03 22:56:12 [info     ] memory.retrieve                limit=0 query=test
-2025-12-03 22:56:12 [info     ] memory.retrieve                limit=101 query=test
+tests/server/tools/test_memory.py::test_retrieve_memories_limit_validation 2025-12-04 13:33:55 [info     ] memory.retrieve                limit=0 query=test
+2025-12-04 13:33:55 [info     ] memory.retrieve                limit=101 query=test
 PASSED
-tests/server/tools/test_memory.py::test_list_memories_success 2025-12-03 22:56:12 [info     ] memory.list                    category=None limit=10 offset=0
-2025-12-03 22:56:12 [info     ] memory.listed                  count=1 total=1
+tests/server/tools/test_memory.py::test_list_memories_success 2025-12-04 13:33:55 [info     ] memory.list                    category=None limit=10 offset=0
+2025-12-04 13:33:55 [info     ] memory.listed                  count=1 total=1
 PASSED
-tests/server/tools/test_memory.py::test_list_memories_pagination 2025-12-03 22:56:12 [info     ] memory.list                    category=None limit=2 offset=2
-2025-12-03 22:56:12 [info     ] memory.listed                  count=2 total=5
+tests/server/tools/test_memory.py::test_list_memories_pagination 2025-12-04 13:33:55 [info     ] memory.list                    category=None limit=2 offset=2
+2025-12-04 13:33:55 [info     ] memory.listed                  count=2 total=5
 PASSED
-tests/server/tools/test_memory.py::test_list_memories_with_filters 2025-12-03 22:56:12 [info     ] memory.list                    category=fact limit=50 offset=0
-2025-12-03 22:56:12 [info     ] memory.listed                  count=0 total=0
+tests/server/tools/test_memory.py::test_list_memories_with_filters 2025-12-04 13:33:55 [info     ] memory.list                    category=fact limit=50 offset=0
+2025-12-04 13:33:55 [info     ] memory.listed                  count=0 total=0
 PASSED
-tests/server/tools/test_memory.py::test_list_memories_invalid_offset 2025-12-03 22:56:12 [info     ] memory.list                    category=None limit=50 offset=-1
+tests/server/tools/test_memory.py::test_list_memories_invalid_offset 2025-12-04 13:33:55 [info     ] memory.list                    category=None limit=50 offset=-1
 PASSED
-tests/server/tools/test_memory.py::test_list_memories_limit_validation 2025-12-03 22:56:12 [info     ] memory.list                    category=None limit=0 offset=0
-2025-12-03 22:56:12 [info     ] memory.list                    category=None limit=201 offset=0
+tests/server/tools/test_memory.py::test_list_memories_limit_validation 2025-12-04 13:33:55 [info     ] memory.list                    category=None limit=0 offset=0
+2025-12-04 13:33:55 [info     ] memory.list                    category=None limit=201 offset=0
 PASSED
-tests/server/tools/test_memory.py::test_delete_memory_success 2025-12-03 22:56:12 [info     ] memory.delete                  memory_id=test-id
-2025-12-03 22:56:12 [info     ] memory.deleted                 memory_id=test-id
+tests/server/tools/test_memory.py::test_delete_memory_success 2025-12-04 13:33:55 [info     ] memory.delete                  memory_id=test-id
+2025-12-04 13:33:55 [info     ] memory.deleted                 memory_id=test-id
 PASSED
-tests/server/tools/test_memory.py::test_delete_memory_not_found 2025-12-03 22:56:12 [info     ] memory.delete                  memory_id=nonexistent
-2025-12-03 22:56:12 [warning  ] memory.delete_failed           error='Not found' memory_id=nonexistent
+tests/server/tools/test_memory.py::test_delete_memory_not_found 2025-12-04 13:33:55 [info     ] memory.delete                  memory_id=nonexistent
+2025-12-04 13:33:55 [warning  ] memory.delete_failed           error='Not found' memory_id=nonexistent
 PASSED
-tests/server/tools/test_memory.py::test_all_valid_categories_accepted 2025-12-03 22:56:12 [info     ] memory.store                   category=preference importance=0.5
-2025-12-03 22:56:12 [info     ] memory.stored                  category=preference memory_id=edd843bd-7fa5-453f-81cf-9f889b854a9a
-2025-12-03 22:56:12 [info     ] memory.store                   category=fact importance=0.5
-2025-12-03 22:56:12 [info     ] memory.stored                  category=fact memory_id=dd9de3bd-5d12-407e-8972-133d41a4881a
-2025-12-03 22:56:12 [info     ] memory.store                   category=event importance=0.5
-2025-12-03 22:56:12 [info     ] memory.stored                  category=event memory_id=727352eb-448a-4686-a4fc-2110ff0ba240
-2025-12-03 22:56:12 [info     ] memory.store                   category=workflow importance=0.5
-2025-12-03 22:56:12 [info     ] memory.stored                  category=workflow memory_id=fdf730bd-77c0-41f1-b227-169a287abf39
-2025-12-03 22:56:12 [info     ] memory.store                   category=context importance=0.5
-2025-12-03 22:56:12 [info     ] memory.stored                  category=context memory_id=09ac2ad0-c3a6-435e-ad5e-d1a6470848aa
-2025-12-03 22:56:12 [info     ] memory.store                   category=error importance=0.5
-2025-12-03 22:56:12 [info     ] memory.stored                  category=error memory_id=1b432f0e-a453-4ef5-9ecf-2963f04babd3
-2025-12-03 22:56:12 [info     ] memory.store                   category=decision importance=0.5
-2025-12-03 22:56:12 [info     ] memory.stored                  category=decision memory_id=5d47f658-cc67-40de-be5b-440d7bb3645b
+tests/server/tools/test_memory.py::test_all_valid_categories_accepted 2025-12-04 13:33:55 [info     ] memory.store                   category=preference importance=0.5
+2025-12-04 13:33:55 [info     ] memory.stored                  category=preference memory_id=dd43961e-d8e3-42d9-9105-25164f5fa377
+2025-12-04 13:33:55 [info     ] memory.store                   category=fact importance=0.5
+2025-12-04 13:33:55 [info     ] memory.stored                  category=fact memory_id=fb467006-f9ea-4736-b52a-9f5fd9d7c290
+2025-12-04 13:33:55 [info     ] memory.store                   category=event importance=0.5
+2025-12-04 13:33:55 [info     ] memory.stored                  category=event memory_id=d18cd3ae-8095-46ad-9d08-29b8a076f053
+2025-12-04 13:33:55 [info     ] memory.store                   category=workflow importance=0.5
+2025-12-04 13:33:55 [info     ] memory.stored                  category=workflow memory_id=9c3f570f-dc22-4abe-b9b1-44f58e377594
+2025-12-04 13:33:55 [info     ] memory.store                   category=context importance=0.5
+2025-12-04 13:33:55 [info     ] memory.stored                  category=context memory_id=6e10ba1b-4087-4b93-b2a3-f39fb54ca50a
+2025-12-04 13:33:55 [info     ] memory.store                   category=error importance=0.5
+2025-12-04 13:33:55 [info     ] memory.stored                  category=error memory_id=706c18b0-6aef-45d1-95bc-c82d115e5116
+2025-12-04 13:33:55 [info     ] memory.store                   category=decision importance=0.5
+2025-12-04 13:33:55 [info     ] memory.stored                  category=decision memory_id=a3a4dccd-4574-44bb-9e22-039dc7b59515
 PASSED
 tests/storage/test_memory.py::TestInMemoryVectorStore::test_create_collection PASSED
 tests/storage/test_memory.py::TestInMemoryVectorStore::test_create_duplicate_collection PASSED
@@ -211,4 +211,4 @@ tests/storage/test_qdrant.py::TestQdrantVectorStore::test_distance_metrics PASSE
 tests/test_placeholder.py::test_placeholder PASSED
 tests/test_placeholder.py::test_fixture PASSED
 
-============================= 119 passed in 33.11s =============================
+============================= 119 passed in 33.50s =============================
