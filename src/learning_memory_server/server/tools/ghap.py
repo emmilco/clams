@@ -51,7 +51,7 @@ def register_ghap_tools(
         persister: Observation persister service
     """
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def start_ghap(
         domain: str,
         strategy: str,
@@ -147,7 +147,7 @@ def register_ghap_tools(
             )
             return _error_response("internal_error", "Internal server error")
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def update_ghap(
         hypothesis: str | None = None,
         action: str | None = None,
@@ -228,7 +228,7 @@ def register_ghap_tools(
             )
             return _error_response("internal_error", "Internal server error")
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def resolve_ghap(
         status: str,
         result: str,
@@ -405,7 +405,7 @@ def register_ghap_tools(
             )
             return _error_response("internal_error", "Internal server error")
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def get_active_ghap() -> dict[str, Any]:
         """Get the current active GHAP entry.
 
@@ -451,7 +451,7 @@ def register_ghap_tools(
             )
             return _error_response("internal_error", "Internal server error")
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def list_ghap_entries(
         limit: int = 20,
         domain: str | None = None,

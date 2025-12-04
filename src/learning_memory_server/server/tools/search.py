@@ -40,7 +40,7 @@ def register_search_tools(
         searcher: Search service
     """
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def search_experiences(
         query: str,
         axis: str = "full",

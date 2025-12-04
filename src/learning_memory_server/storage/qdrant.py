@@ -42,8 +42,7 @@ class QdrantVectorStore(VectorStore):
         """Initialize Qdrant client.
 
         Args:
-            url: Qdrant server URL (defaults to settings). Use
-                ":memory:" for in-memory mode.
+            url: Qdrant server URL (defaults to settings)
             api_key: Optional API key for authentication
             timeout: Request timeout in seconds
         """
@@ -51,19 +50,11 @@ class QdrantVectorStore(VectorStore):
         self._url = url or settings.qdrant_url
         self._api_key = api_key or settings.qdrant_api_key
         self._timeout = timeout or settings.qdrant_timeout
-
-        # Handle in-memory mode
-        if self._url == ":memory:":
-            self._client = AsyncQdrantClient(
-                location=":memory:",
-                timeout=int(self._timeout),
-            )
-        else:
-            self._client = AsyncQdrantClient(
-                url=self._url,
-                api_key=self._api_key,
-                timeout=int(self._timeout),
-            )
+        self._client = AsyncQdrantClient(
+            url=self._url,
+            api_key=self._api_key,
+            timeout=int(self._timeout),
+        )
 
     async def create_collection(
         self, name: str, dimension: int, distance: str = "cosine"
@@ -238,56 +229,23 @@ class QdrantVectorStore(VectorStore):
     def _build_filter(self, filters: dict[str, Any]) -> qmodels.Filter:
         """Build Qdrant filter from simple key-value pairs.
 
-        Supports:
-        - Equality matching: {"field": "value"}
-        - Multi-value matching: {"field": {"$in": ["val1", "val2"]}}
-        - Range queries: {"field": {"$gte": value}}, {"field": {"$lte": value}}
-
-        Note: Range queries only work with numeric values (int, float).
-        Timestamps should be stored as Unix timestamps for range queries.
+        Supports equality matching on payload fields.
         """
         conditions: list[
             qmodels.FieldCondition
             | qmodels.IsEmptyCondition
             | qmodels.IsNullCondition
             | qmodels.HasIdCondition
-            | qmodels.HasVectorCondition
             | qmodels.NestedCondition
             | qmodels.Filter
         ] = []
 
         for key, value in filters.items():
-            # Handle operator queries
-            if isinstance(value, dict):
-                if "$in" in value:
-                    # Multi-value match (ANY of the values)
-                    conditions.append(
-                        qmodels.FieldCondition(
-                            key=key,
-                            match=qmodels.MatchAny(any=value["$in"]),
-                        )
-                    )
-                elif any(op in value for op in ("$gte", "$lte", "$gt", "$lt")):
-                    # Range query - can combine multiple operators
-                    conditions.append(
-                        qmodels.FieldCondition(
-                            key=key,
-                            range=qmodels.Range(
-                                gte=value.get("$gte"),
-                                lte=value.get("$lte"),
-                                gt=value.get("$gt"),
-                                lt=value.get("$lt"),
-                            ),
-                        )
-                    )
-            else:
-                # Simple equality match
-                conditions.append(
-                    qmodels.FieldCondition(
-                        key=key,
-                        match=qmodels.MatchValue(value=value),
-                    )
+            conditions.append(
+                qmodels.FieldCondition(
+                    key=key,
+                    match=qmodels.MatchValue(value=value),
                 )
+            )
 
-        # Qdrant accepts Sequence but list is covariant-compatible
-        return qmodels.Filter(must=conditions if conditions else None)
+        return qmodels.Filter(must=conditions)  # type: ignore[arg-type]

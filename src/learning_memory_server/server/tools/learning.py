@@ -43,7 +43,7 @@ def register_learning_tools(
         value_store: Value storage service
     """
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def get_clusters(axis: str) -> dict[str, Any]:
         """Get cluster information for a given axis.
 
@@ -121,7 +121,7 @@ def register_learning_tools(
             )
             return _error_response("internal_error", "Internal server error")
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def get_cluster_members(
         cluster_id: str,
         limit: int = 50,
@@ -186,7 +186,7 @@ def register_learning_tools(
             )
             return _error_response("internal_error", "Internal server error")
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def validate_value(
         text: str,
         cluster_id: str,
@@ -263,7 +263,7 @@ def register_learning_tools(
             )
             return _error_response("internal_error", "Internal server error")
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def store_value(
         text: str,
         cluster_id: str,
@@ -339,7 +339,7 @@ def register_learning_tools(
             )
             return _error_response("internal_error", "Internal server error")
 
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def list_values(
         axis: str | None = None,
         limit: int = 20,
