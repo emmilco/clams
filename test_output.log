@@ -25,72 +25,84 @@ tests/clustering/test_clusterer.py::test_cluster_invariants PASSED
 tests/clustering/test_clusterer.py::test_centroid_invariants PASSED
 tests/clustering/test_clusterer.py::test_cluster_result_types PASSED
 tests/clustering/test_clusterer.py::test_cluster_info_types PASSED
-tests/clustering/test_experience.py::test_cluster_axis_success 2025-12-04 13:41:19 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
+tests/clustering/test_experience.py::test_cluster_axis_success 2025-12-04 13:43:06 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
 PASSED
 tests/clustering/test_experience.py::test_cluster_axis_invalid PASSED
 tests/clustering/test_experience.py::test_cluster_axis_no_data PASSED
-tests/clustering/test_experience.py::test_cluster_axis_with_weights 2025-12-04 13:41:19 [info     ] clustering.complete            axis=strategy n_clusters=2 noise_count=10 total_points=20
+tests/clustering/test_experience.py::test_cluster_axis_with_weights 2025-12-04 13:43:06 [info     ] clustering.complete            axis=strategy n_clusters=2 noise_count=10 total_points=20
 PASSED
-tests/clustering/test_experience.py::test_cluster_axis_missing_tier 2025-12-04 13:41:19 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
+tests/clustering/test_experience.py::test_cluster_axis_missing_tier 2025-12-04 13:43:06 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
 PASSED
-tests/clustering/test_experience.py::test_cluster_axis_all_noise 2025-12-04 13:41:19 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=5 total_points=5
+tests/clustering/test_experience.py::test_cluster_axis_all_noise 2025-12-04 13:43:06 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=5 total_points=5
 PASSED
-tests/clustering/test_experience.py::test_cluster_all_axes 2025-12-04 13:41:19 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=10 total_points=10
-2025-12-04 13:41:19 [warning  ] clustering.all_noise           axis=strategy message='HDBSCAN labeled all points as noise - no clusters found' noise_count=15 total_points=15
-2025-12-04 13:41:19 [warning  ] clustering.axis_skipped        axis=surprise error="No embeddings found for axis 'surprise' (collection: experiences_surprise)" message='Skipping axis due to error'
-2025-12-04 13:41:19 [warning  ] clustering.axis_skipped        axis=root_cause error="No embeddings found for axis 'root_cause' (collection: experiences_root_cause)" message='Skipping axis due to error'
+tests/clustering/test_experience.py::test_cluster_all_axes 2025-12-04 13:43:06 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=10 total_points=10
+2025-12-04 13:43:06 [warning  ] clustering.all_noise           axis=strategy message='HDBSCAN labeled all points as noise - no clusters found' noise_count=15 total_points=15
+2025-12-04 13:43:06 [warning  ] clustering.axis_skipped        axis=surprise error="No embeddings found for axis 'surprise' (collection: experiences_surprise)" message='Skipping axis due to error'
+2025-12-04 13:43:06 [warning  ] clustering.axis_skipped        axis=root_cause error="No embeddings found for axis 'root_cause' (collection: experiences_root_cause)" message='Skipping axis due to error'
 PASSED
-tests/clustering/test_experience.py::test_cluster_all_axes_all_empty 2025-12-04 13:41:19 [warning  ] clustering.axis_skipped        axis=full error="No embeddings found for axis 'full' (collection: experiences_full)" message='Skipping axis due to error'
-2025-12-04 13:41:19 [warning  ] clustering.axis_skipped        axis=strategy error="No embeddings found for axis 'strategy' (collection: experiences_strategy)" message='Skipping axis due to error'
-2025-12-04 13:41:19 [warning  ] clustering.axis_skipped        axis=surprise error="No embeddings found for axis 'surprise' (collection: experiences_surprise)" message='Skipping axis due to error'
-2025-12-04 13:41:19 [warning  ] clustering.axis_skipped        axis=root_cause error="No embeddings found for axis 'root_cause' (collection: experiences_root_cause)" message='Skipping axis due to error'
+tests/clustering/test_experience.py::test_cluster_all_axes_all_empty 2025-12-04 13:43:06 [warning  ] clustering.axis_skipped        axis=full error="No embeddings found for axis 'full' (collection: experiences_full)" message='Skipping axis due to error'
+2025-12-04 13:43:06 [warning  ] clustering.axis_skipped        axis=strategy error="No embeddings found for axis 'strategy' (collection: experiences_strategy)" message='Skipping axis due to error'
+2025-12-04 13:43:06 [warning  ] clustering.axis_skipped        axis=surprise error="No embeddings found for axis 'surprise' (collection: experiences_surprise)" message='Skipping axis due to error'
+2025-12-04 13:43:06 [warning  ] clustering.axis_skipped        axis=root_cause error="No embeddings found for axis 'root_cause' (collection: experiences_root_cause)" message='Skipping axis due to error'
 PASSED
-tests/clustering/test_experience.py::test_cluster_axis_calls_correct_collection 2025-12-04 13:41:19 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
-2025-12-04 13:41:19 [info     ] clustering.complete            axis=strategy n_clusters=2 noise_count=10 total_points=20
-2025-12-04 13:41:19 [info     ] clustering.complete            axis=surprise n_clusters=2 noise_count=10 total_points=20
-2025-12-04 13:41:19 [info     ] clustering.complete            axis=root_cause n_clusters=2 noise_count=10 total_points=20
+tests/clustering/test_experience.py::test_cluster_axis_calls_correct_collection 2025-12-04 13:43:06 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
+2025-12-04 13:43:06 [info     ] clustering.complete            axis=strategy n_clusters=2 noise_count=10 total_points=20
+2025-12-04 13:43:06 [info     ] clustering.complete            axis=surprise n_clusters=2 noise_count=10 total_points=20
+2025-12-04 13:43:06 [info     ] clustering.complete            axis=root_cause n_clusters=2 noise_count=10 total_points=20
 PASSED
-tests/clustering/test_experience.py::test_cluster_axis_scroll_limit_warning 2025-12-04 13:41:19 [warning  ] clustering.scroll_limit_reached axis=full collection=experiences_full count=10000 message='May have truncated results - consider pagination'
-2025-12-04 13:41:28 [info     ] clustering.complete            axis=full n_clusters=358 noise_count=8166 total_points=10000
+tests/clustering/test_experience.py::test_cluster_axis_scroll_limit_warning 2025-12-04 13:43:06 [warning  ] clustering.scroll_limit_reached axis=full collection=experiences_full count=10000 message='May have truncated results - consider pagination'
+2025-12-04 13:43:15 [info     ] clustering.complete            axis=full n_clusters=358 noise_count=8166 total_points=10000
 PASSED
-tests/clustering/test_integration.py::test_end_to_end_clustering 2025-12-04 13:41:29 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=50 total_points=50
+tests/clustering/test_integration.py::test_end_to_end_clustering 2025-12-04 13:43:15 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=50 total_points=50
+PASSED
+tests/clustering/test_integration.py::test_multi_axis_clustering 2025-12-04 13:43:16 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=30 total_points=30
+2025-12-04 13:43:16 [warning  ] clustering.all_noise           axis=strategy message='HDBSCAN labeled all points as noise - no clusters found' noise_count=30 total_points=30
+PASSED
+tests/clustering/test_integration.py::test_clustering_with_mixed_confidence_tiers 2025-12-04 13:43:16 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=16 total_points=16
 FAILED
 
 =================================== FAILURES ===================================
-__________________________ test_end_to_end_clustering __________________________
+_________________ test_clustering_with_mixed_confidence_tiers __________________
 
-store = <learning_memory_server.storage.qdrant.QdrantVectorStore object at 0x12548dee0>
+store = <learning_memory_server.storage.qdrant.QdrantVectorStore object at 0x1251c8f20>
 test_collection = 'test_experiences_full'
 
     @pytest.mark.asyncio
-    async def test_end_to_end_clustering(
+    async def test_clustering_with_mixed_confidence_tiers(
         store: QdrantVectorStore, test_collection: str
     ) -> None:
-        """Test full clustering workflow with real Qdrant."""
-        # Store 50 synthetic experiences (3 clear clusters)
+        """Test clustering with different confidence tiers affects centroids."""
+        # Create a cluster where one point has high weight
         np.random.seed(42)
-        for i in range(50):
-            cluster_id = i // 17  # 3 clusters
-            base = np.zeros(128)
-            base[0] = cluster_id * 10  # Separate along first dimension
-            vector = (np.random.randn(128) * 0.5 + base).astype(np.float32)
     
+        # Base cluster around origin
+        base = np.zeros(128)
+    
+        # Add most points near origin
+        for i in range(15):
+            vector = (np.random.randn(128) * 0.5 + base).astype(np.float32)
             await store.upsert(
                 collection=test_collection,
-                id=f"ghap_{i}",
+                id=f"bronze_{i}",
                 vector=vector,
-                payload={
-                    "confidence_tier": "gold" if i % 3 == 0 else "silver",
-                    "created_at": "2024-01-01T00:00:00Z",
-                    "session_id": "test_session",
-                },
+                payload={"confidence_tier": "bronze"},  # Low weight
             )
     
+        # Add one outlier with high weight
+        outlier = base.copy()
+        outlier[0] = 5.0  # Shift along first dimension
+        await store.upsert(
+            collection=test_collection,
+            id="gold_outlier",
+            vector=outlier.astype(np.float32),
+            payload={"confidence_tier": "gold"},  # High weight
+        )
+    
         # Cluster
-        clusterer = Clusterer(min_cluster_size=5)
+        clusterer = Clusterer(min_cluster_size=3)
         exp_clusterer = ExperienceClusterer(store, clusterer)
     
-        # Mock the collection mapping for test
+        # Mock the collection mapping
         from learning_memory_server.clustering import experience
     
         original_mapping = experience.AXIS_COLLECTIONS.copy()
@@ -99,30 +111,22 @@ test_collection = 'test_experiences_full'
         try:
             clusters = await exp_clusterer.cluster_axis("full")
     
-            # Should find clusters (exact count depends on HDBSCAN)
+            # Should find at least one cluster
 >           assert len(clusters) >= 1
 E           assert 0 >= 1
 E            +  where 0 = len([])
 
-tests/clustering/test_integration.py:75: AssertionError
+tests/clustering/test_integration.py:208: AssertionError
 =============================== warnings summary ===============================
-.venv/lib/python3.12/site-packages/hdbscan/plots.py:448
-  /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-12/.venv/lib/python3.12/site-packages/hdbscan/plots.py:448: SyntaxWarning: invalid escape sequence '\l'
-    axis.set_ylabel('$\lambda$ value')
-
-.venv/lib/python3.12/site-packages/hdbscan/robust_single_linkage_.py:175
-  /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-12/.venv/lib/python3.12/site-packages/hdbscan/robust_single_linkage_.py:175: SyntaxWarning: invalid escape sequence '\{'
-    $max \{ core_k(a), core_k(b), 1/\alpha d(a,b) \}$.
-
 tests/clustering/test_clusterer.py: 208 warnings
 tests/clustering/test_experience.py: 22 warnings
-tests/clustering/test_integration.py: 2 warnings
+tests/clustering/test_integration.py: 8 warnings
   /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-12/.venv/lib/python3.12/site-packages/sklearn/utils/deprecation.py:132: FutureWarning: 'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will be removed in 1.8.
     warnings.warn(
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =========================== short test summary info ============================
-FAILED tests/clustering/test_integration.py::test_end_to_end_clustering - assert 0 >= 1
+FAILED tests/clustering/test_integration.py::test_clustering_with_mixed_confidence_tiers - assert 0 >= 1
  +  where 0 = len([])
 !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
-================= 1 failed, 26 passed, 234 warnings in 52.59s ==================
+================= 1 failed, 28 passed, 238 warnings in 13.99s ==================

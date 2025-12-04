@@ -70,8 +70,28 @@ class ValueStore:
         if axis not in VALID_AXES:
             raise ValueError(f"Invalid axis '{axis}'. Must be one of: {VALID_AXES}")
 
-        # Delegate to Clusterer
-        cluster_result: list[ClusterInfo] = await self.clusterer.cluster_axis(axis)
+        # Delegate to ExperienceClusterer (returns clustering.ClusterInfo)
+        from learning_memory_server.clustering.types import (
+            ClusterInfo as ClusteringClusterInfo,
+        )
+
+        clustering_results: list[
+            ClusteringClusterInfo
+        ] = await self.clusterer.cluster_axis(axis)
+
+        # Convert to values.ClusterInfo and add cluster_id
+        cluster_result = [
+            ClusterInfo(
+                cluster_id=f"{axis}_{c.label}",
+                axis=axis,
+                label=c.label,
+                centroid=c.centroid,
+                member_ids=c.member_ids,
+                size=c.size,
+                avg_weight=c.avg_weight,
+            )
+            for c in clustering_results
+        ]
 
         # Sort by size descending
         cluster_result.sort(key=lambda c: c.size, reverse=True)
