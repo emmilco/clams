@@ -84,11 +84,44 @@ def _render_template(self, template: str, entry: GHAPEntry) -> str:
     - [text with {field_name}] for optional fields
 
     Optional sections are removed if the field is None or empty.
+
+    Limitation: Does not support nested brackets.
     """
+    import re
+
+    # Extract all fields for this entry
+    fields = self._extract_fields(entry)
+
     # Step 1: Extract optional sections (marked with [brackets])
-    # Step 2: For each optional section, check if all fields are non-None
-    # Step 3: Remove section if any field is None, otherwise render it
-    # Step 4: Render remaining template with all required fields
+    # Pattern: [any text with {field_name} placeholders]
+    optional_pattern = re.compile(r'\[([^\[\]]+)\]')
+
+    def process_optional(match: re.Match[str]) -> str:
+        section = match.group(1)
+
+        # Extract field names from this section using {field_name} pattern
+        field_pattern = re.compile(r'\{(\w+)\}')
+        field_names = field_pattern.findall(section)
+
+        # Check if all fields exist and are non-None/non-empty
+        for field_name in field_names:
+            if field_name not in fields or not fields[field_name]:
+                # Field is missing or empty, remove entire section
+                return ""
+
+        # All fields present, render the section (without brackets)
+        return section
+
+    # Step 2: Process all optional sections
+    rendered = optional_pattern.sub(process_optional, template)
+
+    # Step 3: Render remaining template with all required fields
+    # Use str.format() to replace {field_name} placeholders
+    try:
+        return rendered.format(**fields)
+    except KeyError as e:
+        # Missing required field
+        raise ValueError(f"Template rendering failed: missing field {e}")
 ```
 
 ### 3.2 Templates
@@ -138,6 +171,8 @@ def _extract_fields(self, entry: GHAPEntry) -> dict[str, str]:
         "hypothesis": entry.hypothesis,
         "action": entry.action,
         "prediction": entry.prediction,
+        # domain and strategy are non-Optional fields in GHAPEntry model,
+        # so .value access is safe (no None check needed)
         "domain": entry.domain.value,
         "strategy": entry.strategy.value,
         "iteration_count": str(entry.iteration_count),
@@ -176,8 +211,8 @@ async def ensure_collections(self) -> None:
     """Ensure all axis collections exist.
 
     Creates collections if they don't exist. Safe to call multiple times.
-    Uses VectorStore.create_collection() which should be idempotent
-    (implementations check if collection exists before creating).
+    Note: VectorStore.create_collection() raises ValueError if collection
+    already exists, so we catch that specifically.
     """
     axes = ["full", "strategy", "surprise", "root_cause"]
     dimension = self._embedding_service.dimension  # 768 for Nomic
@@ -195,12 +230,12 @@ async def ensure_collections(self) -> None:
                 collection=collection_name,
                 dimension=dimension,
             )
-        except Exception as e:
-            # Collection may already exist - that's ok
+        except ValueError as e:
+            # Collection already exists - this is expected and safe
             self._logger.debug(
-                "collection_create_skipped",
+                "collection_already_exists",
                 collection=collection_name,
-                reason=str(e),
+                error=str(e),
             )
 ```
 
@@ -290,7 +325,7 @@ def _build_metadata(self, entry: GHAPEntry) -> dict[str, Any]:
         "domain": entry.domain.value,
         "strategy": entry.strategy.value,
         "outcome_status": entry.outcome.status.value,
-        "confidence_tier": entry.confidence_tier.value if entry.confidence_tier else "unknown",
+        "confidence_tier": entry.confidence_tier.value if entry.confidence_tier else None,
         "iteration_count": entry.iteration_count,
     }
 
@@ -431,6 +466,24 @@ def test_falsified_without_surprise_skips_surprise_axis():
     """Falsified without surprise field skips surprise axis."""
 ```
 
+**Edge Case Tests**:
+```python
+def test_render_with_empty_string_vs_none():
+    """Verify empty string "" vs None are handled correctly for optional fields."""
+
+def test_entry_with_no_confidence_tier():
+    """Verify metadata construction when confidence_tier is None."""
+
+def test_unicode_emoji_in_fields():
+    """Verify template rendering handles unicode/emoji correctly."""
+
+def test_very_long_field_values():
+    """Verify handling of very long field values (e.g., 10KB text)."""
+
+def test_concurrent_persist_calls():
+    """Verify concurrent calls to persist() are idempotent (same entry)."""
+```
+
 ### 7.2 Integration Tests
 
 **End-to-End Persistence** (`test_persister_integration.py`):
@@ -517,7 +570,7 @@ async def test_batch_fails_on_first_invalid_entry():
 ### Phase 3: Integration Updates
 - [ ] Export `ObservationPersister` from `observation/__init__.py`
 - [ ] Update `observation/utils.py`: Remove quality assessment comment (lines 49-52)
-- [ ] Update `server/tools/ghap.py` if it exists: Change `persister.persist(resolved.to_dict())` to `persister.persist(resolved)`
+- [ ] Update `server/tools/ghap.py` (if it exists): Change `persister.persist(resolved.to_dict())` to `persister.persist(resolved)` - note that this file may not exist yet, so update only if present
 
 ### Phase 4: Type Checking & Linting
 - [ ] Run `mypy --strict` on persister.py
@@ -528,9 +581,10 @@ async def test_batch_fails_on_first_invalid_entry():
 
 ### Required Imports
 ```python
+import re
 from dataclasses import asdict
 from typing import Any
-import re
+
 import structlog
 
 from ..embedding.base import EmbeddingService, EmbeddingModelError
