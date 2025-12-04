@@ -117,12 +117,15 @@ class CodeIndexer:
     ):
         ...
 
-    async def index_file(self, path: str, project: str) -> int:
+    async def index_file(self, path: str, project: str) -> IndexingStats:
         """
-        Index a single file. Returns number of units indexed.
+        Index a single file. Returns IndexingStats with counts and errors.
 
         IMPORTANT: Before indexing, deletes all existing entries for this file
         to prevent orphaned entries when code is renamed/removed.
+
+        Accumulates errors (embedding failures, parse errors) instead of failing
+        fast, enabling partial indexing when some units fail.
         """
         pass
 
