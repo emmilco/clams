@@ -220,6 +220,48 @@ cmd_transition() {
         exit 1
     fi
 
+    # Enforce review requirements for specific transitions
+    # Reviews must be recorded in the database before transition is allowed
+    local required_reviews=""
+    local artifact_type=""
+
+    case "${from_phase}-${to_phase}" in
+        SPEC-DESIGN)
+            artifact_type="spec"
+            required_reviews=2
+            ;;
+        DESIGN-IMPLEMENT)
+            artifact_type="proposal"
+            required_reviews=2
+            ;;
+        REVIEW-TEST)
+            artifact_type="code"
+            required_reviews=2
+            ;;
+    esac
+
+    if [[ -n "$required_reviews" ]]; then
+        local approved_count
+        approved_count=$(sqlite3 "$DB_PATH" \
+            "SELECT COUNT(*) FROM reviews
+             WHERE task_id = '$id'
+             AND artifact_type = '$artifact_type'
+             AND result = 'approved';")
+
+        if [[ "$approved_count" -lt "$required_reviews" ]]; then
+            echo "Error: $from_phase → $to_phase requires $required_reviews approved $artifact_type reviews" >&2
+            echo "" >&2
+            echo "Current status: $approved_count/$required_reviews approved" >&2
+            echo "" >&2
+            echo "Reviews must be recorded in the database before transition." >&2
+            echo "Record reviews with:" >&2
+            echo "  .claude/bin/clams-review record $id $artifact_type approved --worker <worker_id>" >&2
+            exit 1
+        fi
+
+        echo "✓ Review gate passed: $approved_count/$required_reviews $artifact_type reviews approved"
+    fi
+
     # Record transition
     sqlite3 "$DB_PATH" <<EOF
 INSERT INTO phase_transitions (task_id, from_phase, to_phase, gate_result, gate_details)

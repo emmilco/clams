@@ -234,6 +234,21 @@ run_pytest() {
     skipped=${skipped:-0}
     duration=${duration:-0}
 
+    # Check for collection errors (import failures, syntax errors, etc.)
+    # These may not be reflected in the pass/fail counts but indicate broken code
+    if grep -qE "^ERROR collecting|^E   (ModuleNotFoundError|ImportError|SyntaxError)" test_output.log 2>/dev/null; then
+        echo ""
+        echo "=== Collection Errors Detected ==="
+        grep -E "^ERROR collecting|^E   (ModuleNotFoundError|ImportError|SyntaxError)" test_output.log | head -10
+        echo ""
+        echo "FAIL: Test collection errors (import/syntax failures)"
+        echo "Fix the import errors before proceeding."
+
+        # Log as error in database
+        log_test_results "$total" "$passed" "$failed" "1" "$skipped" "$duration" '[{"test":"collection","error":"Import or syntax error during test collection"}]'
+        return 1
+    fi
+
     echo ""
     echo "=== Test Summary ==="
     echo "Total: $total | Passed: $passed | Failed: $failed | Errors: $errors | Skipped: $skipped"
