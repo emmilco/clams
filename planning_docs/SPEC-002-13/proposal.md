@@ -45,7 +45,9 @@ class ValidationResult:
     similarity: Optional[float] = None
     reason: Optional[str] = None
     candidate_distance: Optional[float] = None
-    median_distance: Optional[float] = None
+    mean_distance: Optional[float] = None
+    std_distance: Optional[float] = None
+    threshold: Optional[float] = None  # mean + 1*std
 
 
 @dataclass
@@ -102,8 +104,8 @@ from learning_memory_server.storage.base import VectorStore
 from .types import ClusterInfo, Experience, ValidationResult, Value
 
 
-# Valid clustering axes
-VALID_AXES = {"full", "domain", "strategy", "surprise", "root_cause"}
+# Valid clustering axes (domain is NOT an axis - it's a metadata filter)
+VALID_AXES = {"full", "strategy", "surprise", "root_cause"}
 
 # Collection names (aligned with SPEC-001)
 EXPERIENCES_COLLECTION_PREFIX = "experiences_"  # e.g., "experiences_full"
@@ -257,15 +259,19 @@ class ValueStore:
             cosine_distance(m.embedding, cluster.centroid)
             for m in members
         ]
-        median_dist = float(np.median(member_dists))
+        mean_dist = float(np.mean(member_dists))
+        std_dist = float(np.std(member_dists))
+        threshold = mean_dist + std_dist  # 1 standard deviation
 
-        # Validate
-        if candidate_dist <= median_dist:
+        # Validate: candidate must be within 1 std dev of mean
+        if candidate_dist <= threshold:
             return ValidationResult(
                 valid=True,
                 similarity=1.0 - candidate_dist,
                 candidate_distance=candidate_dist,
-                median_distance=median_dist
+                mean_distance=mean_dist,
+                std_distance=std_dist,
+                threshold=threshold
             )
         else:
             return ValidationResult(
@@ -273,10 +279,12 @@ class ValueStore:
                 reason=(
                     f"Value too far from centroid "
                     f"(distance={candidate_dist:.3f}, "
-                    f"median={median_dist:.3f})"
+                    f"threshold={threshold:.3f} [mean={mean_dist:.3f} + 1*std={std_dist:.3f}])"
                 ),
                 candidate_distance=candidate_dist,
-                median_distance=median_dist
+                mean_distance=mean_dist,
+                std_distance=std_dist,
+                threshold=threshold
             )
 
     async def store_value(
@@ -323,7 +331,8 @@ class ValueStore:
             "created_at": timestamp,
             "validation": {
                 "candidate_distance": validation.candidate_distance,
-                "median_distance": validation.median_distance,
+                "mean_distance": validation.mean_distance,
+                "threshold": validation.threshold,
                 "similarity": validation.similarity
             }
         }
@@ -451,8 +460,8 @@ def mock_clusterer():
     # Mock cluster_axis to return test clusters
     clusterer.cluster_axis.return_value = [
         ClusterInfo(
-            cluster_id="domain_0",
-            axis="domain",
+            cluster_id="full_0",
+            axis="full",
             label=0,
             centroid=np.array([1.0, 0.0], dtype=np.float32),
             member_ids=["exp_1", "exp_2", "exp_3"],
@@ -470,7 +479,7 @@ def value_store(mock_embedding_service, mock_vector_store, mock_clusterer):
 
 class TestGetClusters:
     async def test_valid_axis(self, value_store):
-        clusters = await value_store.get_clusters("domain")
+        clusters = await value_store.get_clusters("full")
         assert len(clusters) > 0
 
     async def test_invalid_axis(self, value_store):
@@ -485,7 +494,7 @@ class TestValidation:
 
         result = await value_store.validate_value_candidate(
             text="Test value",
-            cluster_id="domain_0"
+            cluster_id="full_0"
         )
 
         assert result.valid is True
@@ -497,7 +506,7 @@ class TestValidation:
 
         result = await value_store.validate_value_candidate(
             text="Test value",
-            cluster_id="domain_0"
+            cluster_id="full_0"
         )
 
         assert result.valid is False
@@ -522,7 +531,7 @@ async def integration_setup():
     """Set up real components for integration testing."""
     embedding_service = MockEmbedding()
     vector_store = InMemoryVectorStore()
-    await vector_store.create_collection("experiences_domain", 768)
+    await vector_store.create_collection("experiences_full", 768)
     await vector_store.create_collection("values", 768)
 
     # Create real Clusterer
@@ -543,7 +552,7 @@ async def test_full_workflow(integration_setup):
     # ... (insert test experiences)
 
     # 2. Get clusters
-    clusters = await value_store.get_clusters("domain")
+    clusters = await value_store.get_clusters("full")
     assert len(clusters) > 0
 
     # 3. Get members
@@ -561,12 +570,12 @@ async def test_full_workflow(integration_setup):
     value = await value_store.store_value(
         text="Test principle",
         cluster_id=clusters[0].cluster_id,
-        axis="domain"
+        axis="full"
     )
     assert value.id is not None
 
     # 6. List values
-    values = await value_store.list_values(axis="domain")
+    values = await value_store.list_values(axis="full")
     assert len(values) == 1
     assert values[0].text == "Test principle"
 ```
@@ -597,15 +606,15 @@ All methods are async to comply with the codebase's async-native design:
 ### Cluster ID Format
 
 Cluster IDs are formatted as `{axis}_{label}` where:
-- `axis` is the clustering axis (e.g., "domain")
+- `axis` is the clustering axis (e.g., "full", "strategy", "surprise", "root_cause")
 - `label` is the HDBSCAN cluster label (integer)
 
-Example: `domain_0`, `strategy_2`, `root_cause_1`
+Example: `full_0`, `strategy_2`, `root_cause_1`
 
 ### Collection Names
 
 Following SPEC-001 conventions:
-- Experiences: `experiences_{axis}` (e.g., `experiences_domain`)
+- Experiences: `experiences_{axis}` (e.g., `experiences_full`, `experiences_strategy`)
 - Values: `values` (single collection for all axes, filtered by payload)
 
 ## Dependencies on SPEC-002-12
