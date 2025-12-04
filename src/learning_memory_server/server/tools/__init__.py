@@ -153,4 +153,6 @@ def register_all_tools(server: Server, settings: ServerSettings) -> None:
         """
         return "pong"
 
-    logger.info("tools.registered")
+    logger.info("tools.registered", has_code=services.code_indexer is not None,
+                has_git=services.git_analyzer is not None,
+                has_searcher=services.searcher is not None)

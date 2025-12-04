@@ -366,8 +366,12 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
                 f"Must be one of: {', '.join(sorted(VALID_CATEGORIES))}"
             )
 
-        # Clamp limit
-        limit = max(1, min(100, limit))
+        # Validate limit
+        if not 1 <= limit <= 100:
+            raise ValidationError(
+                f"Limit {limit} out of range. "
+                f"Must be between 1 and 100."
+            )
 
         # Handle empty query
         if not query.strip():
@@ -432,11 +436,19 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
 
         # Validate category
         if category and category not in VALID_CATEGORIES:
-            raise ValidationError(f"Invalid category '{category}'")
+            raise ValidationError(
+                f"Invalid category '{category}'. "
+                f"Must be one of: {', '.join(sorted(VALID_CATEGORIES))}"
+            )
 
-        # Clamp parameters
-        limit = max(1, min(200, limit))
-        offset = max(0, offset)
+        # Validate parameters
+        if not 1 <= limit <= 200:
+            raise ValidationError(
+                f"Limit {limit} out of range. "
+                f"Must be between 1 and 200."
+            )
+        if offset < 0:
+            raise ValidationError(f"Offset {offset} must be >= 0.")
 
         try:
             # Build filters
@@ -520,7 +532,7 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
 **Key Design Decisions**:
 
 1. **UUID for IDs**: Random UUIDs ensure uniqueness without coordination
-2. **Strict validation**: Content length and importance range validated with helpful errors (no silent truncation/clamping per spec line 741)
+2. **Strict validation**: All inputs validated with helpful errors. Invalid inputs are rejected with ValidationError (no silent truncation/clamping per spec line 741). Error messages include valid ranges/options.
 3. **Soft delete failure**: delete_memory returns `deleted: false` instead of raising error
 4. **Structured logging**: All operations logged with context for debugging
 5. **Timezone-aware timestamps**: All datetimes are UTC with timezone info
@@ -649,8 +661,12 @@ def register_code_tools(server: Server, services: ServiceContainer) -> None:
                 "CodeIndexer service not initialized (SPEC-002-06 may be incomplete)."
             )
 
-        # Clamp limit
-        limit = max(1, min(50, limit))
+        # Validate limit
+        if not 1 <= limit <= 50:
+            raise ValidationError(
+                f"Limit {limit} out of range. "
+                f"Must be between 1 and 50."
+            )
 
         # Handle empty query
         if not query.strip():
@@ -726,8 +742,12 @@ def register_code_tools(server: Server, services: ServiceContainer) -> None:
                 f"Maximum allowed is {max_length} characters."
             )
 
-        # Clamp limit
-        limit = max(1, min(50, limit))
+        # Validate limit
+        if not 1 <= limit <= 50:
+            raise ValidationError(
+                f"Limit {limit} out of range. "
+                f"Must be between 1 and 50."
+            )
 
         # Handle empty snippet
         if not snippet.strip():
@@ -770,7 +790,7 @@ def register_code_tools(server: Server, services: ServiceContainer) -> None:
 
 1. **Path validation**: Check directory exists before indexing
 2. **Error accumulation**: Individual file errors collected, not thrown
-3. **Strict snippet validation**: Long snippets rejected with ValidationError (no silent truncation per spec line 741)
+3. **Strict validation**: All inputs validated with helpful errors. Invalid inputs (e.g., snippet too long, limit out of range) are rejected with ValidationError (no silent truncation/clamping per spec line 741). Error messages include valid ranges.
 4. **Language normalization**: Language filter lowercased for consistency
 5. **Empty query handling**: Return empty results, not an error
 6. **Graceful degradation**: Tools registered even if CodeIndexer unavailable, but return helpful errors
@@ -830,8 +850,12 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
                 "GitAnalyzer service not initialized (SPEC-002-07 may be incomplete or no git repository detected)."
             )
 
-        # Clamp limit
-        limit = max(1, min(50, limit))
+        # Validate limit
+        if not 1 <= limit <= 50:
+            raise ValidationError(
+                f"Limit {limit} out of range. "
+                f"Must be between 1 and 50."
+            )
 
         # Parse date if provided
         since_dt = None
@@ -905,8 +929,12 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
                 "GitAnalyzer service not initialized (SPEC-002-07 may be incomplete or no git repository detected)."
             )
 
-        # Clamp limit
-        limit = max(1, min(500, limit))
+        # Validate limit
+        if not 1 <= limit <= 500:
+            raise ValidationError(
+                f"Limit {limit} out of range. "
+                f"Must be between 1 and 500."
+            )
 
         try:
             # Delegate to GitReader
@@ -963,9 +991,17 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
                 "GitAnalyzer service not initialized (SPEC-002-07 may be incomplete or no git repository detected)."
             )
 
-        # Clamp parameters
-        days = max(1, min(365, days))
-        limit = max(1, min(50, limit))
+        # Validate parameters
+        if not 1 <= days <= 365:
+            raise ValidationError(
+                f"Days {days} out of range. "
+                f"Must be between 1 and 365."
+            )
+        if not 1 <= limit <= 50:
+            raise ValidationError(
+                f"Limit {limit} out of range. "
+                f"Must be between 1 and 50."
+            )
 
         try:
             # Delegate to GitAnalyzer
@@ -1049,7 +1085,7 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
 
 1. **Graceful degradation**: Tools registered even if GitAnalyzer unavailable, but return helpful errors
 2. **Date parsing**: Parse ISO date strings to datetime objects with validation
-3. **Parameter clamping**: Clamp days and limit to reasonable ranges
+3. **Strict parameter validation**: All inputs validated with helpful errors. Invalid inputs (e.g., days/limit out of range) are rejected with ValidationError (no silent clamping per spec line 741). Error messages include valid ranges.
 4. **FileNotFoundError handling**: Convert to ValidationError for clearer messaging
 5. **Timestamp formatting**: All timestamps converted to ISO format in output
 
@@ -1292,19 +1328,20 @@ async def test_pagination_with_list_memories(mock_server, real_services):
 
 **Decision**: Rejected. Use shared services initialized once.
 
-### 3. Raise Errors for All Validation Failures
+### 3. Clamp Out-of-Range Inputs Instead of Rejecting
 
-**Approach**: Reject out-of-range inputs instead of clamping.
+**Approach**: Silently adjust out-of-range inputs (e.g., limit=1000 becomes limit=100).
 
 **Pros**:
-- Stricter validation
-- Forces caller to handle bounds
+- Better UX (no errors for agents to handle)
+- Simpler error handling code
 
 **Cons**:
-- Poor UX (agent must retry with adjusted params)
-- More error handling code
+- Silent behavior changes can confuse callers
+- Inconsistent with spec requirement (line 741: "Invalid inputs rejected with ValidationError")
+- Less clear contract
 
-**Decision**: Rejected for limits/importance. Clamp with warning. Still raise for invalid enums (clearer contract).
+**Decision**: Rejected. Always validate and reject invalid inputs with helpful error messages per spec line 741. This ensures callers understand limits and get clear feedback.
 
 ### 4. Synchronous Tool Implementation
 
