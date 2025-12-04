@@ -1,55 +1,198 @@
 ============================= test session starts ==============================
-platform darwin -- Python 3.13.6, pytest-8.4.2, pluggy-1.6.0 -- /Users/elliotmilco/.pyenv/versions/3.13.6/bin/python3.13
-cachedir: .pytest_cache
-rootdir: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-19
+platform darwin -- Python 3.12.12, pytest-9.0.1, pluggy-1.6.0
+rootdir: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-15
 configfile: pyproject.toml
-plugins: asyncio-1.2.0, xdist-3.8.0, timeout-2.4.0, anyio-4.10.0, cov-7.0.0
+testpaths: tests
+plugins: mock-3.15.1, hypothesis-6.148.6, anyio-4.12.0, asyncio-1.3.0
 asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collecting ... collected 16 items
+collected 446 items
 
-tests/hooks/test_mcp_client.py::TestMCPClient::test_init PASSED
-tests/hooks/test_mcp_client.py::TestMCPClient::test_connect_success 2025-12-04 12:56:35 [warning  ] mcp_client.connect_failed      error="'coroutine' object has no attribute '__aenter__'"
-FAILED
+tests/clustering/test_clusterer.py ................                      [  3%]
+tests/clustering/test_experience.py ..........                           [  5%]
+tests/clustering/test_integration.py .....                               [  6%]
+tests/clustering/test_types.py .....                                     [  8%]
+tests/context/test_assembler.py .........                                [ 10%]
+tests/context/test_deduplication.py ..........                           [ 12%]
+tests/context/test_formatting.py ............                            [ 15%]
+tests/context/test_tokens.py ............                                [ 17%]
+tests/embedding/test_mock.py ...........                                 [ 20%]
+tests/embedding/test_nomic.py ........                                   [ 21%]
+tests/git/test_analyzer.py ....................                          [ 26%]
+tests/git/test_reader.py ...................                             [ 30%]
+tests/hooks/test_mcp_client.py ................                          [ 34%]
+tests/observation/test_collector.py ............................         [ 40%]
+tests/observation/test_models.py ...........                             [ 43%]
+tests/observation/test_utils.py ...............                          [ 46%]
+tests/search/test_results.py ........                                    [ 48%]
+tests/search/test_searcher.py ...........................                [ 54%]
+tests/server/test_config.py ...                                          [ 54%]
+tests/server/test_main.py ..                                             [ 55%]
+tests/server/tools/test_code.py ............                             [ 58%]
+tests/server/tools/test_enums.py ................                        [ 61%]
+tests/server/tools/test_errors.py .....                                  [ 62%]
+tests/server/tools/test_ghap.py F
 
 =================================== FAILURES ===================================
-______________________ TestMCPClient.test_connect_success ______________________
+____________________ TestStartGhap.test_start_ghap_success _____________________
+tests/server/tools/test_ghap.py:81: in test_start_ghap_success
+    assert "error" not in result
+E   AssertionError: assert 'error' not in {'error': {'message': 'Internal server error', 'type': 'internal_error'}}
+----------------------------- Captured stdout call -----------------------------
+2025-12-04 17:18:26 [info     ] session_started                session_id=session_20251204_221826_924a40
+2025-12-04 17:18:26 [error    ] ghap.unexpected_error          error="'str' object has no attribute 'value'" tool=start_ghap
+[31m╭─[0m[31m────────────────────[0m[31m [0m[1;31mTraceback [0m[1;2;31m(most recent call last)[0m[31m [0m[31m─────────────────────[0m[31m─╮[0m
+[31m│[0m [2m/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-15/src/learnin[0m [31m│[0m
+[31m│[0m [2mg_memory_server/server/tools/[0m[1mghap.py[0m:112 in start_ghap                       [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m   [2m109 [0m[2m│   │   │   │   [0m)                                                      [31m│[0m
+[31m│[0m   [2m110 [0m[2m│   │   │   [0m                                                           [31m│[0m
+[31m│[0m   [2m111 [0m[2m│   │   │   [0m[2m# Create GHAP entry[0m                                        [31m│[0m
+[31m│[0m [31m❱ [0m112 [2m│   │   │   [0mentry = [94mawait[0m collector.create_ghap(                       [31m│[0m
+[31m│[0m   [2m113 [0m[2m│   │   │   │   [0mdomain=domain,                                         [31m│[0m
+[31m│[0m   [2m114 [0m[2m│   │   │   │   [0mstrategy=strategy,                                     [31m│[0m
+[31m│[0m   [2m115 [0m[2m│   │   │   │   [0mgoal=goal,                                             [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m [34m╭─[0m[34m────────────────────────────────[0m[34m locals [0m[34m────────────────────────────────[0m[34m─╮[0m [31m│[0m
+[31m│[0m [34m│[0m     [3;33maction[0m[31m =[0m [32m'Increasing timeout to 60s'[0m                                 [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m  [3;33mcollector[0m[31m =[0m [1m<[0m[1;95mlearning_memory_server.observation.collector.ObservationC…[0m [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [39mobject at [0m[1;36m0x124c11c40[0m[1m>[0m                                      [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m    [3;33mcurrent[0m[31m =[0m [3;35mNone[0m                                                        [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m     [3;33mdomain[0m[31m =[0m [32m'debugging'[0m                                                 [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m          [3;33me[0m[31m =[0m [1;35mAttributeError[0m[1m([0m[32m"'str' object has no attribute 'value'"[0m[1m)[0m     [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m      [3;33mfield[0m[31m =[0m [32m'prediction'[0m                                                [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m       [3;33mgoal[0m[31m =[0m [32m'Fix auth timeout bug'[0m                                      [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m [3;33mhypothesis[0m[31m =[0m [32m'Slow network responses exceed 30s timeout'[0m                 [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m [3;33mprediction[0m[31m =[0m [32m'Auth failures stop'[0m                                        [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m   [3;33mstrategy[0m[31m =[0m [32m'systematic-elimination'[0m                                    [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m      [3;33mvalue[0m[31m =[0m [32m'Auth failures stop'[0m                                        [34m│[0m [31m│[0m
+[31m│[0m [34m╰──────────────────────────────────────────────────────────────────────────╯[0m [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m [2m/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-15/src/learnin[0m [31m│[0m
+[31m│[0m [2mg_memory_server/observation/[0m[1mcollector.py[0m:113 in create_ghap                  [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m   [2m110 [0m[2m│   │   [0m)                                                              [31m│[0m
+[31m│[0m   [2m111 [0m[2m│   │   [0m                                                               [31m│[0m
+[31m│[0m   [2m112 [0m[2m│   │   [0m[2m# Save to current_ghap.json[0m                                    [31m│[0m
+[31m│[0m [31m❱ [0m113 [2m│   │   [0m[1;4;94mawait[0m[1;4m [0m[1;4;96mself[0m[1;4m._save_current_ghap(entry)[0m                           [31m│[0m
+[31m│[0m   [2m114 [0m[2m│   │   [0m                                                               [31m│[0m
+[31m│[0m   [2m115 [0m[2m│   │   [0mlogger.info(                                                   [31m│[0m
+[31m│[0m   [2m116 [0m[2m│   │   │   [0m[33m"[0m[33mghap_created[0m[33m"[0m,                                            [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m [34m╭─[0m[34m────────────────────────────────[0m[34m locals [0m[34m────────────────────────────────[0m[34m─╮[0m [31m│[0m
+[31m│[0m [34m│[0m     [3;33maction[0m[31m =[0m [32m'Increasing timeout to 60s'[0m                                 [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m    [3;33mcurrent[0m[31m =[0m [3;35mNone[0m                                                        [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m     [3;33mdomain[0m[31m =[0m [32m'debugging'[0m                                                 [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m      [3;33mentry[0m[31m =[0m [1;35mGHAPEntry[0m[1m([0m                                                  [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mid[0m=[32m'ghap_20251204_221826_0cca59'[0m,                       [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33msession_id[0m=[32m'session_20251204_221826_924a40'[0m,            [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mcreated_at[0m=[1;35mdatetime[0m[1;35m.datetime[0m[1m([0m[1;36m2025[0m, [1;36m12[0m, [1;36m4[0m, [1;36m22[0m, [1;36m18[0m, [1;36m26[0m,   [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [1;36m909429[0m, [33mtzinfo[0m=[35mdatetime[0m.timezone.utc[1m)[0m,                      [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mdomain[0m=[32m'debugging'[0m,                                     [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mstrategy[0m=[32m'systematic-elimination'[0m,                      [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mgoal[0m=[32m'Fix auth timeout bug'[0m,                            [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mhypothesis[0m=[32m'Slow network responses exceed 30s timeout'[0m, [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33maction[0m=[32m'Increasing timeout to 60s'[0m,                     [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mprediction[0m=[32m'Auth failures stop'[0m,                        [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mhistory[0m=[1m[[0m[1m][0m,                                             [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33miteration_count[0m=[1;36m1[0m,                                      [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33moutcome[0m=[3;35mNone[0m,                                           [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33msurprise[0m=[3;35mNone[0m,                                          [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mroot_cause[0m=[3;35mNone[0m,                                        [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mlesson[0m=[3;35mNone[0m,                                            [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mconfidence_tier[0m=[3;35mNone[0m,                                   [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mnotes[0m=[1m[[0m[1m][0m                                                [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [1m)[0m                                                           [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m       [3;33mgoal[0m[31m =[0m [32m'Fix auth timeout bug'[0m                                      [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m [3;33mhypothesis[0m[31m =[0m [32m'Slow network responses exceed 30s timeout'[0m                 [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m [3;33mprediction[0m[31m =[0m [32m'Auth failures stop'[0m                                        [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m       [3;33mself[0m[31m =[0m [1m<[0m[1;95mlearning_memory_server.observation.collector.ObservationC…[0m [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [39mobject at [0m[1;36m0x124c11c40[0m[1m>[0m                                      [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m [3;33msession_id[0m[31m =[0m [32m'session_20251204_221826_924a40'[0m                            [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m   [3;33mstrategy[0m[31m =[0m [32m'systematic-elimination'[0m                                    [34m│[0m [31m│[0m
+[31m│[0m [34m╰──────────────────────────────────────────────────────────────────────────╯[0m [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m [2m/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-15/src/learnin[0m [31m│[0m
+[31m│[0m [2mg_memory_server/observation/[0m[1mcollector.py[0m:635 in _save_current_ghap           [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m   [2m632 [0m[2;90m│   │   [0m[33m"""Save current GHAP with error handling."""[0m                   [31m│[0m
+[31m│[0m   [2m633 [0m[2m│   │   [0mpath = [96mself[0m.journal_dir / [33m"[0m[33mcurrent_ghap.json[0m[33m"[0m                  [31m│[0m
+[31m│[0m   [2m634 [0m[2m│   │   [0m[94mtry[0m:                                                           [31m│[0m
+[31m│[0m [31m❱ [0m635 [2m│   │   │   [0m[94mawait[0m atomic_write(path, json.dumps(entry.to_dict(), inden [31m│[0m
+[31m│[0m   [2m636 [0m[2m│   │   │   [0mlogger.debug([33m"[0m[33mghap_saved[0m[33m"[0m, ghap_id=entry.id)               [31m│[0m
+[31m│[0m   [2m637 [0m[2m│   │   [0m[94mexcept[0m [96mPermissionError[0m [94mas[0m e:                                   [31m│[0m
+[31m│[0m   [2m638 [0m[2m│   │   │   [0mlogger.error(                                              [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m [34m╭─[0m[34m────────────────────────────────[0m[34m locals [0m[34m────────────────────────────────[0m[34m─╮[0m [31m│[0m
+[31m│[0m [34m│[0m [3;33mentry[0m[31m =[0m [1;35mGHAPEntry[0m[1m([0m                                                       [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mid[0m=[32m'ghap_20251204_221826_0cca59'[0m,                            [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33msession_id[0m=[32m'session_20251204_221826_924a40'[0m,                 [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mcreated_at[0m=[1;35mdatetime[0m[1;35m.datetime[0m[1m([0m[1;36m2025[0m, [1;36m12[0m, [1;36m4[0m, [1;36m22[0m, [1;36m18[0m, [1;36m26[0m,        [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [1;36m909429[0m, [33mtzinfo[0m=[35mdatetime[0m.timezone.utc[1m)[0m,                           [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mdomain[0m=[32m'debugging'[0m,                                          [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mstrategy[0m=[32m'systematic-elimination'[0m,                           [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mgoal[0m=[32m'Fix auth timeout bug'[0m,                                 [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mhypothesis[0m=[32m'Slow network responses exceed 30s timeout'[0m,      [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33maction[0m=[32m'Increasing timeout to 60s'[0m,                          [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mprediction[0m=[32m'Auth failures stop'[0m,                             [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mhistory[0m=[1m[[0m[1m][0m,                                                  [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33miteration_count[0m=[1;36m1[0m,                                           [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33moutcome[0m=[3;35mNone[0m,                                                [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33msurprise[0m=[3;35mNone[0m,                                               [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mroot_cause[0m=[3;35mNone[0m,                                             [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mlesson[0m=[3;35mNone[0m,                                                 [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mconfidence_tier[0m=[3;35mNone[0m,                                        [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mnotes[0m=[1m[[0m[1m][0m                                                     [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [1m)[0m                                                                [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m  [3;33mpath[0m[31m =[0m [1;35mPosixPath[0m[1m([0m[32m'/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmp…[0m [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m  [3;33mself[0m[31m =[0m [1m<[0m[1;95mlearning_memory_server.observation.collector.ObservationCollec…[0m [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [39mobject at [0m[1;36m0x124c11c40[0m[1m>[0m                                           [34m│[0m [31m│[0m
+[31m│[0m [34m╰──────────────────────────────────────────────────────────────────────────╯[0m [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m [2m/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-15/src/learnin[0m [31m│[0m
+[31m│[0m [2mg_memory_server/observation/[0m[1mmodels.py[0m:198 in to_dict                         [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m   [2m195 [0m[2m│   │   │   [0m[33m"[0m[33mid[0m[33m"[0m: [96mself[0m.id,                                             [31m│[0m
+[31m│[0m   [2m196 [0m[2m│   │   │   [0m[33m"[0m[33msession_id[0m[33m"[0m: [96mself[0m.session_id,                             [31m│[0m
+[31m│[0m   [2m197 [0m[2m│   │   │   [0m[33m"[0m[33mcreated_at[0m[33m"[0m: [96mself[0m.created_at.isoformat().replace([33m"[0m[33m+00:00[0m[33m"[0m [31m│[0m
+[31m│[0m [31m❱ [0m198 [2m│   │   │   [0m[33m"[0m[33mdomain[0m[33m"[0m: [1;4;96mself[0m[1;4m.domain.value[0m,                               [31m│[0m
+[31m│[0m   [2m199 [0m[2m│   │   │   [0m[33m"[0m[33mstrategy[0m[33m"[0m: [96mself[0m.strategy.value,                           [31m│[0m
+[31m│[0m   [2m200 [0m[2m│   │   │   [0m[33m"[0m[33mgoal[0m[33m"[0m: [96mself[0m.goal,                                         [31m│[0m
+[31m│[0m   [2m201 [0m[2m│   │   │   [0m[33m"[0m[33mhypothesis[0m[33m"[0m: [96mself[0m.hypothesis,                             [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m [34m╭─[0m[34m────────────────────────────────[0m[34m locals [0m[34m────────────────────────────────[0m[34m─╮[0m [31m│[0m
+[31m│[0m [34m│[0m [3;33mself[0m[31m =[0m [1;35mGHAPEntry[0m[1m([0m                                                        [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mid[0m=[32m'ghap_20251204_221826_0cca59'[0m,                             [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33msession_id[0m=[32m'session_20251204_221826_924a40'[0m,                  [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mcreated_at[0m=[1;35mdatetime[0m[1;35m.datetime[0m[1m([0m[1;36m2025[0m, [1;36m12[0m, [1;36m4[0m, [1;36m22[0m, [1;36m18[0m, [1;36m26[0m, [1;36m909429[0m, [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [33mtzinfo[0m=[35mdatetime[0m.timezone.utc[1m)[0m,                                    [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mdomain[0m=[32m'debugging'[0m,                                           [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mstrategy[0m=[32m'systematic-elimination'[0m,                            [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mgoal[0m=[32m'Fix auth timeout bug'[0m,                                  [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mhypothesis[0m=[32m'Slow network responses exceed 30s timeout'[0m,       [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33maction[0m=[32m'Increasing timeout to 60s'[0m,                           [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mprediction[0m=[32m'Auth failures stop'[0m,                              [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mhistory[0m=[1m[[0m[1m][0m,                                                   [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33miteration_count[0m=[1;36m1[0m,                                            [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33moutcome[0m=[3;35mNone[0m,                                                 [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33msurprise[0m=[3;35mNone[0m,                                                [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mroot_cause[0m=[3;35mNone[0m,                                              [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mlesson[0m=[3;35mNone[0m,                                                  [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mconfidence_tier[0m=[3;35mNone[0m,                                         [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mnotes[0m=[1m[[0m[1m][0m                                                      [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [1m)[0m                                                                 [34m│[0m [31m│[0m
+[31m│[0m [34m╰──────────────────────────────────────────────────────────────────────────╯[0m [31m│[0m
+[31m╰──────────────────────────────────────────────────────────────────────────────╯[0m
+[1;91mAttributeError: [0m[32m'str'[0m object has no attribute [32m'value'[0m
 
-self = <tests.hooks.test_mcp_client.TestMCPClient object at 0x10bc5c910>
-
-    @pytest.mark.asyncio
-    async def test_connect_success(self) -> None:
-        """Test successful connection to MCP server."""
-        client = MCPClient(["mock-server"], timeout=5.0)
-    
-        # Mock stdio_client and session
-        mock_read = AsyncMock()
-        mock_write = AsyncMock()
-        mock_session = AsyncMock(spec=ClientSession)
-    
-        with patch("mcp_client.stdio_client") as mock_stdio:
-            with patch("mcp_client.ClientSession") as mock_session_cls:
-                # stdio_client is a coroutine that returns a tuple
-                async def mock_stdio_func(*args: Any) -> tuple[Any, Any]:
-                    return (mock_read, mock_write)
-    
-                mock_stdio.side_effect = mock_stdio_func
-                mock_session_cls.return_value = mock_session
-    
-                result = await client.connect()
-    
->               assert result is True
-E               assert False is True
-
-tests/hooks/test_mcp_client.py:55: AssertionError
 =============================== warnings summary ===============================
-tests/hooks/test_mcp_client.py::TestMCPClient::test_connect_success
-  /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-19/tests/hooks/test_mcp_client.py:53: RuntimeWarning: coroutine 'TestMCPClient.test_connect_success.<locals>.mock_stdio_func' was never awaited
-    result = await client.connect()
-  Enable tracemalloc to get traceback where the object was allocated.
-  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+tests/clustering/test_clusterer.py: 208 warnings
+tests/clustering/test_experience.py: 22 warnings
+tests/clustering/test_integration.py: 10 warnings
+  /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-15/.venv/lib/python3.12/site-packages/sklearn/utils/deprecation.py:132: FutureWarning: 'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will be removed in 1.8.
+    warnings.warn(
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =========================== short test summary info ============================
-FAILED tests/hooks/test_mcp_client.py::TestMCPClient::test_connect_success - ...
+FAILED tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_success
 !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
-==================== 1 failed, 1 passed, 1 warning in 0.19s ====================
+================= 1 failed, 280 passed, 240 warnings in 59.05s =================
