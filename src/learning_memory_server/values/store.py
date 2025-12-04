@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -12,7 +12,9 @@ from learning_memory_server.storage.base import VectorStore
 from .types import ClusterInfo, Experience, ValidationResult, Value
 
 if TYPE_CHECKING:
-    from learning_memory_server.clustering import Clusterer
+    from learning_memory_server.clustering import (  # type: ignore[attr-defined]
+        Clusterer,
+    )
 
 # Valid clustering axes (domain is NOT an axis - it's a metadata filter)
 VALID_AXES = {"full", "strategy", "surprise", "root_cause"}
@@ -71,7 +73,7 @@ class ValueStore:
             raise ValueError(f"Invalid axis '{axis}'. Must be one of: {VALID_AXES}")
 
         # Delegate to Clusterer
-        cluster_result = await self.clusterer.cluster_axis(axis)
+        cluster_result: list[ClusterInfo] = await self.clusterer.cluster_axis(axis)
 
         # Sort by size descending
         cluster_result.sort(key=lambda c: c.size, reverse=True)
@@ -116,7 +118,7 @@ class ValueStore:
                 collection=collection, id=member_id, with_vector=True
             )
 
-            if result is not None:
+            if result is not None and result.vector is not None:
                 # Extract weight from payload (confidence tier)
                 weight = result.payload.get("confidence_weight", 1.0)
 
@@ -244,6 +246,7 @@ class ValueStore:
         )
 
         # Return Value object
+        validation_metadata: dict[str, Any] = payload["validation"]  # type: ignore[assignment]
         return Value(
             id=value_id,
             text=text,
@@ -252,7 +255,7 @@ class ValueStore:
             embedding=embedding,
             cluster_size=cluster.size,
             created_at=timestamp,
-            metadata=payload["validation"],
+            metadata=validation_metadata,
         )
 
     async def list_values(self, axis: str | None = None) -> list[Value]:
@@ -282,18 +285,19 @@ class ValueStore:
         # Convert to Value objects
         values = []
         for result in results:
-            values.append(
-                Value(
-                    id=result.id,
-                    text=result.payload["text"],
-                    cluster_id=result.payload["cluster_id"],
-                    axis=result.payload["axis"],
-                    embedding=result.vector,
-                    cluster_size=result.payload["cluster_size"],
-                    created_at=result.payload["created_at"],
-                    metadata=result.payload.get("validation", {}),
+            if result.vector is not None:
+                values.append(
+                    Value(
+                        id=result.id,
+                        text=result.payload["text"],
+                        cluster_id=result.payload["cluster_id"],
+                        axis=result.payload["axis"],
+                        embedding=result.vector,
+                        cluster_size=result.payload["cluster_size"],
+                        created_at=result.payload["created_at"],
+                        metadata=result.payload.get("validation", {}),
+                    )
                 )
-            )
 
         # Sort by created_at descending
         values.sort(key=lambda v: v.created_at, reverse=True)

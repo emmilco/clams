@@ -16,7 +16,7 @@ def register_all_tools(server: Server, settings: ServerSettings) -> None:
         settings: Server configuration
     """
     # Register ping tool for health checks
-    @server.call_tool()  # type: ignore[no-untyped-call, misc]
+    @server.call_tool()  # type: ignore[untyped-decorator]
     async def ping() -> str:
         """Health check endpoint.
 
