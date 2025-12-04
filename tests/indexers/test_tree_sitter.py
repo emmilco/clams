@@ -181,7 +181,9 @@ async def test_parse_java(parser):
     assert len(units) >= 2
 
     # Check for class (constructor may also be extracted with same name)
-    classes = [u for u in units if u.name == "Calculator" and u.unit_type == UnitType.CLASS]
+    classes = [
+        u for u in units if u.name == "Calculator" and u.unit_type == UnitType.CLASS
+    ]
     assert len(classes) == 1
 
     # Check for interface
