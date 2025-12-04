@@ -261,6 +261,28 @@ except Exception as e:
 - **No stack traces to client** - Internal errors return generic message
 - **Structured logging** - All errors logged with context for debugging
 
+**Example usage (get_clusters):**
+```python
+async def get_clusters(axis: str) -> dict:
+    try:
+        validate_axis(axis)
+
+        # Check if enough experiences exist for clustering
+        experience_count = await experience_clusterer.count_experiences(axis)
+        if experience_count < 20:
+            raise InsufficientDataError(
+                f"Not enough experiences for clustering. "
+                f"Found {experience_count}, need at least 20."
+            )
+
+        clusters = await experience_clusterer.cluster_axis(axis)
+        # ...
+        return result
+    except InsufficientDataError as e:
+        return {"error": {"type": "insufficient_data", "message": str(e)}}
+    # ... other error handlers
+```
+
 ### 3. Enum Validation
 
 **Pattern: Centralized enum definitions with validation helpers**
@@ -443,7 +465,7 @@ async def resolve_ghap(
 **Rationale:**
 - **Resilience** - Transient failures (network, Qdrant restart) are retried
 - **Local safety** - Resolution saved locally before persistence attempt
-- **Exponential backoff** - Avoids hammering failed services (1s, 2s, 4s)
+- **Exponential backoff** - Avoids hammering failed services (1s, 2s, 4s); `asyncio.sleep()` takes seconds as float
 - **Clear failure** - After 3 attempts, error explains what succeeded (local) and what failed (remote)
 - **Structured logging** - Track retry attempts for debugging
 
@@ -528,7 +550,20 @@ async def list_ghap_entries(
     outcome: str | None = None,
     since: str | None = None,  # ISO date
 ) -> dict:
-    """List recent GHAP entries with filters."""
+    """List recent GHAP entries with filters.
+
+    Validation example for 'since' parameter:
+    ```python
+    if since is not None:
+        try:
+            since_dt = datetime.fromisoformat(since)
+        except ValueError:
+            raise ValidationError(
+                f"Invalid date format for 'since': {since}. "
+                "Expected ISO 8601 format (e.g., '2024-01-15T10:30:45+00:00')"
+            )
+    ```
+    """
     # Returns: {"results": [...], "count": int}
     # Or: {"error": {...}}
 ```
