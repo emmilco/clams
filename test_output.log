@@ -1,92 +1,75 @@
 ============================= test session starts ==============================
-platform darwin -- Python 3.12.12, pytest-9.0.1, pluggy-1.6.0 -- /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-03/.venv/bin/python
+platform darwin -- Python 3.13.6, pytest-8.4.2, pluggy-1.6.0 -- /Users/elliotmilco/.pyenv/versions/3.13.6/bin/python3.13
 cachedir: .pytest_cache
-rootdir: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-03
+rootdir: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-18
 configfile: pyproject.toml
-testpaths: tests
-plugins: anyio-4.12.0, asyncio-1.3.0
+plugins: asyncio-1.2.0, xdist-3.8.0, timeout-2.4.0, anyio-4.10.0, cov-7.0.0
 asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collecting ... collected 30 items
+collecting ... collected 43 items
 
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_create_collection PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_create_duplicate_collection PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_delete_collection PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_upsert_and_get PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_upsert_update PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_upsert_wrong_dimension PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_search_cosine_similarity PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_search_with_filters PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_delete PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_scroll PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_scroll_with_filters PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_count PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_count_with_filters PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_get_nonexistent PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_operations_on_nonexistent_collection PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_create_collection PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_delete_collection PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_upsert_and_get PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_upsert_update PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_search_cosine_similarity FAILED
+tests/context/test_assembler.py::test_assemble_single_source_memories 2025-12-04 12:45:07 [info     ] assembling_context             component=context_assembler context_types=['memories'] limit=20 max_tokens=1000 query='coding preferences'
+2025-12-04 12:45:07 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=1
+2025-12-04 12:45:07 [debug    ] source_budget_used             budget=1000 component=context_assembler items_selected=1 source=memories unused=983 used=17
+2025-12-04 12:45:07 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=983
+PASSED
+tests/context/test_assembler.py::test_assemble_multiple_sources 2025-12-04 12:45:07 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=2000 query='python examples'
+2025-12-04 12:45:07 [info     ] deduplication_complete         component=context_assembler deduplicated_count=2 original_count=2
+2025-12-04 12:45:07 [debug    ] source_budget_used             budget=666 component=context_assembler items_selected=1 source=memories unused=649 used=17
+2025-12-04 12:45:07 [debug    ] source_budget_used             budget=1333 component=context_assembler items_selected=1 source=code unused=1308 used=25
+2025-12-04 12:45:07 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=1957
+PASSED
+tests/context/test_assembler.py::test_invalid_context_type PASSED
+tests/context/test_assembler.py::test_empty_results 2025-12-04 12:45:07 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=1000 query=nothing
+2025-12-04 12:45:07 [info     ] deduplication_complete         component=context_assembler deduplicated_count=0 original_count=0
+PASSED
+tests/context/test_assembler.py::test_token_budget_distribution 2025-12-04 12:45:07 [info     ] assembling_context             component=context_assembler context_types=['memories'] limit=20 max_tokens=500 query=test
+2025-12-04 12:45:07 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=20
+2025-12-04 12:45:07 [debug    ] source_budget_used             budget=500 component=context_assembler items_selected=1 source=memories unused=485 used=15
+2025-12-04 12:45:07 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=485
+FAILED
 
 =================================== FAILURES ===================================
-_____________ TestQdrantVectorStore.test_search_cosine_similarity ______________
+________________________ test_token_budget_distribution ________________________
 
-self = <tests.storage.test_qdrant.TestQdrantVectorStore object at 0x10b091c70>
-store = <learning_memory_server.storage.qdrant.QdrantVectorStore object at 0x10b0b2c30>
-collection = 'test_collection'
+assembler = <learning_memory_server.context.assembler.ContextAssembler object at 0x10985fbb0>
+mock_searcher = <tests.context.test_assembler.MockSearcher object at 0x10985fce0>
 
-    async def test_search_cosine_similarity(
-        self, store: QdrantVectorStore, collection: str
+    @pytest.mark.asyncio
+    async def test_token_budget_distribution(
+        assembler: ContextAssembler, mock_searcher: MockSearcher
     ) -> None:
-        """Test cosine similarity search."""
-        # Insert some test vectors
-        vectors = [
-            (np.array([1.0, 0.0, 0.0], dtype=np.float32), {"label": "x"}),
-            (np.array([0.0, 1.0, 0.0], dtype=np.float32), {"label": "y"}),
-            (np.array([0.0, 0.0, 1.0], dtype=np.float32), {"label": "z"}),
-            (np.array([0.9, 0.1, 0.0], dtype=np.float32), {"label": "x-ish"}),
+        """Test token budget is distributed correctly."""
+        # Create many short memories
+        mock_searcher.memories = [
+            MemoryResult(
+                id=f"mem_{i}",
+                category="fact",
+                content=f"Short memory {i}",
+                score=0.9 - (i * 0.01),
+                importance=0.5,
+                tags=[],
+                created_at=datetime.now(timezone.utc),
+                verified_at=None,
+                verification_status=None,
+            )
+            for i in range(20)
         ]
     
-        for i, (vec, payload) in enumerate(vectors):
-            await store.upsert(collection, f"id{i}", vec, payload)
-    
-        # Search for x-like vectors
-        query = np.array([1.0, 0.0, 0.0], dtype=np.float32)
->       results = await store.search(collection, query, limit=2)
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-tests/storage/test_qdrant.py:133: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-self = <learning_memory_server.storage.qdrant.QdrantVectorStore object at 0x10b0b2c30>
-collection = 'test_collection', query = array([1., 0., 0.], dtype=float32)
-limit = 2, filters = None
-
-    async def search(
-        self,
-        collection: str,
-        query: Vector,
-        limit: int = 10,
-        filters: dict[str, Any] | None = None,
-    ) -> list[SearchResult]:
-        """Search for similar vectors."""
-        # Convert filters to Qdrant filter format
-        qdrant_filter = self._build_filter(filters) if filters else None
-    
->       results = await self._client.search(
-                        ^^^^^^^^^^^^^^^^^^^
-            collection_name=collection,
-            query_vector=query.tolist(),
-            limit=limit,
-            query_filter=qdrant_filter,
-            with_payload=True,
-            with_vectors=False,
+        result = await assembler.assemble_context(
+            query="test",
+            context_types=["memories"],
+            limit=20,
+            max_tokens=500,  # Limited budget
         )
-E       AttributeError: 'AsyncQdrantClient' object has no attribute 'search'
+    
+        # Should fit multiple items within budget
+>       assert len(result.items) > 1
+E       AssertionError: assert 1 > 1
+E        +  where 1 = len([ContextItem(source='memory', content='**Memory**: Short memory 0\n*Category: fact, Importance: 0.50*', relevance=0.9, metadata={'id': 'mem_0', 'category': 'fact', 'content': 'Short memory 0', 'score': 0.9, 'importance': 0.5, 'tags': [], 'created_at': datetime.datetime(2025, 12, 4, 17, 45, 7, 870330, tzinfo=datetime.timezone.utc), 'verified_at': None, 'verification_status': None})])
+E        +    where [ContextItem(source='memory', content='**Memory**: Short memory 0\n*Category: fact, Importance: 0.50*', relevance=0.9, metadata={'id': 'mem_0', 'category': 'fact', 'content': 'Short memory 0', 'score': 0.9, 'importance': 0.5, 'tags': [], 'created_at': datetime.datetime(2025, 12, 4, 17, 45, 7, 870330, tzinfo=datetime.timezone.utc), 'verified_at': None, 'verification_status': None})] = FormattedContext(markdown='# Context\n\n\n## Memories\n\n\n**Memory**: Short memory 0\n*Category: fact, Importance: 0.50*\n\n\n---\n*1 items from 1 sources*', items=[ContextItem(source='memory', content='**Memory**: Short memory 0\n*Category: fact, Importance: 0.50*', relevance=0.9, metadata={'id': 'mem_0', 'category': 'fact', 'content': 'Short memory 0', 'score': 0.9, 'importance': 0.5, 'tags': [], 'created_at': datetime.datetime(2025, 12, 4, 17, 45, 7, 870330, tzinfo=datetime.timezone.utc), 'verified_at': None, 'verification_status': None})], token_count=29, sources_used={'memories': 1}, budget_exceeded=False, truncated_items=[]).items
 
-src/learning_memory_server/storage/qdrant.py:119: AttributeError
+tests/context/test_assembler.py:235: AssertionError
 =========================== short test summary info ============================
-FAILED tests/storage/test_qdrant.py::TestQdrantVectorStore::test_search_cosine_similarity
+FAILED tests/context/test_assembler.py::test_token_budget_distribution - Asse...
 !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
-========================= 1 failed, 19 passed in 0.93s =========================
+========================= 1 failed, 4 passed in 0.06s ==========================
