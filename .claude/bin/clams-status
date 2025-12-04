@@ -33,6 +33,34 @@ if [[ ! -f "$DB_PATH" ]]; then
     exit 1
 fi
 
+# Auto-cleanup stale workers (active for > 2 hours)
+# This handles workers left over from context compaction or crashed sessions
+cleanup_stale_workers() {
+    local stale_count
+    stale_count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM workers WHERE status = 'active' AND datetime(started_at) < datetime('now', '-2 hours');")
+
+    if [[ "$stale_count" -gt 0 ]]; then
+        echo "=== Auto-Cleanup ==="
+        echo "Found $stale_count stale worker(s) (active > 2 hours)"
+        sqlite3 "$DB_PATH" "UPDATE workers SET status = 'stale', ended_at = datetime('now') WHERE status = 'active' AND datetime(started_at) < datetime('now', '-2 hours');"
+        echo "Marked as stale. These were likely from a previous session."
+        echo ""
+    fi
+
+    # Also check for session_ended workers and note them
+    local session_ended_count
+    session_ended_count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM workers WHERE status = 'session_ended';")
+    if [[ "$session_ended_count" -gt 0 ]]; then
+        echo "=== Session Continuity ==="
+        echo "Previous session ended with $session_ended_count worker(s) in progress."
+        # Check for HANDOFF.md
+        if [[ -f "$MAIN_REPO/.claude/HANDOFF.md" ]]; then
+            echo "HANDOFF.md found - review for context from last session."
+        fi
+        echo ""
+    fi
+}
+
 cmd_health() {
     echo "=== System Health ==="
 
@@ -141,6 +169,9 @@ EOF
 }
 
 cmd_full() {
+    # Auto-cleanup stale workers on full status check
+    cleanup_stale_workers
+
     cmd_health
     echo ""
     cmd_tasks

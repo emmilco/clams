@@ -115,7 +115,7 @@ SPEC → DESIGN → IMPLEMENT → REVIEW → TEST → INTEGRATE → VERIFY → D
 |------------|-------------|------|
 | SPEC → DESIGN | 2 spec reviews approved, human approves | Semi-auto |
 | DESIGN → IMPLEMENT | Proposal exists, 2 proposal reviews approved, human approves | Semi-auto |
-| IMPLEMENT → REVIEW | Tests pass, linter clean, no untracked TODOs | Automated |
+| IMPLEMENT → REVIEW | Tests pass, linter clean, type check (mypy), no untracked TODOs | Automated |
 | REVIEW → TEST | 2 code reviews approved | Automated |
 | TEST → INTEGRATE | Full test suite passes | Automated |
 | INTEGRATE → VERIFY | Changelog exists, then merge | Semi-auto |
@@ -219,20 +219,21 @@ After worker completes:
 
 **DESIGN → IMPLEMENT**
 1. Architect writes `planning_docs/TASK-XXX/proposal.md`
-2. Dispatch Proposal Reviewer #1
-3. If changes requested: architect fixes, restart from step 2
-4. If approved: `.claude/bin/clams-review record TASK-XXX proposal approved --worker W-xxx`
-5. Dispatch Proposal Reviewer #2
-6. If changes requested: architect fixes, restart from step 2
-7. If approved: `.claude/bin/clams-review record TASK-XXX proposal approved --worker W-yyy`
-8. Run: `.claude/bin/clams-gate check TASK-XXX DESIGN-IMPLEMENT`
-9. Human approves design
-10. Transition: `.claude/bin/clams-task transition TASK-XXX IMPLEMENT --gate-result pass`
+2. **Architect updates spec** to match any interface refinements in proposal (prevents spec/proposal mismatches)
+3. Dispatch Proposal Reviewer #1
+4. If changes requested: architect fixes, restart from step 2
+5. If approved: `.claude/bin/clams-review record TASK-XXX proposal approved --worker W-xxx`
+6. Dispatch Proposal Reviewer #2
+7. If changes requested: architect fixes, restart from step 2
+8. If approved: `.claude/bin/clams-review record TASK-XXX proposal approved --worker W-yyy`
+9. Run: `.claude/bin/clams-gate check TASK-XXX DESIGN-IMPLEMENT`
+10. Human approves design
+11. Transition: `.claude/bin/clams-task transition TASK-XXX IMPLEMENT --gate-result pass`
 
 **IMPLEMENT → REVIEW**
 - Implementer completes code and tests
 - Run: `.claude/bin/clams-gate check TASK-XXX IMPLEMENT-REVIEW`
-- Gate checks: tests pass, linter clean, no untracked TODOs
+- Gate checks: tests pass, linter clean, **type check (mypy --strict)**, no untracked TODOs
 
 **REVIEW → TEST**
 1. Dispatch Code Reviewer #1
@@ -375,7 +376,7 @@ You work with the human through this Claude Code session. The human:
 - Approves designs (DESIGN → IMPLEMENT)
 - Can review code (rarely)
 - Approves spec amendments
-- Issues wrapup command before session ends
+- Issues `/wrapup` command before session ends
 
 When you need human input, ask clearly and wait for response.
 
@@ -383,31 +384,29 @@ When you need human input, ask clearly and wait for response.
 
 ### Ending a Session
 
-Before the session ends, ensure:
-1. All in-progress work is documented in `planning_docs/`
-2. Database reflects current state
-3. Write handoff notes to `.claude/HANDOFF.md`:
-
-```markdown
-# Session Handoff - [DATE]
-
-## Active Tasks
-- TASK-XXX: [phase] - [status/next step]
-
-## Blocked Items
-- [description]
-
-## Next Steps
-1. [what to do next]
-```
+Use the `/wrapup` command before ending a session. This:
+1. Marks all active workers as `session_ended`
+2. Creates a database backup
+3. Generates `.claude/HANDOFF.md` with:
+   - Session summary
+   - Active tasks and their status
+   - **Friction points** encountered this session
+   - Recommendations for next session
+   - Next steps
+4. Commits the handoff document
 
 ### Starting a New Session
 
-1. Run `.claude/bin/clams-status` to understand current state
-2. Read `.claude/HANDOFF.md` if it exists
-3. Run `.claude/bin/clams-worktree list` to see active worktrees
-4. Review `planning_docs/` for context
-5. Resume work based on phase states
+Simply run `.claude/bin/clams-status`. The system will:
+1. Auto-cleanup stale workers (active > 2 hours)
+2. Detect if previous session ended with workers in progress
+3. Note if `HANDOFF.md` exists for review
+4. Show current task states and health
+
+Then review context as needed:
+- Read `.claude/HANDOFF.md` for previous session context
+- Check `planning_docs/` for task details
+- Resume work based on task phases
 
 ## Spec Amendments
 

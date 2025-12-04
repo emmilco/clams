@@ -50,6 +50,7 @@ cmd_list() {
     echo "IMPLEMENT → REVIEW (automated)"
     echo "  - [auto] Tests pass (check_tests.sh)"
     echo "  - [auto] Linter clean (check_linter.sh)"
+    echo "  - [auto] Type check clean (check_types.sh)"
     echo "  - [auto] No untracked TODOs (check_todos.sh)"
     echo ""
     echo "REVIEW → TEST (automated)"
@@ -207,6 +208,10 @@ cmd_check() {
             fi
             echo ""
             if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
+                failed=1
+            fi
+            echo ""
+            if ! run_gate "Type check clean" "check_types.sh" "$worktree"; then
                 failed=1
             fi
             echo ""
