@@ -2,7 +2,18 @@
 
 ## Revision Summary
 
-This proposal has been updated to address review feedback:
+This proposal has been updated to address review feedback and simplify v1 implementation:
+
+### Human Decision: Skip Domain-Specific Premortem for v1
+
+**Rationale**: Domain-specific premortem adds complexity without proven value. For v1, we'll focus on generic context injection via `assemble_context()`. This simplifies the implementation and reduces performance concerns.
+
+**Changes**:
+- Removed keyword-based domain detection from `user_prompt_submit.sh`
+- Removed `get_premortem_context()` MCP call
+- Removed `.premortem_injected` flag file logic
+- Simplified to just call `assemble_context(query=prompt)` without domain parameter
+- Added domain-specific premortem to "Out of Scope" and "Future Enhancements"
 
 ### Blocking Issues Fixed
 
@@ -18,15 +29,13 @@ This proposal has been updated to address review feedback:
 
 ### Should-Fix Issues Addressed
 
-6. **Premortem Injection Tracking**: Added `.premortem_injected` flag file in `user_prompt_submit.sh` to ensure one-shot injection per GHAP cycle. Flag is checked before injecting premortem.
+6. **Hook Output Format**: Added comprehensive "Hook Output Format" section documenting JSON schema and Claude Code integration expectations.
 
-7. **Hook Output Format**: Added comprehensive "Hook Output Format" section documenting JSON schema and Claude Code integration expectations.
+7. **Performance Requirements**: Added performance strategy notes for `user_prompt_submit.sh`. Reduced limits (10 results, 1500 tokens) and acknowledged potential latency on cold start. Acceptable tradeoff for rich context.
 
-8. **Performance Requirements**: Added performance strategy notes for `user_prompt_submit.sh`. Reduced limits (10 results, 1500 tokens) and acknowledged potential latency on cold start. Acceptable tradeoff for rich context.
+8. **Test Fixtures**: Removed placeholder fixtures from proposal (implementation detail, not architectural).
 
-9. **Test Fixtures**: Removed placeholder fixtures from proposal (implementation detail, not architectural).
-
-10. **chmod +x Responsibility**: Added "Installation and Setup" section documenting that hooks must be made executable during installation/setup.
+9. **chmod +x Responsibility**: Added "Installation and Setup" section documenting that hooks must be made executable during installation/setup.
 
 ## Problem Statement
 
@@ -105,8 +114,7 @@ pyyaml>=6.0
 │   ├── user_prompt_submit.sh        # Hook 2: User prompt analysis
 │   ├── ghap_checkin.sh              # Hook 3: GHAP reminder (PreToolCall)
 │   ├── outcome_capture.sh           # Hook 4: Test/build capture (PostToolCall)
-│   ├── session_end.sh               # Hook 5: Session cleanup (future)
-│   └── .premortem_injected          # State: premortem already shown this cycle
+│   └── session_end.sh               # Hook 5: Session cleanup (future)
 └── journal/                         # ObservationCollector data
     ├── current_ghap.json
     ├── session_entries.jsonl
@@ -388,8 +396,6 @@ set -uo pipefail  # No -e: we handle errors explicitly
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MCP_CLIENT="$SCRIPT_DIR/mcp_client.py"
-CONFIG_FILE="$SCRIPT_DIR/config.yaml"
-STATE_FILE="$SCRIPT_DIR/.premortem_injected"
 
 # Helper: Call MCP with error handling
 call_mcp() {
@@ -414,28 +420,6 @@ call_mcp() {
 # Read user prompt from stdin
 USER_PROMPT=$(cat)
 
-# Detect domain from prompt keywords
-DOMAIN="unknown"
-case "$USER_PROMPT" in
-  *fix*|*debug*|*failing*|*broken*|*error*)
-    DOMAIN="debugging"
-    ;;
-  *implement*|*add*|*feature*|*create*)
-    DOMAIN="feature"
-    ;;
-  *refactor*|*clean*|*reorganize*)
-    DOMAIN="refactoring"
-    ;;
-esac
-
-# Check if premortem already injected this GHAP cycle
-INJECT_PREMORTEM=false
-if [ "$DOMAIN" != "unknown" ] && [ ! -f "$STATE_FILE" ]; then
-  INJECT_PREMORTEM=true
-  # Mark as injected (will be cleared when GHAP resolves)
-  touch "$STATE_FILE" 2>/dev/null || true
-fi
-
 # Get rich context (with limited results for performance)
 CONTEXT_RESULT=$(call_mcp "assemble_context" "{
   \"query\": $(echo "$USER_PROMPT" | jq -Rs .),
@@ -444,30 +428,13 @@ CONTEXT_RESULT=$(call_mcp "assemble_context" "{
   \"max_tokens\": 1500
 }")
 
-# Get premortem if enabled and not yet injected
-PREMORTEM_RESULT='{}'
-if [ "$INJECT_PREMORTEM" = "true" ]; then
-  PREMORTEM_RESULT=$(call_mcp "get_premortem_context" "{
-    \"domain\": \"$DOMAIN\",
-    \"limit\": 5,
-    \"max_tokens\": 500
-  }")
-fi
-
 # Build output
 CONTEXT_MD=$(echo "$CONTEXT_RESULT" | jq -r '.markdown // ""')
-PREMORTEM_MD=$(echo "$PREMORTEM_RESULT" | jq -r '.markdown // ""')
-
-if [ -n "$PREMORTEM_MD" ]; then
-  FULL_CONTENT="$CONTEXT_MD\n\n---\n\n$PREMORTEM_MD"
-else
-  FULL_CONTENT="$CONTEXT_MD"
-fi
 
 cat <<EOF
 {
   "type": "rich",
-  "content": $(echo -e "$FULL_CONTENT" | jq -Rs .),
+  "content": $(echo "$CONTEXT_MD" | jq -Rs .),
   "token_count": $(echo "$CONTEXT_RESULT" | jq -r '.token_count // 0')
 }
 EOF
@@ -475,18 +442,11 @@ EOF
 exit 0
 ```
 
-**Domain Detection Logic**:
-- "fix", "debug", "failing", "broken", "error" → debugging
-- "implement", "add", "feature", "create" → feature
-- "refactor", "clean", "reorganize" → refactoring
-- No match → skip premortem
-
 **Performance Target**: <500ms (p95)
 
 **Performance Strategy**:
 - Reduced limits vs original spec (10 results vs 20, 1500 tokens vs 2000)
 - Skip code search (only experiences + values for speed)
-- One-shot premortem injection (flag file prevents repeated calls)
 - Parallel MCP calls when possible (future optimization)
 - May exceed 500ms on cold start; acceptable tradeoff for rich context
 
@@ -658,21 +618,12 @@ GHAP_RESULT=$(call_mcp "get_active_ghap" '{}')
 HAS_ACTIVE=$(echo "$GHAP_RESULT" | jq -r '.has_active // false')
 PREDICTION=$(echo "$GHAP_RESULT" | jq -r '.prediction // ""')
 
-# If failure and NO active GHAP, inject premortem
+# If failure and NO active GHAP, suggest starting GHAP
 if [ "$OUTCOME_STATUS" = "failure" ] && [ "$HAS_ACTIVE" = "false" ]; then
-  # Get premortem (once per GHAP cycle)
-  PREMORTEM_RESULT=$(call_mcp "get_premortem_context" '{
-    "domain": "debugging",
-    "limit": 10,
-    "max_tokens": 1500
-  }')
-
-  PREMORTEM_MD=$(echo "$PREMORTEM_RESULT" | jq -r '.markdown // ""')
-
   cat <<EOF
 {
-  "type": "premortem",
-  "content": "## Test FAILED\n\n$PREMORTEM_MD\n\n---\n\nConsider starting a GHAP to track your debugging approach.",
+  "type": "suggestion",
+  "content": "## Test FAILED\n\nConsider starting a GHAP to track your debugging approach and learn from the process.",
   "prompt": "Start tracking with GHAP?"
 }
 EOF
@@ -716,11 +667,9 @@ exit 0
 - Build tools: make build, npm build, cargo build
 - Exit code 0 = success, non-zero = failure
 
-**Premortem Logic**:
-- Only inject on first failure when no GHAP is active
-- Once agent starts GHAP, they're engaged (no repeated prompts)
+**Note**: Domain-specific premortem is deferred to v2. For v1, we focus on outcome detection and GHAP resolution prompts only.
 
-**Performance**: <200ms (local file reads + conditional premortem query)
+**Performance**: <200ms (local file reads only, no premortem query)
 
 ### 6. Hook 5: session_end.sh (Future)
 
@@ -895,9 +844,6 @@ async def end_session() -> dict:
 
 Already defined in ContextAssembler spec. Hooks call this for context injection.
 
-### 7. get_premortem_context (from SPEC-002-18)
-
-Already defined in ContextAssembler spec. Hooks call this for premortem warnings.
 
 ## Hook Output Format
 
@@ -1345,13 +1291,12 @@ fi
 3. session_start.sh injects light context on first prompt
 4. session_start.sh detects and prompts for orphaned GHAP
 5. user_prompt_submit.sh injects rich context based on prompt
-6. user_prompt_submit.sh includes premortem for detected domains
-7. ghap_checkin.sh triggers every N tool calls (configurable)
-8. outcome_capture.sh detects test/build outcomes from tool results
-9. outcome_capture.sh prompts for GHAP resolution on outcomes
-10. Hooks output valid JSON for Claude Code to parse
-11. Configuration loaded from config.yaml
-12. Hooks degrade gracefully when MCP server unavailable
+6. ghap_checkin.sh triggers every N tool calls (configurable)
+7. outcome_capture.sh detects test/build outcomes from tool results
+8. outcome_capture.sh prompts for GHAP resolution on outcomes
+9. Hooks output valid JSON for Claude Code to parse
+10. Configuration loaded from config.yaml
+11. Hooks degrade gracefully when MCP server unavailable
 
 ### Quality Requirements
 
@@ -1391,7 +1336,8 @@ fi
 - Hook state sharing (hooks are independent)
 - Web-based configuration UI
 - Hook telemetry dashboard
-- Multi-language premortem detection (only English keywords)
+- **Domain-specific premortem warnings** (deferred to v2)
+- **Keyword-based domain detection** (deferred to v2)
 
 ## Future Enhancements
 
@@ -1405,11 +1351,12 @@ fi
 
 ### Phase 3 Enhancements
 
-1. **Multi-language domain detection**: Support non-English prompts
-2. **Advanced outcome matchers**: Regex and glob patterns for custom tools
-3. **Richer premortem context**: Include file history, churn analysis, and blame data
-4. **Hook composition**: Allow hooks to call other hooks or share state
-5. **User-configurable hooks**: Let users write custom hook scripts
+1. **Domain-specific premortem warnings**: Keyword-based domain detection and targeted premortem context
+2. **Multi-language domain detection**: Support non-English prompts
+3. **Advanced outcome matchers**: Regex and glob patterns for custom tools
+4. **Richer premortem context**: Include file history, churn analysis, and blame data
+5. **Hook composition**: Allow hooks to call other hooks or share state
+6. **User-configurable hooks**: Let users write custom hook scripts
 
 ## Notes
 
@@ -1420,5 +1367,5 @@ fi
 - Hooks never block agent workflow (graceful degradation)
 - MCP client logs to stderr (stdout is for JSON output)
 - Configuration changes require hook restart (no hot reload in v1)
-- Premortem injection is one-shot per GHAP cycle (not per failure)
 - Orphan detection runs once at session start only
+- Domain-specific premortem is deferred to v2 for simplicity
