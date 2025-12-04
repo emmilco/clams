@@ -1,5 +1,33 @@
 # SPEC-002-19: Hook Scripts and Context Injection - Technical Proposal
 
+## Revision Summary
+
+This proposal has been updated to address review feedback:
+
+### Blocking Issues Fixed
+
+1. **Type Check Gate Requirement**: Added mypy --strict compliance requirement throughout. All Python code must use strict type hints.
+
+2. **MCP Tool Interface**: Clarified that `result.content[0].text` returns a **JSON string**, not a dict. Updated `call_tool()` to parse JSON explicitly with error handling.
+
+3. **Shell Script Error Handling**: Changed from `set -euo pipefail` to `set -uo pipefail` with explicit error handling. Added `call_mcp()` helper function in all hooks that validates results and returns empty dict on failure. All hooks now exit 0 (graceful degradation).
+
+4. **Dependency Documentation**: Removed yq dependency. Use Python with PyYAML for config parsing (more portable). Added jq, Python 3.10+, and PyYAML to dependencies section.
+
+5. **jq Dependency**: Documented jq requirement with installation instructions for macOS and Ubuntu.
+
+### Should-Fix Issues Addressed
+
+6. **Premortem Injection Tracking**: Added `.premortem_injected` flag file in `user_prompt_submit.sh` to ensure one-shot injection per GHAP cycle. Flag is checked before injecting premortem.
+
+7. **Hook Output Format**: Added comprehensive "Hook Output Format" section documenting JSON schema and Claude Code integration expectations.
+
+8. **Performance Requirements**: Added performance strategy notes for `user_prompt_submit.sh`. Reduced limits (10 results, 1500 tokens) and acknowledged potential latency on cold start. Acceptable tradeoff for rich context.
+
+9. **Test Fixtures**: Removed placeholder fixtures from proposal (implementation detail, not architectural).
+
+10. **chmod +x Responsibility**: Added "Installation and Setup" section documenting that hooks must be made executable during installation/setup.
+
 ## Problem Statement
 
 The Learning Memory Server needs to integrate seamlessly with Claude Code agent sessions through automatic context injection and GHAP state management. Currently, agents must explicitly call MCP tools to interact with the memory system, creating friction and reducing adoption. We need a "magic layer" where the system automatically:
@@ -44,6 +72,28 @@ Claude Code Session
 4. **Progressive disclosure**: Light context at session start, rich context on user prompts
 5. **One-shot premortem**: Inject premortem warnings only once per GHAP cycle to reduce noise
 
+## Dependencies
+
+### System Requirements
+
+All hook scripts require:
+- **Python 3.10+**: For mcp_client.py
+- **jq**: JSON parsing in shell scripts
+  - Install: `brew install jq` (macOS), `apt-get install jq` (Ubuntu)
+- **PyYAML**: For config parsing in Python
+  - Install: `pip install pyyaml`
+
+### Python Dependencies
+
+```
+# requirements.txt for hooks
+structlog>=23.1.0
+mcp>=0.1.0  # MCP SDK
+pyyaml>=6.0
+```
+
+**Note**: yq is NOT required. We use Python with PyYAML for YAML parsing (more portable).
+
 ## File Structure
 
 ```
@@ -55,7 +105,8 @@ Claude Code Session
 │   ├── user_prompt_submit.sh        # Hook 2: User prompt analysis
 │   ├── ghap_checkin.sh              # Hook 3: GHAP reminder (PreToolCall)
 │   ├── outcome_capture.sh           # Hook 4: Test/build capture (PostToolCall)
-│   └── session_end.sh               # Hook 5: Session cleanup (future)
+│   ├── session_end.sh               # Hook 5: Session cleanup (future)
+│   └── .premortem_injected          # State: premortem already shown this cycle
 └── journal/                         # ObservationCollector data
     ├── current_ghap.json
     ├── session_entries.jsonl
@@ -141,7 +192,14 @@ class MCPClient:
                 self.session.call_tool(tool_name, arguments),
                 timeout=self.timeout
             )
-            return result.content[0].text if result.content else {}
+            # MCP tools return JSON string in .text, must parse it
+            if result.content:
+                text = result.content[0].text
+                return json.loads(text) if text else {}
+            return {}
+        except json.JSONDecodeError as e:
+            logger.error("mcp_client.invalid_json", tool=tool_name, error=str(e))
+            return {}
         except (asyncio.TimeoutError, Exception) as e:
             logger.warning("mcp_client.call_failed", tool=tool_name, error=str(e))
             return {}
@@ -202,6 +260,23 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+**Type Annotations**:
+- All code uses strict type hints (PEP 484)
+- Mypy --strict compliance required
+- No use of `Any` without justification
+
+**MCP Tool Response Handling**:
+- MCP tools return `CallToolResult` objects
+- `result.content[0].text` contains **JSON string**, not dict
+- Must parse JSON: `json.loads(result.content[0].text)`
+- Example:
+  ```python
+  result = await self.session.call_tool(tool_name, arguments)
+  # result.content[0].text is '{"session_id": "123"}', not {"session_id": "123"}
+  data = json.loads(result.content[0].text) if result.content else {}
+  return data
+  ```
+
 **Error Handling**:
 - Connection timeout: Return empty result, exit code 1
 - Tool call timeout: Return empty result, exit code 2
@@ -224,29 +299,50 @@ if __name__ == "__main__":
 # Hook: SessionStart
 # Purpose: Initialize session and inject light context
 
-set -euo pipefail
+set -uo pipefail  # No -e: we handle errors explicitly
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MCP_CLIENT="$SCRIPT_DIR/mcp_client.py"
 
-# 1. Start session
-SESSION_RESULT=$(python3 "$MCP_CLIENT" "start_session" '{}' 2>/dev/null || echo '{}')
+# Helper: Call MCP with error handling
+call_mcp() {
+  local tool_name="$1"
+  local args="$2"
+  local result
+
+  if ! result=$(python3 "$MCP_CLIENT" "$tool_name" "$args" 2>/dev/null); then
+    echo '{}'
+    return 1
+  fi
+
+  # Validate JSON
+  if ! echo "$result" | jq empty 2>/dev/null; then
+    echo '{}'
+    return 1
+  fi
+
+  echo "$result"
+  return 0
+}
+
+# 1. Start session (optional, graceful degradation if fails)
+SESSION_RESULT=$(call_mcp "start_session" '{}')
 SESSION_ID=$(echo "$SESSION_RESULT" | jq -r '.session_id // empty')
 
 # 2. Check for orphaned GHAP
-ORPHAN_RESULT=$(python3 "$MCP_CLIENT" "get_orphaned_ghap" '{}' 2>/dev/null || echo '{}')
+ORPHAN_RESULT=$(call_mcp "get_orphaned_ghap" '{}')
 HAS_ORPHAN=$(echo "$ORPHAN_RESULT" | jq -r '.has_orphan // false')
 
 # 3. Get light context (top values only)
-CONTEXT_RESULT=$(python3 "$MCP_CLIENT" "assemble_context" '{
+CONTEXT_RESULT=$(call_mcp "assemble_context" '{
   "query": "",
   "context_types": ["values"],
   "limit": 5,
   "max_tokens": 500
-}' 2>/dev/null || echo '{}')
+}')
 
-# 4. Build output
+# 4. Build output (always succeed, even if context is empty)
 if [ "$HAS_ORPHAN" = "true" ]; then
   GOAL=$(echo "$ORPHAN_RESULT" | jq -r '.goal // "Unknown"')
   HYPOTHESIS=$(echo "$ORPHAN_RESULT" | jq -r '.hypothesis // "Unknown"')
@@ -265,6 +361,9 @@ else
 }
 EOF
 fi
+
+# Always exit successfully (graceful degradation)
+exit 0
 ```
 
 **Output Format**:
@@ -284,11 +383,33 @@ fi
 # Hook: UserPromptSubmit
 # Purpose: Analyze prompt and inject rich context
 
-set -euo pipefail
+set -uo pipefail  # No -e: we handle errors explicitly
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MCP_CLIENT="$SCRIPT_DIR/mcp_client.py"
+CONFIG_FILE="$SCRIPT_DIR/config.yaml"
+STATE_FILE="$SCRIPT_DIR/.premortem_injected"
+
+# Helper: Call MCP with error handling
+call_mcp() {
+  local tool_name="$1"
+  local args="$2"
+  local result
+
+  if ! result=$(python3 "$MCP_CLIENT" "$tool_name" "$args" 2>/dev/null); then
+    echo '{}'
+    return 1
+  fi
+
+  if ! echo "$result" | jq empty 2>/dev/null; then
+    echo '{}'
+    return 1
+  fi
+
+  echo "$result"
+  return 0
+}
 
 # Read user prompt from stdin
 USER_PROMPT=$(cat)
@@ -307,22 +428,30 @@ case "$USER_PROMPT" in
     ;;
 esac
 
-# Get rich context
-CONTEXT_RESULT=$(python3 "$MCP_CLIENT" "assemble_context" "{
-  \"query\": $(echo "$USER_PROMPT" | jq -Rs .),
-  \"context_types\": [\"experiences\", \"values\", \"code\"],
-  \"limit\": 20,
-  \"max_tokens\": 2000
-}" 2>/dev/null || echo '{}')
+# Check if premortem already injected this GHAP cycle
+INJECT_PREMORTEM=false
+if [ "$DOMAIN" != "unknown" ] && [ ! -f "$STATE_FILE" ]; then
+  INJECT_PREMORTEM=true
+  # Mark as injected (will be cleared when GHAP resolves)
+  touch "$STATE_FILE" 2>/dev/null || true
+fi
 
-# Get premortem if domain detected
-PREMORTEM_RESULT=""
-if [ "$DOMAIN" != "unknown" ]; then
-  PREMORTEM_RESULT=$(python3 "$MCP_CLIENT" "get_premortem_context" "{
+# Get rich context (with limited results for performance)
+CONTEXT_RESULT=$(call_mcp "assemble_context" "{
+  \"query\": $(echo "$USER_PROMPT" | jq -Rs .),
+  \"context_types\": [\"experiences\", \"values\"],
+  \"limit\": 10,
+  \"max_tokens\": 1500
+}")
+
+# Get premortem if enabled and not yet injected
+PREMORTEM_RESULT='{}'
+if [ "$INJECT_PREMORTEM" = "true" ]; then
+  PREMORTEM_RESULT=$(call_mcp "get_premortem_context" "{
     \"domain\": \"$DOMAIN\",
-    \"limit\": 10,
-    \"max_tokens\": 1500
-  }" 2>/dev/null || echo '{}')
+    \"limit\": 5,
+    \"max_tokens\": 500
+  }")
 fi
 
 # Build output
@@ -342,6 +471,8 @@ cat <<EOF
   "token_count": $(echo "$CONTEXT_RESULT" | jq -r '.token_count // 0')
 }
 EOF
+
+exit 0
 ```
 
 **Domain Detection Logic**:
@@ -350,7 +481,14 @@ EOF
 - "refactor", "clean", "reorganize" → refactoring
 - No match → skip premortem
 
-**Performance**: <500ms (rich context + optional premortem)
+**Performance Target**: <500ms (p95)
+
+**Performance Strategy**:
+- Reduced limits vs original spec (10 results vs 20, 1500 tokens vs 2000)
+- Skip code search (only experiences + values for speed)
+- One-shot premortem injection (flag file prevents repeated calls)
+- Parallel MCP calls when possible (future optimization)
+- May exceed 500ms on cold start; acceptable tradeoff for rich context
 
 ### 4. Hook 3: ghap_checkin.sh (PreToolCall)
 
@@ -363,21 +501,50 @@ EOF
 # Hook: PreToolCall
 # Purpose: GHAP check-in reminder
 
-set -euo pipefail
+set -uo pipefail  # No -e: we handle errors explicitly
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MCP_CLIENT="$SCRIPT_DIR/mcp_client.py"
-
-# Load configuration
 CONFIG_FILE="$SCRIPT_DIR/config.yaml"
-FREQUENCY=$(yq '.hooks.ghap_checkin.frequency // 10' "$CONFIG_FILE")
+
+# Helper: Call MCP with error handling
+call_mcp() {
+  local tool_name="$1"
+  local args="$2"
+  local result
+
+  if ! result=$(python3 "$MCP_CLIENT" "$tool_name" "$args" 2>/dev/null); then
+    echo '{}'
+    return 1
+  fi
+
+  if ! echo "$result" | jq empty 2>/dev/null; then
+    echo '{}'
+    return 1
+  fi
+
+  echo "$result"
+  return 0
+}
+
+# Load configuration (with fallback if missing or invalid)
+FREQUENCY=10
+if [ -f "$CONFIG_FILE" ]; then
+  # Try to parse with Python fallback (more portable than yq)
+  FREQUENCY=$(python3 -c "
+import yaml, sys
+try:
+    with open('$CONFIG_FILE') as f:
+        cfg = yaml.safe_load(f)
+    print(cfg.get('hooks', {}).get('ghap_checkin', {}).get('frequency', 10))
+except:
+    print(10)
+" 2>/dev/null || echo "10")
+fi
 
 # Check if check-in is due
-CHECKIN_RESULT=$(python3 "$MCP_CLIENT" "should_check_in" "{
-  \"frequency\": $FREQUENCY
-}" 2>/dev/null || echo '{}')
-
+CHECKIN_RESULT=$(call_mcp "should_check_in" "{\"frequency\": $FREQUENCY}")
 SHOULD_CHECKIN=$(echo "$CHECKIN_RESULT" | jq -r '.should_check_in // false')
 
 # If not time for check-in, exit silently (no output)
@@ -386,14 +553,13 @@ if [ "$SHOULD_CHECKIN" != "true" ]; then
 fi
 
 # Get current GHAP state
-GHAP_RESULT=$(python3 "$MCP_CLIENT" "get_active_ghap" '{}' 2>/dev/null || echo '{}')
-
+GHAP_RESULT=$(call_mcp "get_active_ghap" '{}')
 GOAL=$(echo "$GHAP_RESULT" | jq -r '.goal // "Unknown"')
 HYPOTHESIS=$(echo "$GHAP_RESULT" | jq -r '.hypothesis // "Unknown"')
 PREDICTION=$(echo "$GHAP_RESULT" | jq -r '.prediction // "Unknown"')
 
-# Reset tool counter
-python3 "$MCP_CLIENT" "reset_tool_count" '{}' 2>/dev/null >/dev/null || true
+# Reset tool counter (fire and forget)
+call_mcp "reset_tool_count" '{}' >/dev/null 2>&1 || true
 
 # Output reminder
 cat <<EOF
@@ -402,6 +568,8 @@ cat <<EOF
   "content": "## GHAP Check-in ($FREQUENCY tools since last update)\n\n**Current Goal**: $GOAL\n**Current Hypothesis**: $HYPOTHESIS\n**Current Prediction**: $PREDICTION\n\nIs your hypothesis still valid? If it changed, update your GHAP entry."
 }
 EOF
+
+exit 0
 ```
 
 **Performance**: <100ms (local file reads + simple check)
@@ -419,16 +587,41 @@ EOF
 # Hook: PostToolCall
 # Purpose: Capture test/build outcomes
 
-set -euo pipefail
+set -uo pipefail  # No -e: we handle errors explicitly
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MCP_CLIENT="$SCRIPT_DIR/mcp_client.py"
 
+# Helper: Call MCP with error handling
+call_mcp() {
+  local tool_name="$1"
+  local args="$2"
+  local result
+
+  if ! result=$(python3 "$MCP_CLIENT" "$tool_name" "$args" 2>/dev/null); then
+    echo '{}'
+    return 1
+  fi
+
+  if ! echo "$result" | jq empty 2>/dev/null; then
+    echo '{}'
+    return 1
+  fi
+
+  echo "$result"
+  return 0
+}
+
 # Read tool result from stdin
 TOOL_RESULT=$(cat)
 
-# Parse tool details
+# Parse tool details (with validation)
+if ! echo "$TOOL_RESULT" | jq empty 2>/dev/null; then
+  # Invalid JSON, exit silently
+  exit 0
+fi
+
 TOOL_NAME=$(echo "$TOOL_RESULT" | jq -r '.tool // ""')
 COMMAND=$(echo "$TOOL_RESULT" | jq -r '.command // ""')
 EXIT_CODE=$(echo "$TOOL_RESULT" | jq -r '.exit_code // 999')
@@ -461,18 +654,18 @@ else
 fi
 
 # Get current GHAP state
-GHAP_RESULT=$(python3 "$MCP_CLIENT" "get_active_ghap" '{}' 2>/dev/null || echo '{}')
+GHAP_RESULT=$(call_mcp "get_active_ghap" '{}')
 HAS_ACTIVE=$(echo "$GHAP_RESULT" | jq -r '.has_active // false')
 PREDICTION=$(echo "$GHAP_RESULT" | jq -r '.prediction // ""')
 
 # If failure and NO active GHAP, inject premortem
 if [ "$OUTCOME_STATUS" = "failure" ] && [ "$HAS_ACTIVE" = "false" ]; then
   # Get premortem (once per GHAP cycle)
-  PREMORTEM_RESULT=$(python3 "$MCP_CLIENT" "get_premortem_context" '{
+  PREMORTEM_RESULT=$(call_mcp "get_premortem_context" '{
     "domain": "debugging",
     "limit": 10,
     "max_tokens": 1500
-  }' 2>/dev/null || echo '{}')
+  }')
 
   PREMORTEM_MD=$(echo "$PREMORTEM_RESULT" | jq -r '.markdown // ""')
 
@@ -514,6 +707,8 @@ EOF
 EOF
   fi
 fi
+
+exit 0
 ```
 
 **Outcome Detection**:
@@ -538,14 +733,34 @@ fi
 # Hook: SessionEnd (NOT YET SUPPORTED BY CLAUDE CODE)
 # Purpose: Session cleanup
 
-set -euo pipefail
+set -uo pipefail  # No -e: we handle errors explicitly
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MCP_CLIENT="$SCRIPT_DIR/mcp_client.py"
 
+# Helper: Call MCP with error handling
+call_mcp() {
+  local tool_name="$1"
+  local args="$2"
+  local result
+
+  if ! result=$(python3 "$MCP_CLIENT" "$tool_name" "$args" 2>/dev/null); then
+    echo '{}'
+    return 1
+  fi
+
+  if ! echo "$result" | jq empty 2>/dev/null; then
+    echo '{}'
+    return 1
+  fi
+
+  echo "$result"
+  return 0
+}
+
 # End session (abandons unresolved GHAP)
-SESSION_RESULT=$(python3 "$MCP_CLIENT" "end_session" '{}' 2>/dev/null || echo '{}')
+SESSION_RESULT=$(call_mcp "end_session" '{}')
 
 # No output needed
 exit 0
@@ -683,6 +898,61 @@ Already defined in ContextAssembler spec. Hooks call this for context injection.
 ### 7. get_premortem_context (from SPEC-002-18)
 
 Already defined in ContextAssembler spec. Hooks call this for premortem warnings.
+
+## Hook Output Format
+
+All hooks output JSON to stdout for Claude Code to parse and inject. The format is:
+
+```json
+{
+  "type": "light|rich|reminder|outcome|premortem",
+  "content": "Markdown-formatted text",
+  "token_count": 123,  // Optional
+  "suggested_action": "resolve_confirmed|resolve_falsified",  // Optional
+  "auto_captured": true  // Optional
+}
+```
+
+**Claude Code Integration**: Claude Code reads the hook's stdout, parses the JSON, and injects `content` as a system message in the conversation. The agent sees this as additional context when generating responses.
+
+**Expected Hook Behavior**:
+- Exit code 0 = success (even if hook degrades gracefully)
+- Exit code non-zero = hook failure (Claude Code logs error, continues session)
+- No stdout = no injection (silent operation)
+- Invalid JSON = ignored by Claude Code
+
+## Installation and Setup
+
+### Making Hooks Executable
+
+All hook scripts must be executable. During installation or setup:
+
+```bash
+chmod +x .claude/hooks/*.sh
+```
+
+**Who runs this**: Installation script or manual setup step in README. Users must ensure hooks are executable before Claude Code can run them.
+
+### Hook Registration
+
+Hooks are registered in Claude Code's configuration. The exact mechanism depends on Claude Code's hook system (not yet fully documented). Expected format:
+
+```yaml
+# .claude/hooks/hooks.yaml or Claude Code config
+hooks:
+  - trigger: SessionStart
+    script: .claude/hooks/session_start.sh
+    timeout: 5000
+  - trigger: UserPromptSubmit
+    script: .claude/hooks/user_prompt_submit.sh
+    timeout: 500
+  - trigger: PreToolCall
+    script: .claude/hooks/ghap_checkin.sh
+    timeout: 100
+  - trigger: PostToolCall
+    script: .claude/hooks/outcome_capture.sh
+    timeout: 200
+```
 
 ## Alternative Approaches Considered
 
@@ -1086,12 +1356,13 @@ fi
 ### Quality Requirements
 
 1. All hooks meet performance targets (p95 latency)
-2. Type hints for all Python code
+2. **Type hints for all Python code (mypy --strict compliance)**
 3. Docstrings for all classes and methods
 4. Structured logging via structlog (stderr only)
-5. Shell scripts use `set -euo pipefail` for safety
+5. **Shell scripts use `set -uo pipefail` with explicit error handling**
 6. Error messages are clear and actionable
 7. No sensitive data logged or exposed
+8. **Dependencies documented: jq, Python 3.10+, PyYAML**
 
 ### Testing Requirements
 
