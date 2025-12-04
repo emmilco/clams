@@ -1,89 +1,70 @@
-# Session Handoff - 2025-12-04 (Night)
+# Session Handoff - 2025-12-04 (Evening)
 
 ## Session Summary
 
-This session focused on **fixing mypy/linter issues** and **advancing tasks through CODE_REVIEW**:
+Significant progress on SPEC-002 Learning Memory Server. Merged 4 tasks to main (SPEC-002-11, 12, 13, 18, 19), verified tests pass (381 tests), and advanced SPEC-002-15 through code review to INTEGRATE phase. Reset SPEC-002-14 to start fresh due to worktree divergence issues.
 
-1. **Fixed mypy issues** in SPEC-002-14, 15, 18, 19 (changed `# type: ignore[misc]` to `# type: ignore[untyped-decorator]`)
-2. **Fixed linter issues** via `ruff check --fix` and manual fixes
-3. **Passed IMPLEMENT-CODE_REVIEW gates** for all 4 tasks
-4. **Completed 2 code reviews** for SPEC-002-14, 15, 18, 19 (all approved)
-5. **Transitioned to INTEGRATE** for SPEC-002-15, 18, 19
-6. **Discovered critical model incompatibility** in SPEC-002-14 during merge
+### Accomplishments
+- Merged SPEC-002-11 (MCP tools for memory, code, git) to main
+- Merged SPEC-002-12 (Clusterer HDBSCAN) to main
+- Merged SPEC-002-13 (ValueStore) to main
+- Merged SPEC-002-18 (ContextAssembler) to main
+- Merged SPEC-002-19 (Hook scripts) to main
+- SPEC-002-15: Completed 2/2 proposal reviews + 2/2 code reviews, advanced to INTEGRATE
+- SPEC-002-14: Reset to SPEC phase with fresh worktree (old one had divergence issues)
+- Added `hypothesis` dependency to project
 
-## CRITICAL: SPEC-002-14 Must Return to Architect
+## Active Tasks
 
-**SPEC-002-14 (ObservationPersister)** was set back to DESIGN phase because:
+| Task | Phase | Status | Next Step |
+|------|-------|--------|-----------|
+| SPEC-002-15 | INTEGRATE | Code reviews complete, merge blocked | Rebase onto main, resolve conflicts, re-test, merge |
+| SPEC-002-14 | SPEC | Fresh worktree created | Needs spec review (2x), then DESIGN phase |
+| SPEC-002-06 | TEST | Has 1 skipped test | Fix skipped test, implement feature fully |
+| SPEC-002 | DESIGN | Parent spec | Waiting for all subtasks to complete |
 
-- The branch uses **Pydantic models** for GHAPEntry, Outcome, RootCause, Lesson
-- Main branch (from SPEC-002-08) uses **dataclass models** with different structure
-- Key structural differences:
-  - Main: `entry.surprise`, `entry.root_cause`, `entry.lesson` are on GHAPEntry directly
-  - SPEC-002-14: These were nested under `entry.outcome`
-  - Main: `Outcome.auto_captured`
-  - SPEC-002-14: `GHAPEntry.auto_captured`
-  - Main: Has `HistoryEntry` class and `history: list[HistoryEntry]` on GHAPEntry
-  - SPEC-002-14: No history tracking
+## Blocked Items
 
-**Action Required**: Dispatch Architect to revise proposal for SPEC-002-14 to work with main's dataclass models. The persister.py and templates.py need to be rewritten to use the correct model structure.
-
-## Active Tasks by Phase
-
-### DESIGN (1 task - needs architect)
-| Task | Title | Action Needed |
-|------|-------|---------------|
-| SPEC-002-14 | ObservationPersister | **Architect must revise proposal to use main's dataclass models** |
-
-### TEST (2 tasks)
-| Task | Title | Status |
-|------|-------|--------|
-| SPEC-002-06 | CodeParser + CodeIndexer | Awaiting TEST-INTEGRATE gate |
-| SPEC-002-13 | ValueStore | Awaiting TEST-INTEGRATE gate |
-
-### INTEGRATE (5 tasks - ready for merge)
-| Task | Title | Status |
-|------|-------|--------|
-| SPEC-002-15 | MCP tools GHAP/learning | Ready to merge (gate passed) |
-| SPEC-002-18 | ContextAssembler | Ready to merge (gate passed) |
-| SPEC-002-19 | Hook scripts | Ready to merge (gate passed) |
-| SPEC-002-11 | MCP tools memory/code/git | Awaiting merge |
-| SPEC-002-12 | Clusterer HDBSCAN | Awaiting merge (NOTE: may have same issue as 14) |
-
-### DONE (8 tasks)
-SPEC-002-01, 02, 03, 04, 05, 07, 08, 09
+- **SPEC-002-15**: Merge blocked by conflicts. Worktree diverged from main. When rebasing:
+  - Keep HEAD (main) versions of `__init__.py` files in clustering/, observation/, search/, values/
+  - For `server/tools/__init__.py`: Need to merge BOTH sets of imports (main's infrastructure + SPEC-002-15's GHAP tool registrations)
 
 ## Friction Points This Session
 
-1. **Model architecture divergence** - SPEC-002-14 was developed with Pydantic models while SPEC-002-08 (already on main) uses dataclasses. This wasn't caught until merge time. **Recommendation**: Architect should verify model compatibility with main before finalizing proposals.
+1. **Worktree divergence** - Both SPEC-002-14 and SPEC-002-15 had worktrees that diverged significantly from main, causing complex merge conflicts. The `__init__.py` files had stub implementations while main had real implementations.
+   - Resolution for 14: Deleted worktree, reset to SPEC, created fresh worktree
+   - Recommendation: Consider rebasing worktrees more frequently to avoid divergence
 
-2. **Merge conflicts require manual resolution** - The observation module has complex conflicts between dataclass and Pydantic implementations. Simple merge strategies don't work.
+2. **Proposal code examples vs implementation** - SPEC-002-14 proposal had incorrect field access patterns that were flagged in review, even though they were in "wrong examples" documentation section. Reviewers got confused.
+   - Resolution: Clarified in reviewer prompts that "wrong" examples are intentional documentation
 
-3. **Type ignore comments evolving** - The correct mypy ignore for MCP decorators is `# type: ignore[untyped-decorator]`, not `misc` or `no-untyped-call`. This pattern needs to be consistent across all tool files.
+3. **Missing imports after code changes** - Changed `ValidationError` to `MCPError` but forgot to add the import, caught by code review.
+   - Resolution: Fixed by adding import
 
-4. **Background shell sessions accumulating** - Gate checks run in background but their status shows "running" even after completion. Use `BashOutput` or read log files directly.
+4. **Shell state issues** - After deleting SPEC-002-14 worktree, shell working directory became invalid, causing all commands to fail with exit code 1.
+   - Resolution: Explicit `cd` to main repo directory
+
+5. **Gate transition naming** - Used `IMPLEMENT-CODE_REVIEW` instead of `IMPLEMENT-REVIEW`, causing gate check to fail.
+   - Recommendation: Gate names should match phase names exactly
 
 ## Recommendations for Next Session
 
-1. **Dispatch Architect for SPEC-002-14** immediately - have them update the proposal to specify using main's dataclass models
-2. **Merge SPEC-002-15, 18, 19** first (they have no model conflicts)
-3. **Check SPEC-002-12 for similar issues** before merging - it may also have model incompatibilities
-4. **Consider adding model compatibility check** to DESIGN phase gates
+1. **SPEC-002-15 merge priority**: Complete the rebase carefully:
+   - For module `__init__.py` files: Use main's version (has real implementations)
+   - For `server/tools/__init__.py`: Merge both sets of imports
+   - Re-run full test suite after rebase
+   - Then merge
 
-## Next Steps (Priority Order)
+2. **SPEC-002-14**: Start fresh spec review cycle since task was reset
 
-1. **Dispatch Architect** for SPEC-002-14 to revise proposal
-2. **Merge SPEC-002-15, 18, 19** to main (run INTEGRATE-VERIFY gates + merge)
-3. **Run gate checks** for SPEC-002-06 and SPEC-002-13 (TEST-INTEGRATE)
-4. **Verify SPEC-002-11, 12** are merge-ready
-5. **Complete SPEC-002-14** after architect revision
+3. **SPEC-002-06**: Investigate the skipped test - need to either implement the feature or remove the skip marker
 
-## Database Backup
+4. **Consider worktree refresh strategy**: Tasks that sit in worktrees for extended periods accumulate divergence from main
 
-Created: `.claude/backups/clams_auto_20251204_152026.db`
+## Next Steps
 
-## System Health
-
-- Status: HEALTHY
-- Merge lock: inactive
-- Merges since E2E: 9 (threshold: 12)
-- Active workers: 0 (marked as session_ended)
+1. **Rebase SPEC-002-15 onto main** - Resolve conflicts (keep main's __init__.py implementations, merge tools/__init__.py imports)
+2. **Re-run tests** in SPEC-002-15 worktree after rebase
+3. **Merge SPEC-002-15** to main
+4. **Start SPEC-002-14** spec review cycle
+5. **Fix SPEC-002-06** skipped test
