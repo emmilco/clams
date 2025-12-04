@@ -1,75 +1,55 @@
 ============================= test session starts ==============================
 platform darwin -- Python 3.13.6, pytest-8.4.2, pluggy-1.6.0 -- /Users/elliotmilco/.pyenv/versions/3.13.6/bin/python3.13
 cachedir: .pytest_cache
-rootdir: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-18
+rootdir: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-19
 configfile: pyproject.toml
 plugins: asyncio-1.2.0, xdist-3.8.0, timeout-2.4.0, anyio-4.10.0, cov-7.0.0
 asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collecting ... collected 43 items
+collecting ... collected 16 items
 
-tests/context/test_assembler.py::test_assemble_single_source_memories 2025-12-04 12:45:07 [info     ] assembling_context             component=context_assembler context_types=['memories'] limit=20 max_tokens=1000 query='coding preferences'
-2025-12-04 12:45:07 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=1
-2025-12-04 12:45:07 [debug    ] source_budget_used             budget=1000 component=context_assembler items_selected=1 source=memories unused=983 used=17
-2025-12-04 12:45:07 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=983
-PASSED
-tests/context/test_assembler.py::test_assemble_multiple_sources 2025-12-04 12:45:07 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=2000 query='python examples'
-2025-12-04 12:45:07 [info     ] deduplication_complete         component=context_assembler deduplicated_count=2 original_count=2
-2025-12-04 12:45:07 [debug    ] source_budget_used             budget=666 component=context_assembler items_selected=1 source=memories unused=649 used=17
-2025-12-04 12:45:07 [debug    ] source_budget_used             budget=1333 component=context_assembler items_selected=1 source=code unused=1308 used=25
-2025-12-04 12:45:07 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=1957
-PASSED
-tests/context/test_assembler.py::test_invalid_context_type PASSED
-tests/context/test_assembler.py::test_empty_results 2025-12-04 12:45:07 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=1000 query=nothing
-2025-12-04 12:45:07 [info     ] deduplication_complete         component=context_assembler deduplicated_count=0 original_count=0
-PASSED
-tests/context/test_assembler.py::test_token_budget_distribution 2025-12-04 12:45:07 [info     ] assembling_context             component=context_assembler context_types=['memories'] limit=20 max_tokens=500 query=test
-2025-12-04 12:45:07 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=20
-2025-12-04 12:45:07 [debug    ] source_budget_used             budget=500 component=context_assembler items_selected=1 source=memories unused=485 used=15
-2025-12-04 12:45:07 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=485
+tests/hooks/test_mcp_client.py::TestMCPClient::test_init PASSED
+tests/hooks/test_mcp_client.py::TestMCPClient::test_connect_success 2025-12-04 12:56:35 [warning  ] mcp_client.connect_failed      error="'coroutine' object has no attribute '__aenter__'"
 FAILED
 
 =================================== FAILURES ===================================
-________________________ test_token_budget_distribution ________________________
+______________________ TestMCPClient.test_connect_success ______________________
 
-assembler = <learning_memory_server.context.assembler.ContextAssembler object at 0x10985fbb0>
-mock_searcher = <tests.context.test_assembler.MockSearcher object at 0x10985fce0>
+self = <tests.hooks.test_mcp_client.TestMCPClient object at 0x10bc5c910>
 
     @pytest.mark.asyncio
-    async def test_token_budget_distribution(
-        assembler: ContextAssembler, mock_searcher: MockSearcher
-    ) -> None:
-        """Test token budget is distributed correctly."""
-        # Create many short memories
-        mock_searcher.memories = [
-            MemoryResult(
-                id=f"mem_{i}",
-                category="fact",
-                content=f"Short memory {i}",
-                score=0.9 - (i * 0.01),
-                importance=0.5,
-                tags=[],
-                created_at=datetime.now(timezone.utc),
-                verified_at=None,
-                verification_status=None,
-            )
-            for i in range(20)
-        ]
+    async def test_connect_success(self) -> None:
+        """Test successful connection to MCP server."""
+        client = MCPClient(["mock-server"], timeout=5.0)
     
-        result = await assembler.assemble_context(
-            query="test",
-            context_types=["memories"],
-            limit=20,
-            max_tokens=500,  # Limited budget
-        )
+        # Mock stdio_client and session
+        mock_read = AsyncMock()
+        mock_write = AsyncMock()
+        mock_session = AsyncMock(spec=ClientSession)
     
-        # Should fit multiple items within budget
->       assert len(result.items) > 1
-E       AssertionError: assert 1 > 1
-E        +  where 1 = len([ContextItem(source='memory', content='**Memory**: Short memory 0\n*Category: fact, Importance: 0.50*', relevance=0.9, metadata={'id': 'mem_0', 'category': 'fact', 'content': 'Short memory 0', 'score': 0.9, 'importance': 0.5, 'tags': [], 'created_at': datetime.datetime(2025, 12, 4, 17, 45, 7, 870330, tzinfo=datetime.timezone.utc), 'verified_at': None, 'verification_status': None})])
-E        +    where [ContextItem(source='memory', content='**Memory**: Short memory 0\n*Category: fact, Importance: 0.50*', relevance=0.9, metadata={'id': 'mem_0', 'category': 'fact', 'content': 'Short memory 0', 'score': 0.9, 'importance': 0.5, 'tags': [], 'created_at': datetime.datetime(2025, 12, 4, 17, 45, 7, 870330, tzinfo=datetime.timezone.utc), 'verified_at': None, 'verification_status': None})] = FormattedContext(markdown='# Context\n\n\n## Memories\n\n\n**Memory**: Short memory 0\n*Category: fact, Importance: 0.50*\n\n\n---\n*1 items from 1 sources*', items=[ContextItem(source='memory', content='**Memory**: Short memory 0\n*Category: fact, Importance: 0.50*', relevance=0.9, metadata={'id': 'mem_0', 'category': 'fact', 'content': 'Short memory 0', 'score': 0.9, 'importance': 0.5, 'tags': [], 'created_at': datetime.datetime(2025, 12, 4, 17, 45, 7, 870330, tzinfo=datetime.timezone.utc), 'verified_at': None, 'verification_status': None})], token_count=29, sources_used={'memories': 1}, budget_exceeded=False, truncated_items=[]).items
+        with patch("mcp_client.stdio_client") as mock_stdio:
+            with patch("mcp_client.ClientSession") as mock_session_cls:
+                # stdio_client is a coroutine that returns a tuple
+                async def mock_stdio_func(*args: Any) -> tuple[Any, Any]:
+                    return (mock_read, mock_write)
+    
+                mock_stdio.side_effect = mock_stdio_func
+                mock_session_cls.return_value = mock_session
+    
+                result = await client.connect()
+    
+>               assert result is True
+E               assert False is True
 
-tests/context/test_assembler.py:235: AssertionError
+tests/hooks/test_mcp_client.py:55: AssertionError
+=============================== warnings summary ===============================
+tests/hooks/test_mcp_client.py::TestMCPClient::test_connect_success
+  /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-19/tests/hooks/test_mcp_client.py:53: RuntimeWarning: coroutine 'TestMCPClient.test_connect_success.<locals>.mock_stdio_func' was never awaited
+    result = await client.connect()
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =========================== short test summary info ============================
-FAILED tests/context/test_assembler.py::test_token_budget_distribution - Asse...
+FAILED tests/hooks/test_mcp_client.py::TestMCPClient::test_connect_success - ...
 !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
-========================= 1 failed, 4 passed in 0.06s ==========================
+==================== 1 failed, 1 passed, 1 warning in 0.19s ====================
