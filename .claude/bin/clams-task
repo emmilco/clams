@@ -220,6 +220,35 @@ cmd_transition() {
         exit 1
     fi
 
+    # Get worktree path for implementation checks
+    local worktree_path
+    worktree_path=$(sqlite3 "$DB_PATH" "SELECT worktree_path FROM tasks WHERE id = '$id';")
+
+    # Enforce implementation exists for IMPLEMENT → CODE_REVIEW
+    if [[ "${from_phase}-${to_phase}" == "IMPLEMENT-CODE_REVIEW" ]]; then
+        if [[ -z "$worktree_path" || ! -d "$worktree_path" ]]; then
+            echo "Error: No worktree found for task $id" >&2
+            exit 1
+        fi
+
+        # Check for actual code changes (not just docs)
+        local code_changes
+        code_changes=$(cd "$worktree_path" && git diff main...HEAD --name-only -- 'src/' 'tests/' 2>/dev/null | grep -v '__pycache__' | head -5)
+
+        if [[ -z "$code_changes" ]]; then
+            echo "Error: IMPLEMENT → CODE_REVIEW requires implementation code" >&2
+            echo "" >&2
+            echo "No changes found in src/ or tests/ directories." >&2
+            echo "The task appears to have only documentation changes." >&2
+            echo "" >&2
+            echo "Run 'git diff main...HEAD --stat' in the worktree to see what changed." >&2
+            exit 1
+        fi
+
+        echo "✓ Implementation check passed. Changed files:"
+        echo "$code_changes" | sed 's/^/  /'
+    fi
+
     # Enforce review requirements for specific transitions
     # Reviews must be recorded in the database before transition is allowed
     local required_reviews=""
@@ -234,7 +263,7 @@ cmd_transition() {
             artifact_type="proposal"
             required_reviews=2
             ;;
-        REVIEW-TEST)
+        CODE_REVIEW-TEST)
             artifact_type="code"
             required_reviews=2
             ;;

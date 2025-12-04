@@ -106,7 +106,7 @@ Available in `.claude/roles/`:
 ## Phase Model
 
 ```
-SPEC → DESIGN → IMPLEMENT → REVIEW → TEST → INTEGRATE → VERIFY → DONE
+SPEC → DESIGN → IMPLEMENT → CODE_REVIEW → TEST → INTEGRATE → VERIFY → DONE
 ```
 
 ### Phase Transitions
@@ -115,8 +115,8 @@ SPEC → DESIGN → IMPLEMENT → REVIEW → TEST → INTEGRATE → VERIFY → D
 |------------|-------------|------|
 | SPEC → DESIGN | 2 spec reviews approved, human approves | Semi-auto |
 | DESIGN → IMPLEMENT | Proposal exists, 2 proposal reviews approved, human approves | Semi-auto |
-| IMPLEMENT → REVIEW | Tests pass, linter clean, type check (mypy), no untracked TODOs | Automated |
-| REVIEW → TEST | 2 code reviews approved | Automated |
+| IMPLEMENT → CODE_REVIEW | Tests pass, linter clean, type check (mypy), no untracked TODOs, implementation code exists | Automated |
+| CODE_REVIEW → TEST | 2 code reviews approved | Automated |
 | TEST → INTEGRATE | Full test suite passes | Automated |
 | INTEGRATE → VERIFY | Changelog exists, then merge | Semi-auto |
 | VERIFY → DONE | Tests on main, acceptance verified, no orphans | Manual (on main) |
@@ -212,48 +212,51 @@ After worker completes:
 
 ### Phase-by-Phase Guide
 
-**SPEC → DESIGN** (after spec written)
+**SPEC → DESIGN** (after spec written by orchestrator)
 1. Dispatch Spec Reviewer #1
-2. If changes requested: author fixes, restart from step 1
-3. If approved: `.claude/bin/clams-review record TASK-XXX spec approved --worker W-xxx`
+2. If changes requested: orchestrator fixes spec, restart from step 1
+3. If approved: **Reviewer records**: `.claude/bin/clams-review record TASK-XXX spec approved --worker W-xxx`
 4. Dispatch Spec Reviewer #2
-5. If changes requested: author fixes, restart from step 1
-6. If approved: `.claude/bin/clams-review record TASK-XXX spec approved --worker W-yyy`
-7. Run: `.claude/bin/clams-gate check TASK-XXX SPEC-DESIGN`
+5. If changes requested: orchestrator fixes spec, restart from step 1
+6. If approved: **Reviewer records**: `.claude/bin/clams-review record TASK-XXX spec approved --worker W-yyy`
+7. **Reviewer #2 runs**: `.claude/bin/clams-gate check TASK-XXX SPEC-DESIGN`
 8. Human approves spec
-9. Transition: `.claude/bin/clams-task transition TASK-XXX DESIGN --gate-result pass`
+9. **Orchestrator runs**: `.claude/bin/clams-task transition TASK-XXX DESIGN --gate-result pass`
 
 **DESIGN → IMPLEMENT**
-1. Architect writes `planning_docs/TASK-XXX/proposal.md`
+1. Dispatch Architect to write `planning_docs/TASK-XXX/proposal.md`
 2. **Architect updates spec** to match any interface refinements in proposal (prevents spec/proposal mismatches)
 3. Dispatch Proposal Reviewer #1
-4. If changes requested: architect fixes, restart from step 2
-5. If approved: `.claude/bin/clams-review record TASK-XXX proposal approved --worker W-xxx`
+4. If changes requested: dispatch architect to fix, restart from step 2
+5. If approved: **Reviewer records**: `.claude/bin/clams-review record TASK-XXX proposal approved --worker W-xxx`
 6. Dispatch Proposal Reviewer #2
-7. If changes requested: architect fixes, restart from step 2
-8. If approved: `.claude/bin/clams-review record TASK-XXX proposal approved --worker W-yyy`
-9. Run: `.claude/bin/clams-gate check TASK-XXX DESIGN-IMPLEMENT`
+7. If changes requested: dispatch architect to fix, restart from step 2
+8. If approved: **Reviewer records**: `.claude/bin/clams-review record TASK-XXX proposal approved --worker W-yyy`
+9. **Reviewer #2 runs**: `.claude/bin/clams-gate check TASK-XXX DESIGN-IMPLEMENT`
 10. Human approves design
-11. Transition: `.claude/bin/clams-task transition TASK-XXX IMPLEMENT --gate-result pass`
+11. **Orchestrator runs**: `.claude/bin/clams-task transition TASK-XXX IMPLEMENT --gate-result pass`
 
-**IMPLEMENT → REVIEW**
+**IMPLEMENT → CODE_REVIEW**
 - Implementer completes code and tests
-- Run: `.claude/bin/clams-gate check TASK-XXX IMPLEMENT-REVIEW`
-- Gate checks: tests pass, linter clean, **type check (mypy --strict)**, no untracked TODOs
+- **Implementer runs**: `.claude/bin/clams-gate check TASK-XXX IMPLEMENT-CODE_REVIEW`
+- Gate checks: **implementation code exists in src/ or tests/**, tests pass, linter clean, **type check (mypy --strict)**, no untracked TODOs
+- **Implementer runs**: `.claude/bin/clams-task transition TASK-XXX CODE_REVIEW --gate-result pass`
+- Implementer reports completion to orchestrator
 
-**REVIEW → TEST**
+**CODE_REVIEW → TEST**
 1. Dispatch Code Reviewer #1
-2. If changes requested: implementer fixes, restart from step 1
-3. If approved: `.claude/bin/clams-review record TASK-XXX code approved --worker W-xxx`
+2. If changes requested: dispatch implementer to fix, then restart from step 1
+3. If approved: **Reviewer records**: `.claude/bin/clams-review record TASK-XXX code approved --worker W-xxx`
 4. Dispatch Code Reviewer #2
-5. If changes requested: implementer fixes, restart from step 1
-6. If approved: `.claude/bin/clams-review record TASK-XXX code approved --worker W-yyy`
-7. Run: `.claude/bin/clams-gate check TASK-XXX REVIEW-TEST`
-8. Transition: `.claude/bin/clams-task transition TASK-XXX TEST --gate-result pass`
+5. If changes requested: dispatch implementer to fix, then restart from step 1
+6. If approved: **Reviewer records**: `.claude/bin/clams-review record TASK-XXX code approved --worker W-yyy`
+7. **Reviewer #2 runs**: `.claude/bin/clams-gate check TASK-XXX CODE_REVIEW-TEST`
+8. **Reviewer #2 runs**: `.claude/bin/clams-task transition TASK-XXX TEST --gate-result pass`
 
 **TEST → INTEGRATE**
-- Run full test suite: `.claude/bin/clams-gate check TASK-XXX TEST-INTEGRATE`
-- Implementer writes changelog entry: `changelog.d/TASK-XXX.md`
+- **Implementer runs**: `.claude/bin/clams-gate check TASK-XXX TEST-INTEGRATE`
+- **Implementer writes** changelog entry: `changelog.d/TASK-XXX.md`
+- **Implementer runs**: `.claude/bin/clams-task transition TASK-XXX INTEGRATE --gate-result pass`
 
   ```markdown
   ## TASK-XXX: [Title]
@@ -268,26 +271,28 @@ After worker completes:
   ```
 
 **INTEGRATE → VERIFY**
-- Verify main is HEALTHY: `.claude/bin/clams-status health`
-- Run: `.claude/bin/clams-gate check TASK-XXX INTEGRATE-VERIFY` (checks changelog exists)
-- Merge: `.claude/bin/clams-worktree merge TASK-XXX` (removes worktree)
-- Transition: `.claude/bin/clams-task transition TASK-XXX VERIFY --gate-result pass`
+- **Orchestrator verifies** main is HEALTHY: `.claude/bin/clams-status health`
+- **Orchestrator runs**: `.claude/bin/clams-gate check TASK-XXX INTEGRATE-VERIFY` (checks changelog exists)
+- **Orchestrator runs**: `.claude/bin/clams-worktree merge TASK-XXX` (removes worktree)
+- **Orchestrator runs**: `.claude/bin/clams-task transition TASK-XXX VERIFY --gate-result pass`
 
 **VERIFY → DONE** (runs on main branch, worktree is gone)
-- Run tests on main: `pytest -vvsx`
+- **Orchestrator runs** tests on main: `pytest -vvsx`
 - Dispatch QA/Product worker to verify acceptance criteria
-- Manually check for orphaned code (grep for dead imports, unused functions)
-- QA confirms all criteria met
-- Transition: `.claude/bin/clams-task transition TASK-XXX DONE --gate-result pass`
+- QA checks for orphaned code (grep for dead imports, unused functions)
+- **QA runs**: `.claude/bin/clams-task transition TASK-XXX DONE --gate-result pass`
 
 Note: VERIFY phase happens on main after merge. Automated gate checks are limited since worktree no longer exists.
 
 ### Phase Advancement
 
-Before advancing any task to the next phase:
-1. Run gate checks: `.claude/bin/clams-gate check <task_id> <transition>`
-2. If gate fails, worker must fix issues
-3. If gate passes, record transition: `.claude/bin/clams-task transition <task_id> <phase>`
+**Workers run their own transitions.** The worker completing the work runs the gate check and transition:
+1. Worker runs gate check: `.claude/bin/clams-gate check <task_id> <transition>`
+2. If gate fails, worker fixes issues and retries
+3. If gate passes, worker runs: `.claude/bin/clams-task transition <task_id> <phase> --gate-result pass`
+4. Worker reports completion to orchestrator
+
+**Exception**: SPEC→DESIGN and DESIGN→IMPLEMENT require human approval, so the orchestrator runs the transition after human confirms.
 
 ### Test Results
 

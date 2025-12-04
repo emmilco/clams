@@ -6,8 +6,8 @@
 #   clams-gate check <task_id> <transition>
 #   clams-gate list
 #
-# Transitions: SPEC-DESIGN, DESIGN-IMPLEMENT, IMPLEMENT-REVIEW,
-#              REVIEW-TEST, TEST-INTEGRATE, INTEGRATE-VERIFY, VERIFY-DONE
+# Transitions: SPEC-DESIGN, DESIGN-IMPLEMENT, IMPLEMENT-CODE_REVIEW,
+#              CODE_REVIEW-TEST, TEST-INTEGRATE, INTEGRATE-VERIFY, VERIFY-DONE
 
 set -euo pipefail
 
@@ -27,8 +27,8 @@ usage() {
     echo "Transitions:"
     echo "  SPEC-DESIGN       Human approves spec"
     echo "  DESIGN-IMPLEMENT  Human approves design, proposal documented"
-    echo "  IMPLEMENT-REVIEW  Tests pass, linter clean, type check"
-    echo "  REVIEW-TEST       Reviewer approved"
+    echo "  IMPLEMENT-CODE_REVIEW  Tests pass, linter clean, type check, code exists"
+    echo "  CODE_REVIEW-TEST       2 code reviews approved"
     echo "  TEST-INTEGRATE    Full test suite passes"
     echo "  INTEGRATE-VERIFY  Clean merge, suite passes, docs updated"
     echo "  VERIFY-DONE       Acceptance verified, no orphans"
@@ -47,13 +47,14 @@ cmd_list() {
     echo "  - [auto] 2 proposal reviews with APPROVED status"
     echo "  - Human approves design"
     echo ""
-    echo "IMPLEMENT → REVIEW (automated)"
+    echo "IMPLEMENT → CODE_REVIEW (automated)"
     echo "  - [auto] Tests pass (check_tests.sh)"
     echo "  - [auto] Linter clean (check_linter.sh)"
     echo "  - [auto] Type check clean (check_types.sh)"
     echo "  - [auto] No untracked TODOs (check_todos.sh)"
+    echo "  - [auto] Implementation code exists in src/ or tests/"
     echo ""
-    echo "REVIEW → TEST (automated)"
+    echo "CODE_REVIEW → TEST (automated)"
     echo "  - [auto] 2 code reviews with APPROVED status"
     echo ""
     echo "TEST → INTEGRATE (automated)"
@@ -201,7 +202,23 @@ cmd_check() {
             fi
             ;;
 
-        IMPLEMENT-REVIEW)
+        IMPLEMENT-CODE_REVIEW)
+            echo ""
+            # Check for actual implementation code
+            echo "--- Gate: Implementation code exists ---"
+            local code_changes
+            code_changes=$(cd "$worktree" && git diff main...HEAD --name-only -- 'src/' 'tests/' 2>/dev/null | grep -v '__pycache__' | head -10)
+            if [[ -z "$code_changes" ]]; then
+                echo "✗ Implementation code exists: FAIL"
+                echo ""
+                echo "No changes found in src/ or tests/ directories."
+                echo "The task appears to have only documentation changes."
+                failed=1
+            else
+                echo "✓ Implementation code exists: PASS"
+                echo "Changed files:"
+                echo "$code_changes" | sed 's/^/  /'
+            fi
             echo ""
             if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
                 failed=1
@@ -220,7 +237,7 @@ cmd_check() {
             fi
             ;;
 
-        REVIEW-TEST)
+        CODE_REVIEW-TEST)
             echo "This transition requires 2 code reviews with APPROVED status."
             echo ""
             # Check for 2 code reviews

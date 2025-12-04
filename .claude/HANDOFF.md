@@ -1,97 +1,127 @@
-# Session Handoff - 2025-12-04
+# Session Handoff - 2025-12-04 (Evening)
 
 ## Session Summary
 
-This session completed the full DESIGN→IMPLEMENT cycle for 4 tasks:
-- **SPEC-002-14**: ObservationPersister multi-axis embedding
-- **SPEC-002-15**: MCP tools for GHAP and learning
-- **SPEC-002-18**: ContextAssembler
-- **SPEC-002-19**: Hook scripts and context injection
+This session focused on **workflow improvements** and **fixing gate check issues**:
 
-All 4 tasks now have working implementations with passing tests.
+1. **Discovered critical workflow bug**: SPEC-002-12 and SPEC-002-13 went through the entire pipeline without any actual implementation code - only documentation was committed
+2. **Renamed REVIEW phase to CODE_REVIEW** for clarity
+3. **Added implementation code check** to prevent docs-only changes from passing gates
+4. **Made transitions enforce review requirements** from database
+5. **Clarified ownership** at each phase (who runs gates, who transitions)
+6. **Started fixing mypy/linter issues** across worktrees (incomplete)
 
-## Work Completed
+## Critical Workflow Fixes Applied
 
-1. **Architect proposals written** - 4 architects dispatched in parallel
-2. **Proposal reviews** - 2x sonnet reviews per task, multiple fix cycles required
-3. **Human approval** - All 4 proposals reviewed with human, key decisions made
-4. **Implementation** - 4 backend workers dispatched, all completed successfully
+### Phase Rename
+- `REVIEW` → `CODE_REVIEW` throughout the system
+- Updated: `clams-gate`, `clams-task`, `CLAUDE.md`, `reviewer.md`, database
 
-### Key Decisions Made This Session
+### New Gate: Implementation Code Exists
+```
+IMPLEMENT → CODE_REVIEW now checks:
+  git diff main...HEAD --name-only -- src/ tests/
+```
+If no code changes in src/ or tests/, the gate **FAILS**.
 
-- **SPEC-002-19**: Domain-specific premortem deferred to v2. Hooks do generic semantic search without keyword-based domain detection (simplifies v1).
-- **SPEC-002-14**: Confirmed 4 collections approach, surprise/root_cause only for FALSIFIED entries
-- **SPEC-002-15**: Confirmed retry logic (1s, 2s, 4s backoff) for persistence
-- **SPEC-002-18**: Confirmed 4 chars/token heuristic, weighted budget distribution
+### Transition Enforcement
+`clams-task transition` now verifies reviews exist in DB before allowing:
+- SPEC → DESIGN: 2 approved spec reviews
+- DESIGN → IMPLEMENT: 2 approved proposal reviews
+- CODE_REVIEW → TEST: 2 approved code reviews
+
+### Ownership Clarification
+Workers now run their own transitions (gate check + transition command), except for human-approval gates.
 
 ## Active Tasks by Phase
 
-### IMPLEMENT (5 tasks)
+### IMPLEMENT (7 tasks - need gate checks)
 | Task | Title | Status |
 |------|-------|--------|
-| **SPEC-002-14** | ObservationPersister | **Code complete, 36 tests passing** - Ready for gate check |
-| **SPEC-002-15** | MCP tools for GHAP/learning | **Code complete, 65 tests passing** - Ready for gate check |
-| **SPEC-002-18** | ContextAssembler | **Code complete, 43 tests passing** - Ready for gate check |
-| **SPEC-002-19** | Hook scripts | **Code complete, 16 tests passing** - Ready for gate check |
-| SPEC-002-06 | CodeParser + CodeIndexer | Previous session - check status |
+| SPEC-002-14 | ObservationPersister | Mypy: 1 error fixed, needs re-check |
+| SPEC-002-15 | MCP tools GHAP/learning | Mypy: decorators partially fixed |
+| SPEC-002-18 | ContextAssembler | Mypy + linter issues need fixes |
+| SPEC-002-19 | Hook scripts | Mypy + linter issues need fixes |
+| SPEC-002-06 | CodeParser + CodeIndexer | Tests pass, needs full gate check |
+| SPEC-002-12 | Clusterer HDBSCAN | **No implementation - needs re-work** |
+| SPEC-002-13 | ValueStore | **No implementation - needs re-work** |
 
-### REVIEW (2 tasks)
+### CODE_REVIEW (1 task)
 | Task | Title | Status |
 |------|-------|--------|
-| SPEC-002-09 | Searcher unified query interface | Awaiting code reviewers |
-| SPEC-002-11 | MCP tools for memory, code, git | Awaiting code reviewers |
+| SPEC-002-11 | MCP tools memory/code/git | Awaiting reviewers |
 
-### VERIFY (2 tasks)
-| Task | Title | Status |
-|------|-------|--------|
-| SPEC-002-12 | Clusterer HDBSCAN | Merged to main, needs verification |
-| SPEC-002-13 | ValueStore validation and storage | Merged to main, needs verification |
+### DONE (8 tasks)
+SPEC-002-01, 02, 03, 04, 05, 07, 08, 09
 
-### DONE (7 tasks)
-SPEC-002-01 through SPEC-002-08 (except 06), plus others
+## Work in Progress (Incomplete)
+
+### Mypy/Linter Fixes Started But Not Complete
+Fixed in some worktrees:
+- `storage/qdrant.py:251`: Added `# type: ignore[arg-type]` for Filter variance
+- `server/tools/__init__.py`: Changed decorator type ignore to `# type: ignore[misc]`
+
+Still need fixes:
+- SPEC-002-15: Multiple decorator type ignores in ghap.py, learning.py, search.py
+- SPEC-002-18: Linter issues (line too long, UTC alias)
+- SPEC-002-19: Linter issues (unused import, import order)
+
+### Common Mypy Pattern
+All MCP tools use `@server.call_tool()` which is untyped. Fix is:
+```python
+@server.call_tool()  # type: ignore[misc]
+```
 
 ## Friction Points
 
-1. **Multiple review fix cycles** - Reviewers found issues requiring architect fixes. SPEC-002-15 had reviewer #2 find issues #1 missed.
+1. **Workflow let implementation-free tasks through** - Discovered SPEC-002-12/13 were "implemented" with only documentation. Root cause: gate checks ran full test suite (which passed because no new tests), didn't verify new code added.
 
-2. **Proposal reviews are thorough but slow** - 2x sonnet reviews with potential fix cycles adds significant time per task.
+2. **Phase naming confusion** - "REVIEW" phase was for code review, but spec/proposal reviews happen earlier. Renamed to CODE_REVIEW for clarity.
+
+3. **Transition enforcement was advisory** - `clams-task transition` accepted `--gate-result pass` without verifying reviews. Now enforces review count from database.
+
+4. **Mypy strict mode + untyped libraries** - MCP library decorators aren't typed, causing mypy --strict failures. Need type ignores.
 
 ## Next Steps (Priority Order)
 
-1. **Run gate checks for newly implemented tasks**:
+1. **Complete mypy/linter fixes** for SPEC-002-14, 15, 18, 19:
+   - Replace `# type: ignore[no-untyped-call, misc]` with `# type: ignore[misc]` in all tool files
+   - Run `ruff check --fix` for auto-fixable linter issues
+   - Manual fixes for line length and other issues
+
+2. **Run gate checks** for tasks with fixed code:
    ```bash
-   .claude/bin/clams-gate check SPEC-002-14 IMPLEMENT-REVIEW
-   .claude/bin/clams-gate check SPEC-002-15 IMPLEMENT-REVIEW
-   .claude/bin/clams-gate check SPEC-002-18 IMPLEMENT-REVIEW
-   .claude/bin/clams-gate check SPEC-002-19 IMPLEMENT-REVIEW
+   .claude/bin/clams-gate check SPEC-002-14 IMPLEMENT-CODE_REVIEW
+   # ... etc
    ```
 
-2. **Transition passing tasks to REVIEW**:
-   ```bash
-   .claude/bin/clams-task transition SPEC-002-XX REVIEW --gate-result pass
-   ```
+3. **Re-implement SPEC-002-12 (Clusterer)** - Has spec/proposal but no code
 
-3. **Dispatch code reviewers** (2x sonnet, sequential) for all tasks in REVIEW
+4. **Re-implement SPEC-002-13 (ValueStore)** - Depends on Clusterer, also needs code
 
-4. **Clear VERIFY backlog** - SPEC-002-12 and SPEC-002-13 need verification on main
+5. **Process CODE_REVIEW backlog** - SPEC-002-11 awaits code reviewers
 
-5. **Check SPEC-002-06 status** - Still in IMPLEMENT from previous session
+## Files Changed This Session
 
-## Worktrees with New Code
+### Main Repo
+- `CLAUDE.md` - Phase model, ownership, gate requirements
+- `.claude/bin/clams-gate` - IMPLEMENT-CODE_REVIEW checks for code
+- `.claude/bin/clams-task` - Transition enforcement
+- `.claude/roles/reviewer.md` - Step 1: verify code exists
 
-| Worktree | Contents |
-|----------|----------|
-| `.worktrees/SPEC-002-14/` | ObservationPersister + templates + tests |
-| `.worktrees/SPEC-002-15/` | 11 MCP tools (ghap, learning, search) + tests |
-| `.worktrees/SPEC-002-18/` | ContextAssembler + formatters + dedup + tests |
-| `.worktrees/SPEC-002-19/` | Hook scripts + mcp_client.py + tests |
+### Worktrees (partial mypy fixes)
+- `.worktrees/SPEC-002-14/src/learning_memory_server/storage/qdrant.py`
+- `.worktrees/SPEC-002-14/src/learning_memory_server/server/tools/__init__.py`
+- `.worktrees/SPEC-002-18/...` (same files)
+- `.worktrees/SPEC-002-19/...` (same files)
 
 ## Database Backup
 
-Created: `.claude/backups/clams_session-wrapup.db` (17 tasks)
+Created: `.claude/backups/clams_session-wrapup-20251204-1416.db`
 
 ## System Health
 
 - Status: HEALTHY
 - Merge lock: inactive
-- Merges since E2E: 8 (approaching threshold of 12)
+- Merges since E2E: 9 (threshold: 12)
+- Active workers: 4 → marked as session_ended
