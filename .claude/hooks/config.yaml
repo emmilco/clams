@@ -1,0 +1,53 @@
+# Hook configuration for Learning Memory Server
+hooks:
+  # Session lifecycle
+  session_start:
+    enabled: true
+    script: .claude/hooks/session_start.sh
+    timeout_ms: 5000
+    inject_light_context: true
+
+  # User prompts
+  user_prompt_submit:
+    enabled: true
+    script: .claude/hooks/user_prompt_submit.sh
+    timeout_ms: 500
+    context_depth: rich  # light | rich
+    token_budget: 2000
+    include_code: true
+
+  # Tool lifecycle
+  ghap_checkin:
+    enabled: true
+    script: .claude/hooks/ghap_checkin.sh
+    frequency: 10  # Every N tool calls
+    timeout_ms: 100
+
+  outcome_capture:
+    enabled: true
+    script: .claude/hooks/outcome_capture.sh
+    timeout_ms: 200
+    matchers:
+      - "pytest"
+      - "npm test"
+      - "cargo test"
+      - "make test"
+      - "make build"
+    auto_capture: true
+
+  session_end:
+    enabled: false  # Not yet supported by Claude Code
+    script: .claude/hooks/session_end.sh
+    timeout_ms: 1000
+
+# MCP server settings
+mcp:
+  server_command: ["python", "-m", "learning_memory_server"]
+  connection_timeout: 10
+  tool_timeout: 10
+
+# Performance settings
+performance:
+  max_context_tokens: 2000
+  max_premortem_tokens: 1500
+  embedding_cache_ttl: 3600  # 1 hour
