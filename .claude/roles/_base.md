@@ -71,6 +71,17 @@ When debugging, use parallel differential diagnosis:
 - No hacks without follow-up
 - Debt is not acceptable
 
+### System Dependencies
+
+When your work requires external tools or system packages (e.g., `ripgrep`, `sqlite`, `ffmpeg`):
+
+1. **Check availability first** before writing code that depends on them
+2. **If missing, STOP and report as a blocker** - do not proceed with workarounds like skip markers
+3. **Request installation explicitly** in your report: "BLOCKER: Requires `ripgrep` to be installed (`brew install ripgrep`)"
+4. **Do not hide dependency issues** behind pytest.skip, conditional imports, or optional features
+
+Skipped tests due to missing dependencies will fail the gate. The correct response is to escalate, not to skip.
+
 ## CRITICAL: Commit Before Reporting Done
 
 **You MUST commit all changes before reporting completion.** Uncommitted work will be lost when the worktree is cleaned up.
