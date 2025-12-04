@@ -239,6 +239,7 @@ class QdrantVectorStore(VectorStore):
 
         Supports:
         - Equality matching: {"field": "value"}
+        - Multi-value matching: {"field": {"$in": ["val1", "val2"]}}
         - Range queries: {"field": {"$gte": value}}, {"field": {"$lte": value}}
 
         Note: Range queries only work with numeric values (int, float).
@@ -254,34 +255,27 @@ class QdrantVectorStore(VectorStore):
         ] = []
 
         for key, value in filters.items():
-            # Handle range queries (numeric only)
+            # Handle operator queries
             if isinstance(value, dict):
-                if "$gte" in value:
+                if "$in" in value:
+                    # Multi-value match (ANY of the values)
                     conditions.append(
                         qmodels.FieldCondition(
                             key=key,
-                            range=qmodels.Range(gte=value["$gte"]),
+                            match=qmodels.MatchAny(any=value["$in"]),
                         )
                     )
-                elif "$lte" in value:
+                elif any(op in value for op in ("$gte", "$lte", "$gt", "$lt")):
+                    # Range query - can combine multiple operators
                     conditions.append(
                         qmodels.FieldCondition(
                             key=key,
-                            range=qmodels.Range(lte=value["$lte"]),
-                        )
-                    )
-                elif "$gt" in value:
-                    conditions.append(
-                        qmodels.FieldCondition(
-                            key=key,
-                            range=qmodels.Range(gt=value["$gt"]),
-                        )
-                    )
-                elif "$lt" in value:
-                    conditions.append(
-                        qmodels.FieldCondition(
-                            key=key,
-                            range=qmodels.Range(lt=value["$lt"]),
+                            range=qmodels.Range(
+                                gte=value.get("$gte"),
+                                lte=value.get("$lte"),
+                                gt=value.get("$gt"),
+                                lt=value.get("$lt"),
+                            ),
                         )
                     )
             else:
