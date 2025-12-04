@@ -12,9 +12,7 @@ from learning_memory_server.storage.base import VectorStore
 from .types import ClusterInfo, Experience, ValidationResult, Value
 
 if TYPE_CHECKING:
-    from learning_memory_server.clustering import (  # type: ignore[attr-defined]
-        Clusterer,
-    )
+    from learning_memory_server.clustering import ExperienceClusterer
 
 # Valid clustering axes (domain is NOT an axis - it's a metadata filter)
 VALID_AXES = {"full", "strategy", "surprise", "root_cause"}
@@ -44,14 +42,14 @@ class ValueStore:
         self,
         embedding_service: EmbeddingService,
         vector_store: VectorStore,
-        clusterer: "Clusterer",
+        clusterer: "ExperienceClusterer",
     ) -> None:
         """Initialize ValueStore.
 
         Args:
             embedding_service: Service for embedding value candidates
             vector_store: Storage for validated values
-            clusterer: Clusterer for retrieving cluster data
+            clusterer: ExperienceClusterer for retrieving cluster data
         """
         self.embedding_service = embedding_service
         self.vector_store = vector_store

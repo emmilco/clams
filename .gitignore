@@ -16,3 +16,4 @@ htmlcov/
 .claude/clams.db
 .claude/settings.local.json
 test_output.log
+.hypothesis/
