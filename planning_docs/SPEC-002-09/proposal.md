@@ -56,15 +56,16 @@ search/
 ├── __init__.py          # Public exports
 ├── searcher.py          # Searcher class implementation
 ├── results.py           # Result dataclasses
-├── collections.py       # Collection name constants
-└── filters.py           # Filter translation helpers
+└── collections.py       # Collection name constants
 ```
+
+Note: Filter building is implemented as a private helper function in `searcher.py` rather than a separate module. A dedicated `filters.py` module for a 20-line helper function would be over-engineering.
 
 **`__init__.py` exports:**
 ```python
 """Unified query interface for semantic search."""
 
-from .searcher import Searcher, SearchError, InvalidAxisError, CollectionNotFoundError, EmbeddingError
+from .searcher import Searcher, SearchError, InvalidAxisError, InvalidSearchModeError, CollectionNotFoundError, EmbeddingError
 from .results import (
     MemoryResult,
     CodeResult,
@@ -80,6 +81,7 @@ __all__ = [
     "Searcher",
     "SearchError",
     "InvalidAxisError",
+    "InvalidSearchModeError",
     "CollectionNotFoundError",
     "EmbeddingError",
     "MemoryResult",
@@ -116,7 +118,12 @@ class MemoryResult:
 
     @classmethod
     def from_search_result(cls, result: SearchResult) -> "MemoryResult":
-        """Convert VectorStore SearchResult to MemoryResult."""
+        """
+        Convert VectorStore SearchResult to MemoryResult.
+
+        Note: Datetime handling uses fromisoformat() which supports both
+        'Z' and '+00:00' timezone formats. All datetimes should be timezone-aware UTC.
+        """
         payload = result.payload
         return cls(
             id=result.id,
@@ -142,9 +149,9 @@ class MemoryResult:
 Filters are translated from method parameters to VectorStore dict format:
 
 ```python
-# filters.py
+# searcher.py (private helper)
 
-def build_filters(**kwargs) -> dict[str, Any] | None:
+def _build_filters(**kwargs) -> dict[str, Any] | None:
     """
     Build VectorStore filter dict from keyword arguments.
 
@@ -153,6 +160,11 @@ def build_filters(**kwargs) -> dict[str, Any] | None:
 
     Returns:
         Filter dict or None if no filters specified
+
+    Note:
+        Currently only supports simple equality and $gte (date range) operators.
+        Advanced operators like $in, $lte are not yet supported by the Qdrant
+        implementation and will be added in a future version.
     """
     filters = {}
     for key, value in kwargs.items():
@@ -177,13 +189,22 @@ async def search_code(
     language: str | None = None,
     unit_type: str | None = None,
     limit: int = 10,
+    search_mode: str = "semantic",
 ) -> list[CodeResult]:
     """Search code with filters."""
+    # Validate search mode (only semantic supported in v1)
+    if search_mode != "semantic":
+        raise InvalidSearchModeError(
+            f"Invalid search mode '{search_mode}'. "
+            "Only 'semantic' mode is currently supported. "
+            "Hybrid search will be added in a future release."
+        )
+
     # Generate embedding
     query_vector = await self.embedding_service.embed(query)
 
     # Build filters
-    filters = build_filters(
+    filters = self._build_filters(
         project=project,
         language=language,
         unit_type=unit_type,
@@ -224,7 +245,6 @@ class CollectionName:
     MEMORIES = "memories"
     CODE = "code"
     EXPERIENCES_FULL = "experiences_full"
-    EXPERIENCES_DOMAIN = "experiences_domain"
     EXPERIENCES_STRATEGY = "experiences_strategy"
     EXPERIENCES_SURPRISE = "experiences_surprise"
     EXPERIENCES_ROOT_CAUSE = "experiences_root_cause"
@@ -232,9 +252,9 @@ class CollectionName:
     COMMITS = "commits"
 
     # Experience axis mapping
+    # Note: 'domain' is NOT a separate collection - it's stored as metadata on experiences_full
     EXPERIENCE_AXES = {
         "full": EXPERIENCES_FULL,
-        "domain": EXPERIENCES_DOMAIN,
         "strategy": EXPERIENCES_STRATEGY,
         "surprise": EXPERIENCES_SURPRISE,
         "root_cause": EXPERIENCES_ROOT_CAUSE,
@@ -333,6 +353,10 @@ class InvalidAxisError(SearchError):
     """Raised when an invalid experience axis is specified."""
     pass
 
+class InvalidSearchModeError(SearchError):
+    """Raised when an invalid search mode is specified."""
+    pass
+
 class CollectionNotFoundError(SearchError):
     """Raised when a collection doesn't exist."""
     pass
@@ -349,8 +373,17 @@ async def search_experiences(
     domain: str | None = None,
     outcome: str | None = None,
     limit: int = 10,
+    search_mode: str = "semantic",
 ) -> list[ExperienceResult]:
     """Search experiences with comprehensive error handling."""
+    # Validate search mode (only semantic supported in v1)
+    if search_mode != "semantic":
+        raise InvalidSearchModeError(
+            f"Invalid search mode '{search_mode}'. "
+            "Only 'semantic' mode is currently supported. "
+            "Hybrid search will be added in a future release."
+        )
+
     try:
         # Get collection name (validates axis)
         collection = CollectionName.get_experience_collection(axis)
@@ -401,6 +434,65 @@ async def search_experiences(
 All result dataclasses follow the same pattern:
 
 ```python
+@dataclass
+class ExperienceResult:
+    """Result from experience search."""
+    id: str
+    ghap_id: str
+    axis: str
+    domain: str
+    strategy: str
+    goal: str
+    hypothesis: str
+    action: str
+    prediction: str
+    outcome_status: str
+    outcome_result: str
+    surprise: str | None
+    root_cause: "RootCause | None"
+    lesson: "Lesson | None"
+    confidence_tier: str
+    iteration_count: int
+    score: float
+    created_at: datetime
+
+    @classmethod
+    def from_search_result(cls, result: SearchResult) -> "ExperienceResult":
+        """Convert VectorStore SearchResult to ExperienceResult."""
+        payload = result.payload
+        return cls(
+            id=result.id,
+            score=result.score,
+            ghap_id=payload["ghap_id"],
+            axis=payload["axis"],
+            domain=payload["domain"],
+            strategy=payload["strategy"],
+            goal=payload["goal"],
+            hypothesis=payload["hypothesis"],
+            action=payload["action"],
+            prediction=payload["prediction"],
+            outcome_status=payload["outcome_status"],
+            outcome_result=payload["outcome_result"],
+            surprise=payload.get("surprise"),
+            root_cause=RootCause(**payload["root_cause"]) if payload.get("root_cause") else None,
+            lesson=Lesson(**payload["lesson"]) if payload.get("lesson") else None,
+            confidence_tier=payload["confidence_tier"],
+            iteration_count=payload["iteration_count"],
+            created_at=datetime.fromisoformat(payload["created_at"]),
+        )
+
+@dataclass
+class RootCause:
+    """Nested dataclass for root cause information."""
+    category: str
+    description: str
+
+@dataclass
+class Lesson:
+    """Nested dataclass for lesson information."""
+    what_worked: str
+    takeaway: str | None
+
 @dataclass
 class CodeResult:
     """Result from code search."""
@@ -480,10 +572,11 @@ class MemoryResult:
 
 **Datetime Conventions**:
 - Stored as ISO 8601 strings in VectorStore payload
-- Parsed to timezone-aware datetime objects
-- Always UTC (consistent with codebase standards)
+- Parsed to timezone-aware datetime objects (UTC)
+- Use `fromisoformat()` for parsing (handles both 'Z' and '+00:00' formats)
 - Optional fields use `| None` type hint
-- Use `fromisoformat()` for parsing (handles both 'Z' and '+00:00')
+- All datetime fields are timezone-aware (never naive datetimes)
+- Consistent with codebase standards from metadata.py
 
 ### Testing Strategy
 
@@ -519,9 +612,9 @@ class MemoryResult:
        searcher, mock_vector_store
    ):
        """Verify axis maps to correct collection."""
-       await searcher.search_experiences(query="test", axis="domain")
+       await searcher.search_experiences(query="test", axis="strategy")
        mock_vector_store.search.assert_called_once()
-       assert mock_vector_store.search.call_args[1]["collection"] == "experiences_domain"
+       assert mock_vector_store.search.call_args[1]["collection"] == "experiences_strategy"
    ```
 
 4. **Result Mapping**
@@ -557,6 +650,13 @@ class MemoryResult:
            await searcher.search_experiences(query="test", axis="invalid")
        assert "invalid" in str(exc_info.value).lower()
        assert "full" in str(exc_info.value)  # Shows valid axes
+
+   async def test_invalid_search_mode_raises_error(searcher):
+       """Verify invalid search mode raises InvalidSearchModeError."""
+       with pytest.raises(InvalidSearchModeError) as exc_info:
+           await searcher.search_memories(query="test", search_mode="hybrid")
+       assert "hybrid" in str(exc_info.value).lower()
+       assert "semantic" in str(exc_info.value).lower()  # Shows supported mode
    ```
 
 #### Integration Tests
@@ -593,20 +693,35 @@ class MemoryResult:
        # Setup: Index experiences
        await index_test_experiences(vector_store)
 
-       # Search all axes
+       # Search all axes (note: 'domain' is not a separate axis, it's metadata on 'full')
        full_results = await searcher.search_experiences(query="bug", axis="full")
-       domain_results = await searcher.search_experiences(query="bug", axis="domain")
        strategy_results = await searcher.search_experiences(query="bug", axis="strategy")
+       surprise_results = await searcher.search_experiences(query="bug", axis="surprise")
 
        # Verify each axis returns results (may differ)
        assert len(full_results) > 0
-       assert len(domain_results) > 0
        assert len(strategy_results) > 0
+       assert len(surprise_results) > 0
 
        # Each result has correct axis
        assert all(r.axis == "full" for r in full_results)
-       assert all(r.axis == "domain" for r in domain_results)
        assert all(r.axis == "strategy" for r in strategy_results)
+       assert all(r.axis == "surprise" for r in surprise_results)
+
+   async def test_search_experiences_domain_filter(searcher, vector_store):
+       """Test domain filtering on experiences_full axis."""
+       # Setup: Index experiences with different domains
+       await index_test_experiences(vector_store)
+
+       # Search with domain filter (metadata filter, not separate collection)
+       results = await searcher.search_experiences(
+           query="bug",
+           axis="full",
+           domain="debugging"
+       )
+
+       # Verify all results have the filtered domain
+       assert all(r.domain == "debugging" for r in results)
    ```
 
 3. **Empty results**
@@ -800,18 +915,20 @@ results = await searcher.query("auth") \
 
 ### Phase 3: Filter Translation (Est: 1 hour)
 
-- [ ] Implement `build_filters()` helper in `filters.py`
-- [ ] Handle datetime range filters
+- [ ] Implement `_build_filters()` private helper in `searcher.py`
+- [ ] Handle datetime range filters ($gte only, document limitations)
 - [ ] Handle multiple filters (AND logic)
 - [ ] Unit tests for filter building
+- [ ] Document that $in, $lte not yet supported (Qdrant limitation)
 
 ### Phase 4: Searcher Implementation (Est: 3 hours)
 
 - [ ] Implement `Searcher` class with all search methods
+- [ ] Add search_mode parameter validation (semantic-only in v1)
 - [ ] Embed query text
 - [ ] Apply filters
-- [ ] Map results
-- [ ] Error handling
+- [ ] Map results (including nested RootCause/Lesson dataclasses)
+- [ ] Error handling (including InvalidSearchModeError)
 
 ### Phase 5: Testing (Est: 3 hours)
 
@@ -828,6 +945,72 @@ results = await searcher.query("auth") \
 - [ ] Type hint verification
 
 **Total Estimate**: ~12 hours
+
+## Hybrid Search (Future Work)
+
+The Searcher interface includes a `search_mode` parameter to support future hybrid search:
+
+- **semantic** (default, v1 only): Dense vector similarity search using embeddings
+- **keyword** (future): Sparse vector search using BM25/SPLADE tokenization
+- **hybrid** (future): Combined dense + sparse search with result fusion
+
+### v1 Implementation
+
+**Initial implementation only supports `search_mode="semantic"`**. All search methods will:
+1. Accept `search_mode` parameter (defaults to "semantic")
+2. Validate that `search_mode == "semantic"`
+3. Raise `InvalidSearchModeError` for "keyword" or "hybrid" modes
+
+This approach:
+- Establishes the interface for hybrid search
+- Allows callers to depend on the parameter existing
+- Provides clear error messages when non-semantic modes are attempted
+- Defers hybrid implementation to a follow-up task (per amendment)
+
+### Future Requirements (v2+)
+
+Hybrid search will require:
+1. **EmbeddingService** to generate both dense and sparse vectors (SPEC-002-02 amendment)
+2. **VectorStore** to store and query both vector types (SPEC-002-03 amendment)
+3. Qdrant's native hybrid search to handle score fusion
+
+### Future Implementation Notes
+
+- Sparse vectors will use SPLADE or BM25 tokenization
+- Qdrant stores dense vectors in the main vector field, sparse in a named vector
+- Hybrid queries set both vector types; Qdrant fuses results internally
+- Latency impact: ~20-50ms additional for hybrid vs semantic-only
+
+See `planning_docs/AMENDMENTS-hybrid-search.md` for full details on future implementation.
+
+## Integration with VectorStore
+
+The Searcher wraps the VectorStore's `search()` method and handles embedding generation:
+
+```python
+# VectorStore.search() signature (from base.py)
+async def search(
+    self,
+    collection: str,
+    query: Vector,  # Already embedded vector
+    limit: int = 10,
+    filters: dict[str, Any] | None = None,
+) -> list[SearchResult]
+
+# Searcher wraps this and adds:
+# 1. Embedding generation (query: str -> Vector)
+# 2. Collection name mapping (axis/domain -> collection)
+# 3. Filter translation (method params -> VectorStore filters)
+# 4. Result mapping (SearchResult -> typed results)
+```
+
+**Key integration points**:
+- Searcher calls `EmbeddingService.embed(query_text)` to get the query vector
+- Searcher passes the vector to `VectorStore.search(collection, vector, ...)`
+- VectorStore returns generic `SearchResult` objects with `payload` dict
+- Searcher maps `SearchResult` to typed result dataclasses
+
+**Compatibility**: The current VectorStore API is fully compatible with Searcher. No changes needed to VectorStore for v1 (semantic-only). Future hybrid search will require VectorStore amendments per AMENDMENTS-hybrid-search.md.
 
 ## Open Questions
 

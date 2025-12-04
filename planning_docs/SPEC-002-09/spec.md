@@ -47,6 +47,7 @@ class Searcher:
         query: str,
         category: str | None = None,
         limit: int = 10,
+        search_mode: str = "semantic",
     ) -> list[MemoryResult]:
         """
         Search verified memory entries.
@@ -55,6 +56,7 @@ class Searcher:
             query: Search query text
             category: Optional filter by memory category
             limit: Maximum results to return
+            search_mode: Search mode (semantic, keyword, hybrid). Default: semantic.
 
         Returns:
             List of memory search results ordered by relevance
@@ -68,6 +70,7 @@ class Searcher:
         language: str | None = None,
         unit_type: str | None = None,
         limit: int = 10,
+        search_mode: str = "semantic",
     ) -> list[CodeResult]:
         """
         Search indexed code units.
@@ -78,6 +81,7 @@ class Searcher:
             language: Optional filter by programming language
             unit_type: Optional filter by unit type (function, class, method)
             limit: Maximum results to return
+            search_mode: Search mode (semantic, keyword, hybrid). Default: semantic.
 
         Returns:
             List of code search results ordered by relevance
@@ -91,16 +95,18 @@ class Searcher:
         domain: str | None = None,
         outcome: str | None = None,
         limit: int = 10,
+        search_mode: str = "semantic",
     ) -> list[ExperienceResult]:
         """
         Search GHAP experiences across clustering axes.
 
         Args:
             query: Search query text
-            axis: Clustering axis (full, domain, strategy, surprise, root_cause)
-            domain: Optional filter by domain
+            axis: Clustering axis (full, strategy, surprise, root_cause)
+            domain: Optional filter by domain (metadata filter on experiences_full)
             outcome: Optional filter by outcome status (confirmed, falsified, abandoned)
             limit: Maximum results to return
+            search_mode: Search mode (semantic, keyword, hybrid). Default: semantic.
 
         Returns:
             List of experience search results ordered by relevance
@@ -112,14 +118,16 @@ class Searcher:
         query: str,
         axis: str | None = None,
         limit: int = 5,
+        search_mode: str = "semantic",
     ) -> list[ValueResult]:
         """
         Search emergent values.
 
         Args:
             query: Search query text
-            axis: Optional filter by axis (domain, strategy, surprise, root_cause)
+            axis: Optional filter by axis (strategy, surprise, root_cause)
             limit: Maximum results to return (default 5, values are sparse)
+            search_mode: Search mode (semantic, keyword, hybrid). Default: semantic.
 
         Returns:
             List of value search results ordered by relevance
@@ -132,6 +140,7 @@ class Searcher:
         author: str | None = None,
         since: datetime | None = None,
         limit: int = 10,
+        search_mode: str = "semantic",
     ) -> list[CommitResult]:
         """
         Search git commit messages and diffs.
@@ -141,6 +150,7 @@ class Searcher:
             author: Optional filter by commit author
             since: Optional filter by minimum commit date
             limit: Maximum results to return
+            search_mode: Search mode (semantic, keyword, hybrid). Default: semantic.
 
         Returns:
             List of commit search results ordered by relevance
@@ -269,7 +279,6 @@ class CollectionName:
     MEMORIES = "memories"
     CODE = "code"
     EXPERIENCES_FULL = "experiences_full"
-    EXPERIENCES_DOMAIN = "experiences_domain"
     EXPERIENCES_STRATEGY = "experiences_strategy"
     EXPERIENCES_SURPRISE = "experiences_surprise"
     EXPERIENCES_ROOT_CAUSE = "experiences_root_cause"
@@ -278,11 +287,12 @@ class CollectionName:
 ```
 
 Experience axis values map to collections:
-- `"full"` → `"experiences_full"`
-- `"domain"` → `"experiences_domain"`
+- `"full"` → `"experiences_full"` (domain is a metadata filter, not a separate axis)
 - `"strategy"` → `"experiences_strategy"`
 - `"surprise"` → `"experiences_surprise"`
 - `"root_cause"` → `"experiences_root_cause"`
+
+**Note**: Domain is stored as metadata on `experiences_full` rather than as a separate collection. This reduces storage overhead while still enabling exact domain filtering. Use `domain` parameter in `search_experiences()` to filter by domain.
 
 ## Filter Specifications
 
@@ -362,6 +372,10 @@ class InvalidAxisError(SearchError):
     """Raised when an invalid experience axis is specified."""
     pass
 
+class InvalidSearchModeError(SearchError):
+    """Raised when an invalid search mode is specified."""
+    pass
+
 class CollectionNotFoundError(SearchError):
     """Raised when a collection doesn't exist."""
     pass
@@ -373,11 +387,34 @@ class EmbeddingError(SearchError):
 
 **Error scenarios**:
 
-1. **Invalid axis**: Raise `InvalidAxisError` with valid options
-2. **Missing collection**: Raise `CollectionNotFoundError` with collection name
-3. **Embedding failure**: Raise `EmbeddingError` wrapping original exception
-4. **Empty query**: Return empty list (not an error)
-5. **VectorStore errors**: Propagate with context
+1. **Invalid axis**: Raise `InvalidAxisError` with valid options (full, strategy, surprise, root_cause)
+2. **Invalid search mode**: Raise `InvalidSearchModeError` with valid options (semantic, keyword, hybrid)
+3. **Missing collection**: Raise `CollectionNotFoundError` with collection name
+4. **Embedding failure**: Raise `EmbeddingError` wrapping original exception
+5. **Empty query**: Return empty list (not an error)
+6. **VectorStore errors**: Propagate with context
+
+## Hybrid Search
+
+The Searcher supports three search modes via the `search_mode` parameter:
+
+- **semantic** (default): Dense vector similarity search using embeddings
+- **keyword**: Sparse vector search using BM25/SPLADE tokenization
+- **hybrid**: Combined dense + sparse search with result fusion
+
+### Requirements
+
+Hybrid search requires:
+1. **EmbeddingService** must generate both dense and sparse vectors
+2. **VectorStore** must store and query both vector types
+3. Qdrant's native hybrid search handles score fusion
+
+### Implementation Notes
+
+- Sparse vectors use SPLADE or BM25 tokenization
+- Qdrant stores dense vectors in the main vector field, sparse in a named vector
+- Hybrid queries set both vector types; Qdrant fuses results internally
+- Latency impact: ~20-50ms additional for hybrid vs semantic-only
 
 ## Testing Strategy
 
@@ -423,14 +460,16 @@ async def searcher(mock_embedding_service, mock_vector_store):
 
 1. Can search memories with category filter
 2. Can search code with project, language, and unit_type filters
-3. Can search experiences across all 5 axes
-4. Can search experiences with domain and outcome filters
+3. Can search experiences across all 4 axes (full, strategy, surprise, root_cause)
+4. Can search experiences with domain (metadata filter) and outcome filters
 5. Can search values with optional axis filter
 6. Can search commits with author and date filters
 7. Results are ordered by score (descending)
 8. Result count respects limit parameter
 9. Empty query returns empty list
 10. Invalid axis raises InvalidAxisError
+11. Invalid search mode raises InvalidSearchModeError
+12. Hybrid search returns results combining semantic and keyword matches
 
 ### Result Mapping
 
@@ -468,8 +507,7 @@ async def searcher(mock_embedding_service, mock_vector_store):
 ## Out of Scope
 
 - **Caching**: No query result caching in v1
-- **Ranking customization**: Use VectorStore's default scoring
-- **Hybrid search**: No keyword + vector hybrid in v1
+- **Ranking customization**: Use VectorStore's default scoring (Qdrant handles fusion for hybrid)
 - **Pagination**: Caller can implement by adjusting limit/offset at VectorStore level
 - **Aggregations**: No faceting or aggregations in v1
 - **Query rewriting**: No automatic query expansion or correction
