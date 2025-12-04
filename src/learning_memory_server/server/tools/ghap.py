@@ -18,6 +18,7 @@ from learning_memory_server.server.tools.enums import (
     validate_strategy,
 )
 from learning_memory_server.server.tools.errors import (
+    MCPError,
     NotFoundError,
     ValidationError,
 )
