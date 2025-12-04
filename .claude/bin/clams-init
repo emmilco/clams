@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS workers (
     current_task_id TEXT,
     status TEXT NOT NULL DEFAULT 'idle',
     started_at TIMESTAMP,
+    ended_at TIMESTAMP,
     FOREIGN KEY (current_task_id) REFERENCES tasks(id)
 );
 

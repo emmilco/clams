@@ -170,7 +170,7 @@ cmd_complete() {
 
     sqlite3 "$DB_PATH" <<EOF
 UPDATE workers
-SET status = 'completed', current_task_id = NULL
+SET status = 'completed', current_task_id = NULL, ended_at = datetime('now')
 WHERE id = '$worker_id';
 EOF
 
@@ -201,7 +201,7 @@ cmd_fail() {
 
     sqlite3 "$DB_PATH" <<EOF
 UPDATE workers
-SET status = 'failed', current_task_id = NULL
+SET status = 'failed', current_task_id = NULL, ended_at = datetime('now')
 WHERE id = '$worker_id';
 EOF
 
