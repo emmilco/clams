@@ -56,8 +56,7 @@ clustering/
 ├── __init__.py          # Public exports
 ├── clusterer.py         # Clusterer class (HDBSCAN + centroids)
 ├── experience.py        # ExperienceClusterer class
-├── types.py             # ClusterResult, ClusterInfo dataclasses
-└── weights.py           # Confidence tier weight mappings
+└── types.py             # ClusterResult, ClusterInfo dataclasses, weight mappings
 ```
 
 **Public exports** (`__init__.py`):
@@ -66,8 +65,7 @@ clustering/
 
 from .clusterer import Clusterer
 from .experience import ExperienceClusterer
-from .types import ClusterResult, ClusterInfo
-from .weights import CONFIDENCE_WEIGHTS, get_weight
+from .types import ClusterResult, ClusterInfo, CONFIDENCE_WEIGHTS, get_weight
 
 __all__ = [
     "Clusterer",
@@ -143,9 +141,7 @@ def compute_weighted_centroid(
 ### 4. Confidence Tier Weighting
 
 ```python
-# weights.py
-from enum import Enum
-
+# types.py
 CONFIDENCE_WEIGHTS = {
     "gold": 1.0,
     "silver": 0.8,
@@ -153,8 +149,18 @@ CONFIDENCE_WEIGHTS = {
     "abandoned": 0.2,
 }
 
-def get_weight(tier: str) -> float:
-    """Get weight for confidence tier."""
+def get_weight(tier: str | None) -> float:
+    """
+    Get weight for confidence tier.
+
+    Args:
+        tier: Confidence tier string or None
+
+    Returns:
+        Weight value (0.2-1.0), defaults to 0.5 (bronze) for None/invalid
+    """
+    if tier is None:
+        return 0.5  # Default to bronze weight
     return CONFIDENCE_WEIGHTS.get(tier.lower(), 0.5)  # Default: bronze
 ```
 
@@ -203,7 +209,7 @@ from dataclasses import dataclass
 from typing import List
 
 import numpy as np
-from sklearn.cluster import HDBSCAN
+import hdbscan
 
 from .types import ClusterResult, ClusterInfo
 
@@ -223,14 +229,6 @@ class Clusterer:
         self.min_samples = min_samples
         self.metric = metric
         self.cluster_selection_method = cluster_selection_method
-
-        # Create HDBSCAN instance (reusable)
-        self.hdbscan = HDBSCAN(
-            min_cluster_size=min_cluster_size,
-            min_samples=min_samples,
-            metric=metric,
-            cluster_selection_method=cluster_selection_method,
-        )
 
     def cluster(
         self,
@@ -252,9 +250,17 @@ class Clusterer:
                 f"embeddings ({len(embeddings)})"
             )
 
+        # Create fresh HDBSCAN instance (avoids state reuse issues)
+        clusterer = hdbscan.HDBSCAN(
+            min_cluster_size=self.min_cluster_size,
+            min_samples=self.min_samples,
+            metric=self.metric,
+            cluster_selection_method=self.cluster_selection_method,
+        )
+
         # Run HDBSCAN
-        labels = self.hdbscan.fit_predict(embeddings)
-        probabilities = self.hdbscan.probabilities_
+        labels = clusterer.fit_predict(embeddings)
+        probabilities = clusterer.probabilities_
 
         # Count clusters (excluding noise = -1)
         unique_labels = set(labels)
@@ -340,13 +346,12 @@ import numpy as np
 
 from ..storage.base import VectorStore
 from .clusterer import Clusterer
-from .types import ClusterInfo
-from .weights import get_weight
+from .types import ClusterInfo, get_weight
 
 # VectorStore collection names by axis
+# Note: "domain" is not a clustering axis (it's metadata on experiences_full)
 AXIS_COLLECTIONS = {
     "full": "experiences_full",
-    "domain": "experiences_domain",
     "strategy": "experiences_strategy",
     "surprise": "experiences_surprise",
     "root_cause": "experiences_root_cause",
@@ -373,11 +378,24 @@ class ExperienceClusterer:
 
         # Retrieve all embeddings from VectorStore
         # Using scroll() to get all points (no search query)
+        # Note: If >10k experiences exist, implement pagination in future
         results = await self.vector_store.scroll(
             collection=collection,
-            limit=10000,  # Generous limit for all experiences
+            limit=10000,  # Hardcoded limit - warn if approaching
             with_vectors=True,
         )
+
+        # Warn if we hit the limit (may indicate truncated dataset)
+        if len(results) == 10000:
+            import structlog
+            logger = structlog.get_logger(__name__)
+            logger.warning(
+                "clustering.scroll_limit_reached",
+                axis=axis,
+                collection=collection,
+                count=10000,
+                message="May have truncated results - consider pagination"
+            )
 
         if not results:
             raise ValueError(
@@ -393,6 +411,19 @@ class ExperienceClusterer:
 
         # Cluster
         cluster_result = self.clusterer.cluster(embeddings, weights)
+
+        # Check for all-noise result (no clusters found)
+        if cluster_result.n_clusters == 0:
+            import structlog
+            logger = structlog.get_logger(__name__)
+            logger.warning(
+                "clustering.all_noise",
+                axis=axis,
+                total_points=len(embeddings),
+                noise_count=cluster_result.noise_count,
+                message="HDBSCAN labeled all points as noise - no clusters found"
+            )
+            return []  # Return empty list if no clusters
 
         # Compute centroids
         clusters = self.clusterer.compute_centroids(
@@ -448,6 +479,30 @@ class ClusterInfo:
     member_ids: List[str]        # IDs of members in this cluster
     size: int                    # Number of members
     avg_weight: float            # Average weight of members
+
+
+# Confidence tier weight mappings
+CONFIDENCE_WEIGHTS = {
+    "gold": 1.0,
+    "silver": 0.8,
+    "bronze": 0.5,
+    "abandoned": 0.2,
+}
+
+
+def get_weight(tier: str | None) -> float:
+    """
+    Get weight for confidence tier.
+
+    Args:
+        tier: Confidence tier string or None
+
+    Returns:
+        Weight value (0.2-1.0), defaults to 0.5 (bronze) for None/invalid
+    """
+    if tier is None:
+        return 0.5  # Default to bronze weight
+    return CONFIDENCE_WEIGHTS.get(tier.lower(), 0.5)  # Default: bronze
 ```
 
 ## Parameter Selection
@@ -814,12 +869,12 @@ Add to `pyproject.toml`:
 ```toml
 dependencies = [
     # ... existing ...
-    "scikit-learn>=1.3.0",  # Includes HDBSCAN
+    "hdbscan",       # Standalone HDBSCAN package
     "numpy>=1.24.0",
 ]
 ```
 
-**Note:** scikit-learn 1.3+ includes HDBSCAN natively (formerly external library).
+**Note:** HDBSCAN is a standalone package (`hdbscan`), not part of scikit-learn. Import with `import hdbscan`, NOT `from sklearn.cluster import HDBSCAN`.
 
 ## Logging Strategy
 
