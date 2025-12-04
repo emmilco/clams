@@ -5,15 +5,22 @@ from dataclasses import dataclass
 import structlog
 from mcp.server import Server
 
+from learning_memory_server.clustering import ExperienceClusterer
 from learning_memory_server.embedding import (
     EmbeddingService,
     EmbeddingSettings,
     NomicEmbedding,
 )
+from learning_memory_server.observation import (
+    ObservationCollector,
+    ObservationPersister,
+)
+from learning_memory_server.search import Searcher
 from learning_memory_server.server.config import ServerSettings
 from learning_memory_server.storage import VectorStore
 from learning_memory_server.storage.metadata import MetadataStore
 from learning_memory_server.storage.qdrant import QdrantVectorStore
+from learning_memory_server.values import ValueStore
 
 logger = structlog.get_logger()
 
@@ -136,12 +143,45 @@ def register_all_tools(server: Server, settings: ServerSettings) -> None:
 
     # Import and register tool modules
     from .code import register_code_tools
+    from .ghap import register_ghap_tools
     from .git import register_git_tools
+    from .learning import register_learning_tools
     from .memory import register_memory_tools
+    from .search import register_search_tools
 
+    # Register memory, code, and git tools (from SPEC-002-11)
     register_memory_tools(server, services)
     register_code_tools(server, services)
     register_git_tools(server, services)
+
+    # Initialize and register GHAP tools (from SPEC-002-15)
+    observation_collector = ObservationCollector(
+        journal_path=settings.journal_path,
+    )
+    observation_persister = ObservationPersister(
+        embedding_service=services.embedding_service,
+        vector_store=services.vector_store,
+    )
+    register_ghap_tools(server, observation_collector, observation_persister)
+
+    # Initialize and register learning tools (from SPEC-002-15)
+    experience_clusterer = ExperienceClusterer(
+        vector_store=services.vector_store,
+        clusterer=None,  # Will be initialized when needed
+    )
+    value_store = ValueStore(
+        embedding_service=services.embedding_service,
+        vector_store=services.vector_store,
+        clusterer=None,  # Will be initialized when needed
+    )
+    register_learning_tools(server, experience_clusterer, value_store)
+
+    # Initialize and register search tools (from SPEC-002-15)
+    searcher = Searcher(
+        embedding_service=services.embedding_service,
+        vector_store=services.vector_store,
+    )
+    register_search_tools(server, searcher)
 
     # Register ping tool for health checks
     @server.call_tool()  # type: ignore[untyped-decorator]
@@ -153,6 +193,9 @@ def register_all_tools(server: Server, settings: ServerSettings) -> None:
         """
         return "pong"
 
-    logger.info("tools.registered", has_code=services.code_indexer is not None,
-                has_git=services.git_analyzer is not None,
-                has_searcher=services.searcher is not None)
+    logger.info(
+        "tools.registered",
+        has_code=services.code_indexer is not None,
+        has_git=services.git_analyzer is not None,
+        has_searcher=services.searcher is not None,
+    )
