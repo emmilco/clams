@@ -40,7 +40,7 @@ class ValidationResult:
     candidate_distance: Optional[float] = None  # Distance to centroid
     mean_distance: Optional[float] = None  # Mean member distance
     std_distance: Optional[float] = None  # Std dev of member distances
-    threshold: Optional[float] = None  # mean + 1*std (validation threshold)
+    threshold: Optional[float] = None  # mean + 0.5*std (validation threshold)
 
 
 @dataclass
@@ -213,9 +213,9 @@ async def validate_value_candidate(
     ]
     mean_dist = np.mean(member_dists)
     std_dist = np.std(member_dists)
-    threshold = mean_dist + std_dist  # 1 standard deviation
+    threshold = mean_dist + 0.5 * std_dist  # 0.5 standard deviation (conservative)
 
-    # Validate: candidate must be within 1 std dev of mean
+    # Validate: candidate must be within 0.5 std dev of mean
     if candidate_dist <= threshold:
         return ValidationResult(
             valid=True,
@@ -231,7 +231,7 @@ async def validate_value_candidate(
             reason=(
                 f"Value too far from centroid "
                 f"(distance={candidate_dist:.3f}, "
-                f"threshold={threshold:.3f} [mean={mean_dist:.3f} + 1*std={std_dist:.3f}])"
+                f"threshold={threshold:.3f} [mean={mean_dist:.3f} + 0.5*std={std_dist:.3f}])"
             ),
             candidate_distance=candidate_dist,
             mean_distance=mean_dist,
@@ -288,8 +288,8 @@ Values are stored in the `values` collection in VectorStore with the following p
    - Invalid axis or cluster_id raises `ValueError`
 
 2. **Validation**
-   - `validate_value_candidate(text, cluster_id)` correctly implements 1-std-dev threshold validation
-   - Valid candidates (distance <= mean + 1*std) return `ValidationResult` with `valid=True`
+   - `validate_value_candidate(text, cluster_id)` correctly implements 0.5-std-dev threshold validation
+   - Valid candidates (distance <= mean + 0.5*std) return `ValidationResult` with `valid=True`
    - Invalid candidates return `ValidationResult` with `valid=False` and explanation including threshold
 
 3. **Storage**
@@ -301,8 +301,8 @@ Values are stored in the `values` collection in VectorStore with the following p
    - Unit tests with mock embedding service and in-memory vector store
    - Integration tests with real Clusterer (SPEC-002-12)
    - Test cases:
-     - Valid value candidate (distance <= mean + 1*std)
-     - Invalid value candidate (distance > mean + 1*std)
+     - Valid value candidate (distance <= mean + 0.5*std)
+     - Invalid value candidate (distance > mean + 0.5*std)
      - Multiple values per cluster
      - Filtering by axis
      - Edge cases: empty clusters, single-member clusters, very tight clusters (low std)

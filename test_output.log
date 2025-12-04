@@ -1,13 +1,41 @@
 ============================= test session starts ==============================
-platform darwin -- Python 3.12.12, pytest-9.0.1, pluggy-1.6.0 -- /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-03/.venv/bin/python
+platform darwin -- Python 3.12.12, pytest-9.0.1, pluggy-1.6.0 -- /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-13/.venv/bin/python
 cachedir: .pytest_cache
-rootdir: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-03
+rootdir: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-13
 configfile: pyproject.toml
 testpaths: tests
 plugins: anyio-4.12.0, asyncio-1.3.0
 asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collecting ... collected 30 items
+collecting ... collected 109 items
 
+tests/embedding/test_mock.py::TestMockEmbedding::test_dimension PASSED
+tests/embedding/test_mock.py::TestMockEmbedding::test_embed_returns_correct_shape PASSED
+tests/embedding/test_mock.py::TestMockEmbedding::test_embed_deterministic PASSED
+tests/embedding/test_mock.py::TestMockEmbedding::test_embed_different_texts_produce_different_embeddings PASSED
+tests/embedding/test_mock.py::TestMockEmbedding::test_embed_normalized PASSED
+tests/embedding/test_mock.py::TestMockEmbedding::test_embed_batch_empty_list PASSED
+tests/embedding/test_mock.py::TestMockEmbedding::test_embed_batch_single_item PASSED
+tests/embedding/test_mock.py::TestMockEmbedding::test_embed_batch_multiple_items PASSED
+tests/embedding/test_mock.py::TestMockEmbedding::test_embed_batch_consistency_with_embed PASSED
+tests/embedding/test_mock.py::TestMockEmbedding::test_embed_handles_special_characters PASSED
+tests/embedding/test_mock.py::TestMockEmbedding::test_embed_long_text PASSED
+tests/embedding/test_nomic.py::TestNomicEmbedding::test_dimension PASSED
+tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_returns_correct_shape PASSED
+tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_multiple_calls PASSED
+tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_batch_empty_list PASSED
+tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_batch_single_item PASSED
+tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_batch_multiple_items PASSED
+tests/embedding/test_nomic.py::TestNomicEmbedding::test_custom_settings PASSED
+tests/embedding/test_nomic.py::TestNomicEmbedding::test_invalid_model_raises_error PASSED
+tests/server/test_config.py::test_default_settings PASSED
+tests/server/test_config.py::test_env_override PASSED
+tests/server/test_config.py::test_settings_immutable PASSED
+tests/server/test_main.py::test_create_server 2025-12-03 22:48:59 [info     ] tools.registered               tool_count=1
+2025-12-03 22:48:59 [info     ] server.created                 server_name=learning-memory-server
+PASSED
+tests/server/test_main.py::test_server_has_ping_tool 2025-12-03 22:48:59 [info     ] tools.registered               tool_count=1
+2025-12-03 22:48:59 [info     ] server.created                 server_name=learning-memory-server
+PASSED
 tests/storage/test_memory.py::TestInMemoryVectorStore::test_create_collection PASSED
 tests/storage/test_memory.py::TestInMemoryVectorStore::test_create_duplicate_collection PASSED
 tests/storage/test_memory.py::TestInMemoryVectorStore::test_delete_collection PASSED
@@ -23,70 +51,75 @@ tests/storage/test_memory.py::TestInMemoryVectorStore::test_count PASSED
 tests/storage/test_memory.py::TestInMemoryVectorStore::test_count_with_filters PASSED
 tests/storage/test_memory.py::TestInMemoryVectorStore::test_get_nonexistent PASSED
 tests/storage/test_memory.py::TestInMemoryVectorStore::test_operations_on_nonexistent_collection PASSED
+tests/storage/test_metadata.py::TestIndexedFiles::test_add_indexed_file PASSED
+tests/storage/test_metadata.py::TestIndexedFiles::test_add_indexed_file_upsert PASSED
+tests/storage/test_metadata.py::TestIndexedFiles::test_get_indexed_file PASSED
+tests/storage/test_metadata.py::TestIndexedFiles::test_get_indexed_file_not_found PASSED
+tests/storage/test_metadata.py::TestIndexedFiles::test_list_indexed_files PASSED
+tests/storage/test_metadata.py::TestIndexedFiles::test_list_indexed_files_all_projects PASSED
+tests/storage/test_metadata.py::TestIndexedFiles::test_get_stale_files PASSED
+tests/storage/test_metadata.py::TestIndexedFiles::test_delete_indexed_file PASSED
+tests/storage/test_metadata.py::TestCallGraph::test_add_call PASSED
+tests/storage/test_metadata.py::TestCallGraph::test_add_call_upsert PASSED
+tests/storage/test_metadata.py::TestCallGraph::test_get_callers PASSED
+tests/storage/test_metadata.py::TestCallGraph::test_get_callees PASSED
+tests/storage/test_metadata.py::TestCallGraph::test_delete_calls_for_file PASSED
+tests/storage/test_metadata.py::TestProjects::test_add_project PASSED
+tests/storage/test_metadata.py::TestProjects::test_add_project_default_settings PASSED
+tests/storage/test_metadata.py::TestProjects::test_add_project_upsert PASSED
+tests/storage/test_metadata.py::TestProjects::test_get_project PASSED
+tests/storage/test_metadata.py::TestProjects::test_get_project_not_found PASSED
+tests/storage/test_metadata.py::TestProjects::test_list_projects PASSED
+tests/storage/test_metadata.py::TestProjects::test_update_project_last_indexed PASSED
+tests/storage/test_metadata.py::TestProjects::test_delete_project PASSED
+tests/storage/test_metadata.py::TestJSONSerialization::test_complex_settings_roundtrip PASSED
+tests/storage/test_metadata.py::TestJSONSerialization::test_empty_settings_roundtrip PASSED
 tests/storage/test_qdrant.py::TestQdrantVectorStore::test_create_collection PASSED
 tests/storage/test_qdrant.py::TestQdrantVectorStore::test_delete_collection PASSED
 tests/storage/test_qdrant.py::TestQdrantVectorStore::test_upsert_and_get PASSED
 tests/storage/test_qdrant.py::TestQdrantVectorStore::test_upsert_update PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_search_cosine_similarity FAILED
+tests/storage/test_qdrant.py::TestQdrantVectorStore::test_search_cosine_similarity PASSED
+tests/storage/test_qdrant.py::TestQdrantVectorStore::test_search_with_filters PASSED
+tests/storage/test_qdrant.py::TestQdrantVectorStore::test_delete PASSED
+tests/storage/test_qdrant.py::TestQdrantVectorStore::test_scroll PASSED
+tests/storage/test_qdrant.py::TestQdrantVectorStore::test_scroll_with_filters PASSED
+tests/storage/test_qdrant.py::TestQdrantVectorStore::test_count PASSED
+tests/storage/test_qdrant.py::TestQdrantVectorStore::test_count_with_filters PASSED
+tests/storage/test_qdrant.py::TestQdrantVectorStore::test_get_nonexistent PASSED
+tests/storage/test_qdrant.py::TestQdrantVectorStore::test_distance_metrics PASSED
+tests/test_placeholder.py::test_placeholder PASSED
+tests/test_placeholder.py::test_fixture PASSED
+tests/values/test_integration.py::TestIntegration::test_full_workflow PASSED
+tests/values/test_integration.py::TestIntegration::test_invalid_value_rejected PASSED
+tests/values/test_integration.py::TestIntegration::test_multiple_values_per_cluster PASSED
+tests/values/test_integration.py::TestIntegration::test_real_embedding_consistency PASSED
+tests/values/test_store.py::TestGetClusters::test_valid_axis PASSED
+tests/values/test_store.py::TestGetClusters::test_sorted_by_size_descending PASSED
+tests/values/test_store.py::TestGetClusters::test_invalid_axis PASSED
+tests/values/test_store.py::TestGetClusters::test_domain_not_valid_axis PASSED
+tests/values/test_store.py::TestGetClusters::test_all_valid_axes[full] PASSED
+tests/values/test_store.py::TestGetClusters::test_all_valid_axes[strategy] PASSED
+tests/values/test_store.py::TestGetClusters::test_all_valid_axes[surprise] PASSED
+tests/values/test_store.py::TestGetClusters::test_all_valid_axes[root_cause] PASSED
+tests/values/test_store.py::TestGetClusterMembers::test_get_members_success PASSED
+tests/values/test_store.py::TestGetClusterMembers::test_invalid_cluster_id_format PASSED
+tests/values/test_store.py::TestGetClusterMembers::test_invalid_axis_in_cluster_id PASSED
+tests/values/test_store.py::TestGetClusterMembers::test_cluster_not_found PASSED
+tests/values/test_store.py::TestGetClusterMembers::test_correct_collection_name PASSED
+tests/values/test_store.py::TestValidateValueCandidate::test_valid_candidate_close_to_centroid PASSED
+tests/values/test_store.py::TestValidateValueCandidate::test_invalid_candidate_far_from_centroid PASSED
+tests/values/test_store.py::TestValidateValueCandidate::test_empty_cluster PASSED
+tests/values/test_store.py::TestValidateValueCandidate::test_validation_threshold_calculation PASSED
+tests/values/test_store.py::TestStoreValue::test_store_valid_value PASSED
+tests/values/test_store.py::TestStoreValue::test_store_invalid_value_raises_error PASSED
+tests/values/test_store.py::TestStoreValue::test_value_id_format PASSED
+tests/values/test_store.py::TestStoreValue::test_stored_payload_structure PASSED
+tests/values/test_store.py::TestListValues::test_list_all_values PASSED
+tests/values/test_store.py::TestListValues::test_list_values_filtered_by_axis PASSED
+tests/values/test_store.py::TestListValues::test_list_values_invalid_axis PASSED
+tests/values/test_store.py::TestListValues::test_list_values_sorted_by_recency PASSED
+tests/values/test_store.py::TestGetCluster::test_get_cluster_success PASSED
+tests/values/test_store.py::TestGetCluster::test_get_cluster_invalid_format PASSED
+tests/values/test_store.py::TestGetCluster::test_get_cluster_not_found PASSED
 
-=================================== FAILURES ===================================
-_____________ TestQdrantVectorStore.test_search_cosine_similarity ______________
-
-self = <tests.storage.test_qdrant.TestQdrantVectorStore object at 0x10b091c70>
-store = <learning_memory_server.storage.qdrant.QdrantVectorStore object at 0x10b0b2c30>
-collection = 'test_collection'
-
-    async def test_search_cosine_similarity(
-        self, store: QdrantVectorStore, collection: str
-    ) -> None:
-        """Test cosine similarity search."""
-        # Insert some test vectors
-        vectors = [
-            (np.array([1.0, 0.0, 0.0], dtype=np.float32), {"label": "x"}),
-            (np.array([0.0, 1.0, 0.0], dtype=np.float32), {"label": "y"}),
-            (np.array([0.0, 0.0, 1.0], dtype=np.float32), {"label": "z"}),
-            (np.array([0.9, 0.1, 0.0], dtype=np.float32), {"label": "x-ish"}),
-        ]
-    
-        for i, (vec, payload) in enumerate(vectors):
-            await store.upsert(collection, f"id{i}", vec, payload)
-    
-        # Search for x-like vectors
-        query = np.array([1.0, 0.0, 0.0], dtype=np.float32)
->       results = await store.search(collection, query, limit=2)
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-tests/storage/test_qdrant.py:133: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-self = <learning_memory_server.storage.qdrant.QdrantVectorStore object at 0x10b0b2c30>
-collection = 'test_collection', query = array([1., 0., 0.], dtype=float32)
-limit = 2, filters = None
-
-    async def search(
-        self,
-        collection: str,
-        query: Vector,
-        limit: int = 10,
-        filters: dict[str, Any] | None = None,
-    ) -> list[SearchResult]:
-        """Search for similar vectors."""
-        # Convert filters to Qdrant filter format
-        qdrant_filter = self._build_filter(filters) if filters else None
-    
->       results = await self._client.search(
-                        ^^^^^^^^^^^^^^^^^^^
-            collection_name=collection,
-            query_vector=query.tolist(),
-            limit=limit,
-            query_filter=qdrant_filter,
-            with_payload=True,
-            with_vectors=False,
-        )
-E       AttributeError: 'AsyncQdrantClient' object has no attribute 'search'
-
-src/learning_memory_server/storage/qdrant.py:119: AttributeError
-=========================== short test summary info ============================
-FAILED tests/storage/test_qdrant.py::TestQdrantVectorStore::test_search_cosine_similarity
-!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
-========================= 1 failed, 19 passed in 0.93s =========================
+============================= 109 passed in 30.75s =============================

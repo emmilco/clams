@@ -261,9 +261,9 @@ class ValueStore:
         ]
         mean_dist = float(np.mean(member_dists))
         std_dist = float(np.std(member_dists))
-        threshold = mean_dist + std_dist  # 1 standard deviation
+        threshold = mean_dist + 0.5 * std_dist  # 0.5 standard deviation (conservative)
 
-        # Validate: candidate must be within 1 std dev of mean
+        # Validate: candidate must be within 0.5 std dev of mean (strict)
         if candidate_dist <= threshold:
             return ValidationResult(
                 valid=True,
@@ -279,7 +279,7 @@ class ValueStore:
                 reason=(
                     f"Value too far from centroid "
                     f"(distance={candidate_dist:.3f}, "
-                    f"threshold={threshold:.3f} [mean={mean_dist:.3f} + 1*std={std_dist:.3f}])"
+                    f"threshold={threshold:.3f} [mean={mean_dist:.3f} + 0.5*std={std_dist:.3f}])"
                 ),
                 candidate_distance=candidate_dist,
                 mean_distance=mean_dist,
