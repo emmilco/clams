@@ -1,202 +1,198 @@
 ============================= test session starts ==============================
-platform darwin -- Python 3.12.12, pytest-9.0.1, pluggy-1.6.0 -- /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-15/.venv/bin/python
-cachedir: .pytest_cache
+platform darwin -- Python 3.12.12, pytest-9.0.1, pluggy-1.6.0
 rootdir: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-15
 configfile: pyproject.toml
 testpaths: tests
-plugins: anyio-4.12.0, asyncio-1.3.0
+plugins: mock-3.15.1, hypothesis-6.148.6, anyio-4.12.0, asyncio-1.3.0
 asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collecting ... collected 142 items
+collected 446 items
 
-tests/embedding/test_mock.py::TestMockEmbedding::test_dimension PASSED
-tests/embedding/test_mock.py::TestMockEmbedding::test_embed_returns_correct_shape PASSED
-tests/embedding/test_mock.py::TestMockEmbedding::test_embed_deterministic PASSED
-tests/embedding/test_mock.py::TestMockEmbedding::test_embed_different_texts_produce_different_embeddings PASSED
-tests/embedding/test_mock.py::TestMockEmbedding::test_embed_normalized PASSED
-tests/embedding/test_mock.py::TestMockEmbedding::test_embed_batch_empty_list PASSED
-tests/embedding/test_mock.py::TestMockEmbedding::test_embed_batch_single_item PASSED
-tests/embedding/test_mock.py::TestMockEmbedding::test_embed_batch_multiple_items PASSED
-tests/embedding/test_mock.py::TestMockEmbedding::test_embed_batch_consistency_with_embed PASSED
-tests/embedding/test_mock.py::TestMockEmbedding::test_embed_handles_special_characters PASSED
-tests/embedding/test_mock.py::TestMockEmbedding::test_embed_long_text PASSED
-tests/embedding/test_nomic.py::TestNomicEmbedding::test_dimension PASSED
-tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_returns_correct_shape PASSED
-tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_multiple_calls PASSED
-tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_batch_empty_list PASSED
-tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_batch_single_item PASSED
-tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_batch_multiple_items PASSED
-tests/embedding/test_nomic.py::TestNomicEmbedding::test_custom_settings PASSED
-tests/embedding/test_nomic.py::TestNomicEmbedding::test_invalid_model_raises_error PASSED
-tests/server/test_config.py::test_default_settings PASSED
-tests/server/test_config.py::test_env_override PASSED
-tests/server/test_config.py::test_settings_immutable PASSED
-tests/server/test_main.py::test_create_server 2025-12-04 16:38:45 [info     ] tools.registered               tool_count=12
-2025-12-04 16:38:45 [info     ] server.created                 server_name=learning-memory-server
-PASSED
-tests/server/test_main.py::test_server_has_ping_tool 2025-12-04 16:38:45 [info     ] tools.registered               tool_count=12
-2025-12-04 16:38:45 [info     ] server.created                 server_name=learning-memory-server
-PASSED
-tests/server/tools/test_enums.py::TestDomains::test_valid_domains PASSED
-tests/server/tools/test_enums.py::TestDomains::test_invalid_domain_raises_error PASSED
-tests/server/tools/test_enums.py::TestDomains::test_error_message_includes_valid_options PASSED
-tests/server/tools/test_enums.py::TestStrategies::test_valid_strategies PASSED
-tests/server/tools/test_enums.py::TestStrategies::test_invalid_strategy_raises_error PASSED
-tests/server/tools/test_enums.py::TestStrategies::test_error_message_includes_valid_options PASSED
-tests/server/tools/test_enums.py::TestAxes::test_valid_axes PASSED
-tests/server/tools/test_enums.py::TestAxes::test_invalid_axis_raises_error PASSED
-tests/server/tools/test_enums.py::TestAxes::test_error_message_includes_valid_options PASSED
-tests/server/tools/test_enums.py::TestAxes::test_domain_is_not_a_valid_axis PASSED
-tests/server/tools/test_enums.py::TestOutcomeStatus::test_valid_outcome_statuses PASSED
-tests/server/tools/test_enums.py::TestOutcomeStatus::test_invalid_outcome_status_raises_error PASSED
-tests/server/tools/test_enums.py::TestOutcomeStatus::test_error_message_includes_valid_options PASSED
-tests/server/tools/test_enums.py::TestRootCauseCategories::test_valid_root_cause_categories PASSED
-tests/server/tools/test_enums.py::TestRootCauseCategories::test_invalid_root_cause_category_raises_error PASSED
-tests/server/tools/test_enums.py::TestRootCauseCategories::test_error_message_includes_valid_options PASSED
-tests/server/tools/test_errors.py::test_mcp_error_is_exception PASSED
-tests/server/tools/test_errors.py::test_validation_error_is_mcp_error PASSED
-tests/server/tools/test_errors.py::test_not_found_error_is_mcp_error PASSED
-tests/server/tools/test_errors.py::test_insufficient_data_error_is_mcp_error PASSED
-tests/server/tools/test_errors.py::test_errors_can_be_raised PASSED
-tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_success 2025-12-04 16:38:45 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764884325.042822 strategy=systematic-elimination
-PASSED
-tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_invalid_domain 2025-12-04 16:38:45 [warning  ] ghap.validation_error          error="Invalid domain 'invalid'. Valid options: debugging, refactoring, feature, testing, configuration, documentation, performance, security, integration"
-PASSED
-tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_invalid_strategy 2025-12-04 16:38:45 [warning  ] ghap.validation_error          error="Invalid strategy 'invalid'. Valid options: systematic-elimination, trial-and-error, research-first, divide-and-conquer, root-cause-analysis, copy-from-similar, check-assumptions, read-the-error, ask-user"
-PASSED
-tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_empty_field 2025-12-04 16:38:45 [warning  ] ghap.validation_error          error="Field 'goal' cannot be empty"
-PASSED
-tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_field_too_long 2025-12-04 16:38:45 [warning  ] ghap.validation_error          error="Field 'goal' exceeds 1000 character limit (1001 chars)"
-PASSED
-tests/server/tools/test_ghap.py::TestUpdateGhap::test_update_ghap_success 2025-12-04 16:38:45 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764884325.04862 strategy=systematic-elimination
-2025-12-04 16:38:45 [info     ] ghap.updated                   ghap_id=ghap_1764884325.04862 iteration_count=2
-PASSED
-tests/server/tools/test_ghap.py::TestUpdateGhap::test_update_ghap_no_active_entry 2025-12-04 16:38:45 [warning  ] ghap.error                     error='No active GHAP entry to update. Use start_ghap to begin tracking.'
-PASSED
-tests/server/tools/test_ghap.py::TestUpdateGhap::test_update_ghap_field_too_long 2025-12-04 16:38:45 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764884325.050436 strategy=systematic-elimination
-2025-12-04 16:38:45 [warning  ] ghap.error                     error="Field 'hypothesis' exceeds 1000 character limit (1001 chars)"
-PASSED
-tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_confirmed 2025-12-04 16:38:45 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764884325.051718 strategy=systematic-elimination
-2025-12-04 16:38:45 [info     ] ghap.persisted                 attempt=1 ghap_id=ghap_1764884325.051718
-PASSED
-tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_falsified 2025-12-04 16:38:45 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764884325.052981 strategy=systematic-elimination
-2025-12-04 16:38:45 [info     ] ghap.persisted                 attempt=1 ghap_id=ghap_1764884325.052981
-PASSED
-tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_falsified_missing_surprise 2025-12-04 16:38:45 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764884325.054093 strategy=systematic-elimination
-2025-12-04 16:38:45 [warning  ] ghap.error                     error="Field 'surprise' is required when status is 'falsified'"
-PASSED
-tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_invalid_status 2025-12-04 16:38:45 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764884325.054991 strategy=systematic-elimination
-2025-12-04 16:38:45 [warning  ] ghap.error                     error="Invalid outcome status 'invalid'. Valid options: confirmed, falsified, abandoned"
-PASSED
-tests/server/tools/test_ghap.py::TestGetActiveGhap::test_get_active_ghap_with_entry 2025-12-04 16:38:45 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764884325.056085 strategy=systematic-elimination
-PASSED
-tests/server/tools/test_ghap.py::TestGetActiveGhap::test_get_active_ghap_no_entry PASSED
-tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_default PASSED
-tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_invalid_limit 2025-12-04 16:38:45 [warning  ] ghap.validation_error          error='Limit must be between 1 and 100 (got 0)'
-PASSED
-tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_invalid_domain 2025-12-04 16:38:45 [warning  ] ghap.validation_error          error="Invalid domain 'invalid'. Valid options: debugging, refactoring, feature, testing, configuration, documentation, performance, security, integration"
-PASSED
-tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_invalid_date 2025-12-04 16:38:45 [warning  ] ghap.validation_error          error="Invalid date format for 'since': not a date. Expected ISO 8601 format (e.g., '2024-01-15T10:30:45+00:00')"
-PASSED
-tests/server/tools/test_learning.py::TestGetClusters::test_get_clusters_success 2025-12-04 16:38:45 [info     ] learning.clusters_retrieved    axis=full count=2 noise_count=7
-PASSED
-tests/server/tools/test_learning.py::TestGetClusters::test_get_clusters_invalid_axis 2025-12-04 16:38:45 [warning  ] learning.error                 error="Invalid axis 'invalid'. Valid options: full, strategy, surprise, root_cause"
-PASSED
-tests/server/tools/test_learning.py::TestGetClusters::test_get_clusters_insufficient_data 2025-12-04 16:38:45 [warning  ] learning.error                 error='Not enough experiences for clustering. Found 15, need at least 20.'
-PASSED
-tests/server/tools/test_learning.py::TestGetClusterMembers::test_get_cluster_members_success PASSED
-tests/server/tools/test_learning.py::TestGetClusterMembers::test_get_cluster_members_invalid_format 2025-12-04 16:38:45 [warning  ] learning.error                 error="Invalid cluster_id format: invalid. Expected format: 'axis_label' (e.g., 'full_0', 'strategy_2')"
-PASSED
-tests/server/tools/test_learning.py::TestGetClusterMembers::test_get_cluster_members_invalid_axis 2025-12-04 16:38:45 [warning  ] learning.error                 error="Invalid axis 'invalid'. Valid options: full, strategy, surprise, root_cause"
-PASSED
-tests/server/tools/test_learning.py::TestGetClusterMembers::test_get_cluster_members_invalid_limit 2025-12-04 16:38:45 [warning  ] learning.error                 error='Limit must be between 1 and 100 (got 0)'
-PASSED
-tests/server/tools/test_learning.py::TestValidateValue::test_validate_value_success 2025-12-04 16:38:45 [info     ] learning.value_validated       cluster_id=strategy_0 similarity=0.85 valid=True
-PASSED
-tests/server/tools/test_learning.py::TestValidateValue::test_validate_value_empty_text 2025-12-04 16:38:45 [warning  ] learning.error                 error="Field 'text' cannot be empty"
-PASSED
-tests/server/tools/test_learning.py::TestValidateValue::test_validate_value_text_too_long 2025-12-04 16:38:45 [warning  ] learning.error                 error="Field 'text' exceeds 500 character limit (501 chars)"
-PASSED
-tests/server/tools/test_learning.py::TestValidateValue::test_validate_value_invalid_cluster_id 2025-12-04 16:38:45 [warning  ] learning.error                 error="Invalid cluster_id format: invalid. Expected format: 'axis_label'"
-PASSED
-tests/server/tools/test_learning.py::TestStoreValue::test_store_value_success 2025-12-04 16:38:45 [info     ] learning.value_stored          axis=strategy cluster_id=strategy_0 value_id=value_1764884325.070157
-PASSED
-tests/server/tools/test_learning.py::TestStoreValue::test_store_value_empty_text 2025-12-04 16:38:45 [warning  ] learning.error                 error="Field 'text' cannot be empty"
-PASSED
-tests/server/tools/test_learning.py::TestStoreValue::test_store_value_invalid_axis 2025-12-04 16:38:45 [warning  ] learning.error                 error="Invalid axis 'invalid'. Valid options: full, strategy, surprise, root_cause"
-PASSED
-tests/server/tools/test_learning.py::TestListValues::test_list_values_default PASSED
-tests/server/tools/test_learning.py::TestListValues::test_list_values_with_axis_filter PASSED
-tests/server/tools/test_learning.py::TestListValues::test_list_values_invalid_axis 2025-12-04 16:38:45 [warning  ] learning.validation_error      error="Invalid axis 'invalid'. Valid options: full, strategy, surprise, root_cause"
-PASSED
-tests/server/tools/test_learning.py::TestListValues::test_list_values_invalid_limit 2025-12-04 16:38:45 [warning  ] learning.validation_error      error='Limit must be between 1 and 100 (got 101)'
-PASSED
-tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_success 2025-12-04 16:38:45 [info     ] search.experiences_searched    axis=full count=0 query='How to debug async issues'
-PASSED
-tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_empty_query PASSED
-tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_with_filters 2025-12-04 16:38:45 [info     ] search.experiences_searched    axis=full count=0 query='debugging patterns'
-PASSED
-tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_invalid_axis 2025-12-04 16:38:45 [warning  ] search.validation_error        error="Invalid axis 'invalid'. Valid options: full, strategy, surprise, root_cause"
-PASSED
-tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_invalid_domain 2025-12-04 16:38:45 [warning  ] search.validation_error        error="Invalid domain 'invalid'. Valid options: debugging, refactoring, feature, testing, configuration, documentation, performance, security, integration"
-PASSED
-tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_invalid_outcome 2025-12-04 16:38:45 [warning  ] search.validation_error        error="Invalid outcome status 'invalid'. Valid options: confirmed, falsified, abandoned"
-PASSED
-tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_invalid_limit 2025-12-04 16:38:45 [warning  ] search.validation_error        error='Limit must be between 1 and 50 (got 0)'
-PASSED
-tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_limit_max 2025-12-04 16:38:45 [warning  ] search.validation_error        error='Limit must be between 1 and 50 (got 51)'
-PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_create_collection PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_create_duplicate_collection PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_delete_collection PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_upsert_and_get PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_upsert_update PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_upsert_wrong_dimension PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_search_cosine_similarity PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_search_with_filters PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_delete PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_scroll PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_scroll_with_filters PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_count PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_count_with_filters PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_get_nonexistent PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_operations_on_nonexistent_collection PASSED
-tests/storage/test_metadata.py::TestIndexedFiles::test_add_indexed_file PASSED
-tests/storage/test_metadata.py::TestIndexedFiles::test_add_indexed_file_upsert PASSED
-tests/storage/test_metadata.py::TestIndexedFiles::test_get_indexed_file PASSED
-tests/storage/test_metadata.py::TestIndexedFiles::test_get_indexed_file_not_found PASSED
-tests/storage/test_metadata.py::TestIndexedFiles::test_list_indexed_files PASSED
-tests/storage/test_metadata.py::TestIndexedFiles::test_list_indexed_files_all_projects PASSED
-tests/storage/test_metadata.py::TestIndexedFiles::test_get_stale_files PASSED
-tests/storage/test_metadata.py::TestIndexedFiles::test_delete_indexed_file PASSED
-tests/storage/test_metadata.py::TestCallGraph::test_add_call PASSED
-tests/storage/test_metadata.py::TestCallGraph::test_add_call_upsert PASSED
-tests/storage/test_metadata.py::TestCallGraph::test_get_callers PASSED
-tests/storage/test_metadata.py::TestCallGraph::test_get_callees PASSED
-tests/storage/test_metadata.py::TestCallGraph::test_delete_calls_for_file PASSED
-tests/storage/test_metadata.py::TestProjects::test_add_project PASSED
-tests/storage/test_metadata.py::TestProjects::test_add_project_default_settings PASSED
-tests/storage/test_metadata.py::TestProjects::test_add_project_upsert PASSED
-tests/storage/test_metadata.py::TestProjects::test_get_project PASSED
-tests/storage/test_metadata.py::TestProjects::test_get_project_not_found PASSED
-tests/storage/test_metadata.py::TestProjects::test_list_projects PASSED
-tests/storage/test_metadata.py::TestProjects::test_update_project_last_indexed PASSED
-tests/storage/test_metadata.py::TestProjects::test_delete_project PASSED
-tests/storage/test_metadata.py::TestJSONSerialization::test_complex_settings_roundtrip PASSED
-tests/storage/test_metadata.py::TestJSONSerialization::test_empty_settings_roundtrip PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_create_collection PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_delete_collection PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_upsert_and_get PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_upsert_update PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_search_cosine_similarity PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_search_with_filters PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_delete PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_scroll PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_scroll_with_filters PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_count PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_count_with_filters PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_get_nonexistent PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_distance_metrics PASSED
-tests/test_placeholder.py::test_placeholder PASSED
-tests/test_placeholder.py::test_fixture PASSED
+tests/clustering/test_clusterer.py ................                      [  3%]
+tests/clustering/test_experience.py ..........                           [  5%]
+tests/clustering/test_integration.py .....                               [  6%]
+tests/clustering/test_types.py .....                                     [  8%]
+tests/context/test_assembler.py .........                                [ 10%]
+tests/context/test_deduplication.py ..........                           [ 12%]
+tests/context/test_formatting.py ............                            [ 15%]
+tests/context/test_tokens.py ............                                [ 17%]
+tests/embedding/test_mock.py ...........                                 [ 20%]
+tests/embedding/test_nomic.py ........                                   [ 21%]
+tests/git/test_analyzer.py ....................                          [ 26%]
+tests/git/test_reader.py ...................                             [ 30%]
+tests/hooks/test_mcp_client.py ................                          [ 34%]
+tests/observation/test_collector.py ............................         [ 40%]
+tests/observation/test_models.py ...........                             [ 43%]
+tests/observation/test_utils.py ...............                          [ 46%]
+tests/search/test_results.py ........                                    [ 48%]
+tests/search/test_searcher.py ...........................                [ 54%]
+tests/server/test_config.py ...                                          [ 54%]
+tests/server/test_main.py ..                                             [ 55%]
+tests/server/tools/test_code.py ............                             [ 58%]
+tests/server/tools/test_enums.py ................                        [ 61%]
+tests/server/tools/test_errors.py .....                                  [ 62%]
+tests/server/tools/test_ghap.py F
 
-============================= 142 passed in 26.37s =============================
+=================================== FAILURES ===================================
+____________________ TestStartGhap.test_start_ghap_success _____________________
+tests/server/tools/test_ghap.py:81: in test_start_ghap_success
+    assert "error" not in result
+E   AssertionError: assert 'error' not in {'error': {'message': 'Internal server error', 'type': 'internal_error'}}
+----------------------------- Captured stdout call -----------------------------
+2025-12-04 17:18:26 [info     ] session_started                session_id=session_20251204_221826_924a40
+2025-12-04 17:18:26 [error    ] ghap.unexpected_error          error="'str' object has no attribute 'value'" tool=start_ghap
+[31m╭─[0m[31m────────────────────[0m[31m [0m[1;31mTraceback [0m[1;2;31m(most recent call last)[0m[31m [0m[31m─────────────────────[0m[31m─╮[0m
+[31m│[0m [2m/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-15/src/learnin[0m [31m│[0m
+[31m│[0m [2mg_memory_server/server/tools/[0m[1mghap.py[0m:112 in start_ghap                       [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m   [2m109 [0m[2m│   │   │   │   [0m)                                                      [31m│[0m
+[31m│[0m   [2m110 [0m[2m│   │   │   [0m                                                           [31m│[0m
+[31m│[0m   [2m111 [0m[2m│   │   │   [0m[2m# Create GHAP entry[0m                                        [31m│[0m
+[31m│[0m [31m❱ [0m112 [2m│   │   │   [0mentry = [94mawait[0m collector.create_ghap(                       [31m│[0m
+[31m│[0m   [2m113 [0m[2m│   │   │   │   [0mdomain=domain,                                         [31m│[0m
+[31m│[0m   [2m114 [0m[2m│   │   │   │   [0mstrategy=strategy,                                     [31m│[0m
+[31m│[0m   [2m115 [0m[2m│   │   │   │   [0mgoal=goal,                                             [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m [34m╭─[0m[34m────────────────────────────────[0m[34m locals [0m[34m────────────────────────────────[0m[34m─╮[0m [31m│[0m
+[31m│[0m [34m│[0m     [3;33maction[0m[31m =[0m [32m'Increasing timeout to 60s'[0m                                 [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m  [3;33mcollector[0m[31m =[0m [1m<[0m[1;95mlearning_memory_server.observation.collector.ObservationC…[0m [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [39mobject at [0m[1;36m0x124c11c40[0m[1m>[0m                                      [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m    [3;33mcurrent[0m[31m =[0m [3;35mNone[0m                                                        [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m     [3;33mdomain[0m[31m =[0m [32m'debugging'[0m                                                 [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m          [3;33me[0m[31m =[0m [1;35mAttributeError[0m[1m([0m[32m"'str' object has no attribute 'value'"[0m[1m)[0m     [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m      [3;33mfield[0m[31m =[0m [32m'prediction'[0m                                                [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m       [3;33mgoal[0m[31m =[0m [32m'Fix auth timeout bug'[0m                                      [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m [3;33mhypothesis[0m[31m =[0m [32m'Slow network responses exceed 30s timeout'[0m                 [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m [3;33mprediction[0m[31m =[0m [32m'Auth failures stop'[0m                                        [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m   [3;33mstrategy[0m[31m =[0m [32m'systematic-elimination'[0m                                    [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m      [3;33mvalue[0m[31m =[0m [32m'Auth failures stop'[0m                                        [34m│[0m [31m│[0m
+[31m│[0m [34m╰──────────────────────────────────────────────────────────────────────────╯[0m [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m [2m/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-15/src/learnin[0m [31m│[0m
+[31m│[0m [2mg_memory_server/observation/[0m[1mcollector.py[0m:113 in create_ghap                  [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m   [2m110 [0m[2m│   │   [0m)                                                              [31m│[0m
+[31m│[0m   [2m111 [0m[2m│   │   [0m                                                               [31m│[0m
+[31m│[0m   [2m112 [0m[2m│   │   [0m[2m# Save to current_ghap.json[0m                                    [31m│[0m
+[31m│[0m [31m❱ [0m113 [2m│   │   [0m[1;4;94mawait[0m[1;4m [0m[1;4;96mself[0m[1;4m._save_current_ghap(entry)[0m                           [31m│[0m
+[31m│[0m   [2m114 [0m[2m│   │   [0m                                                               [31m│[0m
+[31m│[0m   [2m115 [0m[2m│   │   [0mlogger.info(                                                   [31m│[0m
+[31m│[0m   [2m116 [0m[2m│   │   │   [0m[33m"[0m[33mghap_created[0m[33m"[0m,                                            [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m [34m╭─[0m[34m────────────────────────────────[0m[34m locals [0m[34m────────────────────────────────[0m[34m─╮[0m [31m│[0m
+[31m│[0m [34m│[0m     [3;33maction[0m[31m =[0m [32m'Increasing timeout to 60s'[0m                                 [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m    [3;33mcurrent[0m[31m =[0m [3;35mNone[0m                                                        [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m     [3;33mdomain[0m[31m =[0m [32m'debugging'[0m                                                 [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m      [3;33mentry[0m[31m =[0m [1;35mGHAPEntry[0m[1m([0m                                                  [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mid[0m=[32m'ghap_20251204_221826_0cca59'[0m,                       [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33msession_id[0m=[32m'session_20251204_221826_924a40'[0m,            [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mcreated_at[0m=[1;35mdatetime[0m[1;35m.datetime[0m[1m([0m[1;36m2025[0m, [1;36m12[0m, [1;36m4[0m, [1;36m22[0m, [1;36m18[0m, [1;36m26[0m,   [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [1;36m909429[0m, [33mtzinfo[0m=[35mdatetime[0m.timezone.utc[1m)[0m,                      [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mdomain[0m=[32m'debugging'[0m,                                     [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mstrategy[0m=[32m'systematic-elimination'[0m,                      [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mgoal[0m=[32m'Fix auth timeout bug'[0m,                            [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mhypothesis[0m=[32m'Slow network responses exceed 30s timeout'[0m, [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33maction[0m=[32m'Increasing timeout to 60s'[0m,                     [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mprediction[0m=[32m'Auth failures stop'[0m,                        [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mhistory[0m=[1m[[0m[1m][0m,                                             [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33miteration_count[0m=[1;36m1[0m,                                      [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33moutcome[0m=[3;35mNone[0m,                                           [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33msurprise[0m=[3;35mNone[0m,                                          [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mroot_cause[0m=[3;35mNone[0m,                                        [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mlesson[0m=[3;35mNone[0m,                                            [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mconfidence_tier[0m=[3;35mNone[0m,                                   [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [2;32m│   [0m[33mnotes[0m=[1m[[0m[1m][0m                                                [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [1m)[0m                                                           [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m       [3;33mgoal[0m[31m =[0m [32m'Fix auth timeout bug'[0m                                      [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m [3;33mhypothesis[0m[31m =[0m [32m'Slow network responses exceed 30s timeout'[0m                 [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m [3;33mprediction[0m[31m =[0m [32m'Auth failures stop'[0m                                        [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m       [3;33mself[0m[31m =[0m [1m<[0m[1;95mlearning_memory_server.observation.collector.ObservationC…[0m [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m              [39mobject at [0m[1;36m0x124c11c40[0m[1m>[0m                                      [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m [3;33msession_id[0m[31m =[0m [32m'session_20251204_221826_924a40'[0m                            [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m   [3;33mstrategy[0m[31m =[0m [32m'systematic-elimination'[0m                                    [34m│[0m [31m│[0m
+[31m│[0m [34m╰──────────────────────────────────────────────────────────────────────────╯[0m [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m [2m/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-15/src/learnin[0m [31m│[0m
+[31m│[0m [2mg_memory_server/observation/[0m[1mcollector.py[0m:635 in _save_current_ghap           [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m   [2m632 [0m[2;90m│   │   [0m[33m"""Save current GHAP with error handling."""[0m                   [31m│[0m
+[31m│[0m   [2m633 [0m[2m│   │   [0mpath = [96mself[0m.journal_dir / [33m"[0m[33mcurrent_ghap.json[0m[33m"[0m                  [31m│[0m
+[31m│[0m   [2m634 [0m[2m│   │   [0m[94mtry[0m:                                                           [31m│[0m
+[31m│[0m [31m❱ [0m635 [2m│   │   │   [0m[94mawait[0m atomic_write(path, json.dumps(entry.to_dict(), inden [31m│[0m
+[31m│[0m   [2m636 [0m[2m│   │   │   [0mlogger.debug([33m"[0m[33mghap_saved[0m[33m"[0m, ghap_id=entry.id)               [31m│[0m
+[31m│[0m   [2m637 [0m[2m│   │   [0m[94mexcept[0m [96mPermissionError[0m [94mas[0m e:                                   [31m│[0m
+[31m│[0m   [2m638 [0m[2m│   │   │   [0mlogger.error(                                              [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m [34m╭─[0m[34m────────────────────────────────[0m[34m locals [0m[34m────────────────────────────────[0m[34m─╮[0m [31m│[0m
+[31m│[0m [34m│[0m [3;33mentry[0m[31m =[0m [1;35mGHAPEntry[0m[1m([0m                                                       [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mid[0m=[32m'ghap_20251204_221826_0cca59'[0m,                            [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33msession_id[0m=[32m'session_20251204_221826_924a40'[0m,                 [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mcreated_at[0m=[1;35mdatetime[0m[1;35m.datetime[0m[1m([0m[1;36m2025[0m, [1;36m12[0m, [1;36m4[0m, [1;36m22[0m, [1;36m18[0m, [1;36m26[0m,        [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [1;36m909429[0m, [33mtzinfo[0m=[35mdatetime[0m.timezone.utc[1m)[0m,                           [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mdomain[0m=[32m'debugging'[0m,                                          [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mstrategy[0m=[32m'systematic-elimination'[0m,                           [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mgoal[0m=[32m'Fix auth timeout bug'[0m,                                 [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mhypothesis[0m=[32m'Slow network responses exceed 30s timeout'[0m,      [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33maction[0m=[32m'Increasing timeout to 60s'[0m,                          [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mprediction[0m=[32m'Auth failures stop'[0m,                             [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mhistory[0m=[1m[[0m[1m][0m,                                                  [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33miteration_count[0m=[1;36m1[0m,                                           [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33moutcome[0m=[3;35mNone[0m,                                                [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33msurprise[0m=[3;35mNone[0m,                                               [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mroot_cause[0m=[3;35mNone[0m,                                             [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mlesson[0m=[3;35mNone[0m,                                                 [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mconfidence_tier[0m=[3;35mNone[0m,                                        [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [2;32m│   [0m[33mnotes[0m=[1m[[0m[1m][0m                                                     [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [1m)[0m                                                                [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m  [3;33mpath[0m[31m =[0m [1;35mPosixPath[0m[1m([0m[32m'/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmp…[0m [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m  [3;33mself[0m[31m =[0m [1m<[0m[1;95mlearning_memory_server.observation.collector.ObservationCollec…[0m [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [39mobject at [0m[1;36m0x124c11c40[0m[1m>[0m                                           [34m│[0m [31m│[0m
+[31m│[0m [34m╰──────────────────────────────────────────────────────────────────────────╯[0m [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m [2m/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-15/src/learnin[0m [31m│[0m
+[31m│[0m [2mg_memory_server/observation/[0m[1mmodels.py[0m:198 in to_dict                         [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m   [2m195 [0m[2m│   │   │   [0m[33m"[0m[33mid[0m[33m"[0m: [96mself[0m.id,                                             [31m│[0m
+[31m│[0m   [2m196 [0m[2m│   │   │   [0m[33m"[0m[33msession_id[0m[33m"[0m: [96mself[0m.session_id,                             [31m│[0m
+[31m│[0m   [2m197 [0m[2m│   │   │   [0m[33m"[0m[33mcreated_at[0m[33m"[0m: [96mself[0m.created_at.isoformat().replace([33m"[0m[33m+00:00[0m[33m"[0m [31m│[0m
+[31m│[0m [31m❱ [0m198 [2m│   │   │   [0m[33m"[0m[33mdomain[0m[33m"[0m: [1;4;96mself[0m[1;4m.domain.value[0m,                               [31m│[0m
+[31m│[0m   [2m199 [0m[2m│   │   │   [0m[33m"[0m[33mstrategy[0m[33m"[0m: [96mself[0m.strategy.value,                           [31m│[0m
+[31m│[0m   [2m200 [0m[2m│   │   │   [0m[33m"[0m[33mgoal[0m[33m"[0m: [96mself[0m.goal,                                         [31m│[0m
+[31m│[0m   [2m201 [0m[2m│   │   │   [0m[33m"[0m[33mhypothesis[0m[33m"[0m: [96mself[0m.hypothesis,                             [31m│[0m
+[31m│[0m                                                                              [31m│[0m
+[31m│[0m [34m╭─[0m[34m────────────────────────────────[0m[34m locals [0m[34m────────────────────────────────[0m[34m─╮[0m [31m│[0m
+[31m│[0m [34m│[0m [3;33mself[0m[31m =[0m [1;35mGHAPEntry[0m[1m([0m                                                        [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mid[0m=[32m'ghap_20251204_221826_0cca59'[0m,                             [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33msession_id[0m=[32m'session_20251204_221826_924a40'[0m,                  [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mcreated_at[0m=[1;35mdatetime[0m[1;35m.datetime[0m[1m([0m[1;36m2025[0m, [1;36m12[0m, [1;36m4[0m, [1;36m22[0m, [1;36m18[0m, [1;36m26[0m, [1;36m909429[0m, [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [33mtzinfo[0m=[35mdatetime[0m.timezone.utc[1m)[0m,                                    [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mdomain[0m=[32m'debugging'[0m,                                           [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mstrategy[0m=[32m'systematic-elimination'[0m,                            [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mgoal[0m=[32m'Fix auth timeout bug'[0m,                                  [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mhypothesis[0m=[32m'Slow network responses exceed 30s timeout'[0m,       [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33maction[0m=[32m'Increasing timeout to 60s'[0m,                           [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mprediction[0m=[32m'Auth failures stop'[0m,                              [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mhistory[0m=[1m[[0m[1m][0m,                                                   [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33miteration_count[0m=[1;36m1[0m,                                            [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33moutcome[0m=[3;35mNone[0m,                                                 [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33msurprise[0m=[3;35mNone[0m,                                                [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mroot_cause[0m=[3;35mNone[0m,                                              [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mlesson[0m=[3;35mNone[0m,                                                  [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mconfidence_tier[0m=[3;35mNone[0m,                                         [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [2;32m│   [0m[33mnotes[0m=[1m[[0m[1m][0m                                                      [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [1m)[0m                                                                 [34m│[0m [31m│[0m
+[31m│[0m [34m╰──────────────────────────────────────────────────────────────────────────╯[0m [31m│[0m
+[31m╰──────────────────────────────────────────────────────────────────────────────╯[0m
+[1;91mAttributeError: [0m[32m'str'[0m object has no attribute [32m'value'[0m
+
+=============================== warnings summary ===============================
+tests/clustering/test_clusterer.py: 208 warnings
+tests/clustering/test_experience.py: 22 warnings
+tests/clustering/test_integration.py: 10 warnings
+  /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-15/.venv/lib/python3.12/site-packages/sklearn/utils/deprecation.py:132: FutureWarning: 'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will be removed in 1.8.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_success
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+================= 1 failed, 280 passed, 240 warnings in 59.05s =================

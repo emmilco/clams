@@ -228,23 +228,24 @@ def register_learning_tools(
             axis = parts[0]
             validate_axis(axis)
 
-            # This is a stub - actual implementation would:
-            # 1. Generate embedding for text
-            # 2. Call value_store.validate_value_candidate()
-            # For now, return mock validation result
+            # Validate the value candidate against the cluster
             validation_result = await value_store.validate_value_candidate(
-                value_embedding=[],  # Mock embedding
+                text=text,
                 cluster_id=cluster_id,
             )
 
             logger.info(
                 "learning.value_validated",
                 cluster_id=cluster_id,
-                valid=validation_result["valid"],
-                similarity=validation_result.get("similarity"),
+                valid=validation_result.is_valid,
+                similarity=validation_result.similarity_score,
             )
 
-            return validation_result
+            return {
+                "valid": validation_result.is_valid,
+                "similarity": validation_result.similarity_score,
+                "cluster_id": cluster_id,
+            }
 
         except (ValidationError, NotFoundError) as e:
             logger.warning("learning.error", error=str(e))
@@ -299,28 +300,27 @@ def register_learning_tools(
             # Validate axis
             validate_axis(axis)
 
-            # This is a stub - actual implementation would:
-            # 1. Generate embedding for text
-            # 2. Validate against cluster
-            # 3. Store if valid
-            # For now, return mock stored value
+            # Store the value (validates internally)
             value_record = await value_store.store_value(
                 text=text,
                 cluster_id=cluster_id,
                 axis=axis,
-                embedding=[],  # Mock embedding
-                similarity=0.85,
-                cluster_size=10,
             )
 
             logger.info(
                 "learning.value_stored",
-                value_id=value_record["id"],
+                value_id=value_record.id,
                 cluster_id=cluster_id,
                 axis=axis,
             )
 
-            return value_record
+            return {
+                "id": value_record.id,
+                "text": value_record.text,
+                "cluster_id": cluster_id,
+                "axis": axis,
+                "created_at": value_record.created_at.isoformat(),
+            }
 
         except (ValidationError, NotFoundError) as e:
             logger.warning("learning.error", error=str(e))

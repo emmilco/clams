@@ -266,7 +266,8 @@ class TestResolveGhap:
         assert "error" not in result
         assert result["id"] == start_result["id"]
         assert result["status"] == "confirmed"
-        assert result["confidence_tier"] == "gold"
+        # Manual resolutions get "silver" tier; "gold" is for auto-captured resolutions
+        assert result["confidence_tier"] == "silver"
         assert result["resolved_at"] is not None
 
     @pytest.mark.asyncio

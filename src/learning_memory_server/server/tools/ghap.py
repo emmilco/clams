@@ -8,8 +8,13 @@ import structlog
 from mcp.server import Server
 
 from learning_memory_server.observation import (
+    Domain,
+    Lesson,
     ObservationCollector,
     ObservationPersister,
+    OutcomeStatus,
+    RootCause,
+    Strategy,
 )
 from learning_memory_server.server.tools.enums import (
     validate_domain,
@@ -101,17 +106,17 @@ def register_ghap_tools(
             if current is not None:
                 logger.warning(
                     "ghap.orphaned_entry",
-                    current_id=current["id"],
+                    current_id=current.id,
                     message=(
                         "Starting new GHAP with active entry - "
                         "previous entry orphaned"
                     ),
                 )
 
-            # Create GHAP entry
+            # Create GHAP entry (convert strings to enums)
             entry = await collector.create_ghap(
-                domain=domain,
-                strategy=strategy,
+                domain=Domain(domain),
+                strategy=Strategy(strategy),
                 goal=goal,
                 hypothesis=hypothesis,
                 action=action,
@@ -120,20 +125,20 @@ def register_ghap_tools(
 
             logger.info(
                 "ghap.started",
-                ghap_id=entry["id"],
+                ghap_id=entry.id,
                 domain=domain,
                 strategy=strategy,
             )
 
             return {
-                "id": entry["id"],
-                "domain": entry["domain"],
-                "strategy": entry["strategy"],
-                "goal": entry["goal"],
-                "hypothesis": entry["hypothesis"],
-                "action": entry["action"],
-                "prediction": entry["prediction"],
-                "created_at": entry["created_at"],
+                "id": entry.id,
+                "domain": entry.domain.value,
+                "strategy": entry.strategy.value,
+                "goal": entry.goal,
+                "hypothesis": entry.hypothesis,
+                "action": entry.action,
+                "prediction": entry.prediction,
+                "created_at": entry.created_at.isoformat(),
             }
 
         except ValidationError as e:
@@ -192,24 +197,24 @@ def register_ghap_tools(
                     "No active GHAP entry to update. Use start_ghap to begin tracking."
                 )
 
-            # Update GHAP entry
+            # Update GHAP entry (convert strategy string to enum if provided)
             updated = await collector.update_ghap(
                 hypothesis=hypothesis,
                 action=action,
                 prediction=prediction,
-                strategy=strategy,
+                strategy=Strategy(strategy) if strategy else None,
                 note=note,
             )
 
             logger.info(
                 "ghap.updated",
-                ghap_id=updated["id"],
-                iteration_count=updated["iteration_count"],
+                ghap_id=updated.id,
+                iteration_count=updated.iteration_count,
             )
 
             return {
                 "success": True,
-                "iteration_count": updated["iteration_count"],
+                "iteration_count": updated.iteration_count,
             }
 
         except (ValidationError, NotFoundError) as e:
@@ -335,13 +340,29 @@ def register_ghap_tools(
             if current is None:
                 raise NotFoundError("No active GHAP entry to resolve")
 
+            # Convert root_cause dict to RootCause model if provided
+            root_cause_model = None
+            if root_cause:
+                root_cause_model = RootCause(
+                    category=root_cause["category"],
+                    description=root_cause["description"],
+                )
+
+            # Convert lesson dict to Lesson model if provided
+            lesson_model = None
+            if lesson:
+                lesson_model = Lesson(
+                    what_worked=lesson["what_worked"],
+                    takeaway=lesson.get("takeaway"),
+                )
+
             # Mark resolved locally (always succeeds)
             resolved = await collector.resolve_ghap(
-                status=status,
+                status=OutcomeStatus(status),
                 result=result,
                 surprise=surprise,
-                root_cause=root_cause,
-                lesson=lesson,
+                root_cause=root_cause_model,
+                lesson=lesson_model,
             )
 
             # Persist to VectorStore with retry
@@ -350,10 +371,10 @@ def register_ghap_tools(
 
             for attempt in range(max_retries):
                 try:
-                    await persister.persist(resolved)
+                    await persister.persist(resolved.to_dict())
                     logger.info(
                         "ghap.persisted",
-                        ghap_id=resolved["id"],
+                        ghap_id=resolved.id,
                         attempt=attempt + 1,
                     )
                     break
@@ -361,7 +382,7 @@ def register_ghap_tools(
                     if attempt < max_retries - 1:
                         logger.warning(
                             "ghap.persist_retry",
-                            ghap_id=resolved["id"],
+                            ghap_id=resolved.id,
                             attempt=attempt + 1,
                             backoff_seconds=backoff,
                             error=str(e),
@@ -372,7 +393,7 @@ def register_ghap_tools(
                         # Final attempt failed
                         logger.error(
                             "ghap.persist_failed",
-                            ghap_id=resolved["id"],
+                            ghap_id=resolved.id,
                             attempts=max_retries,
                             error=str(e),
                         )
@@ -383,10 +404,10 @@ def register_ghap_tools(
                         )
 
             return {
-                "id": resolved["id"],
-                "status": resolved["status"],
-                "confidence_tier": resolved["confidence_tier"],
-                "resolved_at": resolved["resolved_at"],
+                "id": resolved.id,
+                "status": resolved.outcome.status.value if resolved.outcome else status,
+                "confidence_tier": resolved.confidence_tier.value if resolved.confidence_tier else None,
+                "resolved_at": resolved.outcome.captured_at.isoformat() if resolved.outcome else None,
             }
 
         except (ValidationError, NotFoundError) as e:
@@ -431,15 +452,15 @@ def register_ghap_tools(
                 }
 
             return {
-                "id": current["id"],
-                "domain": current["domain"],
-                "strategy": current["strategy"],
-                "goal": current["goal"],
-                "hypothesis": current["hypothesis"],
-                "action": current["action"],
-                "prediction": current["prediction"],
-                "iteration_count": current.get("iteration_count", 1),
-                "created_at": current["created_at"],
+                "id": current.id,
+                "domain": current.domain.value,
+                "strategy": current.strategy.value,
+                "goal": current.goal,
+                "hypothesis": current.hypothesis,
+                "action": current.action,
+                "prediction": current.prediction,
+                "iteration_count": current.iteration_count,
+                "created_at": current.created_at.isoformat(),
                 "has_active": True,
             }
 

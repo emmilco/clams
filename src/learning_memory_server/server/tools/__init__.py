@@ -1,6 +1,7 @@
 """MCP tool implementations and service container."""
 
 from dataclasses import dataclass
+from pathlib import Path
 
 import structlog
 from mcp.server import Server
@@ -156,7 +157,7 @@ def register_all_tools(server: Server, settings: ServerSettings) -> None:
 
     # Initialize and register GHAP tools (from SPEC-002-15)
     observation_collector = ObservationCollector(
-        journal_path=settings.journal_path,
+        journal_dir=Path(settings.journal_path),
     )
     observation_persister = ObservationPersister(
         embedding_service=services.embedding_service,
