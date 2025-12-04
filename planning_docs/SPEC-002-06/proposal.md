@@ -34,7 +34,7 @@ The spec defines clear interfaces for CodeParser and CodeIndexer, along with sto
 ┌──────────────────────────────────────────────────────────────┐
 │              TreeSitterParser                                 │
 │  - Wraps tree-sitter-languages                               │
-│  - Extracts: functions, classes, methods, YAML/JSON keys     │
+│  - Extracts: functions, classes, methods                     │
 │  - Computes complexity (cyclomatic)                          │
 │  - Extracts docstrings (language-specific)                   │
 │  - Uses run_in_executor for CPU-bound parsing                │
@@ -197,12 +197,17 @@ class CodeParser(ABC):
    }
    ```
 
-2. **Parser Initialization**: Load tree-sitter grammars on init
+2. **Parser Initialization**: Load tree-sitter grammars eagerly on init
    ```python
    from tree_sitter import Node  # For type hints
    from tree_sitter_languages import get_parser, get_language
 
    def __init__(self):
+       """Initialize parser with all supported language grammars.
+
+       Loading is done eagerly to avoid lazy-loading overhead during parsing.
+       All grammars are bundled in tree-sitter-languages, so this is fast.
+       """
        self._parsers = {
            "python": get_parser("python"),
            "typescript": get_parser("typescript"),
@@ -309,7 +314,7 @@ class CodeParser(ABC):
 ```python
 from indexers.base import SemanticUnit, ParseError, IndexingError, IndexingStats
 from indexers.utils import generate_unit_id, compute_file_hash
-from embedding.service import EmbeddingModelError  # For embedding error handling
+from embedding.base import EmbeddingModelError  # For embedding error handling
 from pathlib import Path
 from datetime import datetime
 import time
@@ -619,23 +624,23 @@ async def index_directory(
 
     async def _count_file_units(self, path: str, project: str) -> int:
         """Count units for a file in the vector store."""
-        results = await self.vector_store.query(
+        count = await self.vector_store.count(
             collection=self.COLLECTION_NAME,
-            filter={"file_path": path, "project": project},
-            limit=1000,  # Arbitrary large number
+            filters={"file_path": path, "project": project},
         )
-        return len(results)
+        return count
 
     async def _delete_file_units(self, path: str, project: str) -> None:
         """Delete all vector store entries for a file.
 
         This is a helper method used during reindexing and file removal.
         """
-        # Query vector store for all units from this file
-        results = await self.vector_store.query(
+        # Retrieve all units from this file using scroll
+        results = await self.vector_store.scroll(
             collection=self.COLLECTION_NAME,
-            filter={"file_path": path, "project": project},
+            filters={"file_path": path, "project": project},
             limit=1000,  # Arbitrary large number
+            with_vectors=False,  # Don't need vector data for deletion
         )
 
         # Delete each unit
@@ -676,16 +681,6 @@ def compute_file_hash(path: str) -> str:
         for chunk in iter(lambda: f.read(65536), b''):
             hasher.update(chunk)
     return hasher.hexdigest()
-
-
-def detect_binary(path: str, sample_size: int = 8192) -> bool:
-    """Detect if file is binary by checking for null bytes."""
-    try:
-        with open(path, 'rb') as f:
-            sample = f.read(sample_size)
-            return b'\x00' in sample
-    except IOError:
-        return False
 ```
 
 ---
@@ -697,7 +692,7 @@ def detect_binary(path: str, sample_size: int = 8192) -> bool:
 **Payload structure**:
 ```python
 {
-    "id": str,              # SHA-256 hash (32 chars)
+    # Note: ID is passed separately to VectorStore.upsert(), not in payload
     "project": str,
     "file_path": str,
     "name": str,            # Short name
@@ -728,17 +723,7 @@ class CodeIndexer:
 
         Called automatically from index_file() and index_directory() entry points.
         """
-        # Check if collection already exists first
-        try:
-            collections = await self.vector_store.list_collections()
-            if self.COLLECTION_NAME in collections:
-                logger.debug("collection_exists", name=self.COLLECTION_NAME)
-                return
-        except Exception as e:
-            logger.warning("collection_list_failed", error=str(e))
-            # Continue to creation attempt
-
-        # Create collection
+        # Try to create collection; catch ValueError if it already exists
         try:
             await self.vector_store.create_collection(
                 name=self.COLLECTION_NAME,
@@ -746,7 +731,7 @@ class CodeIndexer:
             )
             logger.info("collection_created", name=self.COLLECTION_NAME)
         except ValueError as e:
-            # Collection already exists (race condition)
+            # Collection already exists (expected on subsequent calls)
             if "already exists" in str(e).lower():
                 logger.debug("collection_exists", name=self.COLLECTION_NAME)
             else:
@@ -773,7 +758,7 @@ Cyclomatic complexity = 1 + number of branch points
 - **Python**: `if`, `elif`, `for`, `while`, `try`, `except`, `with`, `and`, `or`, `match`, `case`
 - **TypeScript/JavaScript**: `if`, `for`, `while`, `try`, `catch`, `switch`, `case`, `&&`, `||`, `?:`
 - **Lua**: `if`, `elseif`, `for`, `while`, `repeat`, `and`, `or`
-- **YAML/JSON**: N/A (always None)
+- **SQL**: N/A (always None)
 
 **Implementation**:
 ```python
