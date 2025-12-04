@@ -508,6 +508,18 @@ wheels = [
 ]
 
 [[package]]
+name = "hypothesis"
+version = "6.148.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "sortedcontainers" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/20/2f/828a50d0a87acf28e3788b1987250ed1cd08d7f0c91a138e3b4f9ffe5198/hypothesis-6.148.6.tar.gz", hash = "sha256:0ef1381f893650590f2c5918318d4c8240c79e481bbb621a49acc3dba868d80f", size = 470734, upload-time = "2025-12-04T05:51:39.588Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/26/23/59af28c84413a7b92036a04d600b3f1132783096503e0259a5463fa20f96/hypothesis-6.148.6-py3-none-any.whl", hash = "sha256:126325f3e84f297d7cce5071ebe1f38744fbc54493ca0adf294d6fa1034e5efc", size = 537645, upload-time = "2025-12-04T05:51:36.989Z" },
+]
+
+[[package]]
 name = "idna"
 version = "3.11"
 source = { registry = "https://pypi.org/simple" }
@@ -607,9 +619,11 @@ dependencies = [
 
 [package.optional-dependencies]
 dev = [
+    { name = "hypothesis" },
     { name = "mypy" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
+    { name = "pytest-mock" },
     { name = "ruff" },
 ]
 
@@ -620,6 +634,7 @@ requires-dist = [
     { name = "einops", specifier = ">=0.8.1" },
     { name = "gitpython" },
     { name = "hdbscan" },
+    { name = "hypothesis", marker = "extra == 'dev'" },
     { name = "mcp" },
     { name = "mypy", marker = "extra == 'dev'" },
     { name = "nomic" },
@@ -627,6 +642,7 @@ requires-dist = [
     { name = "pydantic-settings" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "pytest-asyncio", marker = "extra == 'dev'" },
+    { name = "pytest-mock", marker = "extra == 'dev'" },
     { name = "qdrant-client" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "sentence-transformers" },
@@ -1466,6 +1482,18 @@ wheels = [
 ]
 
 [[package]]
+name = "pytest-mock"
+version = "3.15.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/68/14/eb014d26be205d38ad5ad20d9a80f7d201472e08167f0bb4361e251084a9/pytest_mock-3.15.1.tar.gz", hash = "sha256:1849a238f6f396da19762269de72cb1814ab44416fa73a8686deac10b0d87a0f", size = 34036, upload-time = "2025-09-16T16:37:27.081Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5a/cc/06253936f4a7fa2e0f48dfe6d851d9c56df896a9ab09ac019d70b760619c/pytest_mock-3.15.1-py3-none-any.whl", hash = "sha256:0a25e2eb88fe5168d535041d09a4529a188176ae608a6d249ee65abc0949630d", size = 10095, upload-time = "2025-09-16T16:37:25.734Z" },
+]
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 source = { registry = "https://pypi.org/simple" }
@@ -1972,6 +2000,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/44/cd/a040c4b3119bbe532e5b0732286f805445375489fceaec1f48306068ee3b/smmap-5.0.2.tar.gz", hash = "sha256:26ea65a03958fa0c8a1c7e8c7a58fdc77221b8910f6be2131affade476898ad5", size = 22329, upload-time = "2025-01-02T07:14:40.909Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/04/be/d09147ad1ec7934636ad912901c5fd7667e1c858e19d355237db0d0cd5e4/smmap-5.0.2-py3-none-any.whl", hash = "sha256:b30115f0def7d7531d22a0fb6502488d879e75b260a9db4d0819cfb25403af5e", size = 24303, upload-time = "2025-01-02T07:14:38.724Z" },
+]
+
+[[package]]
+name = "sortedcontainers"
+version = "2.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e8/c4/ba2f8066cceb6f23394729afe52f3bf7adec04bf9ed2c820b39e19299111/sortedcontainers-2.4.0.tar.gz", hash = "sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88", size = 30594, upload-time = "2021-05-16T22:03:42.897Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/32/46/9cb0e58b2deb7f82b84065f37f3bffeb12413f947f9388e4cac22c4621ce/sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0", size = 29575, upload-time = "2021-05-16T22:03:41.177Z" },
 ]
 
 [[package]]

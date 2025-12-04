@@ -12,9 +12,7 @@ from learning_memory_server.storage.base import VectorStore
 from .types import ClusterInfo, Experience, ValidationResult, Value
 
 if TYPE_CHECKING:
-    from learning_memory_server.clustering import (  # type: ignore[attr-defined]
-        Clusterer,
-    )
+    from learning_memory_server.clustering import ExperienceClusterer
 
 # Valid clustering axes (domain is NOT an axis - it's a metadata filter)
 VALID_AXES = {"full", "strategy", "surprise", "root_cause"}
@@ -44,14 +42,14 @@ class ValueStore:
         self,
         embedding_service: EmbeddingService,
         vector_store: VectorStore,
-        clusterer: "Clusterer",
+        clusterer: "ExperienceClusterer",
     ) -> None:
         """Initialize ValueStore.
 
         Args:
             embedding_service: Service for embedding value candidates
             vector_store: Storage for validated values
-            clusterer: Clusterer for retrieving cluster data
+            clusterer: ExperienceClusterer for retrieving cluster data
         """
         self.embedding_service = embedding_service
         self.vector_store = vector_store
@@ -72,8 +70,28 @@ class ValueStore:
         if axis not in VALID_AXES:
             raise ValueError(f"Invalid axis '{axis}'. Must be one of: {VALID_AXES}")
 
-        # Delegate to Clusterer
-        cluster_result: list[ClusterInfo] = await self.clusterer.cluster_axis(axis)
+        # Delegate to ExperienceClusterer (returns clustering.ClusterInfo)
+        from learning_memory_server.clustering.types import (
+            ClusterInfo as ClusteringClusterInfo,
+        )
+
+        clustering_results: list[
+            ClusteringClusterInfo
+        ] = await self.clusterer.cluster_axis(axis)
+
+        # Convert to values.ClusterInfo and add cluster_id
+        cluster_result = [
+            ClusterInfo(
+                cluster_id=f"{axis}_{c.label}",
+                axis=axis,
+                label=c.label,
+                centroid=c.centroid,
+                member_ids=c.member_ids,
+                size=c.size,
+                avg_weight=c.avg_weight,
+            )
+            for c in clustering_results
+        ]
 
         # Sort by size descending
         cluster_result.sort(key=lambda c: c.size, reverse=True)
