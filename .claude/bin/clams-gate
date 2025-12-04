@@ -27,7 +27,7 @@ usage() {
     echo "Transitions:"
     echo "  SPEC-DESIGN       Human approves spec"
     echo "  DESIGN-IMPLEMENT  Human approves design, proposal documented"
-    echo "  IMPLEMENT-REVIEW  Tests pass, linter clean"
+    echo "  IMPLEMENT-REVIEW  Tests pass, linter clean, type check"
     echo "  REVIEW-TEST       Reviewer approved"
     echo "  TEST-INTEGRATE    Full test suite passes"
     echo "  INTEGRATE-VERIFY  Clean merge, suite passes, docs updated"
