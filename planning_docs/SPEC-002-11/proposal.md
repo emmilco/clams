@@ -378,11 +378,11 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
             query_embedding = await services.embedding_service.embed(query)
 
             # Build filters
-            # NOTE: Advanced operators like $gte may not be supported by all
-            # VectorStore implementations. For now, we filter post-search.
             filters = {}
             if category:
                 filters["category"] = category
+            if min_importance > 0.0:
+                filters["importance"] = {"$gte": min_importance}
 
             # Search
             results = await services.vector_store.search(
@@ -391,13 +391,6 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
                 limit=limit,
                 filters=filters if filters else None,
             )
-
-            # Post-filter by importance if needed
-            if min_importance > 0.0:
-                results = [
-                    r for r in results
-                    if r.payload.get("importance", 0.0) >= min_importance
-                ]
 
             # Format results
             formatted = [
@@ -447,11 +440,12 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
 
         try:
             # Build filters
-            # NOTE: Advanced operators like $in may not be supported by all
-            # VectorStore implementations. We filter post-scroll for tags.
             filters = {}
             if category:
                 filters["category"] = category
+            if tags:
+                # $in matches ANY of the provided tags
+                filters["tags"] = {"$in": tags}
 
             # Get count first
             total = await services.vector_store.count(
@@ -469,13 +463,6 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
                 filters=filters if filters else None,
                 with_vectors=False,
             )
-
-            # Post-filter by tags if needed (ANY match)
-            if tags:
-                results = [
-                    r for r in results
-                    if any(tag in r.payload.get("tags", []) for tag in tags)
-                ]
 
             # Apply pagination manually
             results = results[offset:offset + limit]
@@ -537,7 +524,7 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
 3. **Soft delete failure**: delete_memory returns `deleted: false` instead of raising error
 4. **Structured logging**: All operations logged with context for debugging
 5. **Timezone-aware timestamps**: All datetimes are UTC with timezone info
-6. **Post-filtering for advanced operators**: Since VectorStore doesn't guarantee support for operators like `$gte` and `$in`, we filter results after retrieval
+6. **VectorStore filter operators**: Uses `$gte` for importance filtering and `$in` for tag matching (operators added in SPEC-002-09)
 
 ---
 

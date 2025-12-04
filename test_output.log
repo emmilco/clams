@@ -1,92 +1,771 @@
 ============================= test session starts ==============================
-platform darwin -- Python 3.12.12, pytest-9.0.1, pluggy-1.6.0 -- /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-03/.venv/bin/python
+platform darwin -- Python 3.12.12, pytest-9.0.1, pluggy-1.6.0 -- /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-11/.venv/bin/python3
 cachedir: .pytest_cache
-rootdir: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-03
+rootdir: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-11
 configfile: pyproject.toml
-testpaths: tests
 plugins: anyio-4.12.0, asyncio-1.3.0
 asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collecting ... collected 30 items
+collecting ... collected 119 items
 
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_create_collection PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_create_duplicate_collection PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_delete_collection PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_upsert_and_get PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_upsert_update PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_upsert_wrong_dimension PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_search_cosine_similarity PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_search_with_filters PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_delete PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_scroll PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_scroll_with_filters PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_count PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_count_with_filters PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_get_nonexistent PASSED
-tests/storage/test_memory.py::TestInMemoryVectorStore::test_operations_on_nonexistent_collection PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_create_collection PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_delete_collection PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_upsert_and_get PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_upsert_update PASSED
-tests/storage/test_qdrant.py::TestQdrantVectorStore::test_search_cosine_similarity FAILED
+tests/embedding/test_mock.py::TestMockEmbedding::test_dimension PASSED
+tests/embedding/test_mock.py::TestMockEmbedding::test_embed_returns_correct_shape PASSED
+tests/embedding/test_mock.py::TestMockEmbedding::test_embed_deterministic PASSED
+tests/embedding/test_mock.py::TestMockEmbedding::test_embed_different_texts_produce_different_embeddings PASSED
+tests/embedding/test_mock.py::TestMockEmbedding::test_embed_normalized PASSED
+tests/embedding/test_mock.py::TestMockEmbedding::test_embed_batch_empty_list PASSED
+tests/embedding/test_mock.py::TestMockEmbedding::test_embed_batch_single_item PASSED
+tests/embedding/test_mock.py::TestMockEmbedding::test_embed_batch_multiple_items PASSED
+tests/embedding/test_mock.py::TestMockEmbedding::test_embed_batch_consistency_with_embed PASSED
+tests/embedding/test_mock.py::TestMockEmbedding::test_embed_handles_special_characters PASSED
+tests/embedding/test_mock.py::TestMockEmbedding::test_embed_long_text PASSED
+tests/embedding/test_nomic.py::TestNomicEmbedding::test_dimension PASSED
+tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_returns_correct_shape PASSED
+tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_multiple_calls PASSED
+tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_batch_empty_list PASSED
+tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_batch_single_item PASSED
+tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_batch_multiple_items PASSED
+tests/embedding/test_nomic.py::TestNomicEmbedding::test_custom_settings PASSED
+tests/embedding/test_nomic.py::TestNomicEmbedding::test_invalid_model_raises_error PASSED
+tests/server/test_config.py::test_default_settings PASSED
+tests/server/test_config.py::test_env_override PASSED
+tests/server/test_config.py::test_settings_immutable PASSED
+tests/server/test_main.py::test_create_server 2025-12-03 22:51:50 [info     ] services.initializing
+FAILED
 
 =================================== FAILURES ===================================
-_____________ TestQdrantVectorStore.test_search_cosine_similarity ______________
+______________________________ test_create_server ______________________________
 
-self = <tests.storage.test_qdrant.TestQdrantVectorStore object at 0x10b091c70>
-store = <learning_memory_server.storage.qdrant.QdrantVectorStore object at 0x10b0b2c30>
-collection = 'test_collection'
+response = <Response [401]>, endpoint_name = None
 
-    async def test_search_cosine_similarity(
-        self, store: QdrantVectorStore, collection: str
-    ) -> None:
-        """Test cosine similarity search."""
-        # Insert some test vectors
-        vectors = [
-            (np.array([1.0, 0.0, 0.0], dtype=np.float32), {"label": "x"}),
-            (np.array([0.0, 1.0, 0.0], dtype=np.float32), {"label": "y"}),
-            (np.array([0.0, 0.0, 1.0], dtype=np.float32), {"label": "z"}),
-            (np.array([0.9, 0.1, 0.0], dtype=np.float32), {"label": "x-ish"}),
-        ]
+    def hf_raise_for_status(response: Response, endpoint_name: Optional[str] = None) -> None:
+        """
+        Internal version of `response.raise_for_status()` that will refine a
+        potential HTTPError. Raised exception will be an instance of `HfHubHTTPError`.
     
-        for i, (vec, payload) in enumerate(vectors):
-            await store.upsert(collection, f"id{i}", vec, payload)
+        This helper is meant to be the unique method to raise_for_status when making a call
+        to the Hugging Face Hub.
     
-        # Search for x-like vectors
-        query = np.array([1.0, 0.0, 0.0], dtype=np.float32)
->       results = await store.search(collection, query, limit=2)
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    
+        Example:
+        ```py
+            import requests
+            from huggingface_hub.utils import get_session, hf_raise_for_status, HfHubHTTPError
+    
+            response = get_session().post(...)
+            try:
+                hf_raise_for_status(response)
+            except HfHubHTTPError as e:
+                print(str(e)) # formatted message
+                e.request_id, e.server_message # details returned by server
+    
+                # Complete the error message with additional information once it's raised
+                e.append_to_message("\n`create_commit` expects the repository to exist.")
+                raise
+        ```
+    
+        Args:
+            response (`Response`):
+                Response from the server.
+            endpoint_name (`str`, *optional*):
+                Name of the endpoint that has been called. If provided, the error message
+                will be more complete.
+    
+        > [!WARNING]
+        > Raises when the request has failed:
+        >
+        >     - [`~utils.RepositoryNotFoundError`]
+        >         If the repository to download from cannot be found. This may be because it
+        >         doesn't exist, because `repo_type` is not set correctly, or because the repo
+        >         is `private` and you do not have access.
+        >     - [`~utils.GatedRepoError`]
+        >         If the repository exists but is gated and the user is not on the authorized
+        >         list.
+        >     - [`~utils.RevisionNotFoundError`]
+        >         If the repository exists but the revision couldn't be find.
+        >     - [`~utils.EntryNotFoundError`]
+        >         If the repository exists but the entry (e.g. the requested file) couldn't be
+        >         find.
+        >     - [`~utils.BadRequestError`]
+        >         If request failed with a HTTP 400 BadRequest error.
+        >     - [`~utils.HfHubHTTPError`]
+        >         If request failed for a reason not listed above.
+        """
+        try:
+>           response.raise_for_status()
 
-tests/storage/test_qdrant.py:133: 
+.venv/lib/python3.12/site-packages/huggingface_hub/utils/_http.py:402: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <learning_memory_server.storage.qdrant.QdrantVectorStore object at 0x10b0b2c30>
-collection = 'test_collection', query = array([1., 0., 0.], dtype=float32)
-limit = 2, filters = None
+self = <Response [401]>
 
-    async def search(
-        self,
-        collection: str,
-        query: Vector,
-        limit: int = 10,
-        filters: dict[str, Any] | None = None,
-    ) -> list[SearchResult]:
-        """Search for similar vectors."""
-        # Convert filters to Qdrant filter format
-        qdrant_filter = self._build_filter(filters) if filters else None
+    def raise_for_status(self):
+        """Raises :class:`HTTPError`, if one occurred."""
     
->       results = await self._client.search(
-                        ^^^^^^^^^^^^^^^^^^^
-            collection_name=collection,
-            query_vector=query.tolist(),
-            limit=limit,
-            query_filter=qdrant_filter,
-            with_payload=True,
-            with_vectors=False,
-        )
-E       AttributeError: 'AsyncQdrantClient' object has no attribute 'search'
+        http_error_msg = ""
+        if isinstance(self.reason, bytes):
+            # We attempt to decode utf-8 first because some servers
+            # choose to localize their reason strings. If the string
+            # isn't utf-8, we fall back to iso-8859-1 for all other
+            # encodings. (See PR #3538)
+            try:
+                reason = self.reason.decode("utf-8")
+            except UnicodeDecodeError:
+                reason = self.reason.decode("iso-8859-1")
+        else:
+            reason = self.reason
+    
+        if 400 <= self.status_code < 500:
+            http_error_msg = (
+                f"{self.status_code} Client Error: {reason} for url: {self.url}"
+            )
+    
+        elif 500 <= self.status_code < 600:
+            http_error_msg = (
+                f"{self.status_code} Server Error: {reason} for url: {self.url}"
+            )
+    
+        if http_error_msg:
+>           raise HTTPError(http_error_msg, response=self)
+E           requests.exceptions.HTTPError: 401 Client Error: Unauthorized for url: https://huggingface.co/sentence-transformers/nomic-embed-text/resolve/main/adapter_config.json
 
-src/learning_memory_server/storage/qdrant.py:119: AttributeError
+.venv/lib/python3.12/site-packages/requests/models.py:1026: HTTPError
+
+The above exception was the direct cause of the following exception:
+
+path_or_repo_id = 'sentence-transformers/nomic-embed-text'
+filenames = ['adapter_config.json']
+cache_dir = '/Users/elliotmilco/.cache/huggingface/hub', force_download = False
+resume_download = None, proxies = None, token = None, revision = None
+local_files_only = False, subfolder = '', repo_type = None
+user_agent = 'transformers/4.57.3; python/3.12.12; session_id/ce7cb3a7ab0f4df6b84d6676daccf442; torch/2.9.1'
+_raise_exceptions_for_gated_repo = False
+_raise_exceptions_for_missing_entries = False
+_raise_exceptions_for_connection_errors = False, _commit_hash = None
+deprecated_kwargs = {}, use_auth_token = None
+full_filenames = ['adapter_config.json'], existing_files = []
+filename = 'adapter_config.json'
+
+    def cached_files(
+        path_or_repo_id: Union[str, os.PathLike],
+        filenames: list[str],
+        cache_dir: Optional[Union[str, os.PathLike]] = None,
+        force_download: bool = False,
+        resume_download: Optional[bool] = None,
+        proxies: Optional[dict[str, str]] = None,
+        token: Optional[Union[bool, str]] = None,
+        revision: Optional[str] = None,
+        local_files_only: bool = False,
+        subfolder: str = "",
+        repo_type: Optional[str] = None,
+        user_agent: Optional[Union[str, dict[str, str]]] = None,
+        _raise_exceptions_for_gated_repo: bool = True,
+        _raise_exceptions_for_missing_entries: bool = True,
+        _raise_exceptions_for_connection_errors: bool = True,
+        _commit_hash: Optional[str] = None,
+        **deprecated_kwargs,
+    ) -> Optional[str]:
+        """
+        Tries to locate several files in a local folder and repo, downloads and cache them if necessary.
+    
+        Args:
+            path_or_repo_id (`str` or `os.PathLike`):
+                This can be either:
+                - a string, the *model id* of a model repo on huggingface.co.
+                - a path to a *directory* potentially containing the file.
+            filenames (`list[str]`):
+                The name of all the files to locate in `path_or_repo`.
+            cache_dir (`str` or `os.PathLike`, *optional*):
+                Path to a directory in which a downloaded pretrained model configuration should be cached if the standard
+                cache should not be used.
+            force_download (`bool`, *optional*, defaults to `False`):
+                Whether or not to force to (re-)download the configuration files and override the cached versions if they
+                exist.
+            resume_download:
+                Deprecated and ignored. All downloads are now resumed by default when possible.
+                Will be removed in v5 of Transformers.
+            proxies (`dict[str, str]`, *optional*):
+                A dictionary of proxy servers to use by protocol or endpoint, e.g., `{'http': 'foo.bar:3128',
+                'http://hostname': 'foo.bar:4012'}.` The proxies are used on each request.
+            token (`str` or *bool*, *optional*):
+                The token to use as HTTP bearer authorization for remote files. If `True`, will use the token generated
+                when running `hf auth login` (stored in `~/.huggingface`).
+            revision (`str`, *optional*, defaults to `"main"`):
+                The specific model version to use. It can be a branch name, a tag name, or a commit id, since we use a
+                git-based system for storing models and other artifacts on huggingface.co, so `revision` can be any
+                identifier allowed by git.
+            local_files_only (`bool`, *optional*, defaults to `False`):
+                If `True`, will only try to load the tokenizer configuration from local files.
+            subfolder (`str`, *optional*, defaults to `""`):
+                In case the relevant files are located inside a subfolder of the model repo on huggingface.co, you can
+                specify the folder name here.
+            repo_type (`str`, *optional*):
+                Specify the repo type (useful when downloading from a space for instance).
+    
+        Private args:
+            _raise_exceptions_for_gated_repo (`bool`):
+                if False, do not raise an exception for gated repo error but return None.
+            _raise_exceptions_for_missing_entries (`bool`):
+                if False, do not raise an exception for missing entries but return None.
+            _raise_exceptions_for_connection_errors (`bool`):
+                if False, do not raise an exception for connection errors but return None.
+            _commit_hash (`str`, *optional*):
+                passed when we are chaining several calls to various files (e.g. when loading a tokenizer or
+                a pipeline). If files are cached for this commit hash, avoid calls to head and get from the cache.
+    
+        <Tip>
+    
+        Passing `token=True` is required when you want to use a private model.
+    
+        </Tip>
+    
+        Returns:
+            `Optional[str]`: Returns the resolved file (to the cache folder if downloaded from a repo).
+    
+        Examples:
+    
+        ```python
+        # Download a model weight from the Hub and cache it.
+        model_weights_file = cached_file("google-bert/bert-base-uncased", "pytorch_model.bin")
+        ```
+        """
+        use_auth_token = deprecated_kwargs.pop("use_auth_token", None)
+        if use_auth_token is not None:
+            warnings.warn(
+                "The `use_auth_token` argument is deprecated and will be removed in v5 of Transformers. Please use `token` instead.",
+                FutureWarning,
+            )
+            if token is not None:
+                raise ValueError("`token` and `use_auth_token` are both specified. Please set only the argument `token`.")
+            token = use_auth_token
+    
+        if is_offline_mode() and not local_files_only:
+            logger.info("Offline mode: forcing local_files_only=True")
+            local_files_only = True
+        if subfolder is None:
+            subfolder = ""
+    
+        # Add folder to filenames
+        full_filenames = [os.path.join(subfolder, file) for file in filenames]
+    
+        path_or_repo_id = str(path_or_repo_id)
+        existing_files = []
+        for filename in full_filenames:
+            if os.path.isdir(path_or_repo_id):
+                resolved_file = os.path.join(path_or_repo_id, filename)
+                if not os.path.isfile(resolved_file):
+                    if _raise_exceptions_for_missing_entries and filename != os.path.join(subfolder, "config.json"):
+                        revision_ = "main" if revision is None else revision
+                        raise OSError(
+                            f"{path_or_repo_id} does not appear to have a file named {filename}. Checkout "
+                            f"'https://huggingface.co/{path_or_repo_id}/tree/{revision_}' for available files."
+                        )
+                    else:
+                        continue
+                existing_files.append(resolved_file)
+    
+        if os.path.isdir(path_or_repo_id):
+            return existing_files if existing_files else None
+    
+        if cache_dir is None:
+            cache_dir = TRANSFORMERS_CACHE
+        if isinstance(cache_dir, Path):
+            cache_dir = str(cache_dir)
+    
+        existing_files = []
+        file_counter = 0
+        if _commit_hash is not None and not force_download:
+            for filename in full_filenames:
+                # If the file is cached under that commit hash, we return it directly.
+                resolved_file = try_to_load_from_cache(
+                    path_or_repo_id, filename, cache_dir=cache_dir, revision=_commit_hash, repo_type=repo_type
+                )
+                if resolved_file is not None:
+                    if resolved_file is not _CACHED_NO_EXIST:
+                        file_counter += 1
+                        existing_files.append(resolved_file)
+                    elif not _raise_exceptions_for_missing_entries:
+                        file_counter += 1
+                    else:
+                        raise OSError(f"Could not locate {filename} inside {path_or_repo_id}.")
+    
+        # Either all the files were found, or some were _CACHED_NO_EXIST but we do not raise for missing entries
+        if file_counter == len(full_filenames):
+            return existing_files if len(existing_files) > 0 else None
+    
+        user_agent = http_user_agent(user_agent)
+        # download the files if needed
+        try:
+            if len(full_filenames) == 1:
+                # This is slightly better for only 1 file
+>               hf_hub_download(
+                    path_or_repo_id,
+                    filenames[0],
+                    subfolder=None if len(subfolder) == 0 else subfolder,
+                    repo_type=repo_type,
+                    revision=revision,
+                    cache_dir=cache_dir,
+                    user_agent=user_agent,
+                    force_download=force_download,
+                    proxies=proxies,
+                    resume_download=resume_download,
+                    token=token,
+                    local_files_only=local_files_only,
+                )
+
+.venv/lib/python3.12/site-packages/transformers/utils/hub.py:479: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/huggingface_hub/utils/_validators.py:114: in _inner_fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/huggingface_hub/file_download.py:1007: in hf_hub_download
+    return _hf_hub_download_to_cache_dir(
+.venv/lib/python3.12/site-packages/huggingface_hub/file_download.py:1114: in _hf_hub_download_to_cache_dir
+    _raise_on_head_call_error(head_call_error, force_download, local_files_only)
+.venv/lib/python3.12/site-packages/huggingface_hub/file_download.py:1655: in _raise_on_head_call_error
+    raise head_call_error
+.venv/lib/python3.12/site-packages/huggingface_hub/file_download.py:1543: in _get_metadata_or_catch_error
+    metadata = get_hf_file_metadata(
+.venv/lib/python3.12/site-packages/huggingface_hub/utils/_validators.py:114: in _inner_fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/huggingface_hub/file_download.py:1460: in get_hf_file_metadata
+    r = _request_wrapper(
+.venv/lib/python3.12/site-packages/huggingface_hub/file_download.py:283: in _request_wrapper
+    response = _request_wrapper(
+.venv/lib/python3.12/site-packages/huggingface_hub/file_download.py:307: in _request_wrapper
+    hf_raise_for_status(response)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+response = <Response [401]>, endpoint_name = None
+
+    def hf_raise_for_status(response: Response, endpoint_name: Optional[str] = None) -> None:
+        """
+        Internal version of `response.raise_for_status()` that will refine a
+        potential HTTPError. Raised exception will be an instance of `HfHubHTTPError`.
+    
+        This helper is meant to be the unique method to raise_for_status when making a call
+        to the Hugging Face Hub.
+    
+    
+        Example:
+        ```py
+            import requests
+            from huggingface_hub.utils import get_session, hf_raise_for_status, HfHubHTTPError
+    
+            response = get_session().post(...)
+            try:
+                hf_raise_for_status(response)
+            except HfHubHTTPError as e:
+                print(str(e)) # formatted message
+                e.request_id, e.server_message # details returned by server
+    
+                # Complete the error message with additional information once it's raised
+                e.append_to_message("\n`create_commit` expects the repository to exist.")
+                raise
+        ```
+    
+        Args:
+            response (`Response`):
+                Response from the server.
+            endpoint_name (`str`, *optional*):
+                Name of the endpoint that has been called. If provided, the error message
+                will be more complete.
+    
+        > [!WARNING]
+        > Raises when the request has failed:
+        >
+        >     - [`~utils.RepositoryNotFoundError`]
+        >         If the repository to download from cannot be found. This may be because it
+        >         doesn't exist, because `repo_type` is not set correctly, or because the repo
+        >         is `private` and you do not have access.
+        >     - [`~utils.GatedRepoError`]
+        >         If the repository exists but is gated and the user is not on the authorized
+        >         list.
+        >     - [`~utils.RevisionNotFoundError`]
+        >         If the repository exists but the revision couldn't be find.
+        >     - [`~utils.EntryNotFoundError`]
+        >         If the repository exists but the entry (e.g. the requested file) couldn't be
+        >         find.
+        >     - [`~utils.BadRequestError`]
+        >         If request failed with a HTTP 400 BadRequest error.
+        >     - [`~utils.HfHubHTTPError`]
+        >         If request failed for a reason not listed above.
+        """
+        try:
+            response.raise_for_status()
+        except HTTPError as e:
+            error_code = response.headers.get("X-Error-Code")
+            error_message = response.headers.get("X-Error-Message")
+    
+            if error_code == "RevisionNotFound":
+                message = f"{response.status_code} Client Error." + "\n\n" + f"Revision Not Found for url: {response.url}."
+                raise _format(RevisionNotFoundError, message, response) from e
+    
+            elif error_code == "EntryNotFound":
+                message = f"{response.status_code} Client Error." + "\n\n" + f"Entry Not Found for url: {response.url}."
+                raise _format(EntryNotFoundError, message, response) from e
+    
+            elif error_code == "GatedRepo":
+                message = (
+                    f"{response.status_code} Client Error." + "\n\n" + f"Cannot access gated repo for url {response.url}."
+                )
+                raise _format(GatedRepoError, message, response) from e
+    
+            elif error_message == "Access to this resource is disabled.":
+                message = (
+                    f"{response.status_code} Client Error."
+                    + "\n\n"
+                    + f"Cannot access repository for url {response.url}."
+                    + "\n"
+                    + "Access to this resource is disabled."
+                )
+                raise _format(DisabledRepoError, message, response) from e
+    
+            elif error_code == "RepoNotFound" or (
+                response.status_code == 401
+                and error_message != "Invalid credentials in Authorization header"
+                and response.request is not None
+                and response.request.url is not None
+                and REPO_API_REGEX.search(response.request.url) is not None
+            ):
+                # 401 is misleading as it is returned for:
+                #    - private and gated repos if user is not authenticated
+                #    - missing repos
+                # => for now, we process them as `RepoNotFound` anyway.
+                # See https://gist.github.com/Wauplin/46c27ad266b15998ce56a6603796f0b9
+                message = (
+                    f"{response.status_code} Client Error."
+                    + "\n\n"
+                    + f"Repository Not Found for url: {response.url}."
+                    + "\nPlease make sure you specified the correct `repo_id` and"
+                    " `repo_type`.\nIf you are trying to access a private or gated repo,"
+                    " make sure you are authenticated. For more details, see"
+                    " https://huggingface.co/docs/huggingface_hub/authentication"
+                )
+>               raise _format(RepositoryNotFoundError, message, response) from e
+E               huggingface_hub.errors.RepositoryNotFoundError: 401 Client Error. (Request ID: Root=1-69310556-159bc1510318074165106878;e6b6c024-92b8-43cd-893b-535937b4cae9)
+E               
+E               Repository Not Found for url: https://huggingface.co/sentence-transformers/nomic-embed-text/resolve/main/adapter_config.json.
+E               Please make sure you specified the correct `repo_id` and `repo_type`.
+E               If you are trying to access a private or gated repo, make sure you are authenticated. For more details, see https://huggingface.co/docs/huggingface_hub/authentication
+E               Invalid username or password.
+
+.venv/lib/python3.12/site-packages/huggingface_hub/utils/_http.py:452: RepositoryNotFoundError
+
+The above exception was the direct cause of the following exception:
+
+self = <learning_memory_server.embedding.nomic.NomicEmbedding object at 0x122551fa0>
+settings = EmbeddingSettings(model_name='nomic-embed-text', cache_dir=None)
+
+    def __init__(self, settings: EmbeddingSettings | None = None) -> None:
+        """Initialize the Nomic embedding service.
+    
+        Args:
+            settings: Configuration settings (uses defaults if not provided)
+    
+        Raises:
+            EmbeddingModelError: If model loading fails
+        """
+        self.settings = settings or EmbeddingSettings()
+        try:
+>           self.model = SentenceTransformer(
+                self.settings.model_name,
+                cache_folder=self.settings.cache_dir,
+                trust_remote_code=True,
+            )
+
+src/learning_memory_server/embedding/nomic.py:38: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/sentence_transformers/SentenceTransformer.py:339: in __init__
+    modules = self._load_auto_model(
+.venv/lib/python3.12/site-packages/sentence_transformers/SentenceTransformer.py:2112: in _load_auto_model
+    transformer_model = Transformer(
+.venv/lib/python3.12/site-packages/sentence_transformers/models/Transformer.py:87: in __init__
+    config, is_peft_model = self._load_config(model_name_or_path, cache_dir, backend, config_args)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/sentence_transformers/models/Transformer.py:138: in _load_config
+    find_adapter_config_file(
+.venv/lib/python3.12/site-packages/transformers/utils/peft_utils.py:88: in find_adapter_config_file
+    adapter_cached_filename = cached_file(
+.venv/lib/python3.12/site-packages/transformers/utils/hub.py:322: in cached_file
+    file = cached_files(path_or_repo_id=path_or_repo_id, filenames=[filename], **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path_or_repo_id = 'sentence-transformers/nomic-embed-text'
+filenames = ['adapter_config.json']
+cache_dir = '/Users/elliotmilco/.cache/huggingface/hub', force_download = False
+resume_download = None, proxies = None, token = None, revision = None
+local_files_only = False, subfolder = '', repo_type = None
+user_agent = 'transformers/4.57.3; python/3.12.12; session_id/ce7cb3a7ab0f4df6b84d6676daccf442; torch/2.9.1'
+_raise_exceptions_for_gated_repo = False
+_raise_exceptions_for_missing_entries = False
+_raise_exceptions_for_connection_errors = False, _commit_hash = None
+deprecated_kwargs = {}, use_auth_token = None
+full_filenames = ['adapter_config.json'], existing_files = []
+filename = 'adapter_config.json'
+
+    def cached_files(
+        path_or_repo_id: Union[str, os.PathLike],
+        filenames: list[str],
+        cache_dir: Optional[Union[str, os.PathLike]] = None,
+        force_download: bool = False,
+        resume_download: Optional[bool] = None,
+        proxies: Optional[dict[str, str]] = None,
+        token: Optional[Union[bool, str]] = None,
+        revision: Optional[str] = None,
+        local_files_only: bool = False,
+        subfolder: str = "",
+        repo_type: Optional[str] = None,
+        user_agent: Optional[Union[str, dict[str, str]]] = None,
+        _raise_exceptions_for_gated_repo: bool = True,
+        _raise_exceptions_for_missing_entries: bool = True,
+        _raise_exceptions_for_connection_errors: bool = True,
+        _commit_hash: Optional[str] = None,
+        **deprecated_kwargs,
+    ) -> Optional[str]:
+        """
+        Tries to locate several files in a local folder and repo, downloads and cache them if necessary.
+    
+        Args:
+            path_or_repo_id (`str` or `os.PathLike`):
+                This can be either:
+                - a string, the *model id* of a model repo on huggingface.co.
+                - a path to a *directory* potentially containing the file.
+            filenames (`list[str]`):
+                The name of all the files to locate in `path_or_repo`.
+            cache_dir (`str` or `os.PathLike`, *optional*):
+                Path to a directory in which a downloaded pretrained model configuration should be cached if the standard
+                cache should not be used.
+            force_download (`bool`, *optional*, defaults to `False`):
+                Whether or not to force to (re-)download the configuration files and override the cached versions if they
+                exist.
+            resume_download:
+                Deprecated and ignored. All downloads are now resumed by default when possible.
+                Will be removed in v5 of Transformers.
+            proxies (`dict[str, str]`, *optional*):
+                A dictionary of proxy servers to use by protocol or endpoint, e.g., `{'http': 'foo.bar:3128',
+                'http://hostname': 'foo.bar:4012'}.` The proxies are used on each request.
+            token (`str` or *bool*, *optional*):
+                The token to use as HTTP bearer authorization for remote files. If `True`, will use the token generated
+                when running `hf auth login` (stored in `~/.huggingface`).
+            revision (`str`, *optional*, defaults to `"main"`):
+                The specific model version to use. It can be a branch name, a tag name, or a commit id, since we use a
+                git-based system for storing models and other artifacts on huggingface.co, so `revision` can be any
+                identifier allowed by git.
+            local_files_only (`bool`, *optional*, defaults to `False`):
+                If `True`, will only try to load the tokenizer configuration from local files.
+            subfolder (`str`, *optional*, defaults to `""`):
+                In case the relevant files are located inside a subfolder of the model repo on huggingface.co, you can
+                specify the folder name here.
+            repo_type (`str`, *optional*):
+                Specify the repo type (useful when downloading from a space for instance).
+    
+        Private args:
+            _raise_exceptions_for_gated_repo (`bool`):
+                if False, do not raise an exception for gated repo error but return None.
+            _raise_exceptions_for_missing_entries (`bool`):
+                if False, do not raise an exception for missing entries but return None.
+            _raise_exceptions_for_connection_errors (`bool`):
+                if False, do not raise an exception for connection errors but return None.
+            _commit_hash (`str`, *optional*):
+                passed when we are chaining several calls to various files (e.g. when loading a tokenizer or
+                a pipeline). If files are cached for this commit hash, avoid calls to head and get from the cache.
+    
+        <Tip>
+    
+        Passing `token=True` is required when you want to use a private model.
+    
+        </Tip>
+    
+        Returns:
+            `Optional[str]`: Returns the resolved file (to the cache folder if downloaded from a repo).
+    
+        Examples:
+    
+        ```python
+        # Download a model weight from the Hub and cache it.
+        model_weights_file = cached_file("google-bert/bert-base-uncased", "pytorch_model.bin")
+        ```
+        """
+        use_auth_token = deprecated_kwargs.pop("use_auth_token", None)
+        if use_auth_token is not None:
+            warnings.warn(
+                "The `use_auth_token` argument is deprecated and will be removed in v5 of Transformers. Please use `token` instead.",
+                FutureWarning,
+            )
+            if token is not None:
+                raise ValueError("`token` and `use_auth_token` are both specified. Please set only the argument `token`.")
+            token = use_auth_token
+    
+        if is_offline_mode() and not local_files_only:
+            logger.info("Offline mode: forcing local_files_only=True")
+            local_files_only = True
+        if subfolder is None:
+            subfolder = ""
+    
+        # Add folder to filenames
+        full_filenames = [os.path.join(subfolder, file) for file in filenames]
+    
+        path_or_repo_id = str(path_or_repo_id)
+        existing_files = []
+        for filename in full_filenames:
+            if os.path.isdir(path_or_repo_id):
+                resolved_file = os.path.join(path_or_repo_id, filename)
+                if not os.path.isfile(resolved_file):
+                    if _raise_exceptions_for_missing_entries and filename != os.path.join(subfolder, "config.json"):
+                        revision_ = "main" if revision is None else revision
+                        raise OSError(
+                            f"{path_or_repo_id} does not appear to have a file named {filename}. Checkout "
+                            f"'https://huggingface.co/{path_or_repo_id}/tree/{revision_}' for available files."
+                        )
+                    else:
+                        continue
+                existing_files.append(resolved_file)
+    
+        if os.path.isdir(path_or_repo_id):
+            return existing_files if existing_files else None
+    
+        if cache_dir is None:
+            cache_dir = TRANSFORMERS_CACHE
+        if isinstance(cache_dir, Path):
+            cache_dir = str(cache_dir)
+    
+        existing_files = []
+        file_counter = 0
+        if _commit_hash is not None and not force_download:
+            for filename in full_filenames:
+                # If the file is cached under that commit hash, we return it directly.
+                resolved_file = try_to_load_from_cache(
+                    path_or_repo_id, filename, cache_dir=cache_dir, revision=_commit_hash, repo_type=repo_type
+                )
+                if resolved_file is not None:
+                    if resolved_file is not _CACHED_NO_EXIST:
+                        file_counter += 1
+                        existing_files.append(resolved_file)
+                    elif not _raise_exceptions_for_missing_entries:
+                        file_counter += 1
+                    else:
+                        raise OSError(f"Could not locate {filename} inside {path_or_repo_id}.")
+    
+        # Either all the files were found, or some were _CACHED_NO_EXIST but we do not raise for missing entries
+        if file_counter == len(full_filenames):
+            return existing_files if len(existing_files) > 0 else None
+    
+        user_agent = http_user_agent(user_agent)
+        # download the files if needed
+        try:
+            if len(full_filenames) == 1:
+                # This is slightly better for only 1 file
+                hf_hub_download(
+                    path_or_repo_id,
+                    filenames[0],
+                    subfolder=None if len(subfolder) == 0 else subfolder,
+                    repo_type=repo_type,
+                    revision=revision,
+                    cache_dir=cache_dir,
+                    user_agent=user_agent,
+                    force_download=force_download,
+                    proxies=proxies,
+                    resume_download=resume_download,
+                    token=token,
+                    local_files_only=local_files_only,
+                )
+            else:
+                snapshot_download(
+                    path_or_repo_id,
+                    allow_patterns=full_filenames,
+                    repo_type=repo_type,
+                    revision=revision,
+                    cache_dir=cache_dir,
+                    user_agent=user_agent,
+                    force_download=force_download,
+                    proxies=proxies,
+                    resume_download=resume_download,
+                    token=token,
+                    local_files_only=local_files_only,
+                )
+    
+        except Exception as e:
+            # We cannot recover from them
+            if isinstance(e, RepositoryNotFoundError) and not isinstance(e, GatedRepoError):
+>               raise OSError(
+                    f"{path_or_repo_id} is not a local folder and is not a valid model identifier "
+                    "listed on 'https://huggingface.co/models'\nIf this is a private repository, make sure to pass a token "
+                    "having permission to this repo either by logging in with `hf auth login` or by passing "
+                    "`token=<your_token>`"
+E                   OSError: sentence-transformers/nomic-embed-text is not a local folder and is not a valid model identifier listed on 'https://huggingface.co/models'
+E                   If this is a private repository, make sure to pass a token having permission to this repo either by logging in with `hf auth login` or by passing `token=<your_token>`
+
+.venv/lib/python3.12/site-packages/transformers/utils/hub.py:511: OSError
+
+The above exception was the direct cause of the following exception:
+
+    def test_create_server() -> None:
+        """Test that create_server creates a properly configured server."""
+        settings = ServerSettings()
+>       server = create_server(settings)
+                 ^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/server/test_main.py:10: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/learning_memory_server/server/main.py:28: in create_server
+    register_all_tools(server, settings)
+src/learning_memory_server/server/tools/__init__.py:135: in register_all_tools
+    services = initialize_services(settings)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/learning_memory_server/server/tools/__init__.py:54: in initialize_services
+    embedding_service = NomicEmbedding(settings=embedding_settings)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <learning_memory_server.embedding.nomic.NomicEmbedding object at 0x122551fa0>
+settings = EmbeddingSettings(model_name='nomic-embed-text', cache_dir=None)
+
+    def __init__(self, settings: EmbeddingSettings | None = None) -> None:
+        """Initialize the Nomic embedding service.
+    
+        Args:
+            settings: Configuration settings (uses defaults if not provided)
+    
+        Raises:
+            EmbeddingModelError: If model loading fails
+        """
+        self.settings = settings or EmbeddingSettings()
+        try:
+            self.model = SentenceTransformer(
+                self.settings.model_name,
+                cache_folder=self.settings.cache_dir,
+                trust_remote_code=True,
+            )
+        except Exception as e:
+>           raise EmbeddingModelError(
+                f"Failed to load model {self.settings.model_name}: {e}"
+            ) from e
+E           learning_memory_server.embedding.base.EmbeddingModelError: Failed to load model nomic-embed-text: sentence-transformers/nomic-embed-text is not a local folder and is not a valid model identifier listed on 'https://huggingface.co/models'
+E           If this is a private repository, make sure to pass a token having permission to this repo either by logging in with `hf auth login` or by passing `token=<your_token>`
+
+src/learning_memory_server/embedding/nomic.py:44: EmbeddingModelError
+------------------------------ Captured log call -------------------------------
+WARNING  sentence_transformers.SentenceTransformer:SentenceTransformer.py:2098 No sentence-transformers model found with name sentence-transformers/nomic-embed-text. Creating a new one with mean pooling.
 =========================== short test summary info ============================
-FAILED tests/storage/test_qdrant.py::TestQdrantVectorStore::test_search_cosine_similarity
+FAILED tests/server/test_main.py::test_create_server - learning_memory_server.embedding.base.EmbeddingModelError: Failed to load model nomic-embed-text: sentence-transformers/nomic-embed-text is not a local folder and is not a valid model identifier listed on 'https://huggingface.co/models'
+If this is a private repository, make sure to pass a token having permission to this repo either by logging in with `hf auth login` or by passing `token=<your_token>`
 !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
-========================= 1 failed, 19 passed in 0.93s =========================
+======================== 1 failed, 22 passed in 24.89s =========================
+============================= test session starts ==============================
+platform darwin -- Python 3.12.12, pytest-9.0.1, pluggy-1.6.0 -- /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-11/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-11
+configfile: pyproject.toml
+plugins: anyio-4.12.0, asyncio-1.3.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 1 item
+
+tests/server/test_main.py::test_create_server 2025-12-03 22:52:39 [info     ] services.initializing
+2025-12-03 22:52:42 [info     ] services.initialized           has_code=False has_git=False has_searcher=False
+2025-12-03 22:52:42 [info     ] tools.registered
+2025-12-03 22:52:42 [info     ] server.created                 server_name=learning-memory-server
+PASSED
+
+============================== 1 passed in 6.22s ===============================

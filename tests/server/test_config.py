@@ -14,7 +14,7 @@ def test_default_settings() -> None:
     assert settings.sqlite_path == "~/.learning-memory/metadata.db"
     assert settings.journal_path == ".claude/journal"
     assert settings.qdrant_url == "http://localhost:6333"
-    assert settings.embedding_model == "nomic-embed-text"
+    assert settings.embedding_model == "nomic-ai/nomic-embed-text-v1.5"
     assert settings.embedding_dimension == 768
     assert settings.hdbscan_min_cluster_size == 5
     assert settings.hdbscan_min_samples == 3
