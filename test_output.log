@@ -1,58 +1,65 @@
 ============================= test session starts ==============================
-platform darwin -- Python 3.12.12, pytest-9.0.1, pluggy-1.6.0 -- /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-07/.venv/bin/python
+platform darwin -- Python 3.12.12, pytest-9.0.1, pluggy-1.6.0 -- /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-07/.venv/bin/python3
 cachedir: .pytest_cache
 rootdir: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-07
 configfile: pyproject.toml
-testpaths: tests
 plugins: anyio-4.12.0, asyncio-1.3.0
 asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collecting ... collected 116 items
+collecting ... collected 39 items
 
-tests/embedding/test_mock.py::TestMockEmbedding::test_dimension PASSED
-tests/embedding/test_mock.py::TestMockEmbedding::test_embed_returns_correct_shape PASSED
-tests/embedding/test_mock.py::TestMockEmbedding::test_embed_deterministic PASSED
-tests/embedding/test_mock.py::TestMockEmbedding::test_embed_different_texts_produce_different_embeddings PASSED
-tests/embedding/test_mock.py::TestMockEmbedding::test_embed_normalized PASSED
-tests/embedding/test_mock.py::TestMockEmbedding::test_embed_batch_empty_list PASSED
-tests/embedding/test_mock.py::TestMockEmbedding::test_embed_batch_single_item PASSED
-tests/embedding/test_mock.py::TestMockEmbedding::test_embed_batch_multiple_items PASSED
-tests/embedding/test_mock.py::TestMockEmbedding::test_embed_batch_consistency_with_embed PASSED
-tests/embedding/test_mock.py::TestMockEmbedding::test_embed_handles_special_characters PASSED
-tests/embedding/test_mock.py::TestMockEmbedding::test_embed_long_text PASSED
-tests/embedding/test_nomic.py::TestNomicEmbedding::test_dimension PASSED
-tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_returns_correct_shape PASSED
-tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_multiple_calls PASSED
-tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_batch_empty_list PASSED
-tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_batch_single_item PASSED
-tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_batch_multiple_items PASSED
-tests/embedding/test_nomic.py::TestNomicEmbedding::test_custom_settings PASSED
-tests/embedding/test_nomic.py::TestNomicEmbedding::test_invalid_model_raises_error PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_initial huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
-To disable this warning, you can either:
-	- Avoid using `tokenizers` before the fork if possible
-	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
-huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
-To disable this warning, you can either:
-	- Avoid using `tokenizers` before the fork if possible
-	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
-huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
-To disable this warning, you can either:
-	- Avoid using `tokenizers` before the fork if possible
-	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
-ERROR
+tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_initial 2025-12-03 20:22:17 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpa6_vjmfh
+PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_incremental 2025-12-03 20:22:17 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmppq6aan2e
+2025-12-03 20:22:18 [info     ] incremental_index_starting     new_commits=1 repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmppq6aan2e
+PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_already_up_to_date 2025-12-03 20:22:18 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmp8b1x0st4
+2025-12-03 20:22:18 [info     ] index_already_up_to_date       repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmp8b1x0st4
+PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_force_reindex 2025-12-03 20:22:18 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmp9j16o5g5
+2025-12-03 20:22:18 [info     ] full_index_starting            force=True has_state=True repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmp9j16o5g5
+PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_with_limit 2025-12-03 20:22:18 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmp3pjip43r
+PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_five_year_limit 2025-12-03 20:22:18 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmp15qiln0d
+PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_search_commits 2025-12-03 20:22:19 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpym2pnlje
+PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_search_commits_with_author_filter 2025-12-03 20:22:19 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpobqj9kze
+PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_search_commits_with_date_filter 2025-12-03 20:22:19 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmp4y0jvlaw
+PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_get_churn_hotspots PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_get_file_authors PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_get_change_frequency PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_get_change_frequency_nonexistent_file PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_blame_search PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_blame_search_with_file_pattern PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_embedding_text_format PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_embedding_text_truncation PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_index_state_tracking 2025-12-03 20:22:21 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmp6gfp5z9n
+PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_batch_embedding_performance 2025-12-03 20:22:21 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpg0ia3vqo
+PASSED
+tests/git/test_analyzer.py::test_integration_with_real_repo SKIPPEDd
+keyword argument 'dimension')
+tests/git/test_reader.py::TestGitPythonReader::test_init_with_valid_repo PASSED
+tests/git/test_reader.py::TestGitPythonReader::test_init_with_invalid_repo PASSED
+tests/git/test_reader.py::TestGitPythonReader::test_init_with_nonexistent_path PASSED
+tests/git/test_reader.py::TestGitPythonReader::test_get_commits_empty_repo PASSED
+tests/git/test_reader.py::TestGitPythonReader::test_get_commits_single_commit PASSED
+tests/git/test_reader.py::TestGitPythonReader::test_get_commits_multiple_commits PASSED
+tests/git/test_reader.py::TestGitPythonReader::test_get_commits_with_limit PASSED
+tests/git/test_reader.py::TestGitPythonReader::test_get_commits_with_path_filter PASSED
+tests/git/test_reader.py::TestGitPythonReader::test_get_commits_with_date_filter PASSED
+tests/git/test_reader.py::TestGitPythonReader::test_get_blame_text_file PASSED
+tests/git/test_reader.py::TestGitPythonReader::test_get_blame_nonexistent_file PASSED
+tests/git/test_reader.py::TestGitPythonReader::test_get_blame_binary_file PASSED
+tests/git/test_reader.py::TestGitPythonReader::test_get_file_history PASSED
+tests/git/test_reader.py::TestGitPythonReader::test_get_head_sha PASSED
+tests/git/test_reader.py::TestGitPythonReader::test_get_head_sha_empty_repo PASSED
+tests/git/test_reader.py::TestGitPythonReader::test_commit_timezone_aware PASSED
+tests/git/test_reader.py::TestGitPythonReader::test_blame_timezone_aware PASSED
+tests/git/test_reader.py::TestGitPythonReader::test_files_changed_relative_paths PASSED
+tests/git/test_reader.py::test_integration_with_real_repo PASSED
 
-==================================== ERRORS ====================================
-_________ ERROR at setup of TestGitAnalyzer.test_index_commits_initial _________
-
-    @pytest.fixture
-    async def mock_embedding_service():
-        """Create a mock embedding service."""
->       return MockEmbedding(dimension=768)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E       TypeError: MockEmbedding.__init__() got an unexpected keyword argument 'dimension'
-
-tests/git/test_analyzer.py:19: TypeError
-=========================== short test summary info ============================
-ERROR tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_initial
-!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
-========================= 19 passed, 1 error in 26.28s =========================
+======================== 38 passed, 1 skipped in 11.02s ========================

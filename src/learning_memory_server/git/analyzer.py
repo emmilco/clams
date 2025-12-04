@@ -260,7 +260,8 @@ class GitAnalyzer:
             "message": commit.message,
             "author": commit.author,
             "author_email": commit.author_email,
-            "timestamp": commit.timestamp.timestamp(),  # Store as Unix timestamp for range queries
+            # Store as Unix timestamp for range queries
+            "timestamp": commit.timestamp.timestamp(),
             "timestamp_iso": commit.timestamp.isoformat(),  # Keep ISO for display
             "files_changed": commit.files_changed,
             "file_count": len(commit.files_changed),
