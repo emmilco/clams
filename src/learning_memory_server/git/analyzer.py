@@ -5,7 +5,9 @@ import subprocess
 import time
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
+import numpy as np
 import structlog
 
 from ..embedding.base import EmbeddingService
@@ -168,7 +170,11 @@ class GitAnalyzer:
         """
         five_years_ago = datetime.now(UTC) - timedelta(days=5 * 365)
         effective_since = max(since, five_years_ago) if since else five_years_ago
-        return await self.git_reader.get_commits(since=effective_since, limit=limit)
+        # Use large number if no limit
+        effective_limit = limit if limit is not None else 100000
+        return await self.git_reader.get_commits(
+            since=effective_since, limit=effective_limit
+        )
 
     async def _index_commit_batch(
         self, commits: list[Commit], stats: IndexingStats
@@ -245,7 +251,7 @@ class GitAnalyzer:
         return stats
 
     async def _upsert_commit(
-        self, commit: Commit, vector: list[float], repo_path: str
+        self, commit: Commit, vector: np.ndarray, repo_path: str
     ) -> None:
         """Upsert a single commit to the vector store.
 
@@ -325,7 +331,7 @@ class GitAnalyzer:
         query_vector = await self.embedding_service.embed(query)
 
         # Build filters
-        filters = {}
+        filters: dict[str, Any] = {}
         if author:
             filters["author"] = author
         if since:
@@ -380,10 +386,10 @@ class GitAnalyzer:
         since = datetime.now(UTC) - timedelta(days=days)
 
         # Get all commits in range
-        commits = await self.git_reader.get_commits(since=since, limit=None)
+        commits = await self.git_reader.get_commits(since=since, limit=100000)
 
         # Aggregate by file
-        file_stats: dict[str, dict] = {}
+        file_stats: dict[str, dict[str, Any]] = {}
 
         for commit in commits:
             for file_path in commit.files_changed:
@@ -441,10 +447,10 @@ class GitAnalyzer:
             List of AuthorStats ordered by commit count descending
         """
         # Get file history
-        commits = await self.git_reader.get_file_history(file_path, limit=None)
+        commits = await self.git_reader.get_file_history(file_path, limit=100000)
 
         # Aggregate by author
-        author_data: dict[str, dict] = defaultdict(
+        author_data: dict[str, dict[str, Any]] = defaultdict(
             lambda: {
                 "commit_count": 0,
                 "lines_added": 0,
@@ -504,7 +510,7 @@ class GitAnalyzer:
         """
         # Treat as file path first
         commits = await self.git_reader.get_commits(
-            path=file_or_function, since=since, limit=None
+            path=file_or_function, since=since, limit=100000
         )
 
         if not commits:

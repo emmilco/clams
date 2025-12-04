@@ -1,6 +1,7 @@
 """Type definitions for value storage."""
 
 from dataclasses import dataclass, field
+from typing import Any
 
 from learning_memory_server.embedding.base import Vector
 
@@ -29,7 +30,7 @@ class Value:
     embedding: Vector
     cluster_size: int
     created_at: str
-    metadata: dict = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -51,5 +52,5 @@ class Experience:
 
     id: str
     embedding: Vector
-    payload: dict
+    payload: dict[str, Any]
     weight: float

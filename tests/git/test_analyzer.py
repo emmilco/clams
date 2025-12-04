@@ -372,41 +372,37 @@ async def test_integration_with_real_repo():
 
     repo_path = os.getcwd()
 
-    try:
-        # Create temporary stores
-        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
-            db_path = f.name
+    # Create temporary stores
+    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
+        db_path = f.name
 
-        metadata_store = MetadataStore(db_path)
-        await metadata_store.initialize()
+    metadata_store = MetadataStore(db_path)
+    await metadata_store.initialize()
 
-        vector_store = QdrantVectorStore(url=":memory:")
-        await vector_store.create_collection("commits", dimension=768)
+    vector_store = QdrantVectorStore(url=":memory:")
+    await vector_store.create_collection("commits", dimension=768)
 
-        embedding_service = MockEmbedding(dimension=768)
+    embedding_service = MockEmbedding()
 
-        # Create analyzer
-        reader = GitPythonReader(repo_path)
-        analyzer = GitAnalyzer(
-            reader, embedding_service, vector_store, metadata_store
-        )
+    # Create analyzer
+    reader = GitPythonReader(repo_path)
+    analyzer = GitAnalyzer(
+        reader, embedding_service, vector_store, metadata_store
+    )
 
-        # Test indexing (limit to avoid long test time)
-        stats = await analyzer.index_commits(limit=50)
-        assert stats.commits_indexed > 0
-        assert stats.commits_indexed <= 50
+    # Test indexing (limit to avoid long test time)
+    stats = await analyzer.index_commits(limit=50)
+    assert stats.commits_indexed > 0
+    assert stats.commits_indexed <= 50
 
-        # Test search
-        results = await analyzer.search_commits("git", limit=5)
-        assert len(results) > 0
+    # Test search
+    results = await analyzer.search_commits("git", limit=5)
+    assert len(results) > 0
 
-        # Test churn analysis
-        hotspots = await analyzer.get_churn_hotspots(days=30, limit=5)
-        assert len(hotspots) >= 0  # May or may not have hotspots
+    # Test churn analysis
+    hotspots = await analyzer.get_churn_hotspots(days=30, limit=5)
+    assert len(hotspots) >= 0  # May or may not have hotspots
 
-        # Cleanup
-        await metadata_store.close()
-        Path(db_path).unlink(missing_ok=True)
-
-    except Exception as e:
-        pytest.skip(f"Integration test failed: {e}")
+    # Cleanup
+    await metadata_store.close()
+    Path(db_path).unlink(missing_ok=True)

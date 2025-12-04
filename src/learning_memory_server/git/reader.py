@@ -67,7 +67,8 @@ class GitPythonReader(GitReader):
         """Synchronous implementation of get_commits."""
         try:
             # Build iter_commits arguments
-            kwargs: dict[str, object] = {"max_count": limit}
+            from typing import Any as _Any
+            kwargs: dict[str, _Any] = {"max_count": limit}
 
             # Date filtering
             if since:
@@ -91,9 +92,14 @@ class GitPythonReader(GitReader):
                 try:
                     # Extract commit data
                     sha = git_commit.hexsha
-                    message = git_commit.message
-                    author = git_commit.author.name
-                    author_email = git_commit.author.email
+                    if isinstance(git_commit.message, str):
+                        message = git_commit.message
+                    else:
+                        message = git_commit.message.decode('utf-8')
+                    author = git_commit.author.name or "Unknown"
+                    author_email = (
+                        git_commit.author.email or "unknown@example.com"
+                    )
 
                     # Convert timestamp to UTC timezone-aware datetime
                     timestamp = datetime.fromtimestamp(
@@ -131,7 +137,10 @@ class GitPythonReader(GitReader):
                     else:
                         # Initial commit - all files are new
                         try:
-                            files_changed = list(git_commit.stats.files.keys())
+                            # Cast keys to list of strings
+                            files_changed = [
+                                str(k) for k in git_commit.stats.files.keys()
+                            ]
                             stats = git_commit.stats.total
                             insertions = stats.get("insertions", 0)
                             deletions = stats.get("deletions", 0)
@@ -155,14 +164,14 @@ class GitPythonReader(GitReader):
                     )
 
                 except Exception as e:
-                    sha = (
+                    sha_str: str | None = (
                         git_commit.hexsha
                         if hasattr(git_commit, "hexsha")
                         else None
                     )
                     logger.warning(
                         "commit_parse_failed",
-                        sha=sha,
+                        sha=sha_str,
                         error=str(e),
                     )
                     continue
@@ -218,19 +227,32 @@ class GitPythonReader(GitReader):
                 raise GitReaderError(f"Git blame failed: {e}") from e
 
             line_num = 1
-            for commit, lines in blame:
-                content = "".join(lines)
-                line_count = len(lines)
+            # GitPython's blame returns List[Tuple[Commit, List[str]]]
+            # but types are not properly annotated, suppress type errors
+            for blame_commit, blame_lines in blame:  # type: ignore[misc, union-attr]
+                # Convert lines to strings
+                str_lines = [
+                    line if isinstance(line, str) else line.decode('utf-8')
+                    for line in blame_lines  # type: ignore[union-attr]
+                ]
+                content = "".join(str_lines)
+                line_count = len(str_lines)
 
                 timestamp = datetime.fromtimestamp(
-                    commit.committed_date, tz=UTC
+                    blame_commit.committed_date, tz=UTC  # type: ignore[union-attr]
+                )
+
+                author_name = blame_commit.author.name or "Unknown"  # type: ignore[union-attr]
+                author_email_str = (
+                    blame_commit.author.email  # type: ignore[union-attr]
+                    or "unknown@example.com"
                 )
 
                 blame_entries.append(
                     BlameEntry(
-                        sha=commit.hexsha,
-                        author=commit.author.name,
-                        author_email=commit.author.email,
+                        sha=blame_commit.hexsha,  # type: ignore[union-attr]
+                        author=author_name,
+                        author_email=author_email_str,
                         timestamp=timestamp,
                         line_start=line_num,
                         line_end=line_num + line_count - 1,

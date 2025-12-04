@@ -6,7 +6,7 @@ from typing import Any
 from learning_memory_server.embedding.base import EmbeddingService
 from learning_memory_server.storage.base import VectorStore
 
-from .collections import CollectionName
+from .collections import CollectionName, InvalidAxisError
 from .results import (
     CodeResult,
     CommitResult,
@@ -18,12 +18,6 @@ from .results import (
 
 class SearchError(Exception):
     """Base exception for search operations."""
-
-    pass
-
-
-class InvalidAxisError(SearchError):
-    """Raised when an invalid experience axis is specified."""
 
     pass
 

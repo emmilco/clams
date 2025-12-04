@@ -42,7 +42,8 @@ class QdrantVectorStore(VectorStore):
         """Initialize Qdrant client.
 
         Args:
-            url: Qdrant server URL (defaults to settings). Use ":memory:" for in-memory mode.
+            url: Qdrant server URL (defaults to settings). Use
+                ":memory:" for in-memory mode.
             api_key: Optional API key for authentication
             timeout: Request timeout in seconds
         """
@@ -250,6 +251,7 @@ class QdrantVectorStore(VectorStore):
             | qmodels.IsEmptyCondition
             | qmodels.IsNullCondition
             | qmodels.HasIdCondition
+            | qmodels.HasVectorCondition
             | qmodels.NestedCondition
             | qmodels.Filter
         ] = []
@@ -287,4 +289,5 @@ class QdrantVectorStore(VectorStore):
                     )
                 )
 
-        return qmodels.Filter(must=conditions)
+        # Qdrant accepts Sequence but list is covariant-compatible
+        return qmodels.Filter(must=conditions if conditions else None)
