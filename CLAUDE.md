@@ -142,12 +142,18 @@ Use **sonnet** for all reviews to ensure thorough, high-quality feedback.
 | 1st | sonnet | Catch issues, verify structure and completeness |
 | 2nd | sonnet | Independent verification, catch anything missed |
 
+**IMPORTANT RULES**:
+1. **Reviews are SEQUENTIAL, not parallel** - Wait for reviewer #1 to complete before dispatching reviewer #2. This avoids wasting a second review if the first one requests changes.
+2. **Reviewers MUST record their outcome** - The reviewer must run `.claude/bin/clams-review record` before completing. The transition gate verifies reviews exist in the database.
+
 **Workflow**:
 1. Dispatch sonnet reviewer #1
-2. If changes requested → author fixes → restart from step 1
-3. If approved → dispatch sonnet reviewer #2
-4. If changes requested → author fixes → restart from step 1
-5. If both approve → gate passes
+2. Wait for reviewer #1 to complete and record their review
+3. If changes requested → author fixes → clear reviews → restart from step 1
+4. If approved → dispatch sonnet reviewer #2
+5. Wait for reviewer #2 to complete and record their review
+6. If changes requested → author fixes → clear reviews → restart from step 1
+7. If both approve → gate passes (transition command verifies 2 approved reviews exist)
 
 ## Workflow
 

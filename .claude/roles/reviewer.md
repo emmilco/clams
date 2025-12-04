@@ -63,6 +63,24 @@ For each issue found, provide:
 - [ ] No unnecessary complexity
 - [ ] Changes are focused (no scope creep)
 
+## Recording Your Review (REQUIRED)
+
+**You MUST record your review in the database before completing.** The transition gate will not pass without recorded reviews.
+
+After completing your review, run this command from the MAIN repo (not the worktree):
+
+```bash
+cd /path/to/main/repo
+
+# If APPROVED:
+.claude/bin/clams-review record {TASK_ID} code approved --worker {YOUR_WORKER_ID}
+
+# If CHANGES REQUESTED:
+.claude/bin/clams-review record {TASK_ID} code changes_requested --worker {YOUR_WORKER_ID}
+```
+
+**Your worker ID is provided in your assignment prompt.**
+
 ## Reporting Results
 
 Your completion report to the orchestrator MUST include:
@@ -75,6 +93,8 @@ Summary: [Brief description of what was reviewed]
 Files reviewed: [count]
 Tests verified: [pass/fail status]
 No blocking issues found.
+
+Review recorded: .claude/bin/clams-review record {TASK_ID} code approved --worker {WORKER_ID}
 ```
 
 **If CHANGES REQUESTED:**
@@ -86,17 +106,16 @@ Blocking issues:
 2. [File:Line] - [Issue description]
 
 Code must return to implementer for fixes.
-```
 
-The orchestrator will record your verdict using:
-```bash
-.claude/bin/clams-review record {TASK_ID} code approved --worker {YOUR_WORKER_ID}
+Review recorded: .claude/bin/clams-review record {TASK_ID} code changes_requested --worker {WORKER_ID}
 ```
 
 ## Important Notes
 
 - This is review #{REVIEW_NUM} of 2 required reviews
+- Reviews are SEQUENTIAL - reviewer #2 only runs after reviewer #1 approves
 - If you request changes, the review cycle restarts from review #1 after fixes
 - Focus on correctness and security first, style second
 - Be thorough but practical - don't block on nitpicks
+- **ALWAYS record your review before completing**
 
