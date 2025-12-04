@@ -4,6 +4,7 @@ import time
 from datetime import datetime
 from fnmatch import fnmatch
 from pathlib import Path
+from typing import Any
 
 import structlog
 
@@ -183,7 +184,9 @@ class CodeIndexer:
 
         return "\n\n".join(parts)
 
-    def _build_payload(self, unit: SemanticUnit, project: str) -> dict:
+    def _build_payload(
+        self, unit: SemanticUnit, project: str
+    ) -> dict[str, Any]:
         """Build vector store payload from SemanticUnit."""
         return {
             "project": project,
@@ -312,7 +315,9 @@ class CodeIndexer:
         logger.info("project_removed", project=project, files_count=len(files))
         return len(files)
 
-    async def get_indexing_stats(self, project: str | None = None) -> dict:
+    async def get_indexing_stats(
+        self, project: str | None = None
+    ) -> dict[str, Any]:
         """Get indexing statistics."""
         files = await self.metadata_store.list_indexed_files(project=project)
         total_files = len(files)

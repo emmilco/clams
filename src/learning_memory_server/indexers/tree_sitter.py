@@ -266,7 +266,8 @@ class TreeSitterParser(CodeParser):
             if first_child.type == "expression_statement":
                 expr = first_child.children[0] if first_child.child_count > 0 else None
                 if expr and expr.type == "string":
-                    docstring = self._extract_text(expr, source).strip('"""').strip("'''").strip()
+                    text = self._extract_text(expr, source)
+                    docstring = text.strip('"""').strip("'''").strip()
                     units.append(
                         SemanticUnit(
                             name=module_name,
@@ -286,7 +287,9 @@ class TreeSitterParser(CodeParser):
         # Extract classes and functions
         for node in root.children:
             if node.type == "class_definition":
-                units.extend(self._extract_python_class(node, source, file_path, module_name))
+                units.extend(
+                    self._extract_python_class(node, source, file_path, module_name)
+                )
             elif node.type == "function_definition":
                 unit = self._extract_python_function(
                     node, source, file_path, module_name, None
@@ -299,13 +302,14 @@ class TreeSitterParser(CodeParser):
                 if target and target.type == "identifier":
                     name = self._extract_text(target, source)
                     if name.isupper() and "_" in name:
+                        text = self._extract_text(node, source)
                         units.append(
                             SemanticUnit(
                                 name=name,
                                 qualified_name=f"{module_name}.{name}",
                                 unit_type=UnitType.CONSTANT,
-                                signature=self._extract_text(node, source).split("\n")[0],
-                                content=self._extract_text(node, source),
+                                signature=text.split("\n")[0],
+                                content=text,
                                 file_path=file_path,
                                 start_line=node.start_point[0] + 1,
                                 end_line=node.end_point[0] + 1,
@@ -456,13 +460,24 @@ class TreeSitterParser(CodeParser):
                     continue
 
             if actual_node.type in ("function_declaration", "arrow_function"):
-                unit = self._extract_ts_js_function(actual_node, source, file_path, module_name, None, language)
+                unit = self._extract_ts_js_function(
+                    actual_node, source, file_path, module_name, None, language
+                )
                 if unit:
                     units.append(unit)
             elif actual_node.type == "class_declaration":
-                units.extend(self._extract_ts_js_class(actual_node, source, file_path, module_name, language))
-            elif actual_node.type == "interface_declaration" and language == "typescript":
-                unit = self._extract_ts_interface(actual_node, source, file_path, module_name)
+                units.extend(
+                    self._extract_ts_js_class(
+                        actual_node, source, file_path, module_name, language
+                    )
+                )
+            elif (
+                actual_node.type == "interface_declaration"
+                and language == "typescript"
+            ):
+                unit = self._extract_ts_interface(
+                    actual_node, source, file_path, module_name
+                )
                 if unit:
                     units.append(unit)
 
@@ -720,11 +735,20 @@ class TreeSitterParser(CodeParser):
 
         for node in root.children:
             if node.type == "function_declaration":
-                unit = self._extract_swift_function(node, source, file_path, module_name, None)
+                unit = self._extract_swift_function(
+                    node, source, file_path, module_name, None
+                )
                 if unit:
                     units.append(unit)
-            elif node.type in ("class_declaration", "struct_declaration", "enum_declaration", "protocol_declaration"):
-                units.extend(self._extract_swift_type(node, source, file_path, module_name))
+            elif node.type in (
+                "class_declaration",
+                "struct_declaration",
+                "enum_declaration",
+                "protocol_declaration",
+            ):
+                units.extend(
+                    self._extract_swift_type(node, source, file_path, module_name)
+                )
 
         return units
 
@@ -762,14 +786,21 @@ class TreeSitterParser(CodeParser):
         # Extract methods
         for child in node.children:
             if child.type == "function_declaration":
-                method = self._extract_swift_function(child, source, file_path, module_name, type_name)
+                method = self._extract_swift_function(
+                    child, source, file_path, module_name, type_name
+                )
                 if method:
                     units.append(method)
 
         return units
 
     def _extract_swift_function(
-        self, node: Node, source: str, file_path: str, module_name: str, class_name: str | None
+        self,
+        node: Node,
+        source: str,
+        file_path: str,
+        module_name: str,
+        class_name: str | None,
     ) -> SemanticUnit | None:
         """Extract a Swift function or method."""
         name_node = node.child_by_field_name("name")
@@ -810,8 +841,14 @@ class TreeSitterParser(CodeParser):
         module_name = Path(file_path).stem
 
         for node in root.children:
-            if node.type in ("class_declaration", "interface_declaration", "enum_declaration"):
-                units.extend(self._extract_java_type(node, source, file_path, module_name))
+            if node.type in (
+                "class_declaration",
+                "interface_declaration",
+                "enum_declaration",
+            ):
+                units.extend(
+                    self._extract_java_type(node, source, file_path, module_name)
+                )
 
         return units
 
@@ -852,7 +889,9 @@ class TreeSitterParser(CodeParser):
         if body:
             for child in body.children:
                 if child.type in ("method_declaration", "constructor_declaration"):
-                    method = self._extract_java_method(child, source, file_path, module_name, type_name)
+                    method = self._extract_java_method(
+                        child, source, file_path, module_name, type_name
+                    )
                     if method:
                         units.append(method)
 
@@ -904,11 +943,18 @@ class TreeSitterParser(CodeParser):
 
         for node in root.children:
             if node.type == "function_definition":
-                unit = self._extract_c_cpp_function(node, source, file_path, module_name, language)
+                unit = self._extract_c_cpp_function(
+                    node, source, file_path, module_name, language
+                )
                 if unit:
                     units.append(unit)
-            elif node.type in ("class_specifier", "struct_specifier") and language == "cpp":
-                units.extend(self._extract_cpp_class(node, source, file_path, module_name))
+            elif (
+                node.type in ("class_specifier", "struct_specifier")
+                and language == "cpp"
+            ):
+                units.extend(
+                    self._extract_cpp_class(node, source, file_path, module_name)
+                )
 
         return units
 
@@ -944,13 +990,17 @@ class TreeSitterParser(CodeParser):
             complexity=complexity,
         )
 
-    def _extract_function_name_from_declarator(self, declarator: Node, source: str) -> str | None:
+    def _extract_function_name_from_declarator(
+        self, declarator: Node, source: str
+    ) -> str | None:
         """Extract function name from C/C++ declarator."""
         # Handle different declarator types
         if declarator.type == "function_declarator":
             child_declarator = declarator.child_by_field_name("declarator")
             if child_declarator:
-                return self._extract_function_name_from_declarator(child_declarator, source)
+                return self._extract_function_name_from_declarator(
+                    child_declarator, source
+                )
         elif declarator.type == "identifier":
             return self._extract_text(declarator, source)
         return None
@@ -991,10 +1041,13 @@ class TreeSitterParser(CodeParser):
         if body:
             for child in body.children:
                 if child.type == "function_definition":
-                    method = self._extract_c_cpp_function(child, source, file_path, module_name, "cpp")
+                    method = self._extract_c_cpp_function(
+                        child, source, file_path, module_name, "cpp"
+                    )
                     if method:
                         # Update qualified name to include class
-                        method.qualified_name = f"{module_name}::{class_name}::{method.name}"
+                        qname = f"{module_name}::{class_name}::{method.name}"
+                        method.qualified_name = qname
                         method.unit_type = UnitType.METHOD
                         units.append(method)
 
@@ -1073,7 +1126,8 @@ class TreeSitterParser(CodeParser):
         visited_children = False
         while True:
             if not visited_children:
-                if cursor.node.type in branch_nodes:
+                current_node = cursor.node
+                if current_node and current_node.type in branch_nodes:
                     count += 1
                 if not cursor.goto_first_child():
                     visited_children = True
