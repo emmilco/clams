@@ -1,22 +1,45 @@
-# Session Handoff - 2024-12-04
+# Session Handoff - 2025-12-04
 
 ## Session Summary
 
-This session focused on advancing multiple tasks and fixing workflow issues discovered during orchestration.
+This session completed the full DESIGN→IMPLEMENT cycle for 4 tasks:
+- **SPEC-002-14**: ObservationPersister multi-axis embedding
+- **SPEC-002-15**: MCP tools for GHAP and learning
+- **SPEC-002-18**: ContextAssembler
+- **SPEC-002-19**: Hook scripts and context injection
+
+All 4 tasks now have working implementations with passing tests.
+
+## Work Completed
+
+1. **Architect proposals written** - 4 architects dispatched in parallel
+2. **Proposal reviews** - 2x sonnet reviews per task, multiple fix cycles required
+3. **Human approval** - All 4 proposals reviewed with human, key decisions made
+4. **Implementation** - 4 backend workers dispatched, all completed successfully
+
+### Key Decisions Made This Session
+
+- **SPEC-002-19**: Domain-specific premortem deferred to v2. Hooks do generic semantic search without keyword-based domain detection (simplifies v1).
+- **SPEC-002-14**: Confirmed 4 collections approach, surprise/root_cause only for FALSIFIED entries
+- **SPEC-002-15**: Confirmed retry logic (1s, 2s, 4s backoff) for persistence
+- **SPEC-002-18**: Confirmed 4 chars/token heuristic, weighted budget distribution
 
 ## Active Tasks by Phase
 
-### IMPLEMENT (3 tasks)
+### IMPLEMENT (5 tasks)
 | Task | Title | Status |
 |------|-------|--------|
-| SPEC-002-09 | Searcher unified query interface | Implementation complete, tests passing (243 passed). Need to run full gate check and transition to REVIEW |
-| SPEC-002-06 | CodeParser + CodeIndexer | Implementation complete per worker report. Need to run gate check |
-| SPEC-002-14 | ObservationPersister | In DESIGN, needs architect work |
+| **SPEC-002-14** | ObservationPersister | **Code complete, 36 tests passing** - Ready for gate check |
+| **SPEC-002-15** | MCP tools for GHAP/learning | **Code complete, 65 tests passing** - Ready for gate check |
+| **SPEC-002-18** | ContextAssembler | **Code complete, 43 tests passing** - Ready for gate check |
+| **SPEC-002-19** | Hook scripts | **Code complete, 16 tests passing** - Ready for gate check |
+| SPEC-002-06 | CodeParser + CodeIndexer | Previous session - check status |
 
-### REVIEW (1 task)
+### REVIEW (2 tasks)
 | Task | Title | Status |
 |------|-------|--------|
-| SPEC-002-11 | MCP tools for memory, code, git | Review #1 requested formatting fixes. Need to fix formatting, then dispatch reviewer #1 again |
+| SPEC-002-09 | Searcher unified query interface | Awaiting code reviewers |
+| SPEC-002-11 | MCP tools for memory, code, git | Awaiting code reviewers |
 
 ### VERIFY (2 tasks)
 | Task | Title | Status |
@@ -24,44 +47,51 @@ This session focused on advancing multiple tasks and fixing workflow issues disc
 | SPEC-002-12 | Clusterer HDBSCAN | Merged to main, needs verification |
 | SPEC-002-13 | ValueStore validation and storage | Merged to main, needs verification |
 
-## Friction Points Encountered This Session
+### DONE (7 tasks)
+SPEC-002-01 through SPEC-002-08 (except 06), plus others
 
-### 1. SPEC-002-09 Was Merged Without Implementation
-- **Discovery**: Task was in VERIFY phase but had no implementation code
-- **Root cause**: Previous session committed only tests, no production code
-- **Gate failure**: Collection errors (ImportError) weren't caught because pytest continued with other tests
-- **Fix applied**: Added collection error detection to `check_tests.sh`
+## Friction Points
 
-### 2. Reviews Ran in Parallel and Didn't Record Outcomes
-- **Discovery**: Two reviewers dispatched simultaneously for SPEC-002-11
-- **Problem**: Reviewers didn't record their reviews in database; one approved, one requested changes
-- **Fix applied**: Updated CLAUDE.md and reviewer.md to enforce sequential reviews and mandatory database recording
+1. **Multiple review fix cycles** - Reviewers found issues requiring architect fixes. SPEC-002-15 had reviewer #2 find issues #1 missed.
 
-### 3. Transition Commands Didn't Verify Reviews
-- **Discovery**: REVIEW→TEST transition happened despite 0 code reviews recorded
-- **Fix applied**: `clams-task transition` now verifies required reviews exist in database
+2. **Proposal reviews are thorough but slow** - 2x sonnet reviews with potential fix cycles adds significant time per task.
 
-### 4. Missing $in Operator in VectorStore
-- **Discovery**: Tests for `$in` operator were merged but implementation didn't exist
-- **Impact**: SPEC-002-11 MCP tools depend on `$in` for tag filtering
-- **Fix applied**: Added `$in` operator support using Qdrant's MatchAny
+## Next Steps (Priority Order)
 
-## Commits Made This Session
+1. **Run gate checks for newly implemented tasks**:
+   ```bash
+   .claude/bin/clams-gate check SPEC-002-14 IMPLEMENT-REVIEW
+   .claude/bin/clams-gate check SPEC-002-15 IMPLEMENT-REVIEW
+   .claude/bin/clams-gate check SPEC-002-18 IMPLEMENT-REVIEW
+   .claude/bin/clams-gate check SPEC-002-19 IMPLEMENT-REVIEW
+   ```
 
-1. `9bb5fa2` - Add workflow safeguards (collection error detection, review enforcement)
-2. `604cf00` - Enforce sequential reviews with mandatory database recording
-3. `a7624b7` - Add $in operator and simplify range query handling in VectorStore
+2. **Transition passing tasks to REVIEW**:
+   ```bash
+   .claude/bin/clams-task transition SPEC-002-XX REVIEW --gate-result pass
+   ```
 
-## Next Steps
+3. **Dispatch code reviewers** (2x sonnet, sequential) for all tasks in REVIEW
 
-1. **Run gate checks** for SPEC-002-09 and SPEC-002-06 (tests should pass now)
-2. **Transition to REVIEW** once gates pass
-3. **Fix SPEC-002-11 formatting** and restart review cycle (sequential this time)
-4. **Verify SPEC-002-12 and SPEC-002-13** on main branch
-5. **Complete remaining DESIGN phase tasks** (SPEC-002-14, 15, 18, 19)
+4. **Clear VERIFY backlog** - SPEC-002-12 and SPEC-002-13 need verification on main
 
-## Recommendations
+5. **Check SPEC-002-06 status** - Still in IMPLEMENT from previous session
 
-1. Before dispatching reviewers, always remind them to record their review outcome
-2. Run gate checks synchronously (not in background) to ensure full output is captured
-3. After merging, run full test suite on main to catch integration issues early
+## Worktrees with New Code
+
+| Worktree | Contents |
+|----------|----------|
+| `.worktrees/SPEC-002-14/` | ObservationPersister + templates + tests |
+| `.worktrees/SPEC-002-15/` | 11 MCP tools (ghap, learning, search) + tests |
+| `.worktrees/SPEC-002-18/` | ContextAssembler + formatters + dedup + tests |
+| `.worktrees/SPEC-002-19/` | Hook scripts + mcp_client.py + tests |
+
+## Database Backup
+
+Created: `.claude/backups/clams_session-wrapup.db` (17 tasks)
+
+## System Health
+
+- Status: HEALTHY
+- Merge lock: inactive
+- Merges since E2E: 8 (approaching threshold of 12)
