@@ -375,7 +375,7 @@ def register_ghap_tools(
                             attempts=max_retries,
                             error=str(e),
                         )
-                        raise ValidationError(
+                        raise MCPError(
                             f"Failed to persist GHAP entry after "
                             f"{max_retries} attempts. Local resolution saved, "
                             f"but embedding/storage failed. Error: {e}"

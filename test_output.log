@@ -30,11 +30,11 @@ tests/embedding/test_nomic.py::TestNomicEmbedding::test_invalid_model_raises_err
 tests/server/test_config.py::test_default_settings PASSED
 tests/server/test_config.py::test_env_override PASSED
 tests/server/test_config.py::test_settings_immutable PASSED
-tests/server/test_main.py::test_create_server 2025-12-04 15:04:33 [info     ] tools.registered               tool_count=12
-2025-12-04 15:04:33 [info     ] server.created                 server_name=learning-memory-server
+tests/server/test_main.py::test_create_server 2025-12-04 16:38:45 [info     ] tools.registered               tool_count=12
+2025-12-04 16:38:45 [info     ] server.created                 server_name=learning-memory-server
 PASSED
-tests/server/test_main.py::test_server_has_ping_tool 2025-12-04 15:04:33 [info     ] tools.registered               tool_count=12
-2025-12-04 15:04:33 [info     ] server.created                 server_name=learning-memory-server
+tests/server/test_main.py::test_server_has_ping_tool 2025-12-04 16:38:45 [info     ] tools.registered               tool_count=12
+2025-12-04 16:38:45 [info     ] server.created                 server_name=learning-memory-server
 PASSED
 tests/server/tools/test_enums.py::TestDomains::test_valid_domains PASSED
 tests/server/tools/test_enums.py::TestDomains::test_invalid_domain_raises_error PASSED
@@ -57,93 +57,93 @@ tests/server/tools/test_errors.py::test_validation_error_is_mcp_error PASSED
 tests/server/tools/test_errors.py::test_not_found_error_is_mcp_error PASSED
 tests/server/tools/test_errors.py::test_insufficient_data_error_is_mcp_error PASSED
 tests/server/tools/test_errors.py::test_errors_can_be_raised PASSED
-tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_success 2025-12-04 15:04:33 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764878673.59139 strategy=systematic-elimination
+tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_success 2025-12-04 16:38:45 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764884325.042822 strategy=systematic-elimination
 PASSED
-tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_invalid_domain 2025-12-04 15:04:33 [warning  ] ghap.validation_error          error="Invalid domain 'invalid'. Valid options: debugging, refactoring, feature, testing, configuration, documentation, performance, security, integration"
+tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_invalid_domain 2025-12-04 16:38:45 [warning  ] ghap.validation_error          error="Invalid domain 'invalid'. Valid options: debugging, refactoring, feature, testing, configuration, documentation, performance, security, integration"
 PASSED
-tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_invalid_strategy 2025-12-04 15:04:33 [warning  ] ghap.validation_error          error="Invalid strategy 'invalid'. Valid options: systematic-elimination, trial-and-error, research-first, divide-and-conquer, root-cause-analysis, copy-from-similar, check-assumptions, read-the-error, ask-user"
+tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_invalid_strategy 2025-12-04 16:38:45 [warning  ] ghap.validation_error          error="Invalid strategy 'invalid'. Valid options: systematic-elimination, trial-and-error, research-first, divide-and-conquer, root-cause-analysis, copy-from-similar, check-assumptions, read-the-error, ask-user"
 PASSED
-tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_empty_field 2025-12-04 15:04:33 [warning  ] ghap.validation_error          error="Field 'goal' cannot be empty"
+tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_empty_field 2025-12-04 16:38:45 [warning  ] ghap.validation_error          error="Field 'goal' cannot be empty"
 PASSED
-tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_field_too_long 2025-12-04 15:04:33 [warning  ] ghap.validation_error          error="Field 'goal' exceeds 1000 character limit (1001 chars)"
+tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_field_too_long 2025-12-04 16:38:45 [warning  ] ghap.validation_error          error="Field 'goal' exceeds 1000 character limit (1001 chars)"
 PASSED
-tests/server/tools/test_ghap.py::TestUpdateGhap::test_update_ghap_success 2025-12-04 15:04:33 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764878673.646083 strategy=systematic-elimination
-2025-12-04 15:04:33 [info     ] ghap.updated                   ghap_id=ghap_1764878673.646083 iteration_count=2
+tests/server/tools/test_ghap.py::TestUpdateGhap::test_update_ghap_success 2025-12-04 16:38:45 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764884325.04862 strategy=systematic-elimination
+2025-12-04 16:38:45 [info     ] ghap.updated                   ghap_id=ghap_1764884325.04862 iteration_count=2
 PASSED
-tests/server/tools/test_ghap.py::TestUpdateGhap::test_update_ghap_no_active_entry 2025-12-04 15:04:33 [warning  ] ghap.error                     error='No active GHAP entry to update. Use start_ghap to begin tracking.'
+tests/server/tools/test_ghap.py::TestUpdateGhap::test_update_ghap_no_active_entry 2025-12-04 16:38:45 [warning  ] ghap.error                     error='No active GHAP entry to update. Use start_ghap to begin tracking.'
 PASSED
-tests/server/tools/test_ghap.py::TestUpdateGhap::test_update_ghap_field_too_long 2025-12-04 15:04:33 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764878673.658986 strategy=systematic-elimination
-2025-12-04 15:04:33 [warning  ] ghap.error                     error="Field 'hypothesis' exceeds 1000 character limit (1001 chars)"
+tests/server/tools/test_ghap.py::TestUpdateGhap::test_update_ghap_field_too_long 2025-12-04 16:38:45 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764884325.050436 strategy=systematic-elimination
+2025-12-04 16:38:45 [warning  ] ghap.error                     error="Field 'hypothesis' exceeds 1000 character limit (1001 chars)"
 PASSED
-tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_confirmed 2025-12-04 15:04:33 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764878673.667984 strategy=systematic-elimination
-2025-12-04 15:04:33 [info     ] ghap.persisted                 attempt=1 ghap_id=ghap_1764878673.667984
+tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_confirmed 2025-12-04 16:38:45 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764884325.051718 strategy=systematic-elimination
+2025-12-04 16:38:45 [info     ] ghap.persisted                 attempt=1 ghap_id=ghap_1764884325.051718
 PASSED
-tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_falsified 2025-12-04 15:04:33 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764878673.676701 strategy=systematic-elimination
-2025-12-04 15:04:33 [info     ] ghap.persisted                 attempt=1 ghap_id=ghap_1764878673.676701
+tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_falsified 2025-12-04 16:38:45 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764884325.052981 strategy=systematic-elimination
+2025-12-04 16:38:45 [info     ] ghap.persisted                 attempt=1 ghap_id=ghap_1764884325.052981
 PASSED
-tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_falsified_missing_surprise 2025-12-04 15:04:33 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764878673.687722 strategy=systematic-elimination
-2025-12-04 15:04:33 [warning  ] ghap.error                     error="Field 'surprise' is required when status is 'falsified'"
+tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_falsified_missing_surprise 2025-12-04 16:38:45 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764884325.054093 strategy=systematic-elimination
+2025-12-04 16:38:45 [warning  ] ghap.error                     error="Field 'surprise' is required when status is 'falsified'"
 PASSED
-tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_invalid_status 2025-12-04 15:04:33 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764878673.697792 strategy=systematic-elimination
-2025-12-04 15:04:33 [warning  ] ghap.error                     error="Invalid outcome status 'invalid'. Valid options: confirmed, falsified, abandoned"
+tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_invalid_status 2025-12-04 16:38:45 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764884325.054991 strategy=systematic-elimination
+2025-12-04 16:38:45 [warning  ] ghap.error                     error="Invalid outcome status 'invalid'. Valid options: confirmed, falsified, abandoned"
 PASSED
-tests/server/tools/test_ghap.py::TestGetActiveGhap::test_get_active_ghap_with_entry 2025-12-04 15:04:33 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764878673.713886 strategy=systematic-elimination
+tests/server/tools/test_ghap.py::TestGetActiveGhap::test_get_active_ghap_with_entry 2025-12-04 16:38:45 [info     ] ghap.started                   domain=debugging ghap_id=ghap_1764884325.056085 strategy=systematic-elimination
 PASSED
 tests/server/tools/test_ghap.py::TestGetActiveGhap::test_get_active_ghap_no_entry PASSED
 tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_default PASSED
-tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_invalid_limit 2025-12-04 15:04:33 [warning  ] ghap.validation_error          error='Limit must be between 1 and 100 (got 0)'
+tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_invalid_limit 2025-12-04 16:38:45 [warning  ] ghap.validation_error          error='Limit must be between 1 and 100 (got 0)'
 PASSED
-tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_invalid_domain 2025-12-04 15:04:33 [warning  ] ghap.validation_error          error="Invalid domain 'invalid'. Valid options: debugging, refactoring, feature, testing, configuration, documentation, performance, security, integration"
+tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_invalid_domain 2025-12-04 16:38:45 [warning  ] ghap.validation_error          error="Invalid domain 'invalid'. Valid options: debugging, refactoring, feature, testing, configuration, documentation, performance, security, integration"
 PASSED
-tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_invalid_date 2025-12-04 15:04:33 [warning  ] ghap.validation_error          error="Invalid date format for 'since': not a date. Expected ISO 8601 format (e.g., '2024-01-15T10:30:45+00:00')"
+tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_invalid_date 2025-12-04 16:38:45 [warning  ] ghap.validation_error          error="Invalid date format for 'since': not a date. Expected ISO 8601 format (e.g., '2024-01-15T10:30:45+00:00')"
 PASSED
-tests/server/tools/test_learning.py::TestGetClusters::test_get_clusters_success 2025-12-04 15:04:33 [info     ] learning.clusters_retrieved    axis=full count=2 noise_count=7
+tests/server/tools/test_learning.py::TestGetClusters::test_get_clusters_success 2025-12-04 16:38:45 [info     ] learning.clusters_retrieved    axis=full count=2 noise_count=7
 PASSED
-tests/server/tools/test_learning.py::TestGetClusters::test_get_clusters_invalid_axis 2025-12-04 15:04:33 [warning  ] learning.error                 error="Invalid axis 'invalid'. Valid options: full, strategy, surprise, root_cause"
+tests/server/tools/test_learning.py::TestGetClusters::test_get_clusters_invalid_axis 2025-12-04 16:38:45 [warning  ] learning.error                 error="Invalid axis 'invalid'. Valid options: full, strategy, surprise, root_cause"
 PASSED
-tests/server/tools/test_learning.py::TestGetClusters::test_get_clusters_insufficient_data 2025-12-04 15:04:33 [warning  ] learning.error                 error='Not enough experiences for clustering. Found 15, need at least 20.'
+tests/server/tools/test_learning.py::TestGetClusters::test_get_clusters_insufficient_data 2025-12-04 16:38:45 [warning  ] learning.error                 error='Not enough experiences for clustering. Found 15, need at least 20.'
 PASSED
 tests/server/tools/test_learning.py::TestGetClusterMembers::test_get_cluster_members_success PASSED
-tests/server/tools/test_learning.py::TestGetClusterMembers::test_get_cluster_members_invalid_format 2025-12-04 15:04:33 [warning  ] learning.error                 error="Invalid cluster_id format: invalid. Expected format: 'axis_label' (e.g., 'full_0', 'strategy_2')"
+tests/server/tools/test_learning.py::TestGetClusterMembers::test_get_cluster_members_invalid_format 2025-12-04 16:38:45 [warning  ] learning.error                 error="Invalid cluster_id format: invalid. Expected format: 'axis_label' (e.g., 'full_0', 'strategy_2')"
 PASSED
-tests/server/tools/test_learning.py::TestGetClusterMembers::test_get_cluster_members_invalid_axis 2025-12-04 15:04:33 [warning  ] learning.error                 error="Invalid axis 'invalid'. Valid options: full, strategy, surprise, root_cause"
+tests/server/tools/test_learning.py::TestGetClusterMembers::test_get_cluster_members_invalid_axis 2025-12-04 16:38:45 [warning  ] learning.error                 error="Invalid axis 'invalid'. Valid options: full, strategy, surprise, root_cause"
 PASSED
-tests/server/tools/test_learning.py::TestGetClusterMembers::test_get_cluster_members_invalid_limit 2025-12-04 15:04:33 [warning  ] learning.error                 error='Limit must be between 1 and 100 (got 0)'
+tests/server/tools/test_learning.py::TestGetClusterMembers::test_get_cluster_members_invalid_limit 2025-12-04 16:38:45 [warning  ] learning.error                 error='Limit must be between 1 and 100 (got 0)'
 PASSED
-tests/server/tools/test_learning.py::TestValidateValue::test_validate_value_success 2025-12-04 15:04:33 [info     ] learning.value_validated       cluster_id=strategy_0 similarity=0.85 valid=True
+tests/server/tools/test_learning.py::TestValidateValue::test_validate_value_success 2025-12-04 16:38:45 [info     ] learning.value_validated       cluster_id=strategy_0 similarity=0.85 valid=True
 PASSED
-tests/server/tools/test_learning.py::TestValidateValue::test_validate_value_empty_text 2025-12-04 15:04:33 [warning  ] learning.error                 error="Field 'text' cannot be empty"
+tests/server/tools/test_learning.py::TestValidateValue::test_validate_value_empty_text 2025-12-04 16:38:45 [warning  ] learning.error                 error="Field 'text' cannot be empty"
 PASSED
-tests/server/tools/test_learning.py::TestValidateValue::test_validate_value_text_too_long 2025-12-04 15:04:33 [warning  ] learning.error                 error="Field 'text' exceeds 500 character limit (501 chars)"
+tests/server/tools/test_learning.py::TestValidateValue::test_validate_value_text_too_long 2025-12-04 16:38:45 [warning  ] learning.error                 error="Field 'text' exceeds 500 character limit (501 chars)"
 PASSED
-tests/server/tools/test_learning.py::TestValidateValue::test_validate_value_invalid_cluster_id 2025-12-04 15:04:33 [warning  ] learning.error                 error="Invalid cluster_id format: invalid. Expected format: 'axis_label'"
+tests/server/tools/test_learning.py::TestValidateValue::test_validate_value_invalid_cluster_id 2025-12-04 16:38:45 [warning  ] learning.error                 error="Invalid cluster_id format: invalid. Expected format: 'axis_label'"
 PASSED
-tests/server/tools/test_learning.py::TestStoreValue::test_store_value_success 2025-12-04 15:04:33 [info     ] learning.value_stored          axis=strategy cluster_id=strategy_0 value_id=value_1764878673.811967
+tests/server/tools/test_learning.py::TestStoreValue::test_store_value_success 2025-12-04 16:38:45 [info     ] learning.value_stored          axis=strategy cluster_id=strategy_0 value_id=value_1764884325.070157
 PASSED
-tests/server/tools/test_learning.py::TestStoreValue::test_store_value_empty_text 2025-12-04 15:04:33 [warning  ] learning.error                 error="Field 'text' cannot be empty"
+tests/server/tools/test_learning.py::TestStoreValue::test_store_value_empty_text 2025-12-04 16:38:45 [warning  ] learning.error                 error="Field 'text' cannot be empty"
 PASSED
-tests/server/tools/test_learning.py::TestStoreValue::test_store_value_invalid_axis 2025-12-04 15:04:33 [warning  ] learning.error                 error="Invalid axis 'invalid'. Valid options: full, strategy, surprise, root_cause"
+tests/server/tools/test_learning.py::TestStoreValue::test_store_value_invalid_axis 2025-12-04 16:38:45 [warning  ] learning.error                 error="Invalid axis 'invalid'. Valid options: full, strategy, surprise, root_cause"
 PASSED
 tests/server/tools/test_learning.py::TestListValues::test_list_values_default PASSED
 tests/server/tools/test_learning.py::TestListValues::test_list_values_with_axis_filter PASSED
-tests/server/tools/test_learning.py::TestListValues::test_list_values_invalid_axis 2025-12-04 15:04:33 [warning  ] learning.validation_error      error="Invalid axis 'invalid'. Valid options: full, strategy, surprise, root_cause"
+tests/server/tools/test_learning.py::TestListValues::test_list_values_invalid_axis 2025-12-04 16:38:45 [warning  ] learning.validation_error      error="Invalid axis 'invalid'. Valid options: full, strategy, surprise, root_cause"
 PASSED
-tests/server/tools/test_learning.py::TestListValues::test_list_values_invalid_limit 2025-12-04 15:04:33 [warning  ] learning.validation_error      error='Limit must be between 1 and 100 (got 101)'
+tests/server/tools/test_learning.py::TestListValues::test_list_values_invalid_limit 2025-12-04 16:38:45 [warning  ] learning.validation_error      error='Limit must be between 1 and 100 (got 101)'
 PASSED
-tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_success 2025-12-04 15:04:33 [info     ] search.experiences_searched    axis=full count=0 query='How to debug async issues'
+tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_success 2025-12-04 16:38:45 [info     ] search.experiences_searched    axis=full count=0 query='How to debug async issues'
 PASSED
 tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_empty_query PASSED
-tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_with_filters 2025-12-04 15:04:33 [info     ] search.experiences_searched    axis=full count=0 query='debugging patterns'
+tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_with_filters 2025-12-04 16:38:45 [info     ] search.experiences_searched    axis=full count=0 query='debugging patterns'
 PASSED
-tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_invalid_axis 2025-12-04 15:04:33 [warning  ] search.validation_error        error="Invalid axis 'invalid'. Valid options: full, strategy, surprise, root_cause"
+tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_invalid_axis 2025-12-04 16:38:45 [warning  ] search.validation_error        error="Invalid axis 'invalid'. Valid options: full, strategy, surprise, root_cause"
 PASSED
-tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_invalid_domain 2025-12-04 15:04:33 [warning  ] search.validation_error        error="Invalid domain 'invalid'. Valid options: debugging, refactoring, feature, testing, configuration, documentation, performance, security, integration"
+tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_invalid_domain 2025-12-04 16:38:45 [warning  ] search.validation_error        error="Invalid domain 'invalid'. Valid options: debugging, refactoring, feature, testing, configuration, documentation, performance, security, integration"
 PASSED
-tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_invalid_outcome 2025-12-04 15:04:33 [warning  ] search.validation_error        error="Invalid outcome status 'invalid'. Valid options: confirmed, falsified, abandoned"
+tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_invalid_outcome 2025-12-04 16:38:45 [warning  ] search.validation_error        error="Invalid outcome status 'invalid'. Valid options: confirmed, falsified, abandoned"
 PASSED
-tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_invalid_limit 2025-12-04 15:04:33 [warning  ] search.validation_error        error='Limit must be between 1 and 50 (got 0)'
+tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_invalid_limit 2025-12-04 16:38:45 [warning  ] search.validation_error        error='Limit must be between 1 and 50 (got 0)'
 PASSED
-tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_limit_max 2025-12-04 15:04:33 [warning  ] search.validation_error        error='Limit must be between 1 and 50 (got 51)'
+tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_limit_max 2025-12-04 16:38:45 [warning  ] search.validation_error        error='Limit must be between 1 and 50 (got 51)'
 PASSED
 tests/storage/test_memory.py::TestInMemoryVectorStore::test_create_collection PASSED
 tests/storage/test_memory.py::TestInMemoryVectorStore::test_create_duplicate_collection PASSED
@@ -199,4 +199,4 @@ tests/storage/test_qdrant.py::TestQdrantVectorStore::test_distance_metrics PASSE
 tests/test_placeholder.py::test_placeholder PASSED
 tests/test_placeholder.py::test_fixture PASSED
 
-============================= 142 passed in 58.31s =============================
+============================= 142 passed in 26.37s =============================
