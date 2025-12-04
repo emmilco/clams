@@ -87,8 +87,10 @@ class ExperienceClusterer:
         # Extract data from results
         embeddings = np.array([r.vector for r in results], dtype=np.float32)
         ids = [r.id for r in results]
-        tiers = [r.payload.get("confidence_tier", "bronze") for r in results]
-        weights = np.array([get_weight(tier) for tier in tiers])
+        tiers = [
+            str(r.payload.get("confidence_tier", "bronze")) for r in results
+        ]
+        weights = np.array([get_weight(tier) for tier in tiers], dtype=np.float32)
 
         # Cluster
         cluster_result = self.clusterer.cluster(embeddings, weights)

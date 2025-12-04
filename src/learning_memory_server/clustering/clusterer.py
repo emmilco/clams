@@ -116,6 +116,10 @@ class Clusterer:
 
         Args:
             embeddings: Array of shape (n_samples, n_dimensions)
+                        These should be the ORIGINAL embeddings (not normalized).
+                        When cosine metric is used, cluster() normalizes internally
+                        but returns labels computed on normalized space.
+                        Centroids are then computed on original embeddings.
             labels: Cluster labels from HDBSCAN (-1 = noise)
             ids: IDs corresponding to each embedding
             weights: Optional weights for weighted centroid computation
@@ -126,6 +130,14 @@ class Clusterer:
 
         Raises:
             ValueError: If array shapes don't match
+            ValueError: If any cluster has zero total weight
+
+        Note:
+            When cosine metric is used, clustering is performed on normalized
+            embeddings (cosine distance), but centroids are computed from
+            original embeddings. This is intentional: centroids represent
+            the weighted mean in the original embedding space, not the
+            normalized space.
         """
         if len(embeddings) != len(labels) or len(embeddings) != len(ids):
             raise ValueError(
@@ -163,6 +175,11 @@ class Clusterer:
                 cluster_embeddings * cluster_weights[:, np.newaxis], axis=0
             )
             weight_sum = np.sum(cluster_weights)
+
+            # Validate non-zero weight sum (should never happen with valid inputs)
+            if weight_sum == 0:
+                raise ValueError(f"Cluster {label} has zero total weight")
+
             centroid = weighted_sum / weight_sum
 
             # Create ClusterInfo
