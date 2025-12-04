@@ -24,7 +24,7 @@ EXPERIENCES_COLLECTION_PREFIX = "experiences_"  # e.g., "experiences_full"
 VALUES_COLLECTION = "values"
 
 
-def cosine_distance(a: np.ndarray, b: np.ndarray) -> float:
+def cosine_distance(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> float:
     """Calculate cosine distance between two vectors.
 
     Args:
