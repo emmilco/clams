@@ -46,37 +46,42 @@ Complete the Learning Memory Server by integrating all modules into a working, p
 
 ### What's Missing
 
-**Critical Gaps**:
-1. **ObservationPersister is a stub** - SPEC-002-14 is in DESIGN phase, not implemented
-2. **Code/Git services not initialized** - Commented out in `server/tools/__init__.py`
-3. **No end-to-end integration tests** - Individual modules tested, but not wired together
-4. **No installation/deployment verification** - Can it actually be installed and run?
-5. **No performance benchmarks** - Latency targets from master spec unverified
-6. **Missing collections initialization** - VectorStore collections may not exist on fresh install
-7. **Configuration not validated** - Settings may reference incorrect paths or models
+**Critical Integration Bugs** (found via code audit 2025-12-05):
+1. **Stub class shadows real ObservationPersister** - `observation/__init__.py` lines 26-51 defines a stub class that shadows the real implementation imported from `persister.py`. Any code importing from package level gets the stub.
+2. **Wrong API call in GHAP tools** - `server/tools/ghap.py` line 374 calls `persister.persist(resolved.to_dict())` but the real persister expects `GHAPEntry` directly, not a dict.
+3. **search_experiences passes empty embedding** - `server/tools/search.py` line 88 passes `query_embedding=[]` which produces no meaningful results.
 
-**Stub Implementations**:
-- `list_ghap_entries()` - Returns empty results
-- `get_cluster_members()` - Returns empty results
-- `list_values()` - Returns empty results
-- ObservationPersister.persist() - No-op
+**Stub MCP Tools** (return empty results instead of querying VectorStore):
+- `list_ghap_entries()` - ghap.py:519 - Returns empty list
+- `get_cluster_members()` - learning.py:163 - Returns empty list
+- `list_values()` - learning.py:367 - Returns empty list
+
+**Other Gaps**:
+1. **Code/Git services not initialized** - Commented out in `server/tools/__init__.py`
+2. **No end-to-end integration tests** - Individual modules tested, but not wired together
+3. **No installation/deployment verification** - Can it actually be installed and run?
+4. **No performance benchmarks** - Latency targets from master spec unverified
+5. **Missing collections initialization** - VectorStore collections may not exist on fresh install
+6. **Configuration not validated** - Settings may reference incorrect paths or models
 
 ## Requirements
 
-### 1. Complete ObservationPersister Implementation
+### 1. Fix ObservationPersister Integration Bugs
 
-**Why**: GHAP resolution currently succeeds locally but fails to persist to VectorStore. Without persistence, no experiences are stored, clustering fails, and the learning loop is broken.
+**Why**: SPEC-002-14 implemented ObservationPersister, but integration bugs prevent it from working:
+1. The stub class in `__init__.py` shadows the real implementation
+2. GHAP tools call the wrong API (`.to_dict()` instead of direct object)
 
 **What**:
-- Implement multi-axis embedding (full, domain, strategy, surprise, root_cause)
-- Store embeddings in correct collections (experiences_full, experiences_domain, etc.)
-- Handle confidence tier weighting
-- Validate schema matches what Clusterer expects
+- Remove stub class from `observation/__init__.py` (lines 26-51)
+- Import real `ObservationPersister` from `persister.py`
+- Fix `server/tools/ghap.py` line 374: change `persister.persist(resolved.to_dict())` to `persister.persist(resolved)`
+- Verify the 4-axis embedding works (full, strategy, surprise, root_cause - domain is metadata filter)
 
 **Acceptance Criteria**:
-- resolve_ghap() successfully persists to all 5 axis collections
+- `from learning_memory_server.observation import ObservationPersister` returns real implementation
+- resolve_ghap() successfully persists to all 4 axis collections (ghap_full, ghap_strategy, ghap_surprise, ghap_root_cause)
 - Persisted entries include all required payload fields (domain, strategy, confidence_tier, etc.)
-- Confidence tiers map to correct weights (gold=1.0, silver=0.8, bronze=0.5, abandoned=0.2)
 - Integration test: start_ghap() → resolve_ghap() → search_experiences() returns the entry
 
 ### 2. Enable Code and Git Services
@@ -112,17 +117,35 @@ Complete the Learning Memory Server by integrating all modules into a working, p
 
 ### 4. Implement Stub MCP Tools
 
-**Why**: Three MCP tools return empty results instead of querying VectorStore.
+**Why**: Four MCP tools return empty results or pass invalid data instead of working correctly.
 
 **What**:
-- `list_ghap_entries()`: Query experiences_full collection with filters
-- `get_cluster_members()`: Parse cluster_id, query correct axis collection, filter by cluster label
-- `list_values()`: Query values collection with optional axis filter
+- `list_ghap_entries()` (ghap.py:519): Query ghap_full collection with filters (domain, outcome, since)
+- `get_cluster_members()` (learning.py:163): Parse cluster_id, query correct axis collection, filter by cluster label
+- `list_values()` (learning.py:367): Query values collection with optional axis filter
+- `search_experiences()` (search.py:88): Generate query embedding from text, then call searcher
+
+**Specific Fixes**:
+```python
+# search.py:88 - BEFORE (broken):
+results = await searcher.search_experiences(
+    query_embedding=[],  # Empty embedding!
+    ...
+)
+
+# search.py:88 - AFTER (fixed):
+query_embedding = await embedding_service.embed(query)
+results = await searcher.search_experiences(
+    query_embedding=query_embedding,
+    ...
+)
+```
 
 **Acceptance Criteria**:
 - list_ghap_entries() returns actual GHAP entries from VectorStore
 - get_cluster_members() returns experiences in a specific cluster
 - list_values() returns stored values
+- search_experiences() generates real embeddings and returns semantically relevant results
 
 ### 5. End-to-End Integration Tests
 
@@ -358,30 +381,29 @@ Based on master spec, the system must meet:
 
 ## File Structure
 
-New files required:
+Files to modify/create:
 
 ```
 tests/
   integration/
-    __init__.py
-    test_e2e.py           # End-to-end scenarios
-    conftest.py           # Integration test fixtures
+    __init__.py           # NEW
+    test_e2e.py           # NEW: End-to-end scenarios
+    conftest.py           # NEW: Integration test fixtures
   performance/
-    __init__.py
-    test_benchmarks.py    # Performance benchmarks
-    conftest.py           # Performance test fixtures
+    __init__.py           # NEW
+    test_benchmarks.py    # NEW: Performance benchmarks
+    conftest.py           # NEW: Performance test fixtures
 
 src/learning_memory_server/
+  observation/
+    __init__.py           # MODIFY: Remove stub class (lines 26-51), keep real import
   server/
     tools/
       __init__.py         # MODIFY: Uncomment code/git initialization
-      learning.py         # MODIFY: Implement stub tools
-      ghap.py             # MODIFY: Implement list_ghap_entries
-  observation/
-    __init__.py           # MODIFY: Replace ObservationPersister stub
-    persister.py          # NEW: Multi-axis embedding implementation
-  server/
-    init.py               # NEW: Collection initialization on startup (or modify main.py)
+      ghap.py             # MODIFY: Fix line 374 (.to_dict() → direct), implement list_ghap_entries
+      learning.py         # MODIFY: Implement get_cluster_members, list_values
+      search.py           # MODIFY: Fix search_experiences to generate real embeddings
+    main.py               # MODIFY: Add collection initialization on startup
 
 README.md                 # MODIFY: Complete documentation
 ```
@@ -505,13 +527,14 @@ This integration task is successful when:
 ## Dependencies
 
 **Blocked By**:
-- SPEC-002-14 (ObservationPersister) - currently in DESIGN, must be implemented
+- None - SPEC-002-14 (ObservationPersister) is now DONE
 
 **Blocks**:
 - SPEC-002-17 (Documentation) - needs working system to document
 
 **Related**:
 - All completed tasks (SPEC-002-01 through SPEC-002-15, 18, 19)
+- SPEC-002-14 provides the real ObservationPersister that this task wires up
 
 ## Timeline Estimate
 
