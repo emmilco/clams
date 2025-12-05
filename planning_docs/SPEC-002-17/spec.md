@@ -77,9 +77,15 @@ Create the E2E tests and performance benchmarks that were deferred:
 - Log benchmark results to JSON for tracking
 - Performance targets are HARD requirements
 
-### 4. ARCHITECTURE.md (Optional, if time permits)
+**Failure Behavior**:
+- Performance tests that miss targets FAIL (not warn)
+- If Qdrant unavailable: tests skip with clear message (not fail)
+- Benchmark results logged to `tests/performance/benchmark_results.json`
+- Failed benchmarks report: actual p95, target, and percentage over
 
-A brief architectural map. Include ONLY:
+### 4. ARCHITECTURE.md (Optional - NOT required for acceptance)
+
+A brief architectural map if all required work completes early. Include ONLY:
 - Module dependency diagram (text-based, not image)
 - Data flow: GHAP entry → embedding → vector store → retrieval
 - Storage layers: What's in Qdrant, SQLite, JSON files
@@ -125,14 +131,19 @@ observation/   - GHAP state machine, ObservationPersister
    - Context assembly: p95 < 500ms
    - Clustering: < 5s for 100 entries
 
+6. **Test infrastructure works**:
+   - Tests use isolated collections (not production data)
+   - Benchmark results logged to JSON
+   - Qdrant-unavailable case skips cleanly with message
+
 ### Quality
 
-4. **Self-updating design**:
+7. **Self-updating design**:
    - Documentation remains accurate even as code changes
    - References are to file paths, not specific line numbers
    - Concepts explained, specifics deferred to code
 
-5. **AI-agent optimized**:
+8. **AI-agent optimized**:
    - Agents can use Glob/Grep to find specifics
    - Docs tell agents WHERE to look, not WHAT they'll find
    - Minimal prose, maximum utility
@@ -163,6 +174,10 @@ learning-memory-server/
 
 **Blocked By:**
 - SPEC-002-16 (Integration) - need working system before documenting
+
+**Runtime Dependencies:**
+- Qdrant running at localhost:6333 (for E2E/performance tests)
+- All 23 MCP tools implemented (for docstring audit)
 
 **Blocks:**
 - Nothing - this is the final task
