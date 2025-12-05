@@ -29,9 +29,12 @@ def observation_collector(temp_journal_path: Path) -> ObservationCollector:
 @pytest.fixture
 def observation_persister() -> ObservationPersister:
     """Create a mock ObservationPersister."""
+    vector_store = MagicMock()
+    # Make scroll an async method that returns empty results
+    vector_store.scroll = AsyncMock(return_value=[])
     return ObservationPersister(
         embedding_service=MagicMock(),
-        vector_store=MagicMock(),
+        vector_store=vector_store,
     )
 
 
