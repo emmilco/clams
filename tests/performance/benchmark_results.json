@@ -1,0 +1,173 @@
+[
+  {
+    "name": "code_search",
+    "value_ms": 4.275202113785781,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1764938343.418991,
+    "percentage_of_target": 2.1376010568928905
+  },
+  {
+    "name": "memory_retrieval",
+    "value_ms": 2.9446354747051373,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1764938343.650914,
+    "percentage_of_target": 1.4723177373525687
+  },
+  {
+    "name": "context_assembly",
+    "value_ms": 5.643422840512357,
+    "target_ms": 500.0,
+    "passed": true,
+    "iterations": 10,
+    "timestamp": 1764938343.708252,
+    "percentage_of_target": 1.1286845681024715
+  },
+  {
+    "name": "clustering_4_axes",
+    "value_s": 0.12797312496695668,
+    "target_s": 5.0,
+    "passed": true,
+    "iterations": 1,
+    "timestamp": 1764938343.837635,
+    "percentage_of_target": 2.5594624993391335
+  },
+  {
+    "name": "code_search",
+    "value_ms": 3.0538517981767654,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1764938416.418551,
+    "percentage_of_target": 1.5269258990883827
+  },
+  {
+    "name": "memory_retrieval",
+    "value_ms": 3.1999002734664823,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1764938416.672021,
+    "percentage_of_target": 1.599950136733241
+  },
+  {
+    "name": "context_assembly",
+    "value_ms": 6.263135885819792,
+    "target_ms": 500.0,
+    "passed": true,
+    "iterations": 10,
+    "timestamp": 1764938416.728288,
+    "percentage_of_target": 1.2526271771639583
+  },
+  {
+    "name": "code_search",
+    "value_ms": 3.802456590346992,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1764938546.041363,
+    "percentage_of_target": 1.901228295173496
+  },
+  {
+    "name": "memory_retrieval",
+    "value_ms": 2.9926142480690032,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1764938546.2647989,
+    "percentage_of_target": 1.4963071240345016
+  },
+  {
+    "name": "context_assembly",
+    "value_ms": 5.20163124310784,
+    "target_ms": 500.0,
+    "passed": true,
+    "iterations": 10,
+    "timestamp": 1764938546.3215969,
+    "percentage_of_target": 1.040326248621568
+  },
+  {
+    "name": "clustering_4_axes",
+    "value_s": 0.12087424995843321,
+    "target_s": 5.0,
+    "passed": true,
+    "iterations": 1,
+    "timestamp": 1764938546.443752,
+    "percentage_of_target": 2.417484999168664
+  },
+  {
+    "name": "code_search",
+    "value_ms": 3.97905659629032,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1764938616.022309,
+    "percentage_of_target": 1.98952829814516
+  },
+  {
+    "name": "memory_retrieval",
+    "value_ms": 3.3488704561023037,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1764938616.287019,
+    "percentage_of_target": 1.6744352280511516
+  },
+  {
+    "name": "context_assembly",
+    "value_ms": 6.366091879317536,
+    "target_ms": 500.0,
+    "passed": true,
+    "iterations": 10,
+    "timestamp": 1764938616.349684,
+    "percentage_of_target": 1.2732183758635072
+  },
+  {
+    "name": "clustering_4_axes",
+    "value_s": 0.12293587502790615,
+    "target_s": 5.0,
+    "passed": true,
+    "iterations": 1,
+    "timestamp": 1764938616.473973,
+    "percentage_of_target": 2.458717500558123
+  },
+  {
+    "name": "code_search",
+    "value_ms": 3.6756271438207477,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1764939981.536389,
+    "percentage_of_target": 1.8378135719103739
+  },
+  {
+    "name": "memory_retrieval",
+    "value_ms": 3.7828559259651215,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1764939981.808308,
+    "percentage_of_target": 1.8914279629825608
+  },
+  {
+    "name": "context_assembly",
+    "value_ms": 5.693377589341252,
+    "target_ms": 500.0,
+    "passed": true,
+    "iterations": 10,
+    "timestamp": 1764939981.86742,
+    "percentage_of_target": 1.1386755178682504
+  },
+  {
+    "name": "clustering_4_axes",
+    "value_s": 0.12226229096995667,
+    "target_s": 5.0,
+    "passed": true,
+    "iterations": 1,
+    "timestamp": 1764939981.9912739,
+    "percentage_of_target": 2.4452458193991333
+  }
+]
