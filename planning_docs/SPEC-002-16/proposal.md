@@ -96,11 +96,16 @@ The `experiences_*` naming appears in older code but is NOT used by the Observat
 
 #### Solution
 
-**Graceful Degradation Strategy**:
+**Graceful Degradation Strategy** (Code and Git ONLY):
 - Attempt to initialize code/git services
 - If initialization fails (missing dependencies, no git repo, etc.), log warning and continue
 - MCP tools check if service is available before use
 - Return clear error message if tool called without service
+
+**Fail-Fast Strategy** (Qdrant):
+- Qdrant connectivity errors fail immediately during startup
+- No tolerance for vector store unavailability (per spec requirement 8)
+- Clear error message directs user to start Qdrant
 
 **Step 1**: Uncomment code service initialization (lines 66-83):
 ```python
@@ -145,6 +150,8 @@ if settings.repo_path:
         logger.warning("git.init_skipped", reason="module_not_found", error=str(e))
     except Exception as e:
         logger.warning("git.init_failed", repo_path=settings.repo_path, error=str(e))
+else:
+    logger.info("git.init_skipped", reason="no_repo_path")
 ```
 
 **Step 3**: Verify TreeSitter grammars are available:
@@ -212,22 +219,29 @@ async def run_server(settings: ServerSettings) -> None:
 **Collection Creation Logic**:
 
 ```python
-async def initialize_collections(server: Server, settings: ServerSettings) -> None:
+async def initialize_collections(settings: ServerSettings) -> tuple[EmbeddingService, VectorStore]:
     """Ensure all required collections exist.
 
     Creates collections if they don't exist. Idempotent - safe to call
     multiple times.
 
+    Note: Services are initialized HERE (not extracted from server), because
+    we need them BEFORE the server is created. The server tools will receive
+    these same service instances via ServiceContainer.
+
     Args:
-        server: MCP server instance (to access services)
         settings: Server configuration
+
+    Returns:
+        Tuple of (embedding_service, vector_store) for use in ServiceContainer
 
     Raises:
         Exception: If collection creation fails
     """
-    # Get services from server context
-    embedding_service = ...  # Extract from server
-    vector_store = ...
+    # Initialize services (same pattern as initialize_services() in tools/__init__.py)
+    embedding_settings = EmbeddingSettings(model_name=settings.embedding_model)
+    embedding_service = NomicEmbedding(settings=embedding_settings)
+    vector_store = QdrantVectorStore(url=settings.qdrant_url)
 
     # Determine embedding dimension
     dimension = embedding_service.dimension
@@ -264,10 +278,47 @@ async def initialize_collections(server: Server, settings: ServerSettings) -> No
                 exc_info=True
             )
             raise
+
+    return embedding_service, vector_store
+```
+
+**Alternative: Pass Pre-Initialized Services to `register_all_tools()`**
+
+The current `register_all_tools()` calls `initialize_services()` internally. To use pre-initialized services from `initialize_collections()`, modify the signature:
+
+```python
+# In server/tools/__init__.py
+def register_all_tools(
+    server: Server,
+    settings: ServerSettings,
+    embedding_service: EmbeddingService | None = None,
+    vector_store: VectorStore | None = None,
+) -> None:
+    """Register all MCP tools with the server.
+
+    Args:
+        server: MCP Server instance
+        settings: Server configuration
+        embedding_service: Pre-initialized embedding service (optional)
+        vector_store: Pre-initialized vector store (optional)
+    """
+    if embedding_service and vector_store:
+        # Use pre-initialized services
+        services = ServiceContainer(
+            embedding_service=embedding_service,
+            vector_store=vector_store,
+            metadata_store=MetadataStore(db_path=settings.sqlite_path),
+            # ... rest of services
+        )
+    else:
+        # Initialize services as usual
+        services = initialize_services(settings)
+
+    # ... rest of tool registration
 ```
 
 **Error Handling**:
-- If Qdrant unreachable: fail fast with clear error (no tolerance per spec requirement 8)
+- If Qdrant unreachable: **fail fast** with clear error (no tolerance per spec requirement 8)
 - If collection already exists: log and continue (normal case)
 - If dimension mismatch: fail fast (indicates configuration problem)
 
@@ -483,6 +534,56 @@ async def search_experiences(
 
 Create `tests/integration/test_e2e.py` with 5 comprehensive scenarios proving the system works.
 
+#### Test Collection Isolation Strategy
+
+**Problem**: Integration tests need to avoid polluting production collections.
+
+**Solution**: Override `AXIS_COLLECTIONS` module-level mapping temporarily during tests (pattern already used in `tests/clustering/test_integration.py`).
+
+**How It Works**:
+
+1. **Production code** uses module-level constant:
+```python
+# In clustering/experience.py
+AXIS_COLLECTIONS = {
+    "full": "experiences_full",
+    "strategy": "experiences_strategy",
+    "surprise": "experiences_surprise",
+    "root_cause": "experiences_root_cause",
+}
+```
+
+2. **Tests temporarily override** this mapping:
+```python
+# In test fixture
+from learning_memory_server.clustering import experience
+
+original_mapping = experience.AXIS_COLLECTIONS.copy()
+experience.AXIS_COLLECTIONS = {
+    "full": "test_ghap_full",
+    "strategy": "test_ghap_strategy",
+    "surprise": "test_ghap_surprise",
+    "root_cause": "test_ghap_root_cause",
+}
+
+try:
+    # Run tests
+    yield services
+finally:
+    # Restore original mapping
+    experience.AXIS_COLLECTIONS = original_mapping
+```
+
+3. **ObservationPersister** uses same pattern (stores to collections via `AXIS_COLLECTIONS`)
+
+4. **Tests clean up** test collections after completion
+
+This approach:
+- Requires NO service configuration changes
+- Uses existing patterns from clustering tests
+- Ensures complete isolation (no shared state between tests)
+- Allows tests to create their own collections with known state
+
 #### Test Infrastructure
 
 **Setup** (`tests/integration/conftest.py`):
@@ -521,11 +622,24 @@ async def integration_services():
         except:
             pass  # Collection might already exist
 
+    # Override AXIS_COLLECTIONS for test isolation
+    from learning_memory_server.clustering import experience
+    original_mapping = experience.AXIS_COLLECTIONS.copy()
+    experience.AXIS_COLLECTIONS = {
+        "full": "test_ghap_full",
+        "strategy": "test_ghap_strategy",
+        "surprise": "test_ghap_surprise",
+        "root_cause": "test_ghap_root_cause",
+    }
+
     yield {
         "embedding_service": embedding_service,
         "vector_store": vector_store,
         "metadata_store": metadata_store,
     }
+
+    # Restore original mapping
+    experience.AXIS_COLLECTIONS = original_mapping
 
     # Cleanup - delete test collections
     for collection in test_collections:
@@ -1024,6 +1138,13 @@ async def test_clustering_performance(integration_services):
     print(f"Clustering (4 axes, 100 entries): {total_time:.2f}s")
     assert total_time < 5.0, f"Clustering too slow: {total_time:.2f}s"
 ```
+
+**Note on Cold-Start Performance**: The first clustering call may be slower due to:
+- HDBSCAN model initialization
+- NumPy/SciPy lazy loading
+- Memory allocation for large embedding arrays
+
+Subsequent calls will be faster. Benchmarks should measure steady-state performance (run warmup iteration first or take median of multiple runs).
 
 **Results Logging**:
 
