@@ -29,18 +29,16 @@ def _error_response(error_type: str, message: str) -> dict[str, Any]:
     return {"error": {"type": error_type, "message": message}}
 
 
-def register_search_tools(
-    server: Server,
-    searcher: Searcher,
-) -> None:
-    """Register search tools with MCP server.
+def get_search_tools(searcher: Searcher) -> dict[str, Any]:
+    """Get search tool implementations for the dispatcher.
 
     Args:
-        server: MCP Server instance
         searcher: Search service
+
+    Returns:
+        Dictionary mapping tool names to their implementations
     """
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
     async def search_experiences(
         query: str,
         axis: str = "full",
@@ -117,3 +115,20 @@ def register_search_tools(
                 exc_info=True,
             )
             return _error_response("internal_error", "Internal server error")
+
+    return {
+        "search_experiences": search_experiences,
+    }
+
+
+def register_search_tools(
+    server: Server,
+    searcher: Searcher,
+) -> None:
+    """Register search tools with MCP server.
+
+    DEPRECATED: This function is kept for backwards compatibility with tests.
+    The new dispatcher pattern uses get_search_tools() instead.
+    """
+    # No-op - tools are now registered via the central dispatcher
+    pass

@@ -5,31 +5,14 @@ from unittest.mock import Mock
 import pytest
 
 from learning_memory_server.server.errors import MCPError, ValidationError
-from learning_memory_server.server.tools.code import register_code_tools
-
-
-@pytest.fixture
-def server():
-    """Create a mock MCP server."""
-    server = Mock()
-    server._tools = {}
-
-    def call_tool_decorator():
-        def wrapper(func):
-            server._tools[func.__name__] = func
-            return func
-
-        return wrapper
-
-    server.call_tool = call_tool_decorator
-    return server
+from learning_memory_server.server.tools.code import get_code_tools
 
 
 @pytest.mark.asyncio
-async def test_index_codebase_not_available(server, mock_services):
+async def test_index_codebase_not_available(mock_services):
     """Test that code tools return helpful error when CodeIndexer unavailable."""
-    register_code_tools(server, mock_services)
-    index_codebase = server._tools["index_codebase"]
+    tools = get_code_tools(mock_services)
+    index_codebase = tools["index_codebase"]
 
     with pytest.raises(
         MCPError,
@@ -39,10 +22,10 @@ async def test_index_codebase_not_available(server, mock_services):
 
 
 @pytest.mark.asyncio
-async def test_search_code_not_available(server, mock_services):
+async def test_search_code_not_available(mock_services):
     """Test that search_code returns helpful error when CodeIndexer unavailable."""
-    register_code_tools(server, mock_services)
-    search_code = server._tools["search_code"]
+    tools = get_code_tools(mock_services)
+    search_code = tools["search_code"]
 
     with pytest.raises(
         MCPError,
@@ -52,10 +35,10 @@ async def test_search_code_not_available(server, mock_services):
 
 
 @pytest.mark.asyncio
-async def test_find_similar_code_not_available(server, mock_services):
+async def test_find_similar_code_not_available(mock_services):
     """Test that find_similar returns helpful error when CodeIndexer unavailable."""
-    register_code_tools(server, mock_services)
-    find_similar_code = server._tools["find_similar_code"]
+    tools = get_code_tools(mock_services)
+    find_similar_code = tools["find_similar_code"]
 
     with pytest.raises(
         MCPError,
@@ -65,13 +48,13 @@ async def test_find_similar_code_not_available(server, mock_services):
 
 
 @pytest.mark.asyncio
-async def test_search_code_empty_query(server, mock_services):
+async def test_search_code_empty_query(mock_services):
     """Test that empty query returns empty results."""
     # Add mock code indexer
     mock_services.code_indexer = Mock()
 
-    register_code_tools(server, mock_services)
-    search_code = server._tools["search_code"]
+    tools = get_code_tools(mock_services)
+    search_code = tools["search_code"]
 
     result = await search_code(query="   ")
 
@@ -80,12 +63,12 @@ async def test_search_code_empty_query(server, mock_services):
 
 
 @pytest.mark.asyncio
-async def test_search_code_limit_validation(server, mock_services):
+async def test_search_code_limit_validation(mock_services):
     """Test limit validation for search_code."""
     mock_services.code_indexer = Mock()
 
-    register_code_tools(server, mock_services)
-    search_code = server._tools["search_code"]
+    tools = get_code_tools(mock_services)
+    search_code = tools["search_code"]
 
     with pytest.raises(ValidationError, match="Limit.*out of range"):
         await search_code(query="test", limit=0)
@@ -95,12 +78,12 @@ async def test_search_code_limit_validation(server, mock_services):
 
 
 @pytest.mark.asyncio
-async def test_find_similar_code_snippet_too_long(server, mock_services):
+async def test_find_similar_code_snippet_too_long(mock_services):
     """Test validation for snippet that's too long (no silent truncation)."""
     mock_services.code_indexer = Mock()
 
-    register_code_tools(server, mock_services)
-    find_similar_code = server._tools["find_similar_code"]
+    tools = get_code_tools(mock_services)
+    find_similar_code = tools["find_similar_code"]
 
     long_snippet = "x" * 6000
     with pytest.raises(ValidationError, match="Snippet too long"):
@@ -108,12 +91,12 @@ async def test_find_similar_code_snippet_too_long(server, mock_services):
 
 
 @pytest.mark.asyncio
-async def test_find_similar_code_empty_snippet(server, mock_services):
+async def test_find_similar_code_empty_snippet(mock_services):
     """Test that empty snippet returns empty results."""
     mock_services.code_indexer = Mock()
 
-    register_code_tools(server, mock_services)
-    find_similar_code = server._tools["find_similar_code"]
+    tools = get_code_tools(mock_services)
+    find_similar_code = tools["find_similar_code"]
 
     result = await find_similar_code(snippet="   ")
 
@@ -122,12 +105,12 @@ async def test_find_similar_code_empty_snippet(server, mock_services):
 
 
 @pytest.mark.asyncio
-async def test_find_similar_code_limit_validation(server, mock_services):
+async def test_find_similar_code_limit_validation(mock_services):
     """Test limit validation for find_similar_code."""
     mock_services.code_indexer = Mock()
 
-    register_code_tools(server, mock_services)
-    find_similar_code = server._tools["find_similar_code"]
+    tools = get_code_tools(mock_services)
+    find_similar_code = tools["find_similar_code"]
 
     with pytest.raises(ValidationError, match="Limit.*out of range"):
         await find_similar_code(snippet="test", limit=0)
@@ -141,12 +124,12 @@ async def test_find_similar_code_limit_validation(server, mock_services):
 
 
 @pytest.mark.asyncio
-async def test_index_codebase_directory_not_found(server, mock_services, tmp_path):
+async def test_index_codebase_directory_not_found(mock_services, tmp_path):
     """Test validation error when directory doesn't exist."""
     mock_services.code_indexer = Mock()
 
-    register_code_tools(server, mock_services)
-    index_codebase = server._tools["index_codebase"]
+    tools = get_code_tools(mock_services)
+    index_codebase = tools["index_codebase"]
 
     with pytest.raises(ValidationError, match="Directory not found"):
         await index_codebase(
@@ -156,7 +139,7 @@ async def test_index_codebase_directory_not_found(server, mock_services, tmp_pat
 
 
 @pytest.mark.asyncio
-async def test_index_codebase_not_a_directory(server, mock_services, tmp_path):
+async def test_index_codebase_not_a_directory(mock_services, tmp_path):
     """Test validation error when path is not a directory."""
     mock_services.code_indexer = Mock()
 
@@ -164,20 +147,20 @@ async def test_index_codebase_not_a_directory(server, mock_services, tmp_path):
     test_file = tmp_path / "test.txt"
     test_file.write_text("test")
 
-    register_code_tools(server, mock_services)
-    index_codebase = server._tools["index_codebase"]
+    tools = get_code_tools(mock_services)
+    index_codebase = tools["index_codebase"]
 
     with pytest.raises(ValidationError, match="Not a directory"):
         await index_codebase(directory=str(test_file), project="test")
 
 
 @pytest.mark.asyncio
-async def test_search_code_with_filters(server, mock_services, mock_search_result):
+async def test_search_code_with_filters(mock_services, mock_search_result):
     """Test search_code with project and language filters."""
     mock_services.code_indexer = Mock()
 
-    register_code_tools(server, mock_services)
-    search_code = server._tools["search_code"]
+    tools = get_code_tools(mock_services)
+    search_code = tools["search_code"]
 
     # Mock search results
     mock_result = mock_search_result(
@@ -209,12 +192,12 @@ async def test_search_code_with_filters(server, mock_services, mock_search_resul
 
 
 @pytest.mark.asyncio
-async def test_find_similar_code_with_project_filter(server, mock_services):
+async def test_find_similar_code_with_project_filter(mock_services):
     """Test find_similar_code with project filter."""
     mock_services.code_indexer = Mock()
 
-    register_code_tools(server, mock_services)
-    find_similar_code = server._tools["find_similar_code"]
+    tools = get_code_tools(mock_services)
+    find_similar_code = tools["find_similar_code"]
 
     mock_services.vector_store.search.return_value = []
 

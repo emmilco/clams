@@ -457,5 +457,77 @@
     "iterations": 1,
     "timestamp": 1764948548.205455,
     "percentage_of_target": 2.508555839303881
+  },
+  {
+    "name": "code_search",
+    "value_ms": 4.1159437445458025,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1764976014.210488,
+    "percentage_of_target": 2.0579718722729012
+  },
+  {
+    "name": "memory_retrieval",
+    "value_ms": 4.663397910189815,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1764976014.533885,
+    "percentage_of_target": 2.3316989550949074
+  },
+  {
+    "name": "context_assembly",
+    "value_ms": 6.7924001545179635,
+    "target_ms": 500.0,
+    "passed": true,
+    "iterations": 10,
+    "timestamp": 1764976014.60422,
+    "percentage_of_target": 1.3584800309035927
+  },
+  {
+    "name": "clustering_4_axes",
+    "value_s": 0.13324670802103356,
+    "target_s": 5.0,
+    "passed": true,
+    "iterations": 1,
+    "timestamp": 1764976014.739265,
+    "percentage_of_target": 2.664934160420671
+  },
+  {
+    "name": "code_search",
+    "value_ms": 3.498505894094705,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1764976417.0102458,
+    "percentage_of_target": 1.7492529470473523
+  },
+  {
+    "name": "memory_retrieval",
+    "value_ms": 4.030847860849462,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1764976417.313465,
+    "percentage_of_target": 2.015423930424731
+  },
+  {
+    "name": "context_assembly",
+    "value_ms": 6.847160620964131,
+    "target_ms": 500.0,
+    "passed": true,
+    "iterations": 10,
+    "timestamp": 1764976417.380907,
+    "percentage_of_target": 1.3694321241928262
+  },
+  {
+    "name": "clustering_4_axes",
+    "value_s": 0.12801820802269503,
+    "target_s": 5.0,
+    "passed": true,
+    "iterations": 1,
+    "timestamp": 1764976417.510415,
+    "percentage_of_target": 2.5603641604539007
   }
 ]

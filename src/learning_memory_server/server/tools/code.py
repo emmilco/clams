@@ -12,18 +12,16 @@ from learning_memory_server.server.tools import ServiceContainer
 logger = structlog.get_logger()
 
 
-def register_code_tools(server: Server, services: ServiceContainer) -> None:
-    """Register code tools with MCP server.
-
-    If CodeIndexer is not available (SPEC-002-06 incomplete), tools will be
-    registered but return helpful errors.
+def get_code_tools(services: ServiceContainer) -> dict[str, Any]:
+    """Get code tool implementations for the dispatcher.
 
     Args:
-        server: MCP Server instance
         services: Initialized service container
+
+    Returns:
+        Dictionary mapping tool names to their implementations
     """
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
     async def index_codebase(
         directory: str,
         project: str,
@@ -98,7 +96,6 @@ def register_code_tools(server: Server, services: ServiceContainer) -> None:
             logger.error("code.index_failed", error=str(e), exc_info=True)
             raise MCPError(f"Failed to index codebase: {e}") from e
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
     async def search_code(
         query: str,
         project: str | None = None,
@@ -175,7 +172,6 @@ def register_code_tools(server: Server, services: ServiceContainer) -> None:
             logger.error("code.search_failed", error=str(e), exc_info=True)
             raise MCPError(f"Failed to search code: {e}") from e
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
     async def find_similar_code(
         snippet: str,
         project: str | None = None,
@@ -253,3 +249,19 @@ def register_code_tools(server: Server, services: ServiceContainer) -> None:
         except Exception as e:
             logger.error("code.find_similar_failed", error=str(e), exc_info=True)
             raise MCPError(f"Failed to find similar code: {e}") from e
+
+    return {
+        "index_codebase": index_codebase,
+        "search_code": search_code,
+        "find_similar_code": find_similar_code,
+    }
+
+
+def register_code_tools(server: Server, services: ServiceContainer) -> None:
+    """Register code tools with MCP server.
+
+    DEPRECATED: This function is kept for backwards compatibility with tests.
+    The new dispatcher pattern uses get_code_tools() instead.
+    """
+    # No-op - tools are now registered via the central dispatcher
+    pass

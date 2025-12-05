@@ -1,86 +1,86 @@
-# Session Handoff - 2025-12-05 (Evening)
+# Session Handoff - 2025-12-05 (Night)
 
 ## Session Summary
 
-Investigated why MCP tools weren't appearing in Claude Code despite the server showing as "Connected". Used a differential diagnosis approach to systematically identify the root cause.
+Completed the MCP tool discovery fix. The server now properly exposes all 23 tools to Claude Code.
 
-## Key Findings
+## Key Changes
 
-### Root Cause Identified: Two Bugs Found
+### Root Cause (from previous session)
+1. Missing `@server.list_tools()` handler - Claude Code asks "what tools?" and got "Method not found"
+2. Each `@server.call_tool()` decorator REPLACED the previous handler - only the last tool was active
+3. Logs were going to stdout instead of stderr (fixed in previous session)
 
-1. **Missing `@server.list_tools()` handler** (CRITICAL)
-   - The MCP SDK requires a `list_tools` handler to respond to tool discovery requests
-   - Without it, Claude Code asks "what tools?" and gets "Method not found"
-   - Our code only had `@server.call_tool()` decorators (for execution) but no discovery handler
+### Fix Implemented This Session
 
-2. **Logs going to stdout instead of stderr** (MEDIUM)
-   - `src/learning_memory_server/server/logging.py` line 25 used `stream=sys.stdout`
-   - MCP stdio servers MUST log to stderr - stdout is reserved for JSON-RPC
-   - **FIXED**: Changed to `stream=sys.stderr`
+Refactored all tool modules from the old pattern to a dispatcher pattern:
 
-3. **Dispatcher architecture issue** (discovered during fix)
-   - Each `@server.call_tool()` REPLACES the previous handler
-   - Only the last registered tool (ping) was active
-   - Need single dispatcher that routes to all tool implementations
+**Old Pattern** (broken):
+```python
+def register_foo_tools(server, ...):
+    @server.call_tool()  # Each decorator REPLACED the previous!
+    async def tool_a(): ...
 
-## Changes Made
+    @server.call_tool()  # Only last tool was registered
+    async def tool_b(): ...
+```
 
-### Fixed Files
-- `src/learning_memory_server/server/logging.py` - Logs now go to stderr
-- `src/learning_memory_server/server/tools/__init__.py` - Added:
-  - `_get_all_tool_definitions()` - Returns 23 Tool schemas
-  - `@server.list_tools()` handler for tool discovery
-  - Started dispatcher pattern (incomplete)
-- `src/learning_memory_server/server/tools/memory.py` - Refactored to dispatcher pattern
-- `tests/integration/test_mcp_protocol.py` - New MCP protocol-level tests
+**New Pattern** (working):
+```python
+def get_foo_tools(...) -> dict[str, Any]:
+    async def tool_a(): ...
+    async def tool_b(): ...
+    return {"tool_a": tool_a, "tool_b": tool_b}
 
-### Partially Fixed
-- `src/learning_memory_server/server/tools/ghap.py` - Partially refactored (needs return dict + register_ghap_tools stub)
+# Central dispatcher in __init__.py:
+tool_registry.update(get_foo_tools(...))
 
-### Still Needs Refactoring (not started)
-- `src/learning_memory_server/server/tools/code.py`
-- `src/learning_memory_server/server/tools/git.py`
-- `src/learning_memory_server/server/tools/learning.py`
-- `src/learning_memory_server/server/tools/search.py`
+@server.call_tool()  # Single dispatcher for ALL tools
+async def handle_call_tool(name, arguments):
+    return await tool_registry[name](**arguments)
 
-## How Bug Was Missed
+@server.list_tools()  # Returns all 23 tool schemas
+async def handle_list_tools():
+    return _get_all_tool_definitions()
+```
 
-1. **Spec-level gap** - Specs didn't mention MCP SDK implementation details
-2. **Architect misunderstanding** - Thought `server.list_tools()` was a getter, not a decorator
-3. **Skeleton bug** - SPEC-002-05 established the wrong pattern, all tools followed it
-4. **Test coverage gap** - Unit tests mocked `server.call_tool`, tested implementation not protocol
-5. **No E2E protocol test** - Tests called Python services directly, never tested MCP handshake
+### Files Modified
+- `src/learning_memory_server/server/tools/__init__.py` - Added `Any` import, central dispatcher
+- `src/learning_memory_server/server/tools/ghap.py` - Added return dict and stub
+- `src/learning_memory_server/server/tools/code.py` - Refactored to dispatcher pattern
+- `src/learning_memory_server/server/tools/git.py` - Refactored to dispatcher pattern
+- `src/learning_memory_server/server/tools/learning.py` - Refactored to dispatcher pattern
+- `src/learning_memory_server/server/tools/search.py` - Refactored to dispatcher pattern
+- `tests/server/tools/test_code.py` - Updated to use get_code_tools
+- `tests/server/tools/test_git.py` - Updated to use get_git_tools
+- `tests/server/tools/test_memory.py` - Updated to use get_memory_tools
 
-## New Test Added
+## Test Status
 
-`tests/integration/test_mcp_protocol.py` - Protocol-level tests that:
-- Connect to server via stdio (like Claude Code)
-- Send initialize request
-- Send list_tools request (this catches the bug!)
-- Verify expected tools are returned
-- Call tools to verify execution
+### Passing
+- **MCP Protocol Tests**: 10/10 (the critical regression tests)
+- `tests/server/tools/test_code.py`: All pass
+- `tests/server/tools/test_git.py`: All pass
+- `tests/server/tools/test_memory.py`: All pass
+- `tests/server/tools/test_enums.py`: All pass
+- `tests/server/tools/test_errors.py`: All pass
 
-This test caught the bug - it fails with "McpError: Method not found" when handler is missing.
+### Still Need Update
+These test files still use the old `register_*_tools` pattern with `server.tools` dict:
+- `tests/server/tools/test_ghap.py` - Needs refactor to use `get_ghap_tools`
+- `tests/server/tools/test_learning.py` - Needs refactor to use `get_learning_tools`
+- `tests/server/tools/test_search.py` - Needs refactor to use `get_search_tools`
+
+The fix pattern is the same as the other tests:
+1. Import `get_*_tools` instead of `register_*_tools`
+2. Call `get_*_tools(...)` directly to get tools dict
+3. Access tools via `tools["tool_name"]` instead of `server.tools["tool_name"]`
 
 ## Next Steps
 
-1. **Complete the dispatcher refactor** for remaining modules:
-   - Add `get_*_tools()` functions that return dict of tool implementations
-   - Remove `@server.call_tool()` decorators from individual tools
-   - Make `register_*_tools()` functions no-op for backwards compatibility
-
-2. **Fix ghap.py** - Add the return dict at end of `get_ghap_tools()`
-
-3. **Run the new protocol tests** to verify fix works end-to-end
-
-4. **Restart Claude Code** and verify tools appear as `mcp__learning-memory-server__*`
-
-## Friction Points
-
-- MCP SDK's dual-registration pattern (`call_tool` for execution, `list_tools` for discovery) is not obvious
-- The SDK overwrites handlers instead of appending - easy to miss
-- Testing the full MCP protocol requires starting a subprocess and doing async communication
-- anyio/pytest-asyncio compatibility issues in test teardown (non-blocking but annoying)
+1. **Update remaining test files** - Follow the pattern from test_code.py/test_git.py/test_memory.py
+2. **Run full test suite** - After all tests updated
+3. **Verify with Claude Code** - Restart Claude Code and confirm tools appear as `mcp__learning-memory-server__*`
 
 ## Commands to Resume
 
@@ -88,10 +88,18 @@ This test caught the bug - it fails with "McpError: Method not found" when handl
 # Check current state
 .claude/bin/clams-status
 
-# Run the protocol test to see current status
-TOKENIZERS_PARALLELISM=false uv run pytest tests/integration/test_mcp_protocol.py -v --tb=short
+# Run tool tests
+TOKENIZERS_PARALLELISM=false uv run pytest tests/server/tools/ -v --tb=short
 
-# After completing the fix, test with Claude Code
+# Run full test suite after fixes
+TOKENIZERS_PARALLELISM=false uv run pytest -vvsx --ignore=tests/e2e
+
+# After all tests pass, verify with Claude Code
 claude mcp list
-# Then restart Claude Code to pick up changes
 ```
+
+## Friction Points
+
+- The MCP SDK's dual pattern (call_tool for execution, list_tools for discovery) is non-obvious
+- Each @server.call_tool() decorator REPLACES the previous handler - easy to miss in code review
+- Tests that mock `server.call_tool` decorator behavior need manual updates when architecture changes

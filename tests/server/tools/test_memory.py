@@ -6,32 +6,14 @@ from uuid import UUID
 import pytest
 
 from learning_memory_server.server.errors import ValidationError
-from learning_memory_server.server.tools.memory import register_memory_tools
-
-
-@pytest.fixture
-def server():
-    """Create a mock MCP server."""
-    server = Mock()
-    # Store registered tools for testing
-    server._tools = {}
-
-    def call_tool_decorator():
-        def wrapper(func):
-            server._tools[func.__name__] = func
-            return func
-
-        return wrapper
-
-    server.call_tool = call_tool_decorator
-    return server
+from learning_memory_server.server.tools.memory import get_memory_tools
 
 
 @pytest.mark.asyncio
-async def test_store_memory_success(server, mock_services):
+async def test_store_memory_success(mock_services):
     """Test successful memory storage."""
-    register_memory_tools(server, mock_services)
-    store_memory = server._tools["store_memory"]
+    tools = get_memory_tools(mock_services)
+    store_memory = tools["store_memory"]
 
     result = await store_memory(
         content="Test memory",
@@ -55,20 +37,20 @@ async def test_store_memory_success(server, mock_services):
 
 
 @pytest.mark.asyncio
-async def test_store_memory_invalid_category(server, mock_services):
+async def test_store_memory_invalid_category(mock_services):
     """Test validation error for invalid category."""
-    register_memory_tools(server, mock_services)
-    store_memory = server._tools["store_memory"]
+    tools = get_memory_tools(mock_services)
+    store_memory = tools["store_memory"]
 
     with pytest.raises(ValidationError, match="Invalid category"):
         await store_memory(content="Test", category="invalid")
 
 
 @pytest.mark.asyncio
-async def test_store_memory_content_too_long(server, mock_services):
+async def test_store_memory_content_too_long(mock_services):
     """Test validation error for content that's too long (no silent truncation)."""
-    register_memory_tools(server, mock_services)
-    store_memory = server._tools["store_memory"]
+    tools = get_memory_tools(mock_services)
+    store_memory = tools["store_memory"]
 
     long_content = "x" * 15_000
     with pytest.raises(ValidationError, match="Content too long"):
@@ -76,10 +58,10 @@ async def test_store_memory_content_too_long(server, mock_services):
 
 
 @pytest.mark.asyncio
-async def test_store_memory_importance_out_of_range(server, mock_services):
+async def test_store_memory_importance_out_of_range(mock_services):
     """Test validation error for importance out of range (no silent clamping)."""
-    register_memory_tools(server, mock_services)
-    store_memory = server._tools["store_memory"]
+    tools = get_memory_tools(mock_services)
+    store_memory = tools["store_memory"]
 
     with pytest.raises(ValidationError, match="Importance.*out of range"):
         await store_memory(content="Test", category="fact", importance=1.5)
@@ -89,10 +71,10 @@ async def test_store_memory_importance_out_of_range(server, mock_services):
 
 
 @pytest.mark.asyncio
-async def test_store_memory_default_values(server, mock_services):
+async def test_store_memory_default_values(mock_services):
     """Test store_memory with default values."""
-    register_memory_tools(server, mock_services)
-    store_memory = server._tools["store_memory"]
+    tools = get_memory_tools(mock_services)
+    store_memory = tools["store_memory"]
 
     result = await store_memory(content="Test", category="fact")
 
@@ -101,10 +83,10 @@ async def test_store_memory_default_values(server, mock_services):
 
 
 @pytest.mark.asyncio
-async def test_retrieve_memories_success(server, mock_services, mock_search_result):
+async def test_retrieve_memories_success(mock_services, mock_search_result):
     """Test successful memory retrieval."""
-    register_memory_tools(server, mock_services)
-    retrieve_memories = server._tools["retrieve_memories"]
+    tools = get_memory_tools(mock_services)
+    retrieve_memories = tools["retrieve_memories"]
 
     # Mock search results
     mock_result = mock_search_result()
@@ -122,10 +104,10 @@ async def test_retrieve_memories_success(server, mock_services, mock_search_resu
 
 
 @pytest.mark.asyncio
-async def test_retrieve_memories_empty_query(server, mock_services):
+async def test_retrieve_memories_empty_query(mock_services):
     """Test empty query returns empty results."""
-    register_memory_tools(server, mock_services)
-    retrieve_memories = server._tools["retrieve_memories"]
+    tools = get_memory_tools(mock_services)
+    retrieve_memories = tools["retrieve_memories"]
 
     result = await retrieve_memories(query="   ", limit=10)
 
@@ -135,10 +117,10 @@ async def test_retrieve_memories_empty_query(server, mock_services):
 
 
 @pytest.mark.asyncio
-async def test_retrieve_memories_with_filters(server, mock_services):
+async def test_retrieve_memories_with_filters(mock_services):
     """Test retrieve with category and importance filters."""
-    register_memory_tools(server, mock_services)
-    retrieve_memories = server._tools["retrieve_memories"]
+    tools = get_memory_tools(mock_services)
+    retrieve_memories = tools["retrieve_memories"]
 
     await retrieve_memories(
         query="test",
@@ -155,20 +137,20 @@ async def test_retrieve_memories_with_filters(server, mock_services):
 
 
 @pytest.mark.asyncio
-async def test_retrieve_memories_invalid_category(server, mock_services):
+async def test_retrieve_memories_invalid_category(mock_services):
     """Test validation error for invalid category."""
-    register_memory_tools(server, mock_services)
-    retrieve_memories = server._tools["retrieve_memories"]
+    tools = get_memory_tools(mock_services)
+    retrieve_memories = tools["retrieve_memories"]
 
     with pytest.raises(ValidationError, match="Invalid category"):
         await retrieve_memories(query="test", category="invalid")
 
 
 @pytest.mark.asyncio
-async def test_retrieve_memories_limit_validation(server, mock_services):
+async def test_retrieve_memories_limit_validation(mock_services):
     """Test limit validation."""
-    register_memory_tools(server, mock_services)
-    retrieve_memories = server._tools["retrieve_memories"]
+    tools = get_memory_tools(mock_services)
+    retrieve_memories = tools["retrieve_memories"]
 
     # Too small
     with pytest.raises(ValidationError, match="Limit.*out of range"):
@@ -180,10 +162,10 @@ async def test_retrieve_memories_limit_validation(server, mock_services):
 
 
 @pytest.mark.asyncio
-async def test_list_memories_success(server, mock_services, mock_search_result):
+async def test_list_memories_success(mock_services, mock_search_result):
     """Test successful memory listing."""
-    register_memory_tools(server, mock_services)
-    list_memories = server._tools["list_memories"]
+    tools = get_memory_tools(mock_services)
+    list_memories = tools["list_memories"]
 
     # Mock scroll and count
     mock_result = mock_search_result()
@@ -198,10 +180,10 @@ async def test_list_memories_success(server, mock_services, mock_search_result):
 
 
 @pytest.mark.asyncio
-async def test_list_memories_pagination(server, mock_services, mock_search_result):
+async def test_list_memories_pagination(mock_services, mock_search_result):
     """Test pagination with offset."""
-    register_memory_tools(server, mock_services)
-    list_memories = server._tools["list_memories"]
+    tools = get_memory_tools(mock_services)
+    list_memories = tools["list_memories"]
 
     # Create multiple results
     results = [
@@ -222,10 +204,10 @@ async def test_list_memories_pagination(server, mock_services, mock_search_resul
 
 
 @pytest.mark.asyncio
-async def test_list_memories_with_filters(server, mock_services):
+async def test_list_memories_with_filters(mock_services):
     """Test listing with category and tag filters."""
-    register_memory_tools(server, mock_services)
-    list_memories = server._tools["list_memories"]
+    tools = get_memory_tools(mock_services)
+    list_memories = tools["list_memories"]
 
     await list_memories(category="fact", tags=["important", "work"])
 
@@ -237,20 +219,20 @@ async def test_list_memories_with_filters(server, mock_services):
 
 
 @pytest.mark.asyncio
-async def test_list_memories_invalid_offset(server, mock_services):
+async def test_list_memories_invalid_offset(mock_services):
     """Test validation error for negative offset."""
-    register_memory_tools(server, mock_services)
-    list_memories = server._tools["list_memories"]
+    tools = get_memory_tools(mock_services)
+    list_memories = tools["list_memories"]
 
     with pytest.raises(ValidationError, match="Offset.*must be >= 0"):
         await list_memories(offset=-1)
 
 
 @pytest.mark.asyncio
-async def test_list_memories_limit_validation(server, mock_services):
+async def test_list_memories_limit_validation(mock_services):
     """Test limit validation."""
-    register_memory_tools(server, mock_services)
-    list_memories = server._tools["list_memories"]
+    tools = get_memory_tools(mock_services)
+    list_memories = tools["list_memories"]
 
     with pytest.raises(ValidationError, match="Limit.*out of range"):
         await list_memories(limit=0)
@@ -260,10 +242,10 @@ async def test_list_memories_limit_validation(server, mock_services):
 
 
 @pytest.mark.asyncio
-async def test_delete_memory_success(server, mock_services):
+async def test_delete_memory_success(mock_services):
     """Test successful memory deletion."""
-    register_memory_tools(server, mock_services)
-    delete_memory = server._tools["delete_memory"]
+    tools = get_memory_tools(mock_services)
+    delete_memory = tools["delete_memory"]
 
     result = await delete_memory(memory_id="test-id")
 
@@ -275,10 +257,10 @@ async def test_delete_memory_success(server, mock_services):
 
 
 @pytest.mark.asyncio
-async def test_delete_memory_not_found(server, mock_services):
+async def test_delete_memory_not_found(mock_services):
     """Test delete returns false on failure (not an error)."""
-    register_memory_tools(server, mock_services)
-    delete_memory = server._tools["delete_memory"]
+    tools = get_memory_tools(mock_services)
+    delete_memory = tools["delete_memory"]
 
     # Make delete raise an exception
     mock_services.vector_store.delete.side_effect = Exception("Not found")
@@ -289,10 +271,10 @@ async def test_delete_memory_not_found(server, mock_services):
 
 
 @pytest.mark.asyncio
-async def test_all_valid_categories_accepted(server, mock_services):
+async def test_all_valid_categories_accepted(mock_services):
     """Test that all valid categories are accepted."""
-    register_memory_tools(server, mock_services)
-    store_memory = server._tools["store_memory"]
+    tools = get_memory_tools(mock_services)
+    store_memory = tools["store_memory"]
 
     valid_categories = [
         "preference",

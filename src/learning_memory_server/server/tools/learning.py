@@ -30,22 +30,22 @@ def _error_response(error_type: str, message: str) -> dict[str, Any]:
     return {"error": {"type": error_type, "message": message}}
 
 
-def register_learning_tools(
-    server: Server,
+def get_learning_tools(
     experience_clusterer: ExperienceClusterer,
     value_store: ValueStore,
-) -> None:
-    """Register learning tools with MCP server.
+) -> dict[str, Any]:
+    """Get learning tool implementations for the dispatcher.
 
     Args:
-        server: MCP Server instance
         experience_clusterer: Experience clustering service
         value_store: Value storage service
+
+    Returns:
+        Dictionary mapping tool names to their implementations
     """
     # Access vector store for get_cluster_members and list_values
     vector_store = experience_clusterer.vector_store
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
     async def get_clusters(axis: str) -> dict[str, Any]:
         """Get cluster information for a given axis.
 
@@ -123,7 +123,6 @@ def register_learning_tools(
             )
             return _error_response("internal_error", "Internal server error")
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
     async def get_cluster_members(
         cluster_id: str,
         limit: int = 50,
@@ -227,7 +226,6 @@ def register_learning_tools(
             )
             return _error_response("internal_error", "Internal server error")
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
     async def validate_value(
         text: str,
         cluster_id: str,
@@ -305,7 +303,6 @@ def register_learning_tools(
             )
             return _error_response("internal_error", "Internal server error")
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
     async def store_value(
         text: str,
         cluster_id: str,
@@ -380,7 +377,6 @@ def register_learning_tools(
             )
             return _error_response("internal_error", "Internal server error")
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
     async def list_values(
         axis: str | None = None,
         limit: int = 20,
@@ -457,3 +453,25 @@ def register_learning_tools(
                 exc_info=True,
             )
             return _error_response("internal_error", "Internal server error")
+
+    return {
+        "get_clusters": get_clusters,
+        "get_cluster_members": get_cluster_members,
+        "validate_value": validate_value,
+        "store_value": store_value,
+        "list_values": list_values,
+    }
+
+
+def register_learning_tools(
+    server: Server,
+    experience_clusterer: ExperienceClusterer,
+    value_store: ValueStore,
+) -> None:
+    """Register learning tools with MCP server.
+
+    DEPRECATED: This function is kept for backwards compatibility with tests.
+    The new dispatcher pattern uses get_learning_tools() instead.
+    """
+    # No-op - tools are now registered via the central dispatcher
+    pass

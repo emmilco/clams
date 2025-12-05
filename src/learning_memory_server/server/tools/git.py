@@ -12,18 +12,16 @@ from learning_memory_server.server.tools import ServiceContainer
 logger = structlog.get_logger()
 
 
-def register_git_tools(server: Server, services: ServiceContainer) -> None:
-    """Register git tools with MCP server.
-
-    Tools are registered even if GitAnalyzer is not available (SPEC-002-07
-    incomplete), but will return helpful errors when called.
+def get_git_tools(services: ServiceContainer) -> dict[str, Any]:
+    """Get git tool implementations for the dispatcher.
 
     Args:
-        server: MCP Server instance
         services: Initialized service container
+
+    Returns:
+        Dictionary mapping tool names to their implementations
     """
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
     async def search_commits(
         query: str,
         author: str | None = None,
@@ -109,7 +107,6 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
             logger.error("git.search_commits_failed", error=str(e), exc_info=True)
             raise MCPError(f"Failed to search commits: {e}") from e
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
     async def get_file_history(
         path: str,
         limit: int = 100,
@@ -174,7 +171,6 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
             logger.error("git.file_history_failed", error=str(e), exc_info=True)
             raise MCPError(f"Failed to get file history: {e}") from e
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
     async def get_churn_hotspots(
         days: int = 90,
         limit: int = 10,
@@ -241,7 +237,6 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
             logger.error("git.churn_failed", error=str(e), exc_info=True)
             raise MCPError(f"Failed to compute churn hotspots: {e}") from e
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
     async def get_code_authors(path: str) -> dict[str, Any]:
         """Get author statistics for a file.
 
@@ -292,3 +287,20 @@ def register_git_tools(server: Server, services: ServiceContainer) -> None:
         except Exception as e:
             logger.error("git.code_authors_failed", error=str(e), exc_info=True)
             raise MCPError(f"Failed to get code authors: {e}") from e
+
+    return {
+        "search_commits": search_commits,
+        "get_file_history": get_file_history,
+        "get_churn_hotspots": get_churn_hotspots,
+        "get_code_authors": get_code_authors,
+    }
+
+
+def register_git_tools(server: Server, services: ServiceContainer) -> None:
+    """Register git tools with MCP server.
+
+    DEPRECATED: This function is kept for backwards compatibility with tests.
+    The new dispatcher pattern uses get_git_tools() instead.
+    """
+    # No-op - tools are now registered via the central dispatcher
+    pass

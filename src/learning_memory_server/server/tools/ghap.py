@@ -587,3 +587,25 @@ def get_ghap_tools(
                 exc_info=True,
             )
             return _error_response("internal_error", "Internal server error")
+
+    return {
+        "start_ghap": start_ghap,
+        "update_ghap": update_ghap,
+        "resolve_ghap": resolve_ghap,
+        "get_active_ghap": get_active_ghap,
+        "list_ghap_entries": list_ghap_entries,
+    }
+
+
+def register_ghap_tools(
+    server: Server,
+    collector: ObservationCollector,
+    persister: ObservationPersister,
+) -> None:
+    """Register GHAP tools with MCP server.
+
+    DEPRECATED: This function is kept for backwards compatibility with tests.
+    The new dispatcher pattern uses get_ghap_tools() instead.
+    """
+    # No-op - tools are now registered via the central dispatcher
+    pass
