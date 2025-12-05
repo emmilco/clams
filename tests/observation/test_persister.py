@@ -1,9 +1,7 @@
 """Tests for ObservationPersister multi-axis embedding."""
 
-import re
 from datetime import UTC, datetime
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 import numpy as np
 import pytest
@@ -107,7 +105,10 @@ def falsified_entry() -> GHAPEntry:
         surprise="Expected connection pool exhaustion but found auth failure",
         root_cause=RootCause(
             category="wrong-assumption",
-            description="Assumed connection error was capacity-related, but was actually credentials issue",
+            description=(
+                "Assumed connection error was capacity-related, "
+                "but was actually credentials issue"
+            ),
         ),
         lesson=Lesson(
             what_worked="Checking actual error logs instead of assuming",
@@ -203,9 +204,9 @@ def test_render_root_cause_axis(
     assert "Description: Assumed connection error was capacity-related" in result
     assert "Context: debugging - root-cause-analysis" in result
     assert (
-        "Original hypothesis: Database is rejecting connections due to max connections reached"
-        in result
-    )
+        "Original hypothesis: Database is rejecting connections "
+        "due to max connections reached"
+    ) in result
 
 
 # Metadata Tests
@@ -491,7 +492,7 @@ def test_all_confidence_tier_values(persister: ObservationPersister) -> None:
 
 
 def test_literal_template_syntax_in_fields(persister: ObservationPersister) -> None:
-    """Verify fields containing literal text like '{field}' or '[optional]' are rendered correctly."""
+    """Verify fields with literal text like '{field}' render correctly."""
     entry = GHAPEntry(
         id="ghap_test",
         session_id="session_test",
