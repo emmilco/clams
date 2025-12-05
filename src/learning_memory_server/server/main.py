@@ -54,7 +54,7 @@ def validate_configuration(settings: ServerSettings) -> None:
     try:
         from sentence_transformers import SentenceTransformer
         # Try to load model (downloads if needed)
-        _ = SentenceTransformer(settings.embedding_model)
+        _ = SentenceTransformer(settings.embedding_model, trust_remote_code=True)
         logger.info("embedding_model.validated", model=settings.embedding_model)
     except Exception as e:
         raise ValueError(
