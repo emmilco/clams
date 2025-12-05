@@ -53,10 +53,18 @@ cleanup_stale_workers() {
     if [[ "$session_ended_count" -gt 0 ]]; then
         echo "=== Session Continuity ==="
         echo "Previous session ended with $session_ended_count worker(s) in progress."
-        # Check for HANDOFF.md
-        if [[ -f "$MAIN_REPO/.claude/HANDOFF.md" ]]; then
-            echo "HANDOFF.md found - review for context from last session."
-        fi
+        echo ""
+    fi
+
+    # Check for HANDOFF.md - display contents and delete to prevent reuse
+    local handoff_path="$MAIN_REPO/.claude/HANDOFF.md"
+    if [[ -f "$handoff_path" ]]; then
+        echo "=== Session Handoff (from previous session) ==="
+        cat "$handoff_path"
+        echo ""
+        echo "--- End of Handoff ---"
+        rm "$handoff_path"
+        echo "(Handoff document consumed and deleted)"
         echo ""
     fi
 }
