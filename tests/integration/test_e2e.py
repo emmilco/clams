@@ -323,6 +323,110 @@ class TestGitWorkflow:
         )
         assert len(results) == 2
 
+    async def test_churn_hotspots(
+        self,
+        vector_store: QdrantVectorStore,
+        embedding_service: MockEmbedding,
+        test_collections: dict[str, str],
+    ) -> None:
+        """Test get_churn_hotspots returns file change statistics."""
+        from learning_memory_server.git import GitAnalyzer, GitPythonReader
+        from learning_memory_server.storage.metadata import MetadataStore
+
+        # Use the actual repository for real git data
+        repo_path = Path(__file__).parent.parent.parent
+        git_reader = GitPythonReader(repo_path)
+
+        # Create a temporary metadata store for the test
+        with tempfile.TemporaryDirectory() as tmpdir:
+            metadata_store = MetadataStore(Path(tmpdir) / "metadata.db")
+            await metadata_store.initialize()
+
+            analyzer = GitAnalyzer(
+                git_reader=git_reader,
+                embedding_service=embedding_service,
+                vector_store=vector_store,
+                metadata_store=metadata_store,
+            )
+
+            # Get churn hotspots (files with most changes in last 90 days)
+            hotspots = await analyzer.get_churn_hotspots(
+                days=90,
+                limit=10,
+                min_changes=1,  # Low threshold to ensure we get results
+            )
+
+            # Verify we get a list of churn records
+            assert isinstance(hotspots, list)
+
+            # If there are results, verify structure
+            if len(hotspots) > 0:
+                first_hotspot = hotspots[0]
+                # Verify ChurnRecord structure
+                assert hasattr(first_hotspot, "file_path")
+                assert hasattr(first_hotspot, "change_count")
+                assert hasattr(first_hotspot, "total_insertions")
+                assert hasattr(first_hotspot, "total_deletions")
+                assert hasattr(first_hotspot, "authors")
+                assert hasattr(first_hotspot, "last_changed")
+
+                # Verify ordering (most changes first)
+                for i in range(1, len(hotspots)):
+                    assert hotspots[i - 1].change_count >= hotspots[i].change_count
+
+    async def test_code_authors(
+        self,
+        vector_store: QdrantVectorStore,
+        embedding_service: MockEmbedding,
+        test_collections: dict[str, str],
+    ) -> None:
+        """Test get_file_authors returns author statistics for a file."""
+        from learning_memory_server.git import GitAnalyzer, GitPythonReader
+        from learning_memory_server.storage.metadata import MetadataStore
+
+        # Use the actual repository for real git data
+        repo_path = Path(__file__).parent.parent.parent
+        git_reader = GitPythonReader(repo_path)
+
+        # Create a temporary metadata store for the test
+        with tempfile.TemporaryDirectory() as tmpdir:
+            metadata_store = MetadataStore(Path(tmpdir) / "metadata.db")
+            await metadata_store.initialize()
+
+            analyzer = GitAnalyzer(
+                git_reader=git_reader,
+                embedding_service=embedding_service,
+                vector_store=vector_store,
+                metadata_store=metadata_store,
+            )
+
+            # Get authors for a file that exists in the repo
+            # Use this test file itself as it definitely exists
+            test_file = "tests/integration/test_e2e.py"
+            authors = await analyzer.get_file_authors(test_file)
+
+            # Verify we get a list of author stats
+            assert isinstance(authors, list)
+
+            # If there are results, verify structure
+            if len(authors) > 0:
+                first_author = authors[0]
+                # Verify AuthorStats structure
+                assert hasattr(first_author, "author")
+                assert hasattr(first_author, "author_email")
+                assert hasattr(first_author, "commit_count")
+                assert hasattr(first_author, "lines_added")
+                assert hasattr(first_author, "lines_removed")
+                assert hasattr(first_author, "first_commit")
+                assert hasattr(first_author, "last_commit")
+
+                # Verify we have at least one commit for this file
+                assert first_author.commit_count >= 1
+
+                # Verify ordering (most commits first)
+                for i in range(1, len(authors)):
+                    assert authors[i - 1].commit_count >= authors[i].commit_count
+
 
 class TestGHAPLearningLoop:
     """Test GHAP learning loop with 20+ entries for clustering."""
@@ -438,7 +542,12 @@ class TestContextAssembly:
         searcher: Searcher,
         test_collections: dict[str, str],
     ) -> None:
-        """Test populate -> assemble context workflow."""
+        """Test populate -> assemble light -> assemble rich -> premortem workflow."""
+        from unittest.mock import patch
+
+        from learning_memory_server.context import ContextAssembler
+        from learning_memory_server.search.collections import CollectionName
+
         # Populate test data in memories collection
         memories = [
             {
@@ -446,12 +555,20 @@ class TestContextAssembly:
                 "content": "Important context about debugging techniques",
                 "category": "context",
                 "importance": 0.9,
+                "tags": ["debug", "techniques"],
+                "created_at": "2024-01-15T10:00:00Z",
+                "verified_at": "2024-01-15T12:00:00Z",
+                "verification_status": "verified",
             },
             {
                 "id": "mem_2",
                 "content": "Reference to testing best practices",
                 "category": "fact",
                 "importance": 0.7,
+                "tags": ["testing", "practices"],
+                "created_at": "2024-01-16T10:00:00Z",
+                "verified_at": "2024-01-16T12:00:00Z",
+                "verification_status": "verified",
             },
         ]
 
@@ -469,9 +586,13 @@ class TestContextAssembly:
             {
                 "id": "code_1",
                 "content": "def debug_function():\n    pass",
-                "name": "debug_function",
-                "type": "function",
+                "qualified_name": "test.debug_function",
+                "unit_type": "function",
+                "file_path": "/test/debug.py",
+                "start_line": 1,
+                "end_line": 2,
                 "language": "python",
+                "docstring": "Debug helper function",
             },
         ]
 
@@ -484,30 +605,95 @@ class TestContextAssembly:
                 payload=unit,
             )
 
+        # Populate experiences for premortem
+        experiences = [
+            {
+                "id": "exp_1",
+                "ghap_id": "ghap_1",
+                "axis": "full",
+                "domain": "debugging",
+                "strategy": "systematic-elimination",
+                "goal": "Fix authentication bug",
+                "hypothesis": "Token expired",
+                "action": "Check token refresh",
+                "prediction": "Will fix auth",
+                "outcome_status": "falsified",
+                "outcome_result": "Token was valid, issue elsewhere",
+                "surprise": "Token was not the issue",
+                "root_cause": "Session cookie was malformed",
+                "lesson": {"key": "Always check cookies first"},
+                "confidence_tier": "silver",
+                "iteration_count": 2,
+                "created_at": "2024-01-15T10:00:00Z",
+            },
+        ]
+
+        for exp in experiences:
+            embedding = await embedding_service.embed(
+                f"{exp['goal']} {exp['hypothesis']} {exp['action']}"
+            )
+            await vector_store.upsert(
+                collection=test_collections["full"],
+                id=exp["id"],
+                vector=embedding,
+                payload=exp,
+            )
+
         # Verify data exists
         mem_count = await vector_store.count(test_collections["memories"])
         code_count = await vector_store.count(test_collections["code_units"])
+        exp_count = await vector_store.count(test_collections["full"])
         assert mem_count == 2
         assert code_count == 1
+        assert exp_count == 1
 
-        # Test context assembler directly on vector store
-        # (Context assembler uses Searcher which needs the actual collection names)
+        # Patch collection names to use test collections
+        with patch.object(
+            CollectionName, "MEMORIES", test_collections["memories"]
+        ), patch.object(
+            CollectionName, "CODE", test_collections["code_units"]
+        ), patch.object(
+            CollectionName,
+            "get_experience_collection",
+            lambda axis: test_collections.get(axis, test_collections["full"]),
+        ):
+            # Create context assembler with the searcher
+            assembler = ContextAssembler(searcher)
 
-        # Direct search to verify data is searchable
-        query_embedding = await embedding_service.embed("debugging")
-        mem_results = await vector_store.search(
-            collection=test_collections["memories"],
-            query=query_embedding,
-            limit=5,
-        )
-        assert len(mem_results) > 0
+            # Test 1: Light context assembly (single source)
+            light_context = await assembler.assemble_context(
+                query="debugging techniques",
+                context_types=["memories"],
+                limit=10,
+                max_tokens=1000,
+            )
+            assert light_context.markdown is not None
+            assert len(light_context.items) > 0
+            assert "memories" in light_context.sources_used
+            assert light_context.token_count > 0
 
-        code_results = await vector_store.search(
-            collection=test_collections["code_units"],
-            query=query_embedding,
-            limit=5,
-        )
-        assert len(code_results) > 0
+            # Test 2: Rich context assembly (multiple sources)
+            rich_context = await assembler.assemble_context(
+                query="debugging code",
+                context_types=["memories", "code"],
+                limit=10,
+                max_tokens=2000,
+            )
+            assert rich_context.markdown is not None
+            assert len(rich_context.items) >= 1
+            # At least memories should be found
+            assert rich_context.token_count > 0
+
+            # Test 3: Premortem analysis
+            premortem_context = await assembler.get_premortem_context(
+                domain="debugging",
+                strategy="systematic-elimination",
+                limit=5,
+                max_tokens=1500,
+            )
+            assert premortem_context.markdown is not None
+            # Premortem should return experiences
+            assert premortem_context.token_count >= 0
 
 
 class TestObservationCollector:

@@ -227,6 +227,7 @@ class Searcher:
         query: str,
         axis: str = "full",
         domain: str | None = None,
+        strategy: str | None = None,
         outcome: str | None = None,
         limit: int = 10,
         search_mode: str = "semantic",
@@ -237,6 +238,7 @@ class Searcher:
             query: Search query text
             axis: Clustering axis (full, strategy, surprise, root_cause)
             domain: Optional filter by domain (metadata filter on experiences_full)
+            strategy: Optional filter by strategy (metadata filter on experiences_strategy)
             outcome: Optional filter by outcome status (confirmed, falsified, abandoned)
             limit: Maximum results to return
             search_mode: Search mode (semantic, keyword, hybrid). Default: semantic.
@@ -276,7 +278,7 @@ class Searcher:
             raise EmbeddingError(f"Failed to embed query: {e}") from e
 
         # Build filters
-        filters = _build_filters(domain=domain, outcome_status=outcome)
+        filters = _build_filters(domain=domain, strategy=strategy, outcome_status=outcome)
 
         try:
             # Search
