@@ -1,8 +1,12 @@
-# SPEC-002-17: Minimal Documentation
+# SPEC-002-17: Documentation and E2E Testing
 
 ## Summary
 
-Create minimal, self-updating documentation for the Learning Memory Server. The source of truth is the code itself. Documentation should provide navigation and conceptual guidance, not duplicate information that lives in code.
+Complete the Learning Memory Server with:
+1. Minimal, self-updating documentation (navigation, not duplication)
+2. E2E integration tests and performance benchmarks (deferred from SPEC-002-16)
+
+The source of truth is the code itself. Documentation provides navigation and conceptual guidance, not duplicate information.
 
 ## Philosophy
 
@@ -41,6 +45,11 @@ A single onboarding document for AI agents. Include:
 
 Ensure code is self-documenting:
 
+**Scope Definition:**
+- "Public" = no leading underscore (e.g., `class Foo` not `class _Foo`)
+- "Core modules" = all Python files under `src/learning_memory_server/`
+- "MCP tools" = all 23 tool functions registered with the server
+
 **What to verify:**
 - All MCP tools have docstrings with:
   - One-line purpose
@@ -49,6 +58,11 @@ Ensure code is self-documenting:
   - Raises section if applicable
 - All public classes have docstrings
 - All public functions have docstrings
+
+**Verification Method:**
+- Manual inspection during implementation
+- Code review verifies completeness
+- No automated linter enforcement (reviewer judgment)
 
 **What NOT to do:**
 - Create external documentation duplicating docstrings
@@ -79,9 +93,10 @@ Create the E2E tests and performance benchmarks that were deferred:
 
 **Failure Behavior**:
 - Performance tests that miss targets FAIL (not warn)
-- If Qdrant unavailable: tests skip with clear message (not fail)
+- If Qdrant unavailable: use `pytest.skip("Qdrant not available at localhost:6333")` - other tests (docstring checks, unit tests) still run
 - Benchmark results logged to `tests/performance/benchmark_results.json`
 - Failed benchmarks report: actual p95, target, and percentage over
+- CI environments without Qdrant: E2E/perf tests skip, docs/unit tests run
 
 ### 4. ARCHITECTURE.md (Optional - NOT required for acceptance)
 
@@ -133,8 +148,8 @@ observation/   - GHAP state machine, ObservationPersister
 
 6. **Test infrastructure works**:
    - Tests use isolated collections (not production data)
-   - Benchmark results logged to JSON
-   - Qdrant-unavailable case skips cleanly with message
+   - Benchmark results logged to JSON at `tests/performance/benchmark_results.json`
+   - Qdrant-unavailable: `pytest.skip()` with explicit message, non-Qdrant tests still run
 
 ### Quality
 
@@ -173,11 +188,14 @@ learning-memory-server/
 ## Dependencies
 
 **Blocked By:**
-- SPEC-002-16 (Integration) - need working system before documenting
+- SPEC-002-16 (Integration) - DONE - system is working
 
-**Runtime Dependencies:**
-- Qdrant running at localhost:6333 (for E2E/performance tests)
-- All 23 MCP tools implemented (for docstring audit)
+**Runtime Dependencies (for testing):**
+- Qdrant running at localhost:6333 (E2E/perf tests skip if unavailable)
+
+**Implementation Notes:**
+- All 23 MCP tools already exist from prior subtasks - this task audits their docstrings
+- SPEC-002-16 integrated all modules - this task adds E2E tests for the integration
 
 **Blocks:**
 - Nothing - this is the final task
