@@ -110,7 +110,8 @@ def test_deduplicate_items_fuzzy_match() -> None:
     """Test fuzzy deduplication on similar content."""
     # Two items with >90% similar content
     content1 = "This is a test sentence for fuzzy matching algorithms."
-    content2 = "This is a test sentence for fuzzy matching algorithms!"  # Only diff is punctuation
+    # Only diff is punctuation
+    content2 = "This is a test sentence for fuzzy matching algorithms!"
 
     item1 = ContextItem(
         source="memory", content=content1, relevance=0.8, metadata={"id": "mem_1"}

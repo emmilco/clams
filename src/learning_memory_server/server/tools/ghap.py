@@ -353,8 +353,9 @@ def register_ghap_tools(
             # Convert lesson dict to Lesson model if provided
             lesson_model = None
             if lesson:
+                # Validation above ensures what_worked exists and is non-empty
                 lesson_model = Lesson(
-                    what_worked=lesson["what_worked"],
+                    what_worked=lesson["what_worked"],  # type: ignore[arg-type]
                     takeaway=lesson.get("takeaway"),
                 )
 

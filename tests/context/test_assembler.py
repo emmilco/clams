@@ -1,8 +1,6 @@
 """Tests for ContextAssembler."""
 
-from datetime import datetime, timezone
-from typing import Any
-from unittest.mock import AsyncMock
+from datetime import UTC, datetime
 
 import pytest
 
@@ -106,7 +104,7 @@ async def test_assemble_single_source_memories(
             score=0.95,
             importance=0.8,
             tags=["coding"],
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             verified_at=None,
             verification_status=None,
         )
@@ -138,7 +136,7 @@ async def test_assemble_multiple_sources(
             score=0.9,
             importance=0.7,
             tags=[],
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             verified_at=None,
             verification_status=None,
         )
@@ -228,7 +226,7 @@ async def test_token_budget_distribution(
             score=0.9 - (i * 0.01),
             importance=0.5,
             tags=[],
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             verified_at=None,
             verification_status=None,
         )
@@ -272,7 +270,7 @@ async def test_deduplication(
             confidence_tier="gold",
             iteration_count=1,
             score=0.8,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
     ]
 
@@ -326,7 +324,7 @@ async def test_premortem_context(
             confidence_tier="gold",
             iteration_count=1,
             score=0.9,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         ),
         ExperienceResult(
             id="exp_2",
@@ -346,7 +344,7 @@ async def test_premortem_context(
             confidence_tier="silver",
             iteration_count=2,
             score=0.85,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         ),
     ]
 
@@ -415,7 +413,7 @@ async def test_partial_source_failure(
             score=0.9,
             importance=0.5,
             tags=[],
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             verified_at=None,
             verification_status=None,
         )

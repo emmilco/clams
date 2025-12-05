@@ -32,6 +32,31 @@ class ExperienceClusterer:
         self.vector_store = vector_store
         self.clusterer = clusterer
 
+    async def count_experiences(self, axis: str) -> int:
+        """Count experiences for a given axis.
+
+        Args:
+            axis: Axis name (full, strategy, surprise, root_cause)
+
+        Returns:
+            Number of experiences indexed for this axis
+
+        Raises:
+            ValueError: If axis is invalid
+        """
+        if axis not in AXIS_COLLECTIONS:
+            raise ValueError(
+                f"Invalid axis: {axis}. Valid axes: {list(AXIS_COLLECTIONS.keys())}"
+            )
+
+        collection = AXIS_COLLECTIONS[axis]
+        results = await self.vector_store.scroll(
+            collection=collection,
+            limit=10000,
+            with_vectors=False,
+        )
+        return len(results)
+
     async def cluster_axis(self, axis: str) -> list[ClusterInfo]:
         """Cluster experiences along a single axis.
 

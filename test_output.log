@@ -25,42 +25,42 @@ tests/clustering/test_clusterer.py::test_cluster_invariants PASSED
 tests/clustering/test_clusterer.py::test_centroid_invariants PASSED
 tests/clustering/test_clusterer.py::test_cluster_result_types PASSED
 tests/clustering/test_clusterer.py::test_cluster_info_types PASSED
-tests/clustering/test_experience.py::test_cluster_axis_success 2025-12-04 22:48:28 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
+tests/clustering/test_experience.py::test_cluster_axis_success 2025-12-04 22:52:02 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
 PASSED
 tests/clustering/test_experience.py::test_cluster_axis_invalid PASSED
 tests/clustering/test_experience.py::test_cluster_axis_no_data PASSED
-tests/clustering/test_experience.py::test_cluster_axis_with_weights 2025-12-04 22:48:28 [info     ] clustering.complete            axis=strategy n_clusters=2 noise_count=10 total_points=20
+tests/clustering/test_experience.py::test_cluster_axis_with_weights 2025-12-04 22:52:02 [info     ] clustering.complete            axis=strategy n_clusters=2 noise_count=10 total_points=20
 PASSED
-tests/clustering/test_experience.py::test_cluster_axis_missing_tier 2025-12-04 22:48:28 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
+tests/clustering/test_experience.py::test_cluster_axis_missing_tier 2025-12-04 22:52:02 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
 PASSED
-tests/clustering/test_experience.py::test_cluster_axis_all_noise 2025-12-04 22:48:28 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=5 total_points=5
+tests/clustering/test_experience.py::test_cluster_axis_all_noise 2025-12-04 22:52:02 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=5 total_points=5
 PASSED
-tests/clustering/test_experience.py::test_cluster_all_axes 2025-12-04 22:48:28 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=10 total_points=10
-2025-12-04 22:48:28 [warning  ] clustering.all_noise           axis=strategy message='HDBSCAN labeled all points as noise - no clusters found' noise_count=15 total_points=15
-2025-12-04 22:48:28 [warning  ] clustering.axis_skipped        axis=surprise error="No embeddings found for axis 'surprise' (collection: experiences_surprise)" message='Skipping axis due to error'
-2025-12-04 22:48:28 [warning  ] clustering.axis_skipped        axis=root_cause error="No embeddings found for axis 'root_cause' (collection: experiences_root_cause)" message='Skipping axis due to error'
+tests/clustering/test_experience.py::test_cluster_all_axes 2025-12-04 22:52:02 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=10 total_points=10
+2025-12-04 22:52:02 [warning  ] clustering.all_noise           axis=strategy message='HDBSCAN labeled all points as noise - no clusters found' noise_count=15 total_points=15
+2025-12-04 22:52:02 [warning  ] clustering.axis_skipped        axis=surprise error="No embeddings found for axis 'surprise' (collection: experiences_surprise)" message='Skipping axis due to error'
+2025-12-04 22:52:02 [warning  ] clustering.axis_skipped        axis=root_cause error="No embeddings found for axis 'root_cause' (collection: experiences_root_cause)" message='Skipping axis due to error'
 PASSED
-tests/clustering/test_experience.py::test_cluster_all_axes_all_empty 2025-12-04 22:48:28 [warning  ] clustering.axis_skipped        axis=full error="No embeddings found for axis 'full' (collection: experiences_full)" message='Skipping axis due to error'
-2025-12-04 22:48:28 [warning  ] clustering.axis_skipped        axis=strategy error="No embeddings found for axis 'strategy' (collection: experiences_strategy)" message='Skipping axis due to error'
-2025-12-04 22:48:28 [warning  ] clustering.axis_skipped        axis=surprise error="No embeddings found for axis 'surprise' (collection: experiences_surprise)" message='Skipping axis due to error'
-2025-12-04 22:48:28 [warning  ] clustering.axis_skipped        axis=root_cause error="No embeddings found for axis 'root_cause' (collection: experiences_root_cause)" message='Skipping axis due to error'
+tests/clustering/test_experience.py::test_cluster_all_axes_all_empty 2025-12-04 22:52:02 [warning  ] clustering.axis_skipped        axis=full error="No embeddings found for axis 'full' (collection: experiences_full)" message='Skipping axis due to error'
+2025-12-04 22:52:02 [warning  ] clustering.axis_skipped        axis=strategy error="No embeddings found for axis 'strategy' (collection: experiences_strategy)" message='Skipping axis due to error'
+2025-12-04 22:52:02 [warning  ] clustering.axis_skipped        axis=surprise error="No embeddings found for axis 'surprise' (collection: experiences_surprise)" message='Skipping axis due to error'
+2025-12-04 22:52:02 [warning  ] clustering.axis_skipped        axis=root_cause error="No embeddings found for axis 'root_cause' (collection: experiences_root_cause)" message='Skipping axis due to error'
 PASSED
-tests/clustering/test_experience.py::test_cluster_axis_calls_correct_collection 2025-12-04 22:48:28 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
-2025-12-04 22:48:28 [info     ] clustering.complete            axis=strategy n_clusters=2 noise_count=10 total_points=20
-2025-12-04 22:48:28 [info     ] clustering.complete            axis=surprise n_clusters=2 noise_count=10 total_points=20
-2025-12-04 22:48:28 [info     ] clustering.complete            axis=root_cause n_clusters=2 noise_count=10 total_points=20
+tests/clustering/test_experience.py::test_cluster_axis_calls_correct_collection 2025-12-04 22:52:02 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
+2025-12-04 22:52:02 [info     ] clustering.complete            axis=strategy n_clusters=2 noise_count=10 total_points=20
+2025-12-04 22:52:02 [info     ] clustering.complete            axis=surprise n_clusters=2 noise_count=10 total_points=20
+2025-12-04 22:52:02 [info     ] clustering.complete            axis=root_cause n_clusters=2 noise_count=10 total_points=20
 PASSED
-tests/clustering/test_experience.py::test_cluster_axis_scroll_limit_warning 2025-12-04 22:48:28 [warning  ] clustering.scroll_limit_reached axis=full collection=experiences_full count=10000 message='May have truncated results - consider pagination'
-2025-12-04 22:48:37 [info     ] clustering.complete            axis=full n_clusters=358 noise_count=8166 total_points=10000
+tests/clustering/test_experience.py::test_cluster_axis_scroll_limit_warning 2025-12-04 22:52:02 [warning  ] clustering.scroll_limit_reached axis=full collection=experiences_full count=10000 message='May have truncated results - consider pagination'
+2025-12-04 22:52:12 [info     ] clustering.complete            axis=full n_clusters=358 noise_count=8166 total_points=10000
 PASSED
-tests/clustering/test_integration.py::test_end_to_end_clustering 2025-12-04 22:48:37 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=50 total_points=50
+tests/clustering/test_integration.py::test_end_to_end_clustering 2025-12-04 22:52:12 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=50 total_points=50
 PASSED
-tests/clustering/test_integration.py::test_multi_axis_clustering 2025-12-04 22:48:37 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=30 total_points=30
-2025-12-04 22:48:37 [warning  ] clustering.all_noise           axis=strategy message='HDBSCAN labeled all points as noise - no clusters found' noise_count=30 total_points=30
+tests/clustering/test_integration.py::test_multi_axis_clustering 2025-12-04 22:52:12 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=30 total_points=30
+2025-12-04 22:52:12 [warning  ] clustering.all_noise           axis=strategy message='HDBSCAN labeled all points as noise - no clusters found' noise_count=30 total_points=30
 PASSED
-tests/clustering/test_integration.py::test_clustering_with_mixed_confidence_tiers 2025-12-04 22:48:37 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=16 total_points=16
+tests/clustering/test_integration.py::test_clustering_with_mixed_confidence_tiers 2025-12-04 22:52:12 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=16 total_points=16
 PASSED
-tests/clustering/test_integration.py::test_clustering_performance 2025-12-04 22:48:39 [info     ] clustering.complete            axis=full n_clusters=3 noise_count=318 total_points=500
+tests/clustering/test_integration.py::test_clustering_performance 2025-12-04 22:52:14 [info     ] clustering.complete            axis=full n_clusters=3 noise_count=318 total_points=500
 PASSED
 tests/clustering/test_integration.py::test_clustering_empty_collection PASSED
 tests/clustering/test_types.py::test_confidence_weights_mapping PASSED
@@ -68,41 +68,41 @@ tests/clustering/test_types.py::test_get_weight_valid_tiers PASSED
 tests/clustering/test_types.py::test_get_weight_case_insensitive PASSED
 tests/clustering/test_types.py::test_get_weight_none PASSED
 tests/clustering/test_types.py::test_get_weight_invalid PASSED
-tests/context/test_assembler.py::test_assemble_single_source_memories 2025-12-04 22:48:39 [info     ] assembling_context             component=context_assembler context_types=['memories'] limit=20 max_tokens=1000 query='coding preferences'
-2025-12-04 22:48:39 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=1
-2025-12-04 22:48:39 [debug    ] source_budget_used             budget=1000 component=context_assembler items_selected=1 source=memories unused=983 used=17
-2025-12-04 22:48:39 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=983
+tests/context/test_assembler.py::test_assemble_single_source_memories 2025-12-04 22:52:14 [info     ] assembling_context             component=context_assembler context_types=['memories'] limit=20 max_tokens=1000 query='coding preferences'
+2025-12-04 22:52:14 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=1
+2025-12-04 22:52:14 [debug    ] source_budget_used             budget=1000 component=context_assembler items_selected=1 source=memories unused=983 used=17
+2025-12-04 22:52:14 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=983
 PASSED
-tests/context/test_assembler.py::test_assemble_multiple_sources 2025-12-04 22:48:39 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=2000 query='python examples'
-2025-12-04 22:48:39 [info     ] deduplication_complete         component=context_assembler deduplicated_count=2 original_count=2
-2025-12-04 22:48:39 [debug    ] source_budget_used             budget=666 component=context_assembler items_selected=1 source=memories unused=649 used=17
-2025-12-04 22:48:39 [debug    ] source_budget_used             budget=1333 component=context_assembler items_selected=1 source=code unused=1308 used=25
-2025-12-04 22:48:39 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=1957
+tests/context/test_assembler.py::test_assemble_multiple_sources 2025-12-04 22:52:14 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=2000 query='python examples'
+2025-12-04 22:52:14 [info     ] deduplication_complete         component=context_assembler deduplicated_count=2 original_count=2
+2025-12-04 22:52:14 [debug    ] source_budget_used             budget=666 component=context_assembler items_selected=1 source=memories unused=649 used=17
+2025-12-04 22:52:14 [debug    ] source_budget_used             budget=1333 component=context_assembler items_selected=1 source=code unused=1308 used=25
+2025-12-04 22:52:14 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=1957
 PASSED
 tests/context/test_assembler.py::test_invalid_context_type PASSED
-tests/context/test_assembler.py::test_empty_results 2025-12-04 22:48:39 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=1000 query=nothing
-2025-12-04 22:48:39 [info     ] deduplication_complete         component=context_assembler deduplicated_count=0 original_count=0
+tests/context/test_assembler.py::test_empty_results 2025-12-04 22:52:14 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=1000 query=nothing
+2025-12-04 22:52:14 [info     ] deduplication_complete         component=context_assembler deduplicated_count=0 original_count=0
 PASSED
-tests/context/test_assembler.py::test_token_budget_distribution 2025-12-04 22:48:39 [info     ] assembling_context             component=context_assembler context_types=['memories'] limit=20 max_tokens=500 query=test
-2025-12-04 22:48:39 [info     ] deduplication_complete         component=context_assembler deduplicated_count=8 original_count=8
-2025-12-04 22:48:39 [debug    ] source_budget_used             budget=500 component=context_assembler items_selected=8 source=memories unused=354 used=146
-2025-12-04 22:48:39 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=354
+tests/context/test_assembler.py::test_token_budget_distribution 2025-12-04 22:52:14 [info     ] assembling_context             component=context_assembler context_types=['memories'] limit=20 max_tokens=500 query=test
+2025-12-04 22:52:14 [info     ] deduplication_complete         component=context_assembler deduplicated_count=8 original_count=8
+2025-12-04 22:52:14 [debug    ] source_budget_used             budget=500 component=context_assembler items_selected=8 source=memories unused=354 used=146
+2025-12-04 22:52:14 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=354
 PASSED
-tests/context/test_assembler.py::test_deduplication 2025-12-04 22:48:39 [info     ] assembling_context             component=context_assembler context_types=['experiences', 'values'] limit=20 max_tokens=2000 query=test
-2025-12-04 22:48:39 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=2
-2025-12-04 22:48:39 [debug    ] source_budget_used             budget=500 component=context_assembler items_selected=1 source=values unused=487 used=13
-2025-12-04 22:48:39 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=487
+tests/context/test_assembler.py::test_deduplication 2025-12-04 22:52:14 [info     ] assembling_context             component=context_assembler context_types=['experiences', 'values'] limit=20 max_tokens=2000 query=test
+2025-12-04 22:52:14 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=2
+2025-12-04 22:52:14 [debug    ] source_budget_used             budget=500 component=context_assembler items_selected=1 source=values unused=487 used=13
+2025-12-04 22:52:14 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=487
 PASSED
-tests/context/test_assembler.py::test_premortem_context 2025-12-04 22:48:39 [info     ] assembling_premortem           component=context_assembler domain=debugging limit=10 strategy=systematic
+tests/context/test_assembler.py::test_premortem_context 2025-12-04 22:52:14 [info     ] assembling_premortem           component=context_assembler domain=debugging limit=10 strategy=systematic
 PASSED
-tests/context/test_assembler.py::test_premortem_partial_failure 2025-12-04 22:48:39 [info     ] assembling_premortem           component=context_assembler domain=debugging limit=10 strategy=None
-2025-12-04 22:48:39 [warning  ] premortem_query_partial_failure component=context_assembler error='Surprise axis failed' query_index=1
+tests/context/test_assembler.py::test_premortem_partial_failure 2025-12-04 22:52:14 [info     ] assembling_premortem           component=context_assembler domain=debugging limit=10 strategy=None
+2025-12-04 22:52:14 [warning  ] premortem_query_partial_failure component=context_assembler error='Surprise axis failed' query_index=1
 PASSED
-tests/context/test_assembler.py::test_partial_source_failure 2025-12-04 22:48:39 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=2000 query=test
-2025-12-04 22:48:39 [warning  ] source_query_partial_failure   component=context_assembler error='Code search failed' source=code
-2025-12-04 22:48:39 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=1
-2025-12-04 22:48:39 [debug    ] source_budget_used             budget=666 component=context_assembler items_selected=1 source=memories unused=652 used=14
-2025-12-04 22:48:39 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=652
+tests/context/test_assembler.py::test_partial_source_failure 2025-12-04 22:52:14 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=2000 query=test
+2025-12-04 22:52:14 [warning  ] source_query_partial_failure   component=context_assembler error='Code search failed' source=code
+2025-12-04 22:52:14 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=1
+2025-12-04 22:52:14 [debug    ] source_budget_used             budget=666 component=context_assembler items_selected=1 source=memories unused=652 used=14
+2025-12-04 22:52:14 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=652
 PASSED
 tests/context/test_deduplication.py::test_deduplicate_items_empty PASSED
 tests/context/test_deduplication.py::test_deduplicate_items_no_duplicates PASSED
@@ -157,26 +157,26 @@ tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_batch_single_item 
 tests/embedding/test_nomic.py::TestNomicEmbedding::test_embed_batch_multiple_items PASSED
 tests/embedding/test_nomic.py::TestNomicEmbedding::test_custom_settings PASSED
 tests/embedding/test_nomic.py::TestNomicEmbedding::test_invalid_model_raises_error PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_initial 2025-12-04 22:48:58 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpkynx6gl_
+tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_initial 2025-12-04 22:52:36 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpr10rqdt2
 PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_incremental 2025-12-04 22:48:59 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpm__14ig9
-2025-12-04 22:48:59 [info     ] incremental_index_starting     new_commits=1 repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpm__14ig9
+tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_incremental 2025-12-04 22:52:37 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpq715a6nh
+2025-12-04 22:52:37 [info     ] incremental_index_starting     new_commits=1 repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpq715a6nh
 PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_already_up_to_date 2025-12-04 22:48:59 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpdgrqxyzq
-2025-12-04 22:48:59 [info     ] index_already_up_to_date       repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpdgrqxyzq
+tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_already_up_to_date 2025-12-04 22:52:37 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmph_61m_6a
+2025-12-04 22:52:37 [info     ] index_already_up_to_date       repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmph_61m_6a
 PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_force_reindex 2025-12-04 22:49:00 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpoexr9275
-2025-12-04 22:49:00 [info     ] full_index_starting            force=True has_state=True repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpoexr9275
+tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_force_reindex 2025-12-04 22:52:38 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpc1orm3zl
+2025-12-04 22:52:38 [info     ] full_index_starting            force=True has_state=True repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpc1orm3zl
 PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_with_limit 2025-12-04 22:49:00 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmptzycbdol
+tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_with_limit 2025-12-04 22:52:38 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmp_wy7_xix
 PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_five_year_limit 2025-12-04 22:49:00 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpadl8f_n3
+tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_five_year_limit 2025-12-04 22:52:38 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmp19x_t9u4
 PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_search_commits 2025-12-04 22:49:01 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpvw1widlx
+tests/git/test_analyzer.py::TestGitAnalyzer::test_search_commits 2025-12-04 22:52:38 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpwtqg5ysi
 PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_search_commits_with_author_filter 2025-12-04 22:49:01 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpklo8s5n3
+tests/git/test_analyzer.py::TestGitAnalyzer::test_search_commits_with_author_filter 2025-12-04 22:52:39 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpqu53x5j1
 PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_search_commits_with_date_filter 2025-12-04 22:49:01 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpwm7u5w72
+tests/git/test_analyzer.py::TestGitAnalyzer::test_search_commits_with_date_filter 2025-12-04 22:52:39 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmp4ae0ctqn
 PASSED
 tests/git/test_analyzer.py::TestGitAnalyzer::test_get_churn_hotspots PASSED
 tests/git/test_analyzer.py::TestGitAnalyzer::test_get_file_authors PASSED
@@ -186,11 +186,11 @@ tests/git/test_analyzer.py::TestGitAnalyzer::test_blame_search PASSED
 tests/git/test_analyzer.py::TestGitAnalyzer::test_blame_search_with_file_pattern PASSED
 tests/git/test_analyzer.py::TestGitAnalyzer::test_embedding_text_format PASSED
 tests/git/test_analyzer.py::TestGitAnalyzer::test_embedding_text_truncation PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_index_state_tracking 2025-12-04 22:49:04 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpt_pf8p6c
+tests/git/test_analyzer.py::TestGitAnalyzer::test_index_state_tracking 2025-12-04 22:52:41 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpaaiv5qs4
 PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_batch_embedding_performance 2025-12-04 22:49:04 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpvfylbh37
+tests/git/test_analyzer.py::TestGitAnalyzer::test_batch_embedding_performance 2025-12-04 22:52:41 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmphs_kgl74
 PASSED
-tests/git/test_analyzer.py::test_integration_with_real_repo 2025-12-04 22:49:04 [info     ] full_index_starting            force=False has_state=False repo_path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16
+tests/git/test_analyzer.py::test_integration_with_real_repo 2025-12-04 22:52:41 [info     ] full_index_starting            force=False has_state=False repo_path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16
 PASSED
 tests/git/test_reader.py::TestGitPythonReader::test_init_with_valid_repo PASSED
 tests/git/test_reader.py::TestGitPythonReader::test_init_with_invalid_repo PASSED
@@ -213,19 +213,19 @@ tests/git/test_reader.py::TestGitPythonReader::test_files_changed_relative_paths
 tests/git/test_reader.py::test_integration_with_real_repo PASSED
 tests/hooks/test_mcp_client.py::TestMCPClient::test_init PASSED
 tests/hooks/test_mcp_client.py::TestMCPClient::test_connect_success PASSED
-tests/hooks/test_mcp_client.py::TestMCPClient::test_connect_timeout 2025-12-04 22:49:14 [warning  ] mcp_client.connect_failed      error='TestMCPClient.test_connect_timeout.<locals>.slow_connect() takes 0 positional arguments but 1 was given'
+tests/hooks/test_mcp_client.py::TestMCPClient::test_connect_timeout 2025-12-04 22:52:52 [warning  ] mcp_client.connect_failed      error='TestMCPClient.test_connect_timeout.<locals>.slow_connect() takes 0 positional arguments but 1 was given'
 PASSED
-tests/hooks/test_mcp_client.py::TestMCPClient::test_connect_exception 2025-12-04 22:49:14 [warning  ] mcp_client.connect_failed      error='Connection failed'
+tests/hooks/test_mcp_client.py::TestMCPClient::test_connect_exception 2025-12-04 22:52:52 [warning  ] mcp_client.connect_failed      error='Connection failed'
 PASSED
-tests/hooks/test_mcp_client.py::TestMCPClient::test_call_tool_not_connected 2025-12-04 22:49:14 [warning  ] mcp_client.not_connected
+tests/hooks/test_mcp_client.py::TestMCPClient::test_call_tool_not_connected 2025-12-04 22:52:52 [warning  ] mcp_client.not_connected
 PASSED
 tests/hooks/test_mcp_client.py::TestMCPClient::test_call_tool_success PASSED
 tests/hooks/test_mcp_client.py::TestMCPClient::test_call_tool_empty_content PASSED
-tests/hooks/test_mcp_client.py::TestMCPClient::test_call_tool_invalid_json 2025-12-04 22:49:14 [error    ] mcp_client.invalid_json        error='Expecting value: line 1 column 1 (char 0)' tool=test_tool
+tests/hooks/test_mcp_client.py::TestMCPClient::test_call_tool_invalid_json 2025-12-04 22:52:52 [error    ] mcp_client.invalid_json        error='Expecting value: line 1 column 1 (char 0)' tool=test_tool
 PASSED
-tests/hooks/test_mcp_client.py::TestMCPClient::test_call_tool_timeout 2025-12-04 22:49:14 [warning  ] mcp_client.call_failed         error= tool=slow_tool
+tests/hooks/test_mcp_client.py::TestMCPClient::test_call_tool_timeout 2025-12-04 22:52:52 [warning  ] mcp_client.call_failed         error= tool=slow_tool
 PASSED
-tests/hooks/test_mcp_client.py::TestMCPClient::test_call_tool_exception 2025-12-04 22:49:14 [warning  ] mcp_client.call_failed         error='Tool call failed' tool=test_tool
+tests/hooks/test_mcp_client.py::TestMCPClient::test_call_tool_exception 2025-12-04 22:52:52 [warning  ] mcp_client.call_failed         error='Tool call failed' tool=test_tool
 PASSED
 tests/hooks/test_mcp_client.py::TestMCPClient::test_close_with_session PASSED
 tests/hooks/test_mcp_client.py::TestMCPClient::test_close_without_session PASSED
@@ -233,59 +233,59 @@ tests/hooks/test_mcp_client.py::TestMainCLI::test_main_invalid_args PASSED
 tests/hooks/test_mcp_client.py::TestMainCLI::test_main_invalid_json_args PASSED
 tests/hooks/test_mcp_client.py::TestMainCLI::test_main_connection_failed PASSED
 tests/hooks/test_mcp_client.py::TestMainCLI::test_main_success PASSED
-tests/indexers/test_indexer.py::test_index_single_file 2025-12-04 22:49:14 [info     ] collection_created             name=code_units
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py project=test_project
+tests/indexers/test_indexer.py::test_index_single_file 2025-12-04 22:52:52 [info     ] collection_created             name=code_units
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py project=test_project
 PASSED
-tests/indexers/test_indexer.py::test_index_file_twice_skips_second 2025-12-04 22:49:14 [info     ] collection_created             name=code_units
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py project=test_project
-2025-12-04 22:49:14 [info     ] file_skipped                   path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py reason=no_changes
+tests/indexers/test_indexer.py::test_index_file_twice_skips_second 2025-12-04 22:52:52 [info     ] collection_created             name=code_units
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py project=test_project
+2025-12-04 22:52:52 [info     ] file_skipped                   path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py reason=no_changes
 PASSED
-tests/indexers/test_indexer.py::test_index_directory 2025-12-04 22:49:14 [info     ] collection_created             name=code_units
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/malformed.py project=test_project
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.swift project=test_project
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.ts project=test_project
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.java project=test_project
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.cpp project=test_project
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.c project=test_project
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py project=test_project
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.rs project=test_project
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.js project=test_project
+tests/indexers/test_indexer.py::test_index_directory 2025-12-04 22:52:52 [info     ] collection_created             name=code_units
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/malformed.py project=test_project
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.swift project=test_project
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.ts project=test_project
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.java project=test_project
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.cpp project=test_project
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.c project=test_project
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py project=test_project
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.rs project=test_project
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.js project=test_project
 PASSED
-tests/indexers/test_indexer.py::test_remove_file 2025-12-04 22:49:14 [info     ] collection_created             name=code_units
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py project=test_project
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=7 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py project=test_project
-2025-12-04 22:49:14 [info     ] file_removed                   path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py project=test_project units_removed=7
+tests/indexers/test_indexer.py::test_remove_file 2025-12-04 22:52:52 [info     ] collection_created             name=code_units
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py project=test_project
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=7 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py project=test_project
+2025-12-04 22:52:52 [info     ] file_removed                   path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py project=test_project units_removed=7
 PASSED
-tests/indexers/test_indexer.py::test_remove_project 2025-12-04 22:49:14 [info     ] collection_created             name=code_units
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py project=test_project
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.ts project=test_project
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=7 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py project=test_project
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=5 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.ts project=test_project
-2025-12-04 22:49:14 [info     ] project_removed                files_count=2 project=test_project
+tests/indexers/test_indexer.py::test_remove_project 2025-12-04 22:52:52 [info     ] collection_created             name=code_units
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py project=test_project
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.ts project=test_project
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=7 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py project=test_project
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=5 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.ts project=test_project
+2025-12-04 22:52:52 [info     ] project_removed                files_count=2 project=test_project
 PASSED
-tests/indexers/test_indexer.py::test_reindex_prevents_orphans 2025-12-04 22:49:14 [info     ] collection_created             name=code_units
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmp91zs55ge.py project=test_project
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=3 path=/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmp91zs55ge.py project=test_project
+tests/indexers/test_indexer.py::test_reindex_prevents_orphans 2025-12-04 22:52:52 [info     ] collection_created             name=code_units
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpuc1za47k.py project=test_project
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=3 path=/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpuc1za47k.py project=test_project
 PASSED
-tests/indexers/test_indexer.py::test_empty_file_handling 2025-12-04 22:49:14 [info     ] collection_created             name=code_units
+tests/indexers/test_indexer.py::test_empty_file_handling 2025-12-04 22:52:52 [info     ] collection_created             name=code_units
 PASSED
-tests/indexers/test_indexer.py::test_error_accumulation 2025-12-04 22:49:14 [info     ] collection_created             name=code_units
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/malformed.py project=test_project
+tests/indexers/test_indexer.py::test_error_accumulation 2025-12-04 22:52:52 [info     ] collection_created             name=code_units
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/malformed.py project=test_project
 PASSED
-tests/indexers/test_indexer.py::test_exclude_patterns 2025-12-04 22:49:14 [info     ] collection_created             name=code_units
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.swift project=test_project
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.ts project=test_project
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.java project=test_project
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.cpp project=test_project
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.c project=test_project
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py project=test_project
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.rs project=test_project
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.js project=test_project
+tests/indexers/test_indexer.py::test_exclude_patterns 2025-12-04 22:52:52 [info     ] collection_created             name=code_units
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.swift project=test_project
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.ts project=test_project
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.java project=test_project
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.cpp project=test_project
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.c project=test_project
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py project=test_project
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.rs project=test_project
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.js project=test_project
 PASSED
-tests/indexers/test_indexer.py::test_get_indexing_stats 2025-12-04 22:49:14 [info     ] collection_created             name=code_units
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py project=project1
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.ts project=project1
-2025-12-04 22:49:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.js project=project2
+tests/indexers/test_indexer.py::test_get_indexing_stats 2025-12-04 22:52:52 [info     ] collection_created             name=code_units
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.py project=project1
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.ts project=project1
+2025-12-04 22:52:52 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/tests/fixtures/code_samples/sample.js project=project2
 PASSED
 tests/indexers/test_tree_sitter.py::test_language_detection PASSED
 tests/indexers/test_tree_sitter.py::test_supported_languages PASSED
@@ -303,152 +303,152 @@ tests/indexers/test_tree_sitter.py::test_parse_sql SKIPPED (SQL parsing
 is complex and not MVP critical)
 tests/indexers/test_tree_sitter.py::test_parse_empty_file PASSED
 tests/indexers/test_tree_sitter.py::test_parse_malformed_file PASSED
-tests/observation/test_collector.py::test_create_ghap 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_20f670
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_a119e1
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_a119e1 strategy=systematic-elimination
+tests/observation/test_collector.py::test_create_ghap 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_f1626e
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_4c1d64
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_4c1d64 strategy=systematic-elimination
 PASSED
-tests/observation/test_collector.py::test_create_ghap_auto_starts_session 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_225bfc
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_685691
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_685691 strategy=systematic-elimination
+tests/observation/test_collector.py::test_create_ghap_auto_starts_session 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_d88502
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_adac5f
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_adac5f strategy=systematic-elimination
 PASSED
-tests/observation/test_collector.py::test_create_ghap_when_active_raises 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_4c03be
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_eef24b
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_eef24b strategy=systematic-elimination
-2025-12-04 22:49:14 [warning  ] ghap_already_active            current_id=ghap_20251205_034914_eef24b
+tests/observation/test_collector.py::test_create_ghap_when_active_raises 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_b35dba
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_402e8f
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_402e8f strategy=systematic-elimination
+2025-12-04 22:52:52 [warning  ] ghap_already_active            current_id=ghap_20251205_035252_402e8f
 PASSED
-tests/observation/test_collector.py::test_update_ghap_changes_hypothesis 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_c883f9
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_632d2c
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_632d2c strategy=systematic-elimination
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_632d2c
-2025-12-04 22:49:14 [info     ] ghap_updated                   ghap_id=ghap_20251205_034914_632d2c hap_changed=True iteration=2
+tests/observation/test_collector.py::test_update_ghap_changes_hypothesis 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_0d257a
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_a206db
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_a206db strategy=systematic-elimination
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_a206db
+2025-12-04 22:52:52 [info     ] ghap_updated                   ghap_id=ghap_20251205_035252_a206db hap_changed=True iteration=2
 PASSED
-tests/observation/test_collector.py::test_update_ghap_changes_all_hap 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_594940
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_9c5035
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_9c5035 strategy=systematic-elimination
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_9c5035
-2025-12-04 22:49:14 [info     ] ghap_updated                   ghap_id=ghap_20251205_034914_9c5035 hap_changed=True iteration=2
+tests/observation/test_collector.py::test_update_ghap_changes_all_hap 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_9a9a42
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_50c06a
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_50c06a strategy=systematic-elimination
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_50c06a
+2025-12-04 22:52:52 [info     ] ghap_updated                   ghap_id=ghap_20251205_035252_50c06a hap_changed=True iteration=2
 PASSED
-tests/observation/test_collector.py::test_update_ghap_note_only 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_9a6502
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_83972a
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_83972a strategy=systematic-elimination
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_83972a
-2025-12-04 22:49:14 [info     ] ghap_updated                   ghap_id=ghap_20251205_034914_83972a hap_changed=False iteration=1
+tests/observation/test_collector.py::test_update_ghap_note_only 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_3b5f3b
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_411095
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_411095 strategy=systematic-elimination
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_411095
+2025-12-04 22:52:52 [info     ] ghap_updated                   ghap_id=ghap_20251205_035252_411095 hap_changed=False iteration=1
 PASSED
-tests/observation/test_collector.py::test_update_ghap_strategy_only 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_5d6d36
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_774f13
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_774f13 strategy=systematic-elimination
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_774f13
-2025-12-04 22:49:14 [info     ] ghap_updated                   ghap_id=ghap_20251205_034914_774f13 hap_changed=False iteration=1
+tests/observation/test_collector.py::test_update_ghap_strategy_only 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_5c07e2
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_e4159c
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_e4159c strategy=systematic-elimination
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_e4159c
+2025-12-04 22:52:52 [info     ] ghap_updated                   ghap_id=ghap_20251205_035252_e4159c hap_changed=False iteration=1
 PASSED
-tests/observation/test_collector.py::test_update_ghap_no_active_raises 2025-12-04 22:49:14 [warning  ] no_active_ghap_for_update
+tests/observation/test_collector.py::test_update_ghap_no_active_raises 2025-12-04 22:52:52 [warning  ] no_active_ghap_for_update
 PASSED
-tests/observation/test_collector.py::test_resolve_ghap_confirmed 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_71b861
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_fe74ab
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_fe74ab strategy=systematic-elimination
-2025-12-04 22:49:14 [info     ] ghap_resolved                  ghap_id=ghap_20251205_034914_fe74ab iterations=1 status=confirmed tier=silver
+tests/observation/test_collector.py::test_resolve_ghap_confirmed 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_e61c84
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_2be028
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_2be028 strategy=systematic-elimination
+2025-12-04 22:52:52 [info     ] ghap_resolved                  ghap_id=ghap_20251205_035252_2be028 iterations=1 status=confirmed tier=silver
 PASSED
-tests/observation/test_collector.py::test_resolve_ghap_auto_captured_gold 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_d443a3
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_66d4b4
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_66d4b4 strategy=systematic-elimination
-2025-12-04 22:49:14 [info     ] ghap_resolved                  ghap_id=ghap_20251205_034914_66d4b4 iterations=1 status=confirmed tier=gold
+tests/observation/test_collector.py::test_resolve_ghap_auto_captured_gold 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_a02f8e
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_1d7c2a
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_1d7c2a strategy=systematic-elimination
+2025-12-04 22:52:52 [info     ] ghap_resolved                  ghap_id=ghap_20251205_035252_1d7c2a iterations=1 status=confirmed tier=gold
 PASSED
-tests/observation/test_collector.py::test_abandon_ghap 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_88a835
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_22e5e7
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_22e5e7 strategy=systematic-elimination
-2025-12-04 22:49:14 [info     ] ghap_resolved                  ghap_id=ghap_20251205_034914_22e5e7 iterations=1 status=abandoned tier=abandoned
+tests/observation/test_collector.py::test_abandon_ghap 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_08cb13
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_11b4df
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_11b4df strategy=systematic-elimination
+2025-12-04 22:52:52 [info     ] ghap_resolved                  ghap_id=ghap_20251205_035252_11b4df iterations=1 status=abandoned tier=abandoned
 PASSED
-tests/observation/test_collector.py::test_start_session 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_847697
+tests/observation/test_collector.py::test_start_session 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_fc2537
 PASSED
-tests/observation/test_collector.py::test_start_session_archives_previous 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_b05bdd
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_18296c
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_18296c strategy=systematic-elimination
-2025-12-04 22:49:14 [info     ] ghap_resolved                  ghap_id=ghap_20251205_034914_18296c iterations=1 status=confirmed tier=silver
-2025-12-04 22:49:14 [info     ] session_archived               archive_file=20251205_session_20251205_034914_b05bdd.jsonl entry_count=1 session_id=session_20251205_034914_b05bdd
-2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_54f3d2
+tests/observation/test_collector.py::test_start_session_archives_previous 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_7f40e7
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_d6db48
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_d6db48 strategy=systematic-elimination
+2025-12-04 22:52:52 [info     ] ghap_resolved                  ghap_id=ghap_20251205_035252_d6db48 iterations=1 status=confirmed tier=silver
+2025-12-04 22:52:52 [info     ] session_archived               archive_file=20251205_session_20251205_035252_7f40e7.jsonl entry_count=1 session_id=session_20251205_035252_7f40e7
+2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_170f38
 PASSED
-tests/observation/test_collector.py::test_end_session 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_a289b1
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_d454e2
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_d454e2 strategy=systematic-elimination
-2025-12-04 22:49:14 [info     ] ghap_resolved                  ghap_id=ghap_20251205_034914_d454e2 iterations=1 status=confirmed tier=silver
-2025-12-04 22:49:14 [info     ] session_archived               archive_file=20251205_session_20251205_034914_a289b1.jsonl entry_count=1 session_id=session_20251205_034914_a289b1
-2025-12-04 22:49:14 [info     ] session_ended                  entries_archived=1 session_id=session_20251205_034914_a289b1
+tests/observation/test_collector.py::test_end_session 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_31d72f
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_06f0f8
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_06f0f8 strategy=systematic-elimination
+2025-12-04 22:52:52 [info     ] ghap_resolved                  ghap_id=ghap_20251205_035252_06f0f8 iterations=1 status=confirmed tier=silver
+2025-12-04 22:52:52 [info     ] session_archived               archive_file=20251205_session_20251205_035252_31d72f.jsonl entry_count=1 session_id=session_20251205_035252_31d72f
+2025-12-04 22:52:52 [info     ] session_ended                  entries_archived=1 session_id=session_20251205_035252_31d72f
 PASSED
-tests/observation/test_collector.py::test_end_session_abandons_current 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_0a0e87
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_6a171a
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_6a171a strategy=systematic-elimination
-2025-12-04 22:49:14 [info     ] ghap_resolved                  ghap_id=ghap_20251205_034914_6a171a iterations=1 status=abandoned tier=abandoned
-2025-12-04 22:49:14 [info     ] session_archived               archive_file=20251205_session_20251205_034914_0a0e87.jsonl entry_count=1 session_id=session_20251205_034914_0a0e87
-2025-12-04 22:49:14 [info     ] session_ended                  entries_archived=1 session_id=session_20251205_034914_0a0e87
+tests/observation/test_collector.py::test_end_session_abandons_current 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_044700
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_3c32d3
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_3c32d3 strategy=systematic-elimination
+2025-12-04 22:52:52 [info     ] ghap_resolved                  ghap_id=ghap_20251205_035252_3c32d3 iterations=1 status=abandoned tier=abandoned
+2025-12-04 22:52:52 [info     ] session_archived               archive_file=20251205_session_20251205_035252_044700.jsonl entry_count=1 session_id=session_20251205_035252_044700
+2025-12-04 22:52:52 [info     ] session_ended                  entries_archived=1 session_id=session_20251205_035252_044700
 PASSED
-tests/observation/test_collector.py::test_has_orphaned_entry 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_9175a7
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_e85e90
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_e85e90 strategy=systematic-elimination
-2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_a76b39
+tests/observation/test_collector.py::test_has_orphaned_entry 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_1c7c18
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_febdc0
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_febdc0 strategy=systematic-elimination
+2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_bb9c9f
 PASSED
-tests/observation/test_collector.py::test_adopt_orphan 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_0aabc0
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_756ab5
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_756ab5 strategy=systematic-elimination
-2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_220306
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_756ab5
-2025-12-04 22:49:14 [info     ] orphan_adopted                 ghap_id=ghap_20251205_034914_756ab5 new_session_id=session_20251205_034914_220306
+tests/observation/test_collector.py::test_adopt_orphan 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_f2dcd6
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_96e477
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_96e477 strategy=systematic-elimination
+2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_1e9459
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_96e477
+2025-12-04 22:52:52 [info     ] orphan_adopted                 ghap_id=ghap_20251205_035252_96e477 new_session_id=session_20251205_035252_1e9459
 PASSED
-tests/observation/test_collector.py::test_abandon_orphan 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_68b0c4
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_8ad075
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_8ad075 strategy=systematic-elimination
-2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_5204c7
-2025-12-04 22:49:14 [info     ] entry_archived_to_session      archive_file=20251205_session_20251205_034914_68b0c4.jsonl ghap_id=ghap_20251205_034914_8ad075 session_id=session_20251205_034914_68b0c4
-2025-12-04 22:49:14 [info     ] orphan_abandoned               ghap_id=ghap_20251205_034914_8ad075 original_session_id=session_20251205_034914_68b0c4
+tests/observation/test_collector.py::test_abandon_orphan 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_49900f
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_14e317
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_14e317 strategy=systematic-elimination
+2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_bbea7b
+2025-12-04 22:52:52 [info     ] entry_archived_to_session      archive_file=20251205_session_20251205_035252_49900f.jsonl ghap_id=ghap_20251205_035252_14e317 session_id=session_20251205_035252_49900f
+2025-12-04 22:52:52 [info     ] orphan_abandoned               ghap_id=ghap_20251205_035252_14e317 original_session_id=session_20251205_035252_49900f
 PASSED
 tests/observation/test_collector.py::test_increment_tool_count PASSED
-tests/observation/test_collector.py::test_should_check_in 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_125f42
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_66a450
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_66a450 strategy=systematic-elimination
+tests/observation/test_collector.py::test_should_check_in 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_c38b2d
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_67b074
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_67b074 strategy=systematic-elimination
 PASSED
 tests/observation/test_collector.py::test_reset_tool_count PASSED
 tests/observation/test_collector.py::test_tool_count_persists PASSED
-tests/observation/test_collector.py::test_full_session_lifecycle 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_eb2e64
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_fe3b34
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_fe3b34 strategy=systematic-elimination
-2025-12-04 22:49:14 [info     ] ghap_resolved                  ghap_id=ghap_20251205_034914_fe3b34 iterations=1 status=confirmed tier=silver
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_350240
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_350240 strategy=systematic-elimination
-2025-12-04 22:49:14 [info     ] ghap_resolved                  ghap_id=ghap_20251205_034914_350240 iterations=1 status=confirmed tier=silver
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_8992b1
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_8992b1 strategy=systematic-elimination
-2025-12-04 22:49:14 [info     ] ghap_resolved                  ghap_id=ghap_20251205_034914_8992b1 iterations=1 status=confirmed tier=silver
-2025-12-04 22:49:14 [info     ] session_archived               archive_file=20251205_session_20251205_034914_eb2e64.jsonl entry_count=3 session_id=session_20251205_034914_eb2e64
-2025-12-04 22:49:14 [info     ] session_ended                  entries_archived=3 session_id=session_20251205_034914_eb2e64
+tests/observation/test_collector.py::test_full_session_lifecycle 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_cbd611
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_abbf4d
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_abbf4d strategy=systematic-elimination
+2025-12-04 22:52:52 [info     ] ghap_resolved                  ghap_id=ghap_20251205_035252_abbf4d iterations=1 status=confirmed tier=silver
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_61d6af
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_61d6af strategy=systematic-elimination
+2025-12-04 22:52:52 [info     ] ghap_resolved                  ghap_id=ghap_20251205_035252_61d6af iterations=1 status=confirmed tier=silver
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_419529
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_419529 strategy=systematic-elimination
+2025-12-04 22:52:52 [info     ] ghap_resolved                  ghap_id=ghap_20251205_035252_419529 iterations=1 status=confirmed tier=silver
+2025-12-04 22:52:52 [info     ] session_archived               archive_file=20251205_session_20251205_035252_cbd611.jsonl entry_count=3 session_id=session_20251205_035252_cbd611
+2025-12-04 22:52:52 [info     ] session_ended                  entries_archived=3 session_id=session_20251205_035252_cbd611
 PASSED
-tests/observation/test_collector.py::test_state_survives_restart 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_38f453
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_acd5f7
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_acd5f7 strategy=systematic-elimination
+tests/observation/test_collector.py::test_state_survives_restart 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_d10e05
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_23f5ee
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_23f5ee strategy=systematic-elimination
 PASSED
-tests/observation/test_collector.py::test_multiple_iterations 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_acc3eb
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_d7ee28
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_d7ee28 strategy=systematic-elimination
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_d7ee28
-2025-12-04 22:49:14 [info     ] ghap_updated                   ghap_id=ghap_20251205_034914_d7ee28 hap_changed=True iteration=2
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_d7ee28
-2025-12-04 22:49:14 [info     ] ghap_updated                   ghap_id=ghap_20251205_034914_d7ee28 hap_changed=True iteration=3
+tests/observation/test_collector.py::test_multiple_iterations 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_707c49
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_9cfc95
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_9cfc95 strategy=systematic-elimination
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_9cfc95
+2025-12-04 22:52:52 [info     ] ghap_updated                   ghap_id=ghap_20251205_035252_9cfc95 hap_changed=True iteration=2
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_9cfc95
+2025-12-04 22:52:52 [info     ] ghap_updated                   ghap_id=ghap_20251205_035252_9cfc95 hap_changed=True iteration=3
 PASSED
-tests/observation/test_collector.py::test_text_truncation 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_756aa7
-2025-12-04 22:49:14 [warning  ] text_truncated                 max_len=10000 original_len=15000
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_745217
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_745217 strategy=systematic-elimination
+tests/observation/test_collector.py::test_text_truncation 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_d4d152
+2025-12-04 22:52:52 [warning  ] text_truncated                 max_len=10000 original_len=15000
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_ea2c68
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_ea2c68 strategy=systematic-elimination
 PASSED
-tests/observation/test_collector.py::test_corrupted_current_ghap_recovery 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_401b9b
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_878e46
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_878e46 strategy=systematic-elimination
-2025-12-04 22:49:14 [error    ] corrupted_ghap_backed_up       backup=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-594/test_corrupted_current_ghap_re0/journal/current_ghap.corrupted.1764906554 error='Expecting value: line 1 column 1 (char 0)' file=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-594/test_corrupted_current_ghap_re0/journal/current_ghap.json
+tests/observation/test_collector.py::test_corrupted_current_ghap_recovery 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_c1b175
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_40d465
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_40d465 strategy=systematic-elimination
+2025-12-04 22:52:52 [error    ] corrupted_ghap_backed_up       backup=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-595/test_corrupted_current_ghap_re0/journal/current_ghap.corrupted.1764906772 error='Expecting value: line 1 column 1 (char 0)' file=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-595/test_corrupted_current_ghap_re0/journal/current_ghap.json
 PASSED
-tests/observation/test_collector.py::test_corrupted_session_entries_recovery 2025-12-04 22:49:14 [info     ] session_started                session_id=session_20251205_034914_2bb841
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_e05f91
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_e05f91 strategy=systematic-elimination
-2025-12-04 22:49:14 [info     ] ghap_resolved                  ghap_id=ghap_20251205_034914_e05f91 iterations=1 status=confirmed tier=silver
-2025-12-04 22:49:14 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034914_caf0d7
-2025-12-04 22:49:14 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034914_caf0d7 strategy=systematic-elimination
-2025-12-04 22:49:14 [info     ] ghap_resolved                  ghap_id=ghap_20251205_034914_caf0d7 iterations=1 status=confirmed tier=silver
-2025-12-04 22:49:14 [warning  ] corrupt_entry_skipped          error='Expecting value: line 1 column 1 (char 0)' line_num=2
+tests/observation/test_collector.py::test_corrupted_session_entries_recovery 2025-12-04 22:52:52 [info     ] session_started                session_id=session_20251205_035252_df1a31
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_813f66
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_813f66 strategy=systematic-elimination
+2025-12-04 22:52:52 [info     ] ghap_resolved                  ghap_id=ghap_20251205_035252_813f66 iterations=1 status=confirmed tier=silver
+2025-12-04 22:52:52 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035252_db885b
+2025-12-04 22:52:52 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035252_db885b strategy=systematic-elimination
+2025-12-04 22:52:52 [info     ] ghap_resolved                  ghap_id=ghap_20251205_035252_db885b iterations=1 status=confirmed tier=silver
+2025-12-04 22:52:52 [warning  ] corrupt_entry_skipped          error='Expecting value: line 1 column 1 (char 0)' line_num=2
 PASSED
 tests/observation/test_models.py::test_root_cause_serialization PASSED
 tests/observation/test_models.py::test_lesson_serialization PASSED
@@ -474,9 +474,9 @@ tests/observation/test_utils.py::test_atomic_write_overwrites_existing PASSED
 tests/observation/test_utils.py::test_atomic_write_cleans_up_temp_on_error PASSED
 tests/observation/test_utils.py::test_truncate_text_short PASSED
 tests/observation/test_utils.py::test_truncate_text_exact_limit PASSED
-tests/observation/test_utils.py::test_truncate_text_too_long 2025-12-04 22:49:14 [warning  ] text_truncated                 max_len=100 original_len=200
+tests/observation/test_utils.py::test_truncate_text_too_long 2025-12-04 22:52:52 [warning  ] text_truncated                 max_len=100 original_len=200
 PASSED
-tests/observation/test_utils.py::test_truncate_text_unicode 2025-12-04 22:49:14 [warning  ] text_truncated                 max_len=50 original_len=1000
+tests/observation/test_utils.py::test_truncate_text_unicode 2025-12-04 22:52:52 [warning  ] text_truncated                 max_len=50 original_len=1000
 PASSED
 tests/search/test_results.py::TestMemoryResult::test_from_search_result_with_all_fields PASSED
 tests/search/test_results.py::TestMemoryResult::test_from_search_result_with_optional_fields_none PASSED
@@ -516,47 +516,47 @@ tests/search/test_searcher.py::TestCollectionName::test_invalid_axis_raises_erro
 tests/server/test_config.py::test_default_settings PASSED
 tests/server/test_config.py::test_env_override PASSED
 tests/server/test_config.py::test_settings_immutable PASSED
-tests/server/test_main.py::test_create_server 2025-12-04 22:49:14 [info     ] services.initializing
-2025-12-04 22:49:18 [info     ] code.initialized
-2025-12-04 22:49:18 [info     ] git.init_skipped               reason=no_repo_path
-2025-12-04 22:49:18 [info     ] services.initialized           has_code=True has_git=False has_searcher=False
-2025-12-04 22:49:18 [info     ] tools.registered               has_code=True has_git=False has_searcher=False
-2025-12-04 22:49:18 [info     ] server.created                 server_name=learning-memory-server
+tests/server/test_main.py::test_create_server 2025-12-04 22:52:53 [info     ] services.initializing
+2025-12-04 22:52:56 [info     ] code.initialized
+2025-12-04 22:52:56 [info     ] git.init_skipped               reason=no_repo_path
+2025-12-04 22:52:56 [info     ] services.initialized           has_code=True has_git=False has_searcher=False
+2025-12-04 22:52:56 [info     ] tools.registered               has_code=True has_git=False has_searcher=False
+2025-12-04 22:52:56 [info     ] server.created                 server_name=learning-memory-server
 PASSED
-tests/server/test_main.py::test_server_has_ping_tool 2025-12-04 22:49:18 [info     ] services.initializing
-2025-12-04 22:49:21 [info     ] code.initialized
-2025-12-04 22:49:21 [info     ] git.init_skipped               reason=no_repo_path
-2025-12-04 22:49:21 [info     ] services.initialized           has_code=True has_git=False has_searcher=False
-2025-12-04 22:49:21 [info     ] tools.registered               has_code=True has_git=False has_searcher=False
-2025-12-04 22:49:21 [info     ] server.created                 server_name=learning-memory-server
+tests/server/test_main.py::test_server_has_ping_tool 2025-12-04 22:52:56 [info     ] services.initializing
+2025-12-04 22:52:59 [info     ] code.initialized
+2025-12-04 22:52:59 [info     ] git.init_skipped               reason=no_repo_path
+2025-12-04 22:52:59 [info     ] services.initialized           has_code=True has_git=False has_searcher=False
+2025-12-04 22:52:59 [info     ] tools.registered               has_code=True has_git=False has_searcher=False
+2025-12-04 22:52:59 [info     ] server.created                 server_name=learning-memory-server
 PASSED
-tests/server/tools/test_code.py::test_index_codebase_not_available 2025-12-04 22:49:21 [info     ] code.index                     directory=/tmp project=test
+tests/server/tools/test_code.py::test_index_codebase_not_available 2025-12-04 22:52:59 [info     ] code.index                     directory=/tmp project=test
 PASSED
-tests/server/tools/test_code.py::test_search_code_not_available 2025-12-04 22:49:21 [info     ] code.search                    project=None query=test
+tests/server/tools/test_code.py::test_search_code_not_available 2025-12-04 22:52:59 [info     ] code.search                    project=None query=test
 PASSED
-tests/server/tools/test_code.py::test_find_similar_code_not_available 2025-12-04 22:49:21 [info     ] code.find_similar              snippet_len=9
+tests/server/tools/test_code.py::test_find_similar_code_not_available 2025-12-04 22:52:59 [info     ] code.find_similar              snippet_len=9
 PASSED
-tests/server/tools/test_code.py::test_search_code_empty_query 2025-12-04 22:49:21 [info     ] code.search                    project=None query='   '
+tests/server/tools/test_code.py::test_search_code_empty_query 2025-12-04 22:52:59 [info     ] code.search                    project=None query='   '
 PASSED
-tests/server/tools/test_code.py::test_search_code_limit_validation 2025-12-04 22:49:21 [info     ] code.search                    project=None query=test
-2025-12-04 22:49:21 [info     ] code.search                    project=None query=test
+tests/server/tools/test_code.py::test_search_code_limit_validation 2025-12-04 22:52:59 [info     ] code.search                    project=None query=test
+2025-12-04 22:52:59 [info     ] code.search                    project=None query=test
 PASSED
-tests/server/tools/test_code.py::test_find_similar_code_snippet_too_long 2025-12-04 22:49:21 [info     ] code.find_similar              snippet_len=6000
+tests/server/tools/test_code.py::test_find_similar_code_snippet_too_long 2025-12-04 22:52:59 [info     ] code.find_similar              snippet_len=6000
 PASSED
-tests/server/tools/test_code.py::test_find_similar_code_empty_snippet 2025-12-04 22:49:21 [info     ] code.find_similar              snippet_len=3
+tests/server/tools/test_code.py::test_find_similar_code_empty_snippet 2025-12-04 22:52:59 [info     ] code.find_similar              snippet_len=3
 PASSED
-tests/server/tools/test_code.py::test_find_similar_code_limit_validation 2025-12-04 22:49:21 [info     ] code.find_similar              snippet_len=4
-2025-12-04 22:49:21 [info     ] code.find_similar              snippet_len=4
+tests/server/tools/test_code.py::test_find_similar_code_limit_validation 2025-12-04 22:52:59 [info     ] code.find_similar              snippet_len=4
+2025-12-04 22:52:59 [info     ] code.find_similar              snippet_len=4
 PASSED
-tests/server/tools/test_code.py::test_index_codebase_directory_not_found 2025-12-04 22:49:21 [info     ] code.index                     directory=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-594/test_index_codebase_directory_0/nonexistent project=test
+tests/server/tools/test_code.py::test_index_codebase_directory_not_found 2025-12-04 22:52:59 [info     ] code.index                     directory=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-595/test_index_codebase_directory_0/nonexistent project=test
 PASSED
-tests/server/tools/test_code.py::test_index_codebase_not_a_directory 2025-12-04 22:49:21 [info     ] code.index                     directory=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-594/test_index_codebase_not_a_dire0/test.txt project=test
+tests/server/tools/test_code.py::test_index_codebase_not_a_directory 2025-12-04 22:52:59 [info     ] code.index                     directory=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-595/test_index_codebase_not_a_dire0/test.txt project=test
 PASSED
-tests/server/tools/test_code.py::test_search_code_with_filters 2025-12-04 22:49:21 [info     ] code.search                    project=test-project query='test function'
-2025-12-04 22:49:21 [info     ] code.searched                  count=1
+tests/server/tools/test_code.py::test_search_code_with_filters 2025-12-04 22:52:59 [info     ] code.search                    project=test-project query='test function'
+2025-12-04 22:52:59 [info     ] code.searched                  count=1
 PASSED
-tests/server/tools/test_code.py::test_find_similar_code_with_project_filter 2025-12-04 22:49:21 [info     ] code.find_similar              snippet_len=16
-2025-12-04 22:49:21 [info     ] code.similar_found             count=0
+tests/server/tools/test_code.py::test_find_similar_code_with_project_filter 2025-12-04 22:52:59 [info     ] code.find_similar              snippet_len=16
+2025-12-04 22:52:59 [info     ] code.similar_found             count=0
 PASSED
 tests/server/tools/test_enums.py::TestDomains::test_valid_domains PASSED
 tests/server/tools/test_enums.py::TestDomains::test_invalid_domain_raises_error PASSED
@@ -579,90 +579,132 @@ tests/server/tools/test_errors.py::test_validation_error_is_mcp_error PASSED
 tests/server/tools/test_errors.py::test_not_found_error_is_mcp_error PASSED
 tests/server/tools/test_errors.py::test_insufficient_data_error_is_mcp_error PASSED
 tests/server/tools/test_errors.py::test_errors_can_be_raised PASSED
-tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_success 2025-12-04 22:49:21 [info     ] session_started                session_id=session_20251205_034921_c7babe
-2025-12-04 22:49:21 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034921_eed77f
-2025-12-04 22:49:21 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034921_eed77f strategy=systematic-elimination
-2025-12-04 22:49:21 [info     ] ghap.started                   domain=debugging ghap_id=ghap_20251205_034921_eed77f strategy=systematic-elimination
+tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_success 2025-12-04 22:52:59 [info     ] session_started                session_id=session_20251205_035259_8f6699
+2025-12-04 22:52:59 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035259_aa087e
+2025-12-04 22:52:59 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035259_aa087e strategy=systematic-elimination
+2025-12-04 22:52:59 [info     ] ghap.started                   domain=debugging ghap_id=ghap_20251205_035259_aa087e strategy=systematic-elimination
 PASSED
-tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_invalid_domain 2025-12-04 22:49:21 [warning  ] ghap.validation_error          error="Invalid domain 'invalid'. Valid options: debugging, refactoring, feature, testing, configuration, documentation, performance, security, integration"
+tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_invalid_domain 2025-12-04 22:52:59 [warning  ] ghap.validation_error          error="Invalid domain 'invalid'. Valid options: debugging, refactoring, feature, testing, configuration, documentation, performance, security, integration"
 PASSED
-tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_invalid_strategy 2025-12-04 22:49:21 [warning  ] ghap.validation_error          error="Invalid strategy 'invalid'. Valid options: systematic-elimination, trial-and-error, research-first, divide-and-conquer, root-cause-analysis, copy-from-similar, check-assumptions, read-the-error, ask-user"
+tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_invalid_strategy 2025-12-04 22:52:59 [warning  ] ghap.validation_error          error="Invalid strategy 'invalid'. Valid options: systematic-elimination, trial-and-error, research-first, divide-and-conquer, root-cause-analysis, copy-from-similar, check-assumptions, read-the-error, ask-user"
 PASSED
-tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_empty_field 2025-12-04 22:49:21 [warning  ] ghap.validation_error          error="Field 'goal' cannot be empty"
+tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_empty_field 2025-12-04 22:52:59 [warning  ] ghap.validation_error          error="Field 'goal' cannot be empty"
 PASSED
-tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_field_too_long 2025-12-04 22:49:21 [warning  ] ghap.validation_error          error="Field 'goal' exceeds 1000 character limit (1001 chars)"
+tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_field_too_long 2025-12-04 22:52:59 [warning  ] ghap.validation_error          error="Field 'goal' exceeds 1000 character limit (1001 chars)"
 PASSED
-tests/server/tools/test_ghap.py::TestUpdateGhap::test_update_ghap_success 2025-12-04 22:49:21 [info     ] session_started                session_id=session_20251205_034921_8fb9d9
-2025-12-04 22:49:21 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034921_584b0e
-2025-12-04 22:49:21 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034921_584b0e strategy=systematic-elimination
-2025-12-04 22:49:21 [info     ] ghap.started                   domain=debugging ghap_id=ghap_20251205_034921_584b0e strategy=systematic-elimination
-2025-12-04 22:49:21 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034921_584b0e
-2025-12-04 22:49:21 [info     ] ghap_updated                   ghap_id=ghap_20251205_034921_584b0e hap_changed=True iteration=2
-2025-12-04 22:49:21 [info     ] ghap.updated                   ghap_id=ghap_20251205_034921_584b0e iteration_count=2
+tests/server/tools/test_ghap.py::TestUpdateGhap::test_update_ghap_success 2025-12-04 22:52:59 [info     ] session_started                session_id=session_20251205_035259_e7eba9
+2025-12-04 22:52:59 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035259_11ff3b
+2025-12-04 22:52:59 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035259_11ff3b strategy=systematic-elimination
+2025-12-04 22:52:59 [info     ] ghap.started                   domain=debugging ghap_id=ghap_20251205_035259_11ff3b strategy=systematic-elimination
+2025-12-04 22:52:59 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035259_11ff3b
+2025-12-04 22:52:59 [info     ] ghap_updated                   ghap_id=ghap_20251205_035259_11ff3b hap_changed=True iteration=2
+2025-12-04 22:52:59 [info     ] ghap.updated                   ghap_id=ghap_20251205_035259_11ff3b iteration_count=2
 PASSED
-tests/server/tools/test_ghap.py::TestUpdateGhap::test_update_ghap_no_active_entry 2025-12-04 22:49:21 [warning  ] ghap.error                     error='No active GHAP entry to update. Use start_ghap to begin tracking.'
+tests/server/tools/test_ghap.py::TestUpdateGhap::test_update_ghap_no_active_entry 2025-12-04 22:52:59 [warning  ] ghap.error                     error='No active GHAP entry to update. Use start_ghap to begin tracking.'
 PASSED
-tests/server/tools/test_ghap.py::TestUpdateGhap::test_update_ghap_field_too_long 2025-12-04 22:49:21 [info     ] session_started                session_id=session_20251205_034921_e6c17c
-2025-12-04 22:49:21 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034921_f8086b
-2025-12-04 22:49:21 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034921_f8086b strategy=systematic-elimination
-2025-12-04 22:49:21 [info     ] ghap.started                   domain=debugging ghap_id=ghap_20251205_034921_f8086b strategy=systematic-elimination
-2025-12-04 22:49:21 [warning  ] ghap.error                     error="Field 'hypothesis' exceeds 1000 character limit (1001 chars)"
+tests/server/tools/test_ghap.py::TestUpdateGhap::test_update_ghap_field_too_long 2025-12-04 22:52:59 [info     ] session_started                session_id=session_20251205_035259_0bef9e
+2025-12-04 22:52:59 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035259_7367b5
+2025-12-04 22:52:59 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035259_7367b5 strategy=systematic-elimination
+2025-12-04 22:52:59 [info     ] ghap.started                   domain=debugging ghap_id=ghap_20251205_035259_7367b5 strategy=systematic-elimination
+2025-12-04 22:52:59 [warning  ] ghap.error                     error="Field 'hypothesis' exceeds 1000 character limit (1001 chars)"
 PASSED
-tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_confirmed 2025-12-04 22:49:21 [info     ] session_started                session_id=session_20251205_034921_f38525
-2025-12-04 22:49:21 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034921_bcd3a7
-2025-12-04 22:49:21 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034921_bcd3a7 strategy=systematic-elimination
-2025-12-04 22:49:21 [info     ] ghap.started                   domain=debugging ghap_id=ghap_20251205_034921_bcd3a7 strategy=systematic-elimination
-2025-12-04 22:49:21 [info     ] ghap_resolved                  ghap_id=ghap_20251205_034921_bcd3a7 iterations=1 status=confirmed tier=silver
-2025-12-04 22:49:21 [info     ] ghap.persisted                 attempt=1 ghap_id=ghap_20251205_034921_bcd3a7
+tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_confirmed 2025-12-04 22:52:59 [info     ] session_started                session_id=session_20251205_035259_61665d
+2025-12-04 22:52:59 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035259_be8476
+2025-12-04 22:52:59 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035259_be8476 strategy=systematic-elimination
+2025-12-04 22:52:59 [info     ] ghap.started                   domain=debugging ghap_id=ghap_20251205_035259_be8476 strategy=systematic-elimination
+2025-12-04 22:52:59 [info     ] ghap_resolved                  ghap_id=ghap_20251205_035259_be8476 iterations=1 status=confirmed tier=silver
+2025-12-04 22:52:59 [info     ] ghap.persisted                 attempt=1 ghap_id=ghap_20251205_035259_be8476
 PASSED
-tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_falsified 2025-12-04 22:49:21 [info     ] session_started                session_id=session_20251205_034921_559837
-2025-12-04 22:49:21 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034921_a40264
-2025-12-04 22:49:21 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034921_a40264 strategy=systematic-elimination
-2025-12-04 22:49:21 [info     ] ghap.started                   domain=debugging ghap_id=ghap_20251205_034921_a40264 strategy=systematic-elimination
-2025-12-04 22:49:21 [info     ] ghap_resolved                  ghap_id=ghap_20251205_034921_a40264 iterations=1 status=falsified tier=silver
-2025-12-04 22:49:21 [info     ] ghap.persisted                 attempt=1 ghap_id=ghap_20251205_034921_a40264
+tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_falsified 2025-12-04 22:52:59 [info     ] session_started                session_id=session_20251205_035259_807906
+2025-12-04 22:52:59 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035259_f352e2
+2025-12-04 22:52:59 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035259_f352e2 strategy=systematic-elimination
+2025-12-04 22:52:59 [info     ] ghap.started                   domain=debugging ghap_id=ghap_20251205_035259_f352e2 strategy=systematic-elimination
+2025-12-04 22:52:59 [info     ] ghap_resolved                  ghap_id=ghap_20251205_035259_f352e2 iterations=1 status=falsified tier=silver
+2025-12-04 22:52:59 [info     ] ghap.persisted                 attempt=1 ghap_id=ghap_20251205_035259_f352e2
 PASSED
-tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_falsified_missing_surprise 2025-12-04 22:49:21 [info     ] session_started                session_id=session_20251205_034921_8e9ae3
-2025-12-04 22:49:21 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034921_274a01
-2025-12-04 22:49:21 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034921_274a01 strategy=systematic-elimination
-2025-12-04 22:49:21 [info     ] ghap.started                   domain=debugging ghap_id=ghap_20251205_034921_274a01 strategy=systematic-elimination
-2025-12-04 22:49:21 [warning  ] ghap.error                     error="Field 'surprise' is required when status is 'falsified'"
+tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_falsified_missing_surprise 2025-12-04 22:52:59 [info     ] session_started                session_id=session_20251205_035259_7df3d4
+2025-12-04 22:52:59 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035259_9ed6fb
+2025-12-04 22:52:59 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035259_9ed6fb strategy=systematic-elimination
+2025-12-04 22:52:59 [info     ] ghap.started                   domain=debugging ghap_id=ghap_20251205_035259_9ed6fb strategy=systematic-elimination
+2025-12-04 22:52:59 [warning  ] ghap.error                     error="Field 'surprise' is required when status is 'falsified'"
 PASSED
-tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_invalid_status 2025-12-04 22:49:21 [info     ] session_started                session_id=session_20251205_034921_5db8f8
-2025-12-04 22:49:21 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034921_1a6876
-2025-12-04 22:49:21 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034921_1a6876 strategy=systematic-elimination
-2025-12-04 22:49:21 [info     ] ghap.started                   domain=debugging ghap_id=ghap_20251205_034921_1a6876 strategy=systematic-elimination
-2025-12-04 22:49:21 [warning  ] ghap.error                     error="Invalid outcome status 'invalid'. Valid options: confirmed, falsified, abandoned"
+tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_invalid_status 2025-12-04 22:52:59 [info     ] session_started                session_id=session_20251205_035259_e9c9cc
+2025-12-04 22:52:59 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035259_d044e8
+2025-12-04 22:52:59 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035259_d044e8 strategy=systematic-elimination
+2025-12-04 22:52:59 [info     ] ghap.started                   domain=debugging ghap_id=ghap_20251205_035259_d044e8 strategy=systematic-elimination
+2025-12-04 22:52:59 [warning  ] ghap.error                     error="Invalid outcome status 'invalid'. Valid options: confirmed, falsified, abandoned"
 PASSED
-tests/server/tools/test_ghap.py::TestGetActiveGhap::test_get_active_ghap_with_entry 2025-12-04 22:49:21 [info     ] session_started                session_id=session_20251205_034921_f3aa65
-2025-12-04 22:49:21 [debug    ] ghap_saved                     ghap_id=ghap_20251205_034921_636b07
-2025-12-04 22:49:21 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_034921_636b07 strategy=systematic-elimination
-2025-12-04 22:49:21 [info     ] ghap.started                   domain=debugging ghap_id=ghap_20251205_034921_636b07 strategy=systematic-elimination
+tests/server/tools/test_ghap.py::TestGetActiveGhap::test_get_active_ghap_with_entry 2025-12-04 22:52:59 [info     ] session_started                session_id=session_20251205_035259_bb5ef4
+2025-12-04 22:52:59 [debug    ] ghap_saved                     ghap_id=ghap_20251205_035259_8ac93d
+2025-12-04 22:52:59 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251205_035259_8ac93d strategy=systematic-elimination
+2025-12-04 22:52:59 [info     ] ghap.started                   domain=debugging ghap_id=ghap_20251205_035259_8ac93d strategy=systematic-elimination
 PASSED
 tests/server/tools/test_ghap.py::TestGetActiveGhap::test_get_active_ghap_no_entry PASSED
-tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_default 2025-12-04 22:49:21 [error    ] ghap.unexpected_error          error="object MagicMock can't be used in 'await' expression" tool=list_ghap_entries
+tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_default 2025-12-04 22:52:59 [info     ] ghap.entries_listed            count=0 filters={}
+PASSED
+tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_invalid_limit 2025-12-04 22:52:59 [warning  ] ghap.validation_error          error='Limit must be between 1 and 100 (got 0)'
+PASSED
+tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_invalid_domain 2025-12-04 22:52:59 [warning  ] ghap.validation_error          error="Invalid domain 'invalid'. Valid options: debugging, refactoring, feature, testing, configuration, documentation, performance, security, integration"
+PASSED
+tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_invalid_date 2025-12-04 22:52:59 [warning  ] ghap.validation_error          error="Invalid date format for 'since': not a date. Expected ISO 8601 format (e.g., '2024-01-15T10:30:45+00:00')"
+PASSED
+tests/server/tools/test_git.py::test_search_commits_not_available 2025-12-04 22:52:59 [info     ] git.search_commits             author=None query=test
+PASSED
+tests/server/tools/test_git.py::test_get_file_history_not_available 2025-12-04 22:52:59 [info     ] git.file_history               limit=100 path=test.py
+PASSED
+tests/server/tools/test_git.py::test_get_churn_hotspots_not_available 2025-12-04 22:52:59 [info     ] git.churn_hotspots             days=90 limit=10
+PASSED
+tests/server/tools/test_git.py::test_get_code_authors_not_available 2025-12-04 22:52:59 [info     ] git.code_authors               path=test.py
+PASSED
+tests/server/tools/test_git.py::test_search_commits_empty_query 2025-12-04 22:52:59 [info     ] git.search_commits             author=None query='   '
+PASSED
+tests/server/tools/test_git.py::test_search_commits_limit_validation 2025-12-04 22:52:59 [info     ] git.search_commits             author=None query=test
+2025-12-04 22:52:59 [info     ] git.search_commits             author=None query=test
+PASSED
+tests/server/tools/test_git.py::test_search_commits_invalid_date_format 2025-12-04 22:52:59 [info     ] git.search_commits             author=None query=test
+PASSED
+tests/server/tools/test_git.py::test_get_file_history_limit_validation 2025-12-04 22:52:59 [info     ] git.file_history               limit=0 path=test.py
+2025-12-04 22:52:59 [info     ] git.file_history               limit=501 path=test.py
+PASSED
+tests/server/tools/test_git.py::test_get_file_history_file_not_found 2025-12-04 22:52:59 [info     ] git.file_history               limit=100 path=nonexistent.py
+PASSED
+tests/server/tools/test_git.py::test_get_churn_hotspots_days_validation 2025-12-04 22:52:59 [info     ] git.churn_hotspots             days=0 limit=10
+2025-12-04 22:52:59 [info     ] git.churn_hotspots             days=366 limit=10
+PASSED
+tests/server/tools/test_git.py::test_get_churn_hotspots_limit_validation 2025-12-04 22:52:59 [info     ] git.churn_hotspots             days=90 limit=0
+2025-12-04 22:52:59 [info     ] git.churn_hotspots             days=90 limit=51
+PASSED
+tests/server/tools/test_git.py::test_get_code_authors_file_not_found 2025-12-04 22:52:59 [info     ] git.code_authors               path=nonexistent.py
+PASSED
+tests/server/tools/test_learning.py::TestGetClusters::test_get_clusters_success 2025-12-04 22:52:59 [info     ] learning.clusters_retrieved    axis=full count=2 noise_count=7
+PASSED
+tests/server/tools/test_learning.py::TestGetClusters::test_get_clusters_invalid_axis 2025-12-04 22:52:59 [warning  ] learning.error                 error="Invalid axis 'invalid'. Valid options: full, strategy, surprise, root_cause"
+PASSED
+tests/server/tools/test_learning.py::TestGetClusters::test_get_clusters_insufficient_data 2025-12-04 22:52:59 [warning  ] learning.error                 error='Not enough experiences for clustering. Found 15, need at least 20.'
+PASSED
+tests/server/tools/test_learning.py::TestGetClusterMembers::test_get_cluster_members_success 2025-12-04 22:52:59 [error    ] learning.unexpected_error      error="object MagicMock can't be used in 'await' expression" tool=get_cluster_members
 [31m╭─[0m[31m────────────────────[0m[31m [0m[1;31mTraceback [0m[1;2;31m(most recent call last)[0m[31m [0m[31m─────────────────────[0m[31m─╮[0m
 [31m│[0m [2m/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-002-16/src/learnin[0m [31m│[0m
-[31m│[0m [2mg_memory_server/server/tools/[0m[1mghap.py[0m:532 in list_ghap_entries                [31m│[0m
+[31m│[0m [2mg_memory_server/server/tools/[0m[1mlearning.py[0m:178 in get_cluster_members          [31m│[0m
 [31m│[0m                                                                              [31m│[0m
-[31m│[0m   [2m529 [0m[2m│   │   │   │   [0mfilters[[33m"[0m[33mcaptured_at[0m[33m"[0m] = {[33m"[0m[33m$gte[0m[33m"[0m: since_dt.timestamp() [31m│[0m
-[31m│[0m   [2m530 [0m[2m│   │   │   [0m                                                           [31m│[0m
-[31m│[0m   [2m531 [0m[2m│   │   │   [0m[2m# Query ghap_full collection[0m                               [31m│[0m
-[31m│[0m [31m❱ [0m532 [2m│   │   │   [0mresults = [94mawait[0m vector_store.scroll(                       [31m│[0m
-[31m│[0m   [2m533 [0m[2m│   │   │   │   [0mcollection=[33m"[0m[33mghap_full[0m[33m"[0m,                                [31m│[0m
-[31m│[0m   [2m534 [0m[2m│   │   │   │   [0mlimit=limit,                                           [31m│[0m
-[31m│[0m   [2m535 [0m[2m│   │   │   │   [0mfilters=filters [94mif[0m filters [94melse[0m [94mNone[0m,                  [31m│[0m
+[31m│[0m   [2m175 [0m[2m│   │   │   [0mcollection = [33mf[0m[33m"[0m[33mghap_[0m[33m{[0maxis[33m}[0m[33m"[0m                                [31m│[0m
+[31m│[0m   [2m176 [0m[2m│   │   │   [0m                                                           [31m│[0m
+[31m│[0m   [2m177 [0m[2m│   │   │   [0m[2m# Cluster label is stored in payload metadata[0m              [31m│[0m
+[31m│[0m [31m❱ [0m178 [2m│   │   │   [0mresults = [94mawait[0m vector_store.scroll(                       [31m│[0m
+[31m│[0m   [2m179 [0m[2m│   │   │   │   [0mcollection=collection,                                 [31m│[0m
+[31m│[0m   [2m180 [0m[2m│   │   │   │   [0mlimit=limit,                                           [31m│[0m
+[31m│[0m   [2m181 [0m[2m│   │   │   │   [0mfilters={[33m"[0m[33mcluster_label[0m[33m"[0m: label},                      [31m│[0m
 [31m│[0m                                                                              [31m│[0m
 [31m│[0m [34m╭─[0m[34m────────────────────────────────[0m[34m locals [0m[34m────────────────────────────────[0m[34m─╮[0m [31m│[0m
-[31m│[0m [34m│[0m       [3;33mdomain[0m[31m =[0m [3;35mNone[0m                                                      [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m         [3;33maxis[0m[31m =[0m [32m'full'[0m                                                    [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m   [3;33mcluster_id[0m[31m =[0m [32m'full_0'[0m                                                  [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m   [3;33mcollection[0m[31m =[0m [32m'ghap_full'[0m                                               [34m│[0m [31m│[0m
 [31m│[0m [34m│[0m            [3;33me[0m[31m =[0m [1;35mTypeError[0m[1m([0m[32m"object MagicMock can't be used in 'await' [0m     [34m│[0m [31m│[0m
 [31m│[0m [34m│[0m                [32mexpression"[0m[1m)[0m                                              [34m│[0m [31m│[0m
-[31m│[0m [34m│[0m      [3;33mfilters[0m[31m =[0m [1m{[0m[1m}[0m                                                        [34m│[0m [31m│[0m
-[31m│[0m [34m│[0m        [3;33mlimit[0m[31m =[0m [1;36m20[0m                                                        [34m│[0m [31m│[0m
-[31m│[0m [34m│[0m      [3;33moutcome[0m[31m =[0m [3;35mNone[0m                                                      [34m│[0m [31m│[0m
-[31m│[0m [34m│[0m        [3;33msince[0m[31m =[0m [3;35mNone[0m                                                      [34m│[0m [31m│[0m
-[31m│[0m [34m│[0m     [3;33msince_dt[0m[31m =[0m [3;35mNone[0m                                                      [34m│[0m [31m│[0m
-[31m│[0m [34m│[0m [3;33mvector_store[0m[31m =[0m [1m<[0m[1;95mMagicMock[0m[39m [0m[33mid[0m[39m=[0m[32m'4839842128'[0m[1m>[0m                               [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [3;33mlabel[0m[31m =[0m [1;36m0[0m                                                         [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [3;33mlimit[0m[31m =[0m [1;36m50[0m                                                        [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m        [3;33mparts[0m[31m =[0m [1m[[0m[32m'full'[0m, [32m'0'[0m[1m][0m                                             [34m│[0m [31m│[0m
+[31m│[0m [34m│[0m [3;33mvector_store[0m[31m =[0m [1m<[0m[1;95mMagicMock[0m[39m [0m[33mid[0m[39m=[0m[32m'4908114736'[0m[1m>[0m                               [34m│[0m [31m│[0m
 [31m│[0m [34m╰──────────────────────────────────────────────────────────────────────────╯[0m [31m│[0m
 [31m╰──────────────────────────────────────────────────────────────────────────────╯[0m
 [1;91mTypeError: [0mobject MagicMock can't be used in [32m'await'[0m expression
@@ -670,23 +712,23 @@ tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_def
 FAILED
 
 =================================== FAILURES ===================================
-______________ TestListGhapEntries.test_list_ghap_entries_default ______________
+____________ TestGetClusterMembers.test_get_cluster_members_success ____________
 
-self = <tests.server.tools.test_ghap.TestListGhapEntries object at 0x120619be0>
-registered_tools = <MagicMock id='4840731856'>
+self = <tests.server.tools.test_learning.TestGetClusterMembers object at 0x1241012e0>
+registered_tools = <MagicMock id='4908120016'>
 
     @pytest.mark.asyncio
-    async def test_list_ghap_entries_default(
+    async def test_get_cluster_members_success(
         self, registered_tools: MagicMock
     ) -> None:
-        """Test listing GHAP entries with default parameters."""
-        tool = registered_tools.tools["list_ghap_entries"]
-        result = await tool()
+        """Test successful cluster member retrieval."""
+        tool = registered_tools.tools["get_cluster_members"]
+        result = await tool(cluster_id="full_0")
     
 >       assert "error" not in result
 E       AssertionError: assert 'error' not in {'error': {'type': 'internal_error', 'message': 'Internal server error'}}
 
-tests/server/tools/test_ghap.py:415: AssertionError
+tests/server/tools/test_learning.py:153: AssertionError
 =============================== warnings summary ===============================
 tests/clustering/test_clusterer.py: 208 warnings
 tests/clustering/test_experience.py: 22 warnings
@@ -696,6 +738,6 @@ tests/clustering/test_integration.py: 10 warnings
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =========================== short test summary info ============================
-FAILED tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_default - AssertionError: assert 'error' not in {'error': {'type': 'internal_error', 'message': 'Internal server error'}}
+FAILED tests/server/tools/test_learning.py::TestGetClusterMembers::test_get_cluster_members_success - AssertionError: assert 'error' not in {'error': {'type': 'internal_error', 'message': 'Internal server error'}}
 !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
-=========== 1 failed, 316 passed, 2 skipped, 240 warnings in 56.65s ============
+====== 1 failed, 335 passed, 2 skipped, 240 warnings in 60.68s (0:01:00) =======

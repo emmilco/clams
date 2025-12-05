@@ -49,6 +49,7 @@ learning-memory-server = "learning_memory_server.server.main:main"
 [tool.ruff]
 line-length = 88
 target-version = "py312"
+exclude = ["tests/fixtures/code_samples/malformed.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]

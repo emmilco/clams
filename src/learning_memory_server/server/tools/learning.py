@@ -75,15 +75,15 @@ def register_learning_tools(
             noise_count = 0
 
             for cluster_info in clusters:
-                if cluster_info.get("label") == -1:
-                    noise_count = cluster_info.get("size", 0)
+                if cluster_info.label == -1:
+                    noise_count = cluster_info.size
                 else:
                     cluster_list.append(
                         {
-                            "cluster_id": cluster_info["cluster_id"],
-                            "label": cluster_info["label"],
-                            "size": cluster_info["size"],
-                            "avg_weight": cluster_info.get("avg_weight", 0.5),
+                            "cluster_id": cluster_info.label,
+                            "label": cluster_info.label,
+                            "size": cluster_info.size,
+                            "avg_weight": cluster_info.avg_weight,
                         }
                     )
 
@@ -278,13 +278,13 @@ def register_learning_tools(
             logger.info(
                 "learning.value_validated",
                 cluster_id=cluster_id,
-                valid=validation_result.is_valid,
-                similarity=validation_result.similarity_score,
+                valid=validation_result.valid,
+                similarity=validation_result.similarity,
             )
 
             return {
-                "valid": validation_result.is_valid,
-                "similarity": validation_result.similarity_score,
+                "valid": validation_result.valid,
+                "similarity": validation_result.similarity,
                 "cluster_id": cluster_id,
             }
 
@@ -360,7 +360,7 @@ def register_learning_tools(
                 "text": value_record.text,
                 "cluster_id": cluster_id,
                 "axis": axis,
-                "created_at": value_record.created_at.isoformat(),
+                "created_at": value_record.created_at,
             }
 
         except (ValidationError, NotFoundError) as e:
