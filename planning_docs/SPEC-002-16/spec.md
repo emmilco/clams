@@ -106,9 +106,10 @@ Complete the Learning Memory Server by integrating all modules into a working, p
 
 **What**:
 - Create all required collections on server startup
-- Collections: memories, code_units, commits, ghap_full, ghap_strategy, ghap_surprise, ghap_root_cause, values
+- Collections: memories, code, commits, ghap_full, ghap_strategy, ghap_surprise, ghap_root_cause, values
 - Handle "collection already exists" gracefully (this is normal after first run)
 - Verify dimension matches embedding_service.dimension
+- Note: Collection names use "ghap_" prefix per SPEC-002-14 ObservationPersister implementation
 
 **Acceptance Criteria**:
 - Server startup creates all collections if they don't exist
@@ -224,8 +225,9 @@ results = await searcher.search_experiences(
 - Measure p50, p95, p99 latency
 
 **Benchmark 4: Clustering**
-- Store 100 GHAP entries
-- Run cluster_axis() for all 5 axes
+- Store 100 GHAP entries (persisted to ghap_full, ghap_strategy, ghap_surprise, ghap_root_cause collections)
+- Run cluster_axis() for all 4 axes (full, strategy, surprise, root_cause)
+- Domain is a metadata filter, not a clustered axis
 - Measure total time
 
 **Acceptance Criteria** (HARD REQUIREMENTS - failure is a blocker):
@@ -306,7 +308,7 @@ Every module pair must be verified to work together:
 - [ ] Incremental indexing preserves existing embeddings
 
 ### EmbeddingService ↔ ObservationPersister
-- [ ] Multi-axis embedding generates 5 embeddings per entry
+- [ ] Multi-axis embedding generates 4 embeddings per entry
 - [ ] Confidence tier weights propagate to payload
 
 ### EmbeddingService ↔ Searcher
@@ -324,8 +326,9 @@ Every module pair must be verified to work together:
 - [ ] Churn calculations query commits correctly
 
 ### VectorStore ↔ ObservationPersister
-- [ ] All 5 axis collections store entries
+- [ ] All 4 axis collections store entries (ghap_full, ghap_strategy, ghap_surprise, ghap_root_cause)
 - [ ] Payload schema matches Clusterer expectations
+- [ ] Domain is stored as metadata, not a separate collection
 
 ### VectorStore ↔ Clusterer
 - [ ] Scroll retrieves all entries (no pagination issues)
@@ -376,7 +379,7 @@ Based on master spec, the system must meet:
 | Memory retrieval | < 200ms | retrieve_memories() from 1000 memories |
 | Commit search | < 200ms | search_commits() from 500 commits |
 | Context assembly | < 500ms | assemble() with rich context |
-| Clustering | < 5s | cluster_axis() on 100 experiences |
+| Clustering | < 5s | cluster_axis() on 100 experiences (4 axes total) |
 | Embedding (single) | < 100ms | embed() single text |
 | Embedding (batch) | < 2s | embed_batch() 100 texts |
 
@@ -421,7 +424,7 @@ README.md                 # MODIFY: Complete documentation
 ### Functional
 
 1. **ObservationPersister works**:
-   - resolve_ghap() persists to all 5 axis collections
+   - resolve_ghap() persists to all 4 axis collections
    - get_clusters() returns clusters from real data
    - get_cluster_members() returns experiences
 
