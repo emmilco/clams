@@ -39,6 +39,8 @@ def register_search_tools(
         server: MCP Server instance
         searcher: Search service
     """
+    # Access embedding service from searcher
+    embedding_service = searcher._embedding_service
 
     @server.call_tool()  # type: ignore[untyped-decorator]
     async def search_experiences(
@@ -85,12 +87,19 @@ def register_search_tools(
                     f"Limit must be between 1 and 50 (got {limit})"
                 )
 
-            # This is a stub - actual implementation would:
-            # 1. Generate query embedding
-            # 2. Call searcher.search_experiences()
-            # For now, return empty results
+            # Generate query embedding
+            try:
+                query_embedding = await embedding_service.embed(query)
+            except Exception as e:
+                logger.error("search.embed_failed", query=query, error=str(e))
+                return _error_response(
+                    "embedding_error",
+                    f"Failed to generate query embedding: {e}"
+                )
+
+            # Call searcher with real embedding
             results = await searcher.search_experiences(
-                query_embedding=[],  # Mock embedding
+                query_embedding=query_embedding,
                 axis=axis,
                 domain=domain,
                 outcome=outcome,

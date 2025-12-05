@@ -42,6 +42,8 @@ def register_learning_tools(
         experience_clusterer: Experience clustering service
         value_store: Value storage service
     """
+    # Access vector store for get_cluster_members and list_values
+    vector_store = experience_clusterer._vector_store
 
     @server.call_tool()  # type: ignore[untyped-decorator]
     async def get_clusters(axis: str) -> dict[str, Any]:
@@ -160,13 +162,52 @@ def register_learning_tools(
             axis = parts[0]
             validate_axis(axis)
 
-            # This is a stub - actual implementation would query VectorStore
-            # For now, return empty results
+            # Parse cluster label
+            try:
+                label = int(parts[1])
+            except ValueError:
+                raise ValidationError(
+                    f"Invalid cluster label in cluster_id: {cluster_id}. "
+                    "Label must be an integer"
+                )
+
+            # Query appropriate axis collection
+            collection = f"ghap_{axis}"
+
+            # Cluster label is stored in payload metadata
+            results = await vector_store.scroll(
+                collection=collection,
+                limit=limit,
+                filters={"cluster_label": label},
+                with_vectors=False,
+            )
+
+            # Format members
+            members = [
+                {
+                    "id": r.id,
+                    "domain": r.payload.get("domain"),
+                    "strategy": r.payload.get("strategy"),
+                    "outcome_status": r.payload.get("outcome_status"),
+                    "confidence_tier": r.payload.get("confidence_tier"),
+                    "cluster_label": r.payload.get("cluster_label"),
+                }
+                for r in results
+            ]
+
+            logger.info(
+                "learning.cluster_members_retrieved",
+                cluster_id=cluster_id,
+                axis=axis,
+                label=label,
+                count=len(members),
+            )
+
             return {
                 "cluster_id": cluster_id,
                 "axis": axis,
-                "members": [],
-                "count": 0,
+                "members": members,
+                "count": len(members),
             }
 
         except (ValidationError, NotFoundError) as e:
@@ -364,11 +405,38 @@ def register_learning_tools(
                     f"Limit must be between 1 and 100 (got {limit})"
                 )
 
-            # This is a stub - actual implementation would query VectorStore
-            # For now, return empty results
+            # Build filters
+            filters = None
+            if axis is not None:
+                filters = {"axis": axis}
+
+            # Query values collection
+            results = await vector_store.scroll(
+                collection="values",
+                limit=limit,
+                filters=filters,
+                with_vectors=False,
+            )
+
+            # Format results
+            from datetime import datetime
+            values = [
+                {
+                    "id": r.id,
+                    "text": r.payload["text"],
+                    "cluster_id": r.payload["cluster_id"],
+                    "axis": r.payload["axis"],
+                    "validated_at": datetime.fromtimestamp(r.payload["validated_at"]).isoformat() if "validated_at" in r.payload else None,
+                    "distance_to_centroid": r.payload.get("distance_to_centroid"),
+                }
+                for r in results
+            ]
+
+            logger.info("learning.values_listed", count=len(values), axis=axis)
+
             return {
-                "results": [],
-                "count": 0,
+                "results": values,
+                "count": len(values),
             }
 
         except ValidationError as e:
