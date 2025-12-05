@@ -134,17 +134,18 @@ async def initialize_collections(settings: ServerSettings) -> None:
                 distance="cosine"
             )
             logger.info("collection.created", name=collection_name, dimension=dimension)
-        except ValueError:
-            # Collection already exists - this is normal
-            logger.debug("collection.exists", name=collection_name)
         except Exception as e:
-            logger.error(
-                "collection.create_failed",
-                name=collection_name,
-                error=str(e),
-                exc_info=True
-            )
-            raise
+            # Check if collection already exists (409 Conflict)
+            if "already exists" in str(e) or "409" in str(e):
+                logger.debug("collection.exists", name=collection_name)
+            else:
+                logger.error(
+                    "collection.create_failed",
+                    name=collection_name,
+                    error=str(e),
+                    exc_info=True
+                )
+                raise
 
 
 def create_server(settings: ServerSettings) -> Server:
