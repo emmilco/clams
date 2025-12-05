@@ -18,16 +18,16 @@ class CollectionName:
 
     MEMORIES = "memories"
     CODE = "code"
-    EXPERIENCES_FULL = "experiences_full"
-    EXPERIENCES_STRATEGY = "experiences_strategy"
-    EXPERIENCES_SURPRISE = "experiences_surprise"
-    EXPERIENCES_ROOT_CAUSE = "experiences_root_cause"
+    EXPERIENCES_FULL = "ghap_full"
+    EXPERIENCES_STRATEGY = "ghap_strategy"
+    EXPERIENCES_SURPRISE = "ghap_surprise"
+    EXPERIENCES_ROOT_CAUSE = "ghap_root_cause"
     VALUES = "values"
     COMMITS = "commits"
 
     # Experience axis mapping
     # Note: 'domain' is NOT a separate collection - it's stored as
-    # metadata on experiences_full
+    # metadata on ghap_full
     EXPERIENCE_AXES: dict[str, str] = {
         "full": EXPERIENCES_FULL,
         "strategy": EXPERIENCES_STRATEGY,

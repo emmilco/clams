@@ -17,8 +17,8 @@ if TYPE_CHECKING:
 # Valid clustering axes (domain is NOT an axis - it's a metadata filter)
 VALID_AXES = {"full", "strategy", "surprise", "root_cause"}
 
-# Collection names (aligned with SPEC-001)
-EXPERIENCES_COLLECTION_PREFIX = "experiences_"  # e.g., "experiences_full"
+# Collection names (aligned with SPEC-002-14 ghap_* naming)
+EXPERIENCES_COLLECTION_PREFIX = "ghap_"  # e.g., "ghap_full"
 VALUES_COLLECTION = "values"
 
 

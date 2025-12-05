@@ -10,12 +10,12 @@ from .types import ClusterInfo, get_weight
 logger = structlog.get_logger(__name__)
 
 # VectorStore collection names by axis
-# Note: "domain" is not a clustering axis (it's metadata on experiences_full)
+# Note: "domain" is not a clustering axis (it's metadata on ghap_full)
 AXIS_COLLECTIONS = {
-    "full": "experiences_full",
-    "strategy": "experiences_strategy",
-    "surprise": "experiences_surprise",
-    "root_cause": "experiences_root_cause",
+    "full": "ghap_full",
+    "strategy": "ghap_strategy",
+    "surprise": "ghap_surprise",
+    "root_cause": "ghap_root_cause",
 }
 
 

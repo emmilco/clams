@@ -43,7 +43,7 @@ async def test_cluster_axis_success(mock_vector_store: Mock) -> None:
     mock_vector_store.scroll.assert_called_once()
     # Check that scroll was called with correct collection
     call_kwargs = mock_vector_store.scroll.call_args[1]
-    assert call_kwargs["collection"] == "experiences_full"
+    assert call_kwargs["collection"] == "ghap_full"
     assert call_kwargs["with_vectors"] is True
 
 
@@ -230,10 +230,10 @@ async def test_cluster_axis_calls_correct_collection(mock_vector_store: Mock) ->
 
     # Test each axis
     axis_collection_map = {
-        "full": "experiences_full",
-        "strategy": "experiences_strategy",
-        "surprise": "experiences_surprise",
-        "root_cause": "experiences_root_cause",
+        "full": "ghap_full",
+        "strategy": "ghap_strategy",
+        "surprise": "ghap_surprise",
+        "root_cause": "ghap_root_cause",
     }
 
     for axis, expected_collection in axis_collection_map.items():
