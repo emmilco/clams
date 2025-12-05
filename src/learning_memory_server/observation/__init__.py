@@ -18,9 +18,11 @@ from .models import (
     RootCause,
     Strategy,
 )
+from .persister import ObservationPersister
 
 __all__ = [
     "ObservationCollector",
+    "ObservationPersister",
     "Domain",
     "Strategy",
     "OutcomeStatus",
