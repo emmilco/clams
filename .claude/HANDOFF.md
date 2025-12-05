@@ -1,56 +1,80 @@
-# Session Handoff - 2025-12-04 (Late Evening)
+# Session Handoff - 2025-12-05 (Early Morning)
 
 ## Session Summary
 
-Completed 2 major merges and revised SPEC-002-14. The Learning Memory Server now has 15 of 17 subtasks complete (468 tests passing).
+Completed SPEC-002-14 (ObservationPersister), ran comprehensive code audit across all 16 completed subtasks, and updated specs for SPEC-002-16 and SPEC-002-17 based on human decisions.
 
 ### Accomplishments
-- Rebased and merged SPEC-002-15 (MCP tools for GHAP and learning) - required extensive conflict resolution
-- Merged SPEC-002-06 (CodeParser + CodeIndexer) to main
-- Revised SPEC-002-14 spec collaboratively with human:
-  - Reduced from 5 axes to 4 (domain became metadata filter)
-  - Confirmed separate collections design
-  - Aligned with existing interfaces on main
-  - Added integration notes for code changes needed
-- Transitioned SPEC-002-14 to DESIGN phase
+
+1. **SPEC-002-14 Complete** (ObservationPersister)
+   - Finished code review cycle (2/2 approved)
+   - Merged to main (496 tests passing)
+   - Multi-axis embedding now implemented (full, strategy, surprise, root_cause)
+
+2. **Code Audit Across All Modules**
+   - Dispatched 6 agents to verify code completeness
+   - Found critical integration bugs:
+     - `observation/__init__.py` stub shadows real ObservationPersister
+     - `ghap.py:374` uses `.to_dict()` instead of direct GHAPEntry
+     - `search.py:88` passes empty embedding
+     - 3 stub MCP tools return empty results
+   - All findings incorporated into SPEC-002-16
+
+3. **Spec Updates with Human Decisions**
+   - SPEC-002-16 updated with:
+     - Correct collection names (`ghap_*` prefix)
+     - Performance targets are HARD requirements
+     - Qdrant unreachable = fail fast
+     - GHAP clustering test: 20+ entries in ONE test
+     - Minimal README (no brittle info)
+   - SPEC-002-17 completely rewritten:
+     - Philosophy: Code is source of truth
+     - Minimal docs: GETTING_STARTED.md + docstring audit
+     - No comprehensive reference (causes drift)
+
+4. **Workflow Improvement**
+   - `clams-status` now consumes and deletes HANDOFF.md after display
+   - Prevents stale handoffs from confusing future sessions
 
 ## Active Tasks
 
 | Task | Phase | Status | Next Step |
 |------|-------|--------|-----------|
-| SPEC-002-14 | DESIGN | Spec approved, ready for architect | Dispatch architect to write proposal |
-| SPEC-002 | DESIGN | Parent spec | Waiting for SPEC-002-14 to complete |
+| SPEC-002-16 | SPEC | Spec updated with decisions | Start spec review (2x) |
+| SPEC-002-17 | SPEC | Spec rewritten | After 16 done, start spec review |
+| SPEC-002 | DESIGN | Parent spec | Done when 16+17 complete |
 
-## Blocked Items
+## Key Decisions Made This Session
 
-None.
-
-## Friction Points This Session
-
-1. **Lost spec revision** - SPEC-002-14's revised spec was lost when the worktree was reset in a previous session. Had to reconstruct it collaboratively with human.
-   - Recommendation: Consider committing spec changes to worktree immediately after revision
-
-2. **Rebase conflict resolution confusion** - During SPEC-002-15 rebase, used `--theirs` when I meant `--ours` (they're reversed during rebase). Had to manually copy files from main.
-   - Resolution: Copied correct files from main
-   - Recommendation: Be explicit about which version to keep, don't rely on --ours/--theirs
-
-3. **Interface mismatches post-rebase** - After rebasing SPEC-002-15, discovered many interface mismatches between stub implementations and main's real implementations (GHAPEntry methods, collector signatures, ValueStore methods)
-   - Resolution: Fixed all mismatches, all 446 tests passed
-   - Recommendation: Rebase worktrees more frequently to avoid divergence
-
-4. **Accidentally cleared reviews** - Cleared SPEC-002-14 reviews before transitioning, which reset the review gate
-   - Resolution: Re-recorded reviews as human approval
-   - Recommendation: Don't clear reviews before transition; the clear happens automatically if changes are requested
-
-## Recommendations for Next Session
-
-1. **Start SPEC-002-14 DESIGN phase** - Dispatch architect to write proposal
-2. **Consider workflow improvement** - Add pre-commit hook to worktrees to remind about rebasing if >N commits behind main
+1. **Graceful degradation**: Yes for Code/Git services (if init fails, continue without)
+2. **Qdrant unreachable**: Fail fast (no tolerance for broken storage)
+3. **Performance targets**: HARD requirements - failure is a blocker
+4. **Documentation philosophy**: Minimal, AI-focused, code is source of truth
+5. **Execution order**: SPEC-002-16 complete before starting SPEC-002-17
 
 ## Next Steps
 
-1. Dispatch architect for SPEC-002-14 proposal
-2. Complete proposal review cycle (2x reviews)
-3. Get human approval for design
-4. Implement SPEC-002-14
-5. After SPEC-002-14 complete, transition parent SPEC-002 to DONE
+1. Start spec review cycle for SPEC-002-16 (2x sequential reviews)
+2. After spec approved, transition to DESIGN and dispatch architect
+3. Complete SPEC-002-16 implementation
+4. Then do SPEC-002-17
+5. Mark parent SPEC-002 as DONE
+
+## System State
+
+- **16 subtasks DONE** (including SPEC-002-14)
+- **2 subtasks remaining** (SPEC-002-16, SPEC-002-17)
+- **496 tests passing** on main
+- System HEALTHY, no blockers
+
+## Friction Points This Session
+
+1. **Long spec file reads** - Had to read specs in chunks, could use summary tools
+2. **Worktree vs main confusion** - Database commands must run from main repo
+3. **Review cycles** - Multiple back-and-forth rounds for proposal reviews (expected, not a problem)
+
+## Files Modified
+
+- `.claude/bin/clams-status` - Auto-consume HANDOFF.md
+- `.worktrees/SPEC-002-16/planning_docs/SPEC-002-16/spec.md` - Updated with audit findings and decisions
+- `.worktrees/SPEC-002-17/planning_docs/SPEC-002-17/spec.md` - Completely rewritten for minimal docs
