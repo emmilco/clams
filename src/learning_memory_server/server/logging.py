@@ -18,9 +18,11 @@ def configure_logging(log_level: str = "INFO", log_format: str = "json") -> None
     numeric_level = getattr(logging, log_level.upper(), logging.INFO)
 
     # Configure stdlib logging
+    # IMPORTANT: MCP stdio servers MUST log to stderr, not stdout.
+    # stdout is reserved for JSON-RPC protocol messages.
     logging.basicConfig(
         format="%(message)s",
-        stream=sys.stdout,
+        stream=sys.stderr,
         level=numeric_level,
     )
 

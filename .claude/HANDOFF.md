@@ -1,69 +1,97 @@
-# Session Handoff - 2025-12-05 (Afternoon)
+# Session Handoff - 2025-12-05 (Evening)
 
 ## Session Summary
 
-Completed SPEC-002 (Learning Memory Server) - the entire project is now DONE. Finished the final subtask SPEC-002-17 (Documentation and E2E Testing), fixed startup bugs discovered during MCP installation, and successfully installed the Learning Memory Server as a Claude Code MCP.
+Investigated why MCP tools weren't appearing in Claude Code despite the server showing as "Connected". Used a differential diagnosis approach to systematically identify the root cause.
 
-### Key Accomplishments
+## Key Findings
 
-1. **SPEC-002-17 Complete** (Documentation and E2E Testing)
-   - Wrote GETTING_STARTED.md (98 lines, navigation-focused)
-   - Verified all 23 MCP tools have docstrings
-   - Implemented 8 E2E integration tests with real Qdrant
-   - Implemented 4 performance benchmarks (all passing p95 targets)
-   - Fixed incomplete E2E tests caught in code review
-   - Fixed Searcher.search_experiences() missing strategy parameter
+### Root Cause Identified: Two Bugs Found
 
-2. **SPEC-002 Complete** (Parent spec)
-   - All 18 subtasks DONE
-   - 508 tests passing
-   - 84%+ coverage
+1. **Missing `@server.list_tools()` handler** (CRITICAL)
+   - The MCP SDK requires a `list_tools` handler to respond to tool discovery requests
+   - Without it, Claude Code asks "what tools?" and gets "Method not found"
+   - Our code only had `@server.call_tool()` decorators (for execution) but no discovery handler
 
-3. **MCP Installation**
-   - Uninstalled old claude-memory-rag MCP
-   - Fixed startup bug: missing `trust_remote_code=True` for nomic embedding model
-   - Fixed startup bug: wrong exception handling for existing Qdrant collections
-   - Successfully installed learning-memory-server MCP at user level
-   - Verified connection: `claude mcp list` shows connected
+2. **Logs going to stdout instead of stderr** (MEDIUM)
+   - `src/learning_memory_server/server/logging.py` line 25 used `stream=sys.stdout`
+   - MCP stdio servers MUST log to stderr - stdout is reserved for JSON-RPC
+   - **FIXED**: Changed to `stream=sys.stderr`
 
-## Active Tasks
+3. **Dispatcher architecture issue** (discovered during fix)
+   - Each `@server.call_tool()` REPLACES the previous handler
+   - Only the last registered tool (ping) was active
+   - Need single dispatcher that routes to all tool implementations
 
-None - all tasks complete.
+## Changes Made
 
-## Blocked Items
+### Fixed Files
+- `src/learning_memory_server/server/logging.py` - Logs now go to stderr
+- `src/learning_memory_server/server/tools/__init__.py` - Added:
+  - `_get_all_tool_definitions()` - Returns 23 Tool schemas
+  - `@server.list_tools()` handler for tool discovery
+  - Started dispatcher pattern (incomplete)
+- `src/learning_memory_server/server/tools/memory.py` - Refactored to dispatcher pattern
+- `tests/integration/test_mcp_protocol.py` - New MCP protocol-level tests
 
-None.
+### Partially Fixed
+- `src/learning_memory_server/server/tools/ghap.py` - Partially refactored (needs return dict + register_ghap_tools stub)
 
-## Friction Points This Session
+### Still Needs Refactoring (not started)
+- `src/learning_memory_server/server/tools/code.py`
+- `src/learning_memory_server/server/tools/git.py`
+- `src/learning_memory_server/server/tools/learning.py`
+- `src/learning_memory_server/server/tools/search.py`
 
-1. **E2E tests incomplete after first implementation** - Code review caught that TestContextAssembly didn't actually use ContextAssembler, and TestGitWorkflow was missing churn/authors tests. Fixed by dispatching implementer to complete the tests.
+## How Bug Was Missed
 
-2. **Startup bugs not caught by tests** - Two bugs were only discovered when trying to run the actual server:
-   - `trust_remote_code=True` missing in validation (tests used MockEmbedding)
-   - Wrong exception type for existing collections (409 Conflict vs ValueError)
-   - These passed unit tests but failed in real deployment
+1. **Spec-level gap** - Specs didn't mention MCP SDK implementation details
+2. **Architect misunderstanding** - Thought `server.list_tools()` was a getter, not a decorator
+3. **Skeleton bug** - SPEC-002-05 established the wrong pattern, all tools followed it
+4. **Test coverage gap** - Unit tests mocked `server.call_tool`, tested implementation not protocol
+5. **No E2E protocol test** - Tests called Python services directly, never tested MCP handshake
 
-3. **Background bash commands unreliable** - Several gate checks and test runs in background mode showed stale "running" status or truncated output. Had to use foreground mode or read log files directly.
+## New Test Added
 
-4. **Spec review cycles** - Initial spec review found multiple issues requiring fixes before approval. Two rounds of review needed before spec was clean.
+`tests/integration/test_mcp_protocol.py` - Protocol-level tests that:
+- Connect to server via stdio (like Claude Code)
+- Send initialize request
+- Send list_tools request (this catches the bug!)
+- Verify expected tools are returned
+- Call tools to verify execution
 
-## Recommendations for Next Session
-
-1. **Add integration test for server startup** - Create a test that actually starts the server binary and verifies it initializes correctly. Would have caught the `trust_remote_code` and collection exception bugs.
-
-2. **Use real embeddings in at least one E2E test** - Currently all E2E tests use MockEmbedding. One test should use real NomicEmbedding to catch model loading issues.
-
-3. **Test the MCP in Claude Code** - The server is installed but hasn't been tested in an actual Claude Code session yet. Next session should verify the tools work end-to-end.
+This test caught the bug - it fails with "McpError: Method not found" when handler is missing.
 
 ## Next Steps
 
-1. **Restart Claude Code** to pick up the new MCP server
-2. **Test MCP tools** in a real session (store_memory, retrieve_memories, etc.)
-3. **Configure git repo path** if git analysis tools are needed (`LMS_REPO_PATH` env var)
+1. **Complete the dispatcher refactor** for remaining modules:
+   - Add `get_*_tools()` functions that return dict of tool implementations
+   - Remove `@server.call_tool()` decorators from individual tools
+   - Make `register_*_tools()` functions no-op for backwards compatibility
 
-## System State
+2. **Fix ghap.py** - Add the return dict at end of `get_ghap_tools()`
 
-- **SPEC-002**: DONE (all 19 tasks including parent)
-- **MCP Server**: Installed and connected at user level
-- **Tests**: 508 passing
-- **System Health**: HEALTHY
+3. **Run the new protocol tests** to verify fix works end-to-end
+
+4. **Restart Claude Code** and verify tools appear as `mcp__learning-memory-server__*`
+
+## Friction Points
+
+- MCP SDK's dual-registration pattern (`call_tool` for execution, `list_tools` for discovery) is not obvious
+- The SDK overwrites handlers instead of appending - easy to miss
+- Testing the full MCP protocol requires starting a subprocess and doing async communication
+- anyio/pytest-asyncio compatibility issues in test teardown (non-blocking but annoying)
+
+## Commands to Resume
+
+```bash
+# Check current state
+.claude/bin/clams-status
+
+# Run the protocol test to see current status
+TOKENIZERS_PARALLELISM=false uv run pytest tests/integration/test_mcp_protocol.py -v --tb=short
+
+# After completing the fix, test with Claude Code
+claude mcp list
+# Then restart Claude Code to pick up changes
+```

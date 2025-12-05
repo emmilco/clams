@@ -1,7 +1,7 @@
 """Memory tools for MCP server."""
 
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Callable, Coroutine
 from uuid import uuid4
 
 import structlog
@@ -23,38 +23,27 @@ VALID_CATEGORIES = {
     "decision",
 }
 
+# Type alias for tool functions
+ToolFunc = Callable[..., Coroutine[Any, Any, dict[str, Any]]]
 
-def register_memory_tools(server: Server, services: ServiceContainer) -> None:
-    """Register memory tools with MCP server.
+
+def get_memory_tools(services: ServiceContainer) -> dict[str, ToolFunc]:
+    """Get memory tool implementations for the dispatcher.
 
     Args:
-        server: MCP Server instance
         services: Initialized service container
+
+    Returns:
+        Dictionary mapping tool names to their implementations
     """
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
     async def store_memory(
         content: str,
         category: str,
         importance: float = 0.5,
         tags: list[str] | None = None,
     ) -> dict[str, Any]:
-        """Store a new memory with semantic embedding.
-
-        Args:
-            content: Memory content (max 10,000 chars)
-            category: One of: preference, fact, event, workflow, context,
-                error, decision
-            importance: Importance score 0.0-1.0 (default 0.5)
-            tags: Optional tags for categorization
-
-        Returns:
-            Stored memory record with ID and metadata
-
-        Raises:
-            ValidationError: If inputs are invalid
-            MCPError: If storage fails
-        """
+        """Store a new memory with semantic embedding."""
         logger.info("memory.store", category=category, importance=importance)
 
         # Validate category
@@ -114,24 +103,13 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
             logger.error("memory.store_failed", error=str(e), exc_info=True)
             raise MCPError(f"Failed to store memory: {e}") from e
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
     async def retrieve_memories(
         query: str,
         limit: int = 10,
         category: str | None = None,
         min_importance: float = 0.0,
     ) -> dict[str, Any]:
-        """Search memories semantically.
-
-        Args:
-            query: Search query
-            limit: Max results (1-100, default 10)
-            category: Optional category filter
-            min_importance: Minimum importance filter (0.0-1.0)
-
-        Returns:
-            Search results with scores and metadata
-        """
+        """Search memories semantically."""
         logger.info("memory.retrieve", query=query[:50], limit=limit)
 
         # Validate category
@@ -187,24 +165,13 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
             logger.error("memory.retrieve_failed", error=str(e), exc_info=True)
             raise MCPError(f"Failed to retrieve memories: {e}") from e
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
     async def list_memories(
         category: str | None = None,
         tags: list[str] | None = None,
         limit: int = 50,
         offset: int = 0,
     ) -> dict[str, Any]:
-        """List memories with filters (non-semantic).
-
-        Args:
-            category: Optional category filter
-            tags: Optional tag filters (ANY match)
-            limit: Max results (1-200, default 50)
-            offset: Pagination offset (default 0)
-
-        Returns:
-            List of memories with pagination metadata
-        """
+        """List memories with filters (non-semantic)."""
         logger.info("memory.list", category=category, limit=limit, offset=offset)
 
         # Validate category
@@ -240,8 +207,6 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
             )
 
             # Scroll through results
-            # NOTE: VectorStore.scroll() doesn't support offset parameter.
-            # We fetch more results and slice them manually for pagination.
             fetch_limit = offset + limit
             results = await services.vector_store.scroll(
                 collection="memories",
@@ -274,16 +239,8 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
             logger.error("memory.list_failed", error=str(e), exc_info=True)
             raise MCPError(f"Failed to list memories: {e}") from e
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
     async def delete_memory(memory_id: str) -> dict[str, bool]:
-        """Delete a memory by ID.
-
-        Args:
-            memory_id: Memory ID to delete
-
-        Returns:
-            Deletion status
-        """
+        """Delete a memory by ID."""
         logger.info("memory.delete", memory_id=memory_id)
 
         try:
@@ -299,3 +256,20 @@ def register_memory_tools(server: Server, services: ServiceContainer) -> None:
         except Exception as e:
             logger.warning("memory.delete_failed", memory_id=memory_id, error=str(e))
             return {"deleted": False}
+
+    return {
+        "store_memory": store_memory,
+        "retrieve_memories": retrieve_memories,
+        "list_memories": list_memories,
+        "delete_memory": delete_memory,
+    }
+
+
+def register_memory_tools(server: Server, services: ServiceContainer) -> None:
+    """Register memory tools with MCP server.
+
+    DEPRECATED: This function is kept for backwards compatibility with tests.
+    The new dispatcher pattern uses get_memory_tools() instead.
+    """
+    # No-op - tools are now registered via the central dispatcher
+    pass

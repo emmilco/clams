@@ -44,22 +44,22 @@ def _error_response(error_type: str, message: str) -> dict[str, Any]:
     return {"error": {"type": error_type, "message": message}}
 
 
-def register_ghap_tools(
-    server: Server,
+def get_ghap_tools(
     collector: ObservationCollector,
     persister: ObservationPersister,
-) -> None:
-    """Register GHAP tools with MCP server.
+) -> dict[str, Any]:
+    """Get GHAP tool implementations for the dispatcher.
 
     Args:
-        server: MCP Server instance
         collector: Observation collector service
         persister: Observation persister service
+
+    Returns:
+        Dictionary mapping tool names to their implementations
     """
     # Access vector store from persister for list_ghap_entries
     vector_store = persister._vector_store
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
     async def start_ghap(
         domain: str,
         strategy: str,
@@ -155,7 +155,7 @@ def register_ghap_tools(
             )
             return _error_response("internal_error", "Internal server error")
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
+
     async def update_ghap(
         hypothesis: str | None = None,
         action: str | None = None,
@@ -236,7 +236,7 @@ def register_ghap_tools(
             )
             return _error_response("internal_error", "Internal server error")
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
+
     async def resolve_ghap(
         status: str,
         result: str,
@@ -436,7 +436,7 @@ def register_ghap_tools(
             )
             return _error_response("internal_error", "Internal server error")
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
+
     async def get_active_ghap() -> dict[str, Any]:
         """Get the current active GHAP entry.
 
@@ -482,7 +482,7 @@ def register_ghap_tools(
             )
             return _error_response("internal_error", "Internal server error")
 
-    @server.call_tool()  # type: ignore[untyped-decorator]
+
     async def list_ghap_entries(
         limit: int = 20,
         domain: str | None = None,
