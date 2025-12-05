@@ -106,7 +106,7 @@ Complete the Learning Memory Server by integrating all modules into a working, p
 
 **What**:
 - Create all required collections on server startup
-- Collections: memories, code_units, commits, experiences_full, experiences_domain, experiences_strategy, experiences_surprise, experiences_root_cause, values
+- Collections: memories, code_units, commits, ghap_full, ghap_strategy, ghap_surprise, ghap_root_cause, values
 - Handle "collection already exists" gracefully (this is normal after first run)
 - Verify dimension matches embedding_service.dimension
 
@@ -167,12 +167,14 @@ results = await searcher.search_experiences(
 - search_commits() returns relevant commits
 - get_churn_hotspots() returns frequently changed files
 
-**Scenario 4: GHAP Learning Loop**
-- start_ghap() → update_ghap() → resolve_ghap()
-- Verify persisted to all 5 axis collections
-- get_clusters() after sufficient data (need 20+ entries)
+**Scenario 4: GHAP Learning Loop** (single comprehensive test)
+- Create 20+ GHAP entries with varied domains/strategies to enable clustering
+- start_ghap() → update_ghap() → resolve_ghap() cycle for each
+- Verify persisted to all 4 axis collections (ghap_full, ghap_strategy, ghap_surprise, ghap_root_cause)
+- get_clusters() returns clusters from the 20+ entries
 - validate_value() against cluster centroid
 - store_value() → list_values()
+- NOTE: This is intentionally ONE test with 20+ entries to test real clustering
 
 **Scenario 5: Context Assembly**
 - Store memories, code, experiences, values
@@ -226,12 +228,13 @@ results = await searcher.search_experiences(
 - Run cluster_axis() for all 5 axes
 - Measure total time
 
-**Acceptance Criteria**:
+**Acceptance Criteria** (HARD REQUIREMENTS - failure is a blocker):
 - Code search: p95 < 200ms
 - Memory retrieval: p95 < 200ms
 - Context assembly: p95 < 500ms
 - Clustering: completes in < 5s for 100 entries
 - Benchmark results logged to JSON for tracking
+- If any benchmark fails, escalate to human before proceeding
 
 ### 8. Configuration Validation
 
@@ -244,7 +247,7 @@ results = await searcher.search_experiences(
 - Validate git repo_path if provided
 
 **Acceptance Criteria**:
-- Invalid Qdrant URL logs warning but continues (for development)
+- Invalid/unreachable Qdrant URL fails fast with clear error (no tolerance for broken storage)
 - Invalid embedding model fails fast with clear error
 - Invalid paths fail fast with clear error
 - Valid configuration starts successfully
@@ -265,21 +268,26 @@ results = await searcher.search_experiences(
 - ping tool returns "pong" successfully
 - Logs are valid JSON (for log aggregation)
 
-### 10. Documentation Updates
+### 10. Minimal README Update
 
-**Why**: README is minimal. Users need installation, configuration, and usage instructions.
+**Why**: README is minimal. Need basic installation/usage info.
 
-**What**: Update README.md with:
-- Installation (uv, dependencies, Qdrant setup)
-- Configuration (environment variables, defaults)
-- Usage (starting server, configuring Claude Code)
-- MCP Tools reference (brief description of each tool)
-- Troubleshooting (common errors, solutions)
+**What**: Update README.md with ONLY:
+- Brief description (what it is)
+- Installation command (`uv pip install -e .`)
+- How to start server
+- Link to source files for tool discovery (e.g., "See `server/tools/` for available MCP tools")
+- System requirements (Python, Qdrant)
+
+**What NOT to include** (avoid brittle info):
+- Detailed tool parameter documentation (changes frequently)
+- Exhaustive configuration reference (see code)
+- Version-specific information
 
 **Acceptance Criteria**:
-- README covers installation, configuration, usage
-- All MCP tools documented with parameters
-- Troubleshooting section has 3+ common issues
+- README is under 100 lines
+- No brittle information that will drift from code
+- Directs users to source code as the source of truth
 
 ## Integration Checklist
 
