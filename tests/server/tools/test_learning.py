@@ -52,9 +52,13 @@ def experience_clusterer() -> ExperienceClusterer:
 @pytest.fixture
 def value_store() -> ValueStore:
     """Create a mock ValueStore."""
+    vector_store = MagicMock()
+    # Make scroll an async method that returns empty results
+    vector_store.scroll = AsyncMock(return_value=[])
+
     store = ValueStore(
         embedding_service=MagicMock(),
-        vector_store=MagicMock(),
+        vector_store=vector_store,
         clusterer=MagicMock(),
     )
     # Mock the validate_value_candidate method
