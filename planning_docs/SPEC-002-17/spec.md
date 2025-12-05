@@ -93,10 +93,9 @@ Create the E2E tests and performance benchmarks that were deferred:
 
 **Failure Behavior**:
 - Performance tests that miss targets FAIL (not warn)
-- If Qdrant unavailable: use `pytest.skip("Qdrant not available at localhost:6333")` - other tests (docstring checks, unit tests) still run
+- If Qdrant unavailable: tests FAIL (no skips - strong no-skip policy)
 - Benchmark results logged to `tests/performance/benchmark_results.json`
 - Failed benchmarks report: actual p95, target, and percentage over
-- CI environments without Qdrant: E2E/perf tests skip, docs/unit tests run
 
 ### 4. ARCHITECTURE.md (Optional - NOT required for acceptance)
 
@@ -149,7 +148,7 @@ observation/   - GHAP state machine, ObservationPersister
 6. **Test infrastructure works**:
    - Tests use isolated collections (not production data)
    - Benchmark results logged to JSON at `tests/performance/benchmark_results.json`
-   - Qdrant-unavailable: `pytest.skip()` with explicit message, non-Qdrant tests still run
+   - No skip markers - all tests require Qdrant and fail if unavailable
 
 ### Quality
 
@@ -190,8 +189,8 @@ learning-memory-server/
 **Blocked By:**
 - SPEC-002-16 (Integration) - DONE - system is working
 
-**Runtime Dependencies (for testing):**
-- Qdrant running at localhost:6333 (E2E/perf tests skip if unavailable)
+**Runtime Dependencies (REQUIRED for testing):**
+- Qdrant running at localhost:6333 (tests fail if unavailable - no skips)
 
 **Implementation Notes:**
 - All 23 MCP tools already exist from prior subtasks - this task audits their docstrings
