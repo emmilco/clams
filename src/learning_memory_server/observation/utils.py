@@ -45,14 +45,6 @@ def compute_confidence_tier(entry: GHAPEntry) -> ConfidenceTier:
     - ABANDONED: outcome.status is ABANDONED
     - GOLD: auto-captured outcome (test/build result triggered resolution)
     - SILVER: manual resolution (agent explicitly resolved)
-
-    Note: Hypothesis quality assessment is NOT done here. Quality is assessed
-    later by ObservationPersister (SPEC-002-14) using embeddings to detect
-    semantic similarity between hypothesis and prediction (tautology detection)
-    and other quality signals. This keeps the Collector simple and fast.
-
-    If quality issues are discovered during retrospectives, adjustments can be
-    made at retro time to elicit better observation data going forward.
     """
     if entry.outcome is None:
         raise ValueError("Cannot compute confidence tier for unresolved entry")

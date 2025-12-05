@@ -2,22 +2,22 @@
 
 import asyncio
 import json
+
+# Import the module under test
+import sys
+from pathlib import Path
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from mcp import ClientSession
 from mcp.types import CallToolResult, TextContent
 
-# Import the module under test
-import sys
-from pathlib import Path
-
 # Add .claude/hooks to path for importing
 hooks_dir = Path(__file__).parent.parent.parent / ".claude" / "hooks"
 sys.path.insert(0, str(hooks_dir))
 
-from mcp_client import MCPClient
+from mcp_client import MCPClient  # noqa: E402
 
 
 class TestMCPClient:

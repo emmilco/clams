@@ -20,6 +20,7 @@ from .models import (
     RootCause,
     Strategy,
 )
+from .persister import ObservationPersister
 
 
 class ObservationPersister:
