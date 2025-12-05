@@ -10,12 +10,12 @@ from .types import ClusterInfo, get_weight
 logger = structlog.get_logger(__name__)
 
 # VectorStore collection names by axis
-# Note: "domain" is not a clustering axis (it's metadata on experiences_full)
+# Note: "domain" is not a clustering axis (it's metadata on ghap_full)
 AXIS_COLLECTIONS = {
-    "full": "experiences_full",
-    "strategy": "experiences_strategy",
-    "surprise": "experiences_surprise",
-    "root_cause": "experiences_root_cause",
+    "full": "ghap_full",
+    "strategy": "ghap_strategy",
+    "surprise": "ghap_surprise",
+    "root_cause": "ghap_root_cause",
 }
 
 
@@ -31,6 +31,31 @@ class ExperienceClusterer:
         """
         self.vector_store = vector_store
         self.clusterer = clusterer
+
+    async def count_experiences(self, axis: str) -> int:
+        """Count experiences for a given axis.
+
+        Args:
+            axis: Axis name (full, strategy, surprise, root_cause)
+
+        Returns:
+            Number of experiences indexed for this axis
+
+        Raises:
+            ValueError: If axis is invalid
+        """
+        if axis not in AXIS_COLLECTIONS:
+            raise ValueError(
+                f"Invalid axis: {axis}. Valid axes: {list(AXIS_COLLECTIONS.keys())}"
+            )
+
+        collection = AXIS_COLLECTIONS[axis]
+        results = await self.vector_store.scroll(
+            collection=collection,
+            limit=10000,
+            with_vectors=False,
+        )
+        return len(results)
 
     async def cluster_axis(self, axis: str) -> list[ClusterInfo]:
         """Cluster experiences along a single axis.

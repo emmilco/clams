@@ -42,6 +42,8 @@ def register_learning_tools(
         experience_clusterer: Experience clustering service
         value_store: Value storage service
     """
+    # Access vector store for get_cluster_members and list_values
+    vector_store = experience_clusterer.vector_store
 
     @server.call_tool()  # type: ignore[untyped-decorator]
     async def get_clusters(axis: str) -> dict[str, Any]:
@@ -73,15 +75,15 @@ def register_learning_tools(
             noise_count = 0
 
             for cluster_info in clusters:
-                if cluster_info.get("label") == -1:
-                    noise_count = cluster_info.get("size", 0)
+                if cluster_info.label == -1:
+                    noise_count = cluster_info.size
                 else:
                     cluster_list.append(
                         {
-                            "cluster_id": cluster_info["cluster_id"],
-                            "label": cluster_info["label"],
-                            "size": cluster_info["size"],
-                            "avg_weight": cluster_info.get("avg_weight", 0.5),
+                            "cluster_id": cluster_info.label,
+                            "label": cluster_info.label,
+                            "size": cluster_info.size,
+                            "avg_weight": cluster_info.avg_weight,
                         }
                     )
 
@@ -160,13 +162,52 @@ def register_learning_tools(
             axis = parts[0]
             validate_axis(axis)
 
-            # This is a stub - actual implementation would query VectorStore
-            # For now, return empty results
+            # Parse cluster label
+            try:
+                label = int(parts[1])
+            except ValueError:
+                raise ValidationError(
+                    f"Invalid cluster label in cluster_id: {cluster_id}. "
+                    "Label must be an integer"
+                )
+
+            # Query appropriate axis collection
+            collection = f"ghap_{axis}"
+
+            # Cluster label is stored in payload metadata
+            results = await vector_store.scroll(
+                collection=collection,
+                limit=limit,
+                filters={"cluster_label": label},
+                with_vectors=False,
+            )
+
+            # Format members
+            members = [
+                {
+                    "id": r.id,
+                    "domain": r.payload.get("domain"),
+                    "strategy": r.payload.get("strategy"),
+                    "outcome_status": r.payload.get("outcome_status"),
+                    "confidence_tier": r.payload.get("confidence_tier"),
+                    "cluster_label": r.payload.get("cluster_label"),
+                }
+                for r in results
+            ]
+
+            logger.info(
+                "learning.cluster_members_retrieved",
+                cluster_id=cluster_id,
+                axis=axis,
+                label=label,
+                count=len(members),
+            )
+
             return {
                 "cluster_id": cluster_id,
                 "axis": axis,
-                "members": [],
-                "count": 0,
+                "members": members,
+                "count": len(members),
             }
 
         except (ValidationError, NotFoundError) as e:
@@ -237,13 +278,13 @@ def register_learning_tools(
             logger.info(
                 "learning.value_validated",
                 cluster_id=cluster_id,
-                valid=validation_result.is_valid,
-                similarity=validation_result.similarity_score,
+                valid=validation_result.valid,
+                similarity=validation_result.similarity,
             )
 
             return {
-                "valid": validation_result.is_valid,
-                "similarity": validation_result.similarity_score,
+                "valid": validation_result.valid,
+                "similarity": validation_result.similarity,
                 "cluster_id": cluster_id,
             }
 
@@ -319,7 +360,7 @@ def register_learning_tools(
                 "text": value_record.text,
                 "cluster_id": cluster_id,
                 "axis": axis,
-                "created_at": value_record.created_at.isoformat(),
+                "created_at": value_record.created_at,
             }
 
         except (ValidationError, NotFoundError) as e:
@@ -364,11 +405,45 @@ def register_learning_tools(
                     f"Limit must be between 1 and 100 (got {limit})"
                 )
 
-            # This is a stub - actual implementation would query VectorStore
-            # For now, return empty results
+            # Build filters
+            filters = None
+            if axis is not None:
+                filters = {"axis": axis}
+
+            # Query values collection
+            results = await vector_store.scroll(
+                collection="values",
+                limit=limit,
+                filters=filters,
+                with_vectors=False,
+            )
+
+            # Format results
+            from datetime import datetime
+
+            values = []
+            for r in results:
+                validated_at = (
+                    datetime.fromtimestamp(r.payload["validated_at"]).isoformat()
+                    if "validated_at" in r.payload
+                    else None
+                )
+                values.append(
+                    {
+                        "id": r.id,
+                        "text": r.payload["text"],
+                        "cluster_id": r.payload["cluster_id"],
+                        "axis": r.payload["axis"],
+                        "validated_at": validated_at,
+                        "distance_to_centroid": r.payload.get("distance_to_centroid"),
+                    }
+                )
+
+            logger.info("learning.values_listed", count=len(values), axis=axis)
+
             return {
-                "results": [],
-                "count": 0,
+                "results": values,
+                "count": len(values),
             }
 
         except ValidationError as e:

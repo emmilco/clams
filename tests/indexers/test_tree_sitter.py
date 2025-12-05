@@ -137,20 +137,6 @@ async def test_parse_javascript(parser):
     assert len(classes) == 1
 
 
-@pytest.mark.skip(reason="Lua parser not available on PyPI")
-@pytest.mark.asyncio
-async def test_parse_lua(parser):
-    """Test parsing Lua files."""
-    path = str(FIXTURES_DIR / "sample.lua")
-    units = await parser.parse_file(path)
-
-    assert len(units) >= 2
-
-    # Check function names
-    names = {u.name for u in units}
-    assert "add" in names or "process" in names
-
-
 @pytest.mark.asyncio
 async def test_parse_rust(parser):
     """Test parsing Rust files."""
@@ -233,20 +219,6 @@ async def test_parse_swift(parser):
     # Check for class
     classes = [u for u in units if u.name == "Circle"]
     assert len(classes) >= 1
-
-
-@pytest.mark.skip(reason="SQL parsing is complex and not MVP critical")
-@pytest.mark.asyncio
-async def test_parse_sql(parser):
-    """Test parsing SQL files."""
-    path = str(FIXTURES_DIR / "sample.sql")
-    units = await parser.parse_file(path)
-
-    assert len(units) >= 1
-
-    # Check that some units were extracted
-    names = {u.name for u in units if u.name}
-    assert len(names) > 0
 
 
 @pytest.mark.asyncio

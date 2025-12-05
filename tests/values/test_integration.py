@@ -21,7 +21,7 @@ async def integration_setup():
     vector_store = InMemoryVectorStore()
 
     # Create collections
-    await vector_store.create_collection("experiences_full", dimension=768)
+    await vector_store.create_collection("ghap_full", dimension=768)
     await vector_store.create_collection("values", dimension=768)
 
     # Mock clusterer (SPEC-002-12 not yet implemented)
@@ -58,7 +58,7 @@ async def integration_setup():
     # Insert experiences into vector store
     for exp in test_experiences:
         await vector_store.upsert(
-            collection="experiences_full",
+            collection="ghap_full",
             id=exp["id"],
             vector=exp["embedding"],
             payload={

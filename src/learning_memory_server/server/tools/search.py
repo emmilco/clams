@@ -85,12 +85,9 @@ def register_search_tools(
                     f"Limit must be between 1 and 50 (got {limit})"
                 )
 
-            # This is a stub - actual implementation would:
-            # 1. Generate query embedding
-            # 2. Call searcher.search_experiences()
-            # For now, return empty results
+            # Call searcher (it generates embeddings internally)
             results = await searcher.search_experiences(
-                query_embedding=[],  # Mock embedding
+                query=query,
                 axis=axis,
                 domain=domain,
                 outcome=outcome,

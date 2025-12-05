@@ -166,7 +166,7 @@ class TestGetClusterMembers:
         # Check that get was called with correct collection
         calls = mock_vector_store.get.call_args_list
         for call in calls:
-            assert call[1]["collection"] == "experiences_full"
+            assert call[1]["collection"] == "ghap_full"
 
 
 class TestValidateValueCandidate:

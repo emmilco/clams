@@ -2,9 +2,11 @@
 
 from unittest.mock import AsyncMock, MagicMock
 
+import numpy as np
 import pytest
 
 from learning_memory_server.clustering import ExperienceClusterer
+from learning_memory_server.clustering.types import ClusterInfo
 from learning_memory_server.server.tools.learning import register_learning_tools
 from learning_memory_server.values import ValueStore
 
@@ -12,32 +14,40 @@ from learning_memory_server.values import ValueStore
 @pytest.fixture
 def experience_clusterer() -> ExperienceClusterer:
     """Create a mock ExperienceClusterer."""
+    vector_store = MagicMock()
+    # Make scroll an async method that returns empty results
+    vector_store.scroll = AsyncMock(return_value=[])
+
     clusterer = ExperienceClusterer(
-        vector_store=MagicMock(),
+        vector_store=vector_store,
         clusterer=MagicMock(),
     )
     # Mock the count_experiences method
     clusterer.count_experiences = AsyncMock(return_value=25)
-    # Mock the cluster_axis method
+    # Mock the cluster_axis method with ClusterInfo objects
     clusterer.cluster_axis = AsyncMock(
         return_value=[
-            {
-                "cluster_id": "full_0",
-                "label": 0,
-                "size": 10,
-                "avg_weight": 0.8,
-            },
-            {
-                "cluster_id": "full_1",
-                "label": 1,
-                "size": 8,
-                "avg_weight": 0.7,
-            },
-            {
-                "cluster_id": "noise",
-                "label": -1,
-                "size": 7,
-            },
+            ClusterInfo(
+                label=0,
+                centroid=np.array([1.0, 2.0, 3.0], dtype=np.float32),
+                member_ids=["id1", "id2"],
+                size=10,
+                avg_weight=0.8,
+            ),
+            ClusterInfo(
+                label=1,
+                centroid=np.array([4.0, 5.0, 6.0], dtype=np.float32),
+                member_ids=["id3", "id4"],
+                size=8,
+                avg_weight=0.7,
+            ),
+            ClusterInfo(
+                label=-1,
+                centroid=np.array([0.0, 0.0, 0.0], dtype=np.float32),
+                member_ids=["id5"],
+                size=7,
+                avg_weight=0.5,
+            ),
         ]
     )
     return clusterer
@@ -46,9 +56,13 @@ def experience_clusterer() -> ExperienceClusterer:
 @pytest.fixture
 def value_store() -> ValueStore:
     """Create a mock ValueStore."""
+    vector_store = MagicMock()
+    # Make scroll an async method that returns empty results
+    vector_store.scroll = AsyncMock(return_value=[])
+
     store = ValueStore(
         embedding_service=MagicMock(),
-        vector_store=MagicMock(),
+        vector_store=vector_store,
         clusterer=MagicMock(),
     )
     # Mock the validate_value_candidate method

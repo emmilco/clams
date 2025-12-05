@@ -56,6 +56,8 @@ def register_ghap_tools(
         collector: Observation collector service
         persister: Observation persister service
     """
+    # Access vector store from persister for list_ghap_entries
+    vector_store = persister._vector_store
 
     @server.call_tool()  # type: ignore[untyped-decorator]
     async def start_ghap(
@@ -351,8 +353,9 @@ def register_ghap_tools(
             # Convert lesson dict to Lesson model if provided
             lesson_model = None
             if lesson:
+                # Validation above ensures what_worked exists and is non-empty
                 lesson_model = Lesson(
-                    what_worked=lesson["what_worked"],
+                    what_worked=lesson["what_worked"],  # type: ignore[arg-type]
                     takeaway=lesson.get("takeaway"),
                 )
 
@@ -371,7 +374,7 @@ def register_ghap_tools(
 
             for attempt in range(max_retries):
                 try:
-                    await persister.persist(resolved.to_dict())
+                    await persister.persist(resolved)
                     logger.info(
                         "ghap.persisted",
                         ghap_id=resolved.id,
@@ -403,11 +406,17 @@ def register_ghap_tools(
                             f"but embedding/storage failed. Error: {e}"
                         )
 
+            confidence_tier_value = (
+                resolved.confidence_tier.value if resolved.confidence_tier else None
+            )
+            resolved_at_value = (
+                resolved.outcome.captured_at.isoformat() if resolved.outcome else None
+            )
             return {
                 "id": resolved.id,
                 "status": resolved.outcome.status.value if resolved.outcome else status,
-                "confidence_tier": resolved.confidence_tier.value if resolved.confidence_tier else None,
-                "resolved_at": resolved.outcome.captured_at.isoformat() if resolved.outcome else None,
+                "confidence_tier": confidence_tier_value,
+                "resolved_at": resolved_at_value,
             }
 
         except (ValidationError, NotFoundError) as e:
@@ -507,20 +516,64 @@ def register_ghap_tools(
                 validate_outcome_status(outcome)
 
             # Validate since date if provided
+            since_dt = None
             if since is not None:
                 try:
-                    datetime.fromisoformat(since)
+                    since_dt = datetime.fromisoformat(since)
                 except ValueError:
                     raise ValidationError(
                         f"Invalid date format for 'since': {since}. "
                         "Expected ISO 8601 format (e.g., '2024-01-15T10:30:45+00:00')"
                     )
 
-            # This is a stub - actual implementation would query VectorStore
-            # For now, return empty results
+            # Build filters
+            filters: dict[str, Any] = {}
+            if domain is not None:
+                filters["domain"] = domain
+            if outcome is not None:
+                filters["outcome_status"] = outcome
+            if since_dt is not None:
+                filters["captured_at"] = {"$gte": since_dt.timestamp()}
+
+            # Query ghap_full collection
+            results = await vector_store.scroll(
+                collection="ghap_full",
+                limit=limit,
+                filters=filters if filters else None,
+                with_vectors=False,  # Don't need embeddings for listing
+            )
+
+            # Format results
+            entries = []
+            for r in results:
+                created_at = (
+                    datetime.fromtimestamp(r.payload["created_at"]).isoformat()
+                    if "created_at" in r.payload
+                    else None
+                )
+                captured_at = (
+                    datetime.fromtimestamp(r.payload["captured_at"]).isoformat()
+                    if "captured_at" in r.payload
+                    else None
+                )
+                entries.append(
+                    {
+                        "id": r.id,
+                        "domain": r.payload.get("domain"),
+                        "strategy": r.payload.get("strategy"),
+                        "outcome_status": r.payload.get("outcome_status"),
+                        "confidence_tier": r.payload.get("confidence_tier"),
+                        "iteration_count": r.payload.get("iteration_count"),
+                        "created_at": created_at,
+                        "captured_at": captured_at,
+                    }
+                )
+
+            logger.info("ghap.entries_listed", count=len(entries), filters=filters)
+
             return {
-                "results": [],
-                "count": 0,
+                "results": entries,
+                "count": len(entries),
             }
 
         except ValidationError as e:

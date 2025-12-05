@@ -63,57 +63,54 @@ def initialize_services(settings: ServerSettings) -> ServiceContainer:
     vector_store = QdrantVectorStore(url=settings.qdrant_url)
     metadata_store = MetadataStore(db_path=settings.sqlite_path)
 
-    # Code indexing (optional - depends on SPEC-002-06)
+    # Code indexing (optional - graceful degradation)
     code_indexer = None
-    # TODO: Enable when SPEC-002-06 complete
-    # try:
-    #     from learning_memory_server.indexers import (
-    #         CodeIndexer,
-    #         TreeSitterParser,
-    #     )
-    #     code_parser = TreeSitterParser()
-    #     code_indexer = CodeIndexer(
-    #         parser=code_parser,
-    #         embedding_service=embedding_service,
-    #         vector_store=vector_store,
-    #         metadata_store=metadata_store,
-    #     )
-    #     logger.info("code.initialized")
-    # except Exception as e:
-    #     logger.warning("code.init_failed", error=str(e))
+    try:
+        from learning_memory_server.indexers import (
+            CodeIndexer,
+            TreeSitterParser,
+        )
+        code_parser = TreeSitterParser()
+        code_indexer = CodeIndexer(
+            parser=code_parser,
+            embedding_service=embedding_service,
+            vector_store=vector_store,
+            metadata_store=metadata_store,
+        )
+        logger.info("code.initialized")
+    except ImportError as e:
+        logger.warning("code.init_skipped", reason="module_not_found", error=str(e))
+    except Exception as e:
+        logger.warning("code.init_failed", error=str(e))
 
-    # Git analysis (optional - depends on SPEC-002-07)
+    # Git analysis (optional - graceful degradation)
     git_analyzer = None
-    # TODO: Enable when SPEC-002-07 complete
-    # if settings.repo_path:
-    #     try:
-    #         from learning_memory_server.indexers.git import (
-    #             GitAnalyzer,
-    #             GitPythonReader,
-    #         )
-    #         git_reader = GitPythonReader(repo_path=settings.repo_path)
-    #         git_analyzer = GitAnalyzer(
-    #             git_reader=git_reader,
-    #             embedding_service=embedding_service,
-    #             vector_store=vector_store,
-    #             metadata_store=metadata_store,
-    #         )
-    #         logger.info("git.initialized", repo_path=settings.repo_path)
-    #     except Exception as e:
-    #         logger.warning("git.init_failed", error=str(e))
+    if settings.repo_path:
+        try:
+            from learning_memory_server.git import (
+                GitAnalyzer,
+                GitPythonReader,
+            )
+            git_reader = GitPythonReader(repo_path=settings.repo_path)
+            git_analyzer = GitAnalyzer(
+                git_reader=git_reader,
+                embedding_service=embedding_service,
+                vector_store=vector_store,
+                metadata_store=metadata_store,
+            )
+            logger.info("git.initialized", repo_path=settings.repo_path)
+        except ImportError as e:
+            logger.warning("git.init_skipped", reason="module_not_found", error=str(e))
+        except Exception as e:
+            logger.warning(
+                "git.init_failed", repo_path=settings.repo_path, error=str(e)
+            )
+    else:
+        logger.info("git.init_skipped", reason="no_repo_path")
 
-    # Search service (optional - depends on SPEC-002-09)
+    # Note: Searcher is initialized separately in register_all_tools()
+    # since it's used by search tools, not by code/git tools
     searcher = None
-    # TODO: Enable when SPEC-002-09 complete
-    # try:
-    #     from learning_memory_server.search import Searcher
-    #     searcher = Searcher(
-    #         embedding_service=embedding_service,
-    #         vector_store=vector_store,
-    #     )
-    #     logger.info("searcher.initialized")
-    # except Exception as e:
-    #     logger.warning("searcher.init_failed", error=str(e))
 
     logger.info(
         "services.initialized",
@@ -168,12 +165,12 @@ def register_all_tools(server: Server, settings: ServerSettings) -> None:
     # Initialize and register learning tools (from SPEC-002-15)
     experience_clusterer = ExperienceClusterer(
         vector_store=services.vector_store,
-        clusterer=None,  # Will be initialized when needed
+        clusterer=None,  # type: ignore[arg-type]  # Will be initialized when needed
     )
     value_store = ValueStore(
         embedding_service=services.embedding_service,
         vector_store=services.vector_store,
-        clusterer=None,  # Will be initialized when needed
+        clusterer=None,  # type: ignore[arg-type]  # Will be initialized when needed
     )
     register_learning_tools(server, experience_clusterer, value_store)
 
