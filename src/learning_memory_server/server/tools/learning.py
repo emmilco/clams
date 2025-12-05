@@ -43,7 +43,7 @@ def register_learning_tools(
         value_store: Value storage service
     """
     # Access vector store for get_cluster_members and list_values
-    vector_store = experience_clusterer._vector_store
+    vector_store = experience_clusterer.vector_store
 
     @server.call_tool()  # type: ignore[untyped-decorator]
     async def get_clusters(axis: str) -> dict[str, Any]:

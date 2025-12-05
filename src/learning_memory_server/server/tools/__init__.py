@@ -163,12 +163,12 @@ def register_all_tools(server: Server, settings: ServerSettings) -> None:
     # Initialize and register learning tools (from SPEC-002-15)
     experience_clusterer = ExperienceClusterer(
         vector_store=services.vector_store,
-        clusterer=None,  # Will be initialized when needed
+        clusterer=None,  # type: ignore[arg-type]  # Will be initialized when needed
     )
     value_store = ValueStore(
         embedding_service=services.embedding_service,
         vector_store=services.vector_store,
-        clusterer=None,  # Will be initialized when needed
+        clusterer=None,  # type: ignore[arg-type]  # Will be initialized when needed
     )
     register_learning_tools(server, experience_clusterer, value_store)
 
