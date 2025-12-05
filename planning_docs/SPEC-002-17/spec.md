@@ -54,7 +54,30 @@ Ensure code is self-documenting:
 - Create external documentation duplicating docstrings
 - Add verbose comments where code is clear
 
-### 3. ARCHITECTURE.md (Optional, if time permits)
+### 3. Integration & Performance Tests (Deferred from SPEC-002-16)
+
+Create the E2E tests and performance benchmarks that were deferred:
+
+**`tests/integration/test_e2e.py`** - 5 scenarios:
+1. Memory lifecycle (store → retrieve → delete)
+2. Code indexing & search (index → search → find_similar)
+3. Git analysis (index → search → churn → authors)
+4. GHAP learning loop (20+ entries in ONE test for clustering)
+5. Context assembly (populate → assemble light → assemble rich → premortem)
+
+**`tests/performance/test_benchmarks.py`** - 4 benchmarks:
+1. Code search: p95 < 200ms (100 iterations)
+2. Memory retrieval: p95 < 200ms (100 iterations)
+3. Context assembly: p95 < 500ms (10 iterations)
+4. Clustering: < 5s for 100 entries (4 axes)
+
+**Test Infrastructure**:
+- Use test collection isolation (override AXIS_COLLECTIONS)
+- Requires real Qdrant at localhost:6333
+- Log benchmark results to JSON for tracking
+- Performance targets are HARD requirements
+
+### 4. ARCHITECTURE.md (Optional, if time permits)
 
 A brief architectural map. Include ONLY:
 - Module dependency diagram (text-based, not image)
@@ -91,6 +114,16 @@ observation/   - GHAP state machine, ObservationPersister
    - No parameter lists that duplicate code
    - No configuration tables that duplicate ServerSettings
    - All "current value" references point to code, not state value
+
+4. **Integration tests pass**:
+   - All 5 E2E scenarios pass with real Qdrant
+   - Tests clean up after themselves
+
+5. **Performance benchmarks pass** (HARD requirements):
+   - Code search: p95 < 200ms
+   - Memory retrieval: p95 < 200ms
+   - Context assembly: p95 < 500ms
+   - Clustering: < 5s for 100 entries
 
 ### Quality
 
