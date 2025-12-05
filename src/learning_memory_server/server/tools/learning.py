@@ -420,17 +420,24 @@ def register_learning_tools(
 
             # Format results
             from datetime import datetime
-            values = [
-                {
-                    "id": r.id,
-                    "text": r.payload["text"],
-                    "cluster_id": r.payload["cluster_id"],
-                    "axis": r.payload["axis"],
-                    "validated_at": datetime.fromtimestamp(r.payload["validated_at"]).isoformat() if "validated_at" in r.payload else None,
-                    "distance_to_centroid": r.payload.get("distance_to_centroid"),
-                }
-                for r in results
-            ]
+
+            values = []
+            for r in results:
+                validated_at = (
+                    datetime.fromtimestamp(r.payload["validated_at"]).isoformat()
+                    if "validated_at" in r.payload
+                    else None
+                )
+                values.append(
+                    {
+                        "id": r.id,
+                        "text": r.payload["text"],
+                        "cluster_id": r.payload["cluster_id"],
+                        "axis": r.payload["axis"],
+                        "validated_at": validated_at,
+                        "distance_to_centroid": r.payload.get("distance_to_centroid"),
+                    }
+                )
 
             logger.info("learning.values_listed", count=len(values), axis=axis)
 

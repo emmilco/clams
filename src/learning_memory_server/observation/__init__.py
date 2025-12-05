@@ -20,7 +20,6 @@ from .models import (
 )
 from .persister import ObservationPersister
 
-
 __all__ = [
     "ObservationCollector",
     "ObservationPersister",

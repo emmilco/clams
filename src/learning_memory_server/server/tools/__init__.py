@@ -102,7 +102,9 @@ def initialize_services(settings: ServerSettings) -> ServiceContainer:
         except ImportError as e:
             logger.warning("git.init_skipped", reason="module_not_found", error=str(e))
         except Exception as e:
-            logger.warning("git.init_failed", repo_path=settings.repo_path, error=str(e))
+            logger.warning(
+                "git.init_failed", repo_path=settings.repo_path, error=str(e)
+            )
     else:
         logger.info("git.init_skipped", reason="no_repo_path")
 

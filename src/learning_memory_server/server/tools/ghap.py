@@ -406,11 +406,17 @@ def register_ghap_tools(
                             f"but embedding/storage failed. Error: {e}"
                         )
 
+            confidence_tier_value = (
+                resolved.confidence_tier.value if resolved.confidence_tier else None
+            )
+            resolved_at_value = (
+                resolved.outcome.captured_at.isoformat() if resolved.outcome else None
+            )
             return {
                 "id": resolved.id,
                 "status": resolved.outcome.status.value if resolved.outcome else status,
-                "confidence_tier": resolved.confidence_tier.value if resolved.confidence_tier else None,
-                "resolved_at": resolved.outcome.captured_at.isoformat() if resolved.outcome else None,
+                "confidence_tier": confidence_tier_value,
+                "resolved_at": resolved_at_value,
             }
 
         except (ValidationError, NotFoundError) as e:
@@ -538,19 +544,30 @@ def register_ghap_tools(
             )
 
             # Format results
-            entries = [
-                {
-                    "id": r.id,
-                    "domain": r.payload.get("domain"),
-                    "strategy": r.payload.get("strategy"),
-                    "outcome_status": r.payload.get("outcome_status"),
-                    "confidence_tier": r.payload.get("confidence_tier"),
-                    "iteration_count": r.payload.get("iteration_count"),
-                    "created_at": datetime.fromtimestamp(r.payload["created_at"]).isoformat() if "created_at" in r.payload else None,
-                    "captured_at": datetime.fromtimestamp(r.payload["captured_at"]).isoformat() if "captured_at" in r.payload else None,
-                }
-                for r in results
-            ]
+            entries = []
+            for r in results:
+                created_at = (
+                    datetime.fromtimestamp(r.payload["created_at"]).isoformat()
+                    if "created_at" in r.payload
+                    else None
+                )
+                captured_at = (
+                    datetime.fromtimestamp(r.payload["captured_at"]).isoformat()
+                    if "captured_at" in r.payload
+                    else None
+                )
+                entries.append(
+                    {
+                        "id": r.id,
+                        "domain": r.payload.get("domain"),
+                        "strategy": r.payload.get("strategy"),
+                        "outcome_status": r.payload.get("outcome_status"),
+                        "confidence_tier": r.payload.get("confidence_tier"),
+                        "iteration_count": r.payload.get("iteration_count"),
+                        "created_at": created_at,
+                        "captured_at": captured_at,
+                    }
+                )
 
             logger.info("ghap.entries_listed", count=len(entries), filters=filters)
 
