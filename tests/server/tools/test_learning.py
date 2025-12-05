@@ -14,8 +14,12 @@ from learning_memory_server.values import ValueStore
 @pytest.fixture
 def experience_clusterer() -> ExperienceClusterer:
     """Create a mock ExperienceClusterer."""
+    vector_store = MagicMock()
+    # Make scroll an async method that returns empty results
+    vector_store.scroll = AsyncMock(return_value=[])
+
     clusterer = ExperienceClusterer(
-        vector_store=MagicMock(),
+        vector_store=vector_store,
         clusterer=MagicMock(),
     )
     # Mock the count_experiences method
