@@ -30,7 +30,7 @@ class ServerSettings(BaseSettings):
     # GHAP collection configuration
     ghap_check_frequency: int = 10
 
-    # Git repository path (optional, for git tools)
+    # Git repository path (optional, auto-detected from CWD if not set)
     repo_path: str | None = None
 
     # Logging configuration

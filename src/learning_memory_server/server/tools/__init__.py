@@ -87,25 +87,38 @@ async def initialize_services(
 
     # Git analysis (optional - graceful degradation)
     git_analyzer = None
-    if settings.repo_path:
+
+    # Auto-detect repo if not configured
+    repo_path_to_use = settings.repo_path
+    if not repo_path_to_use:
+        try:
+            from git import Repo
+            repo = Repo(search_parent_directories=True)
+            repo_path_to_use = repo.working_dir
+            logger.info("git.repo_auto_detected", repo_path=repo_path_to_use)
+        except Exception:
+            # Not in a git repo or git not available - that's fine
+            logger.debug("git.auto_detect_failed", reason="no_repo_found")
+
+    if repo_path_to_use:
         try:
             from learning_memory_server.git import (
                 GitAnalyzer,
                 GitPythonReader,
             )
-            git_reader = GitPythonReader(repo_path=settings.repo_path)
+            git_reader = GitPythonReader(repo_path=repo_path_to_use)
             git_analyzer = GitAnalyzer(
                 git_reader=git_reader,
                 embedding_service=embedding_service,
                 vector_store=vector_store,
                 metadata_store=metadata_store,
             )
-            logger.info("git.initialized", repo_path=settings.repo_path)
+            logger.info("git.initialized", repo_path=repo_path_to_use)
         except ImportError as e:
             logger.warning("git.init_skipped", reason="module_not_found", error=str(e))
         except Exception as e:
             logger.warning(
-                "git.init_failed", repo_path=settings.repo_path, error=str(e)
+                "git.init_failed", repo_path=repo_path_to_use, error=str(e)
             )
     else:
         logger.info("git.init_skipped", reason="no_repo_path")
