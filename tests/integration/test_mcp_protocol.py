@@ -13,10 +13,15 @@ import asyncio
 from collections.abc import AsyncIterator
 
 import pytest
+import pytest_asyncio
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 pytest_plugins = ("pytest_asyncio",)
+
+# Configure module-scoped event loop for async fixtures
+# This allows all tests in this module to share a single server instance
+pytestmark = pytest.mark.asyncio(loop_scope="module")
 
 # Expected tools that should be discoverable
 EXPECTED_TOOLS = {
@@ -53,12 +58,13 @@ EXPECTED_TOOLS = {
 }
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="module")
 async def mcp_session() -> AsyncIterator[ClientSession]:
     """Create an MCP client session connected to the server.
 
-    This fixture starts the actual server and connects via stdio,
-    exactly as Claude Code would.
+    This fixture starts the actual server ONCE and all tests share it.
+    Module scope dramatically improves test performance by avoiding
+    repeated server startup (each takes ~5s for model loading).
     """
     import signal
 
@@ -102,14 +108,12 @@ async def mcp_session() -> AsyncIterator[ClientSession]:
 class TestMCPProtocol:
     """Test MCP protocol-level behavior."""
 
-    @pytest.mark.asyncio
     async def test_server_initializes(self, mcp_session: ClientSession) -> None:
         """Test that server completes MCP initialization handshake."""
         # If we get here, initialization succeeded
         # The fixture handles initialize() call
         assert mcp_session is not None
 
-    @pytest.mark.asyncio
     async def test_tools_are_discoverable(self, mcp_session: ClientSession) -> None:
         """Test that all expected tools are returned by list_tools.
 
@@ -137,7 +141,6 @@ class TestMCPProtocol:
         if extra_tools:
             print(f"Note: Found additional tools not in expected set: {extra_tools}")
 
-    @pytest.mark.asyncio
     async def test_tools_have_valid_schemas(self, mcp_session: ClientSession) -> None:
         """Test that all tools have proper input schemas defined."""
         tools_response = await mcp_session.list_tools()
@@ -162,7 +165,6 @@ class TestMCPProtocol:
                 f"Tool {tool.name} inputSchema type should be 'object'"
             )
 
-    @pytest.mark.asyncio
     async def test_ping_tool_callable(self, mcp_session: ClientSession) -> None:
         """Test that the ping tool can be called and returns expected response."""
         result = await mcp_session.call_tool("ping", {})
@@ -176,7 +178,6 @@ class TestMCPProtocol:
         assert content.type == "text"
         assert "pong" in content.text.lower()
 
-    @pytest.mark.asyncio
     async def test_store_memory_callable(self, mcp_session: ClientSession) -> None:
         """Test that store_memory tool can be called with valid inputs."""
         result = await mcp_session.call_tool(
@@ -198,7 +199,6 @@ class TestMCPProtocol:
         # The response is JSON, should contain "id" field
         assert "id" in content.text
 
-    @pytest.mark.asyncio
     async def test_retrieve_memories_callable(
         self, mcp_session: ClientSession
     ) -> None:
@@ -214,7 +214,6 @@ class TestMCPProtocol:
         assert result is not None
         assert len(result.content) > 0
 
-    @pytest.mark.asyncio
     async def test_get_active_ghap_callable(self, mcp_session: ClientSession) -> None:
         """Test that get_active_ghap tool can be called."""
         result = await mcp_session.call_tool("get_active_ghap", {})
@@ -227,7 +226,6 @@ class TestMCPProtocol:
         assert content.type == "text"
         assert "has_active" in content.text
 
-    @pytest.mark.asyncio
     async def test_search_experiences_callable(
         self, mcp_session: ClientSession
     ) -> None:
@@ -248,7 +246,6 @@ class TestMCPProtocol:
 class TestMCPToolDiscoveryRegression:
     """Regression tests for tool discovery bugs."""
 
-    @pytest.mark.asyncio
     async def test_list_tools_returns_nonzero(
         self, mcp_session: ClientSession
     ) -> None:
@@ -264,7 +261,6 @@ class TestMCPToolDiscoveryRegression:
             "Check that @server.list_tools() handler is registered."
         )
 
-    @pytest.mark.asyncio
     async def test_tool_count_matches_expected(
         self, mcp_session: ClientSession
     ) -> None:

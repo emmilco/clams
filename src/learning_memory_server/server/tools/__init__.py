@@ -9,11 +9,7 @@ from mcp.server import Server
 from mcp.types import Tool
 
 from learning_memory_server.clustering import ExperienceClusterer
-from learning_memory_server.embedding import (
-    EmbeddingService,
-    EmbeddingSettings,
-    NomicEmbedding,
-)
+from learning_memory_server.embedding import EmbeddingService
 from learning_memory_server.observation import (
     ObservationCollector,
     ObservationPersister,
@@ -44,7 +40,10 @@ class ServiceContainer:
     searcher: object | None = None  # Will be Searcher when SPEC-002-09 complete
 
 
-def initialize_services(settings: ServerSettings) -> ServiceContainer:
+def initialize_services(
+    settings: ServerSettings,
+    embedding_service: EmbeddingService,
+) -> ServiceContainer:
     """Initialize all services for MCP tools.
 
     Core services (embedding, vector, metadata) are always initialized.
@@ -53,6 +52,7 @@ def initialize_services(settings: ServerSettings) -> ServiceContainer:
 
     Args:
         settings: Server configuration
+        embedding_service: Pre-initialized embedding service
 
     Returns:
         ServiceContainer with initialized services
@@ -60,8 +60,7 @@ def initialize_services(settings: ServerSettings) -> ServiceContainer:
     logger.info("services.initializing")
 
     # Core infrastructure (always available)
-    embedding_settings = EmbeddingSettings(model_name=settings.embedding_model)
-    embedding_service = NomicEmbedding(settings=embedding_settings)
+    # Use provided embedding service (no more NomicEmbedding() call here)
     vector_store = QdrantVectorStore(url=settings.qdrant_url)
     metadata_store = MetadataStore(db_path=settings.sqlite_path)
 
@@ -693,15 +692,20 @@ def _get_all_tool_definitions() -> list[Tool]:
     ]
 
 
-def register_all_tools(server: Server, settings: ServerSettings) -> None:
+def register_all_tools(
+    server: Server,
+    settings: ServerSettings,
+    embedding_service: EmbeddingService,
+) -> None:
     """Register all MCP tools with the server.
 
     Args:
         server: MCP Server instance
         settings: Server configuration
+        embedding_service: Pre-initialized embedding service
     """
     # Initialize shared services
-    services = initialize_services(settings)
+    services = initialize_services(settings, embedding_service)
 
     # Import and register tool modules
     from .code import register_code_tools
