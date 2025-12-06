@@ -1,69 +1,63 @@
-# Session Handoff - 2025-12-05 (Evening)
+# Session Handoff - 2025-12-05 (Late Evening)
 
 ## Session Summary
 
-This session accomplished two main tasks:
+Completed SPEC-003: MCP Protocol Test Performance Optimization. This task reduced MCP protocol test execution time from ~130 seconds to ~8.77 seconds (17x improvement).
 
-### 1. Completed MCP Tool Discovery Fix (on main)
-- Updated 3 test files to use the new dispatcher pattern:
-  - `tests/server/tools/test_ghap.py`
-  - `tests/server/tools/test_learning.py`
-  - `tests/server/tools/test_search.py`
-- All 518 tests now pass
-- Committed as `146a525`
+### Work Completed
 
-### 2. SPEC-003: MCP Protocol Test Performance Optimization
-Created and partially implemented a task to optimize slow MCP protocol tests:
+1. **Resumed from previous session** - SPEC-003 was in IMPLEMENT phase with code complete
+2. **Ran gate checks** - IMPLEMENT → CODE_REVIEW transition passed
+3. **Code Reviews** - Dispatched 2 sequential code reviewers, both approved
+4. **Full workflow completion** - CODE_REVIEW → TEST → INTEGRATE → VERIFY → DONE
+5. **Merged to main** - All changes now on main branch
 
-**Problem**: Tests took ~130 seconds due to:
-1. Function-scoped fixture creating new server per test (10 startups)
-2. Server loading embedding model 3 times on startup
+### Changes Merged
 
-**Solution implemented**:
-- Part 1: Module-scoped test fixture (10 startups → 1)
-- Part 2: Single model load during server startup (3 loads → 1)
+- `src/learning_memory_server/server/main.py` - Added `create_embedding_service()`, refactored initialization chain
+- `src/learning_memory_server/server/tools/__init__.py` - Updated to accept embedding service parameter
+- `tests/integration/test_mcp_protocol.py` - Module-scoped fixture with `loop_scope="module"`
+- `tests/server/test_main.py` - New test for `create_embedding_service()`
+- `planning_docs/SPEC-003/` - Spec and proposal preserved
+- `changelog.d/SPEC-003.md` - Changelog entry added
 
-**Results achieved**:
-- Before: ~130 seconds
-- After: **7.75 seconds** (17x improvement!)
+## Active Tasks
 
-**Current state**:
-- Phase: IMPLEMENT (implementation complete, code review pending)
-- All 519 tests pass
-- Commit: `e84e8f5` in worktree
+None - all 20 tasks are DONE.
 
-## Active Task
+## Blocked Items
 
-### SPEC-003 - Optimize MCP protocol test performance
-- **Phase**: IMPLEMENT
-- **Worktree**: `.worktrees/SPEC-003`
-- **Status**: Implementation complete, tests pass, needs gate transition
+None.
 
-**Next steps**:
-1. Run gate check: `.claude/bin/clams-gate check SPEC-003 IMPLEMENT-CODE_REVIEW`
-2. Transition: `.claude/bin/clams-task transition SPEC-003 CODE_REVIEW --gate-result pass`
-3. Dispatch 2 code reviewers (sequential)
-4. After code review: TEST → INTEGRATE → VERIFY → DONE
+## Friction Points This Session
 
-## Friction Points
+1. **Background process management** - BashOutput showed "running" status for processes that were already killed. The system reminders persisted even after killing shells. Workaround: ignore stale reminders.
 
-1. **Module-scoped async fixtures in pytest-asyncio**: Requires careful configuration with `loop_scope="module"`. Initial attempts hung the tests until proper `pytestmark` configuration was added.
+2. **Gate check duration** - Full test suite takes ~90-120 seconds, causing gate checks to run in background. Reading `test_output.log` directly was more reliable than BashOutput.
 
-2. **Background process management**: Multiple zombie pytest processes accumulated. Need to ensure cleanup between test runs.
+3. **Uncommitted changes on main** - The merge failed initially because `benchmark_results.json` had uncommitted changes on main (from previous session). Resolved with `git stash`.
 
-3. **Gate check timing**: The full test suite takes ~90-120 seconds, which can make gate checks appear stuck.
+4. **Stale HANDOFF.md** - Previous session's handoff document was still showing in status output even though it had been consumed. Minor cosmetic issue.
 
 ## Recommendations for Next Session
 
-1. **Continue SPEC-003**: Run the gate check and transition to CODE_REVIEW. The implementation is complete and tested.
+1. **E2E tests approaching** - Currently at 4 merges since last E2E run (threshold is 12). No action needed yet.
 
-2. **Code review focus**: The changes are surgical - main.py refactor to thread embedding_service, and test fixture scope change. Both are low-risk.
+2. **Consider additional optimizations** - The test suite still takes ~90 seconds total. Other slow test files could potentially benefit from similar module-scoped fixture patterns.
 
-3. **After merge**: Update spec.md with actual performance numbers (7.75s actual vs 15s projected).
+3. **Clean up benchmark_results.json** - This file seems to get modified during test runs. Consider either gitignoring it or committing it as part of each relevant task.
 
 ## System State
 
 - **Health**: HEALTHY
 - **Merge lock**: inactive
-- **Tasks**: 19 DONE, 1 IMPLEMENT (SPEC-003)
-- **Worktrees**: 1 active (SPEC-003)
+- **Tasks**: 20 DONE
+- **Worktrees**: 0 active
+- **Merges since E2E**: 4
+- **Merges since docs**: 4
+
+## Next Steps
+
+1. No pending work - system is idle and healthy
+2. Ready to accept new specs/features
+3. E2E batch job will trigger after 8 more merges (at 12 total)
