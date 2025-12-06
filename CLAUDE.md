@@ -103,6 +103,21 @@ Available in `.claude/roles/`:
 | UX | `ux.md` | User experience review |
 | AI/DL | `ai-dl.md` | ML/AI implementation |
 
+## Orchestrator as Specialist
+
+When you perform specialist work directly (instead of dispatching a worker), first read the relevant role file for guidance:
+
+| Activity | Role File |
+|----------|-----------|
+| Running/analyzing tests | `.claude/roles/qa.md` |
+| Reviewing code | `.claude/roles/reviewer.md` |
+| Investigating bugs | `.claude/roles/bug-investigator.md` |
+| Writing specs | `.claude/roles/planning.md` |
+| Architecture decisions | `.claude/roles/architect.md` |
+| Writing documentation | `.claude/roles/doc-writer.md` |
+
+Example: Before running `pytest` to verify a merge, read `.claude/roles/qa.md` for test analysis guidance.
+
 ## Phase Model
 
 ### Feature Phases
