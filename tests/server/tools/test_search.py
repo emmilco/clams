@@ -1,11 +1,12 @@
 """Tests for search tools."""
 
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from learning_memory_server.search import Searcher
-from learning_memory_server.server.tools.search import register_search_tools
+from learning_memory_server.server.tools.search import get_search_tools
 
 
 @pytest.fixture
@@ -21,27 +22,9 @@ def searcher() -> Searcher:
 
 
 @pytest.fixture
-def mock_server() -> MagicMock:
-    """Create a mock MCP server with tool registry."""
-    server = MagicMock()
-    server.tools = {}
-
-    def register_tool(func):  # type: ignore[no-untyped-def]
-        server.tools[func.__name__] = func
-        return func
-
-    server.call_tool = lambda: register_tool
-    return server
-
-
-@pytest.fixture
-def registered_tools(
-    mock_server: MagicMock,
-    searcher: Searcher,
-) -> MagicMock:
-    """Register search tools and return the server."""
-    register_search_tools(mock_server, searcher)
-    return mock_server
+def tools(searcher: Searcher) -> dict[str, Any]:
+    """Get search tools."""
+    return get_search_tools(searcher)
 
 
 class TestSearchExperiences:
@@ -49,10 +32,10 @@ class TestSearchExperiences:
 
     @pytest.mark.asyncio
     async def test_search_experiences_success(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test successful experience search."""
-        tool = registered_tools.tools["search_experiences"]
+        tool = tools["search_experiences"]
         result = await tool(
             query="How to debug async issues",
             axis="full",
@@ -64,10 +47,10 @@ class TestSearchExperiences:
 
     @pytest.mark.asyncio
     async def test_search_experiences_empty_query(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test search with empty query returns empty results."""
-        tool = registered_tools.tools["search_experiences"]
+        tool = tools["search_experiences"]
         result = await tool(query="")
 
         assert "error" not in result
@@ -76,10 +59,10 @@ class TestSearchExperiences:
 
     @pytest.mark.asyncio
     async def test_search_experiences_with_filters(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test search with domain and outcome filters."""
-        tool = registered_tools.tools["search_experiences"]
+        tool = tools["search_experiences"]
         result = await tool(
             query="debugging patterns",
             axis="full",
@@ -93,10 +76,10 @@ class TestSearchExperiences:
 
     @pytest.mark.asyncio
     async def test_search_experiences_invalid_axis(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for invalid axis."""
-        tool = registered_tools.tools["search_experiences"]
+        tool = tools["search_experiences"]
         result = await tool(
             query="test query",
             axis="invalid",
@@ -108,10 +91,10 @@ class TestSearchExperiences:
 
     @pytest.mark.asyncio
     async def test_search_experiences_invalid_domain(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for invalid domain filter."""
-        tool = registered_tools.tools["search_experiences"]
+        tool = tools["search_experiences"]
         result = await tool(
             query="test query",
             domain="invalid",
@@ -123,10 +106,10 @@ class TestSearchExperiences:
 
     @pytest.mark.asyncio
     async def test_search_experiences_invalid_outcome(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for invalid outcome filter."""
-        tool = registered_tools.tools["search_experiences"]
+        tool = tools["search_experiences"]
         result = await tool(
             query="test query",
             outcome="invalid",
@@ -138,10 +121,10 @@ class TestSearchExperiences:
 
     @pytest.mark.asyncio
     async def test_search_experiences_invalid_limit(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for invalid limit."""
-        tool = registered_tools.tools["search_experiences"]
+        tool = tools["search_experiences"]
         result = await tool(
             query="test query",
             limit=0,
@@ -153,10 +136,10 @@ class TestSearchExperiences:
 
     @pytest.mark.asyncio
     async def test_search_experiences_limit_max(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for limit exceeding max."""
-        tool = registered_tools.tools["search_experiences"]
+        tool = tools["search_experiences"]
         result = await tool(
             query="test query",
             limit=51,

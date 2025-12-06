@@ -2,6 +2,7 @@
 
 import tempfile
 from pathlib import Path
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -10,7 +11,7 @@ from learning_memory_server.observation import (
     ObservationCollector,
     ObservationPersister,
 )
-from learning_memory_server.server.tools.ghap import register_ghap_tools
+from learning_memory_server.server.tools.ghap import get_ghap_tools
 
 
 @pytest.fixture
@@ -39,28 +40,12 @@ def observation_persister() -> ObservationPersister:
 
 
 @pytest.fixture
-def mock_server() -> MagicMock:
-    """Create a mock MCP server with tool registry."""
-    server = MagicMock()
-    server.tools = {}
-
-    def register_tool(func):  # type: ignore[no-untyped-def]
-        server.tools[func.__name__] = func
-        return func
-
-    server.call_tool = lambda: register_tool
-    return server
-
-
-@pytest.fixture
-def registered_tools(
-    mock_server: MagicMock,
+def tools(
     observation_collector: ObservationCollector,
     observation_persister: ObservationPersister,
-) -> MagicMock:
-    """Register GHAP tools and return the server."""
-    register_ghap_tools(mock_server, observation_collector, observation_persister)
-    return mock_server
+) -> dict[str, Any]:
+    """Get GHAP tools."""
+    return get_ghap_tools(observation_collector, observation_persister)
 
 
 class TestStartGhap:
@@ -68,10 +53,10 @@ class TestStartGhap:
 
     @pytest.mark.asyncio
     async def test_start_ghap_success(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test successful GHAP creation."""
-        tool = registered_tools.tools["start_ghap"]
+        tool = tools["start_ghap"]
         result = await tool(
             domain="debugging",
             strategy="systematic-elimination",
@@ -90,10 +75,10 @@ class TestStartGhap:
 
     @pytest.mark.asyncio
     async def test_start_ghap_invalid_domain(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for invalid domain."""
-        tool = registered_tools.tools["start_ghap"]
+        tool = tools["start_ghap"]
         result = await tool(
             domain="invalid",
             strategy="systematic-elimination",
@@ -110,10 +95,10 @@ class TestStartGhap:
 
     @pytest.mark.asyncio
     async def test_start_ghap_invalid_strategy(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for invalid strategy."""
-        tool = registered_tools.tools["start_ghap"]
+        tool = tools["start_ghap"]
         result = await tool(
             domain="debugging",
             strategy="invalid",
@@ -129,10 +114,10 @@ class TestStartGhap:
 
     @pytest.mark.asyncio
     async def test_start_ghap_empty_field(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for empty required field."""
-        tool = registered_tools.tools["start_ghap"]
+        tool = tools["start_ghap"]
         result = await tool(
             domain="debugging",
             strategy="systematic-elimination",
@@ -148,10 +133,10 @@ class TestStartGhap:
 
     @pytest.mark.asyncio
     async def test_start_ghap_field_too_long(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for field exceeding length limit."""
-        tool = registered_tools.tools["start_ghap"]
+        tool = tools["start_ghap"]
         result = await tool(
             domain="debugging",
             strategy="systematic-elimination",
@@ -171,11 +156,11 @@ class TestUpdateGhap:
 
     @pytest.mark.asyncio
     async def test_update_ghap_success(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test successful GHAP update."""
         # First start a GHAP
-        start_tool = registered_tools.tools["start_ghap"]
+        start_tool = tools["start_ghap"]
         await start_tool(
             domain="debugging",
             strategy="systematic-elimination",
@@ -186,7 +171,7 @@ class TestUpdateGhap:
         )
 
         # Now update it
-        update_tool = registered_tools.tools["update_ghap"]
+        update_tool = tools["update_ghap"]
         result = await update_tool(
             hypothesis="Updated hypothesis",
             action="Updated action",
@@ -198,10 +183,10 @@ class TestUpdateGhap:
 
     @pytest.mark.asyncio
     async def test_update_ghap_no_active_entry(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test error when no active GHAP entry exists."""
-        tool = registered_tools.tools["update_ghap"]
+        tool = tools["update_ghap"]
         result = await tool(hypothesis="Test")
 
         assert "error" in result
@@ -210,11 +195,11 @@ class TestUpdateGhap:
 
     @pytest.mark.asyncio
     async def test_update_ghap_field_too_long(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for field too long."""
         # First start a GHAP
-        start_tool = registered_tools.tools["start_ghap"]
+        start_tool = tools["start_ghap"]
         await start_tool(
             domain="debugging",
             strategy="systematic-elimination",
@@ -225,7 +210,7 @@ class TestUpdateGhap:
         )
 
         # Try to update with too-long field
-        update_tool = registered_tools.tools["update_ghap"]
+        update_tool = tools["update_ghap"]
         result = await update_tool(hypothesis="x" * 1001)
 
         assert "error" in result
@@ -238,14 +223,14 @@ class TestResolveGhap:
 
     @pytest.mark.asyncio
     async def test_resolve_ghap_confirmed(
-        self, registered_tools: MagicMock, observation_persister: ObservationPersister
+        self, tools: dict[str, Any], observation_persister: ObservationPersister
     ) -> None:
         """Test resolving GHAP as confirmed."""
         # Mock the persist method
         observation_persister.persist = AsyncMock()
 
         # First start a GHAP
-        start_tool = registered_tools.tools["start_ghap"]
+        start_tool = tools["start_ghap"]
         start_result = await start_tool(
             domain="debugging",
             strategy="systematic-elimination",
@@ -256,7 +241,7 @@ class TestResolveGhap:
         )
 
         # Resolve it
-        resolve_tool = registered_tools.tools["resolve_ghap"]
+        resolve_tool = tools["resolve_ghap"]
         result = await resolve_tool(
             status="confirmed",
             result="Test passed 3/3 runs",
@@ -275,14 +260,14 @@ class TestResolveGhap:
 
     @pytest.mark.asyncio
     async def test_resolve_ghap_falsified(
-        self, registered_tools: MagicMock, observation_persister: ObservationPersister
+        self, tools: dict[str, Any], observation_persister: ObservationPersister
     ) -> None:
         """Test resolving GHAP as falsified."""
         # Mock the persist method
         observation_persister.persist = AsyncMock()
 
         # First start a GHAP
-        start_tool = registered_tools.tools["start_ghap"]
+        start_tool = tools["start_ghap"]
         await start_tool(
             domain="debugging",
             strategy="systematic-elimination",
@@ -293,7 +278,7 @@ class TestResolveGhap:
         )
 
         # Resolve as falsified
-        resolve_tool = registered_tools.tools["resolve_ghap"]
+        resolve_tool = tools["resolve_ghap"]
         result = await resolve_tool(
             status="falsified",
             result="Didn't work",
@@ -310,11 +295,11 @@ class TestResolveGhap:
 
     @pytest.mark.asyncio
     async def test_resolve_ghap_falsified_missing_surprise(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test error when falsified without surprise."""
         # First start a GHAP
-        start_tool = registered_tools.tools["start_ghap"]
+        start_tool = tools["start_ghap"]
         await start_tool(
             domain="debugging",
             strategy="systematic-elimination",
@@ -325,7 +310,7 @@ class TestResolveGhap:
         )
 
         # Try to resolve as falsified without surprise
-        resolve_tool = registered_tools.tools["resolve_ghap"]
+        resolve_tool = tools["resolve_ghap"]
         result = await resolve_tool(
             status="falsified",
             result="Didn't work",
@@ -337,11 +322,11 @@ class TestResolveGhap:
 
     @pytest.mark.asyncio
     async def test_resolve_ghap_invalid_status(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test error with invalid status."""
         # First start a GHAP
-        start_tool = registered_tools.tools["start_ghap"]
+        start_tool = tools["start_ghap"]
         await start_tool(
             domain="debugging",
             strategy="systematic-elimination",
@@ -352,7 +337,7 @@ class TestResolveGhap:
         )
 
         # Try to resolve with invalid status
-        resolve_tool = registered_tools.tools["resolve_ghap"]
+        resolve_tool = tools["resolve_ghap"]
         result = await resolve_tool(
             status="invalid",
             result="Test",
@@ -368,11 +353,11 @@ class TestGetActiveGhap:
 
     @pytest.mark.asyncio
     async def test_get_active_ghap_with_entry(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test getting active GHAP when one exists."""
         # First start a GHAP
-        start_tool = registered_tools.tools["start_ghap"]
+        start_tool = tools["start_ghap"]
         start_result = await start_tool(
             domain="debugging",
             strategy="systematic-elimination",
@@ -383,7 +368,7 @@ class TestGetActiveGhap:
         )
 
         # Get active GHAP
-        get_tool = registered_tools.tools["get_active_ghap"]
+        get_tool = tools["get_active_ghap"]
         result = await get_tool()
 
         assert "error" not in result
@@ -393,10 +378,10 @@ class TestGetActiveGhap:
 
     @pytest.mark.asyncio
     async def test_get_active_ghap_no_entry(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test getting active GHAP when none exists."""
-        tool = registered_tools.tools["get_active_ghap"]
+        tool = tools["get_active_ghap"]
         result = await tool()
 
         assert "error" not in result
@@ -409,10 +394,10 @@ class TestListGhapEntries:
 
     @pytest.mark.asyncio
     async def test_list_ghap_entries_default(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test listing GHAP entries with default parameters."""
-        tool = registered_tools.tools["list_ghap_entries"]
+        tool = tools["list_ghap_entries"]
         result = await tool()
 
         assert "error" not in result
@@ -421,10 +406,10 @@ class TestListGhapEntries:
 
     @pytest.mark.asyncio
     async def test_list_ghap_entries_invalid_limit(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for invalid limit."""
-        tool = registered_tools.tools["list_ghap_entries"]
+        tool = tools["list_ghap_entries"]
         result = await tool(limit=0)
 
         assert "error" in result
@@ -433,10 +418,10 @@ class TestListGhapEntries:
 
     @pytest.mark.asyncio
     async def test_list_ghap_entries_invalid_domain(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for invalid domain filter."""
-        tool = registered_tools.tools["list_ghap_entries"]
+        tool = tools["list_ghap_entries"]
         result = await tool(domain="invalid")
 
         assert "error" in result
@@ -445,10 +430,10 @@ class TestListGhapEntries:
 
     @pytest.mark.asyncio
     async def test_list_ghap_entries_invalid_date(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for invalid date format."""
-        tool = registered_tools.tools["list_ghap_entries"]
+        tool = tools["list_ghap_entries"]
         result = await tool(since="not a date")
 
         assert "error" in result

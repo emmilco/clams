@@ -1,5 +1,6 @@
 """Tests for learning tools."""
 
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import numpy as np
@@ -7,7 +8,7 @@ import pytest
 
 from learning_memory_server.clustering import ExperienceClusterer
 from learning_memory_server.clustering.types import ClusterInfo
-from learning_memory_server.server.tools.learning import register_learning_tools
+from learning_memory_server.server.tools.learning import get_learning_tools
 from learning_memory_server.values import ValueStore
 
 
@@ -80,28 +81,12 @@ def value_store() -> ValueStore:
 
 
 @pytest.fixture
-def mock_server() -> MagicMock:
-    """Create a mock MCP server with tool registry."""
-    server = MagicMock()
-    server.tools = {}
-
-    def register_tool(func):  # type: ignore[no-untyped-def]
-        server.tools[func.__name__] = func
-        return func
-
-    server.call_tool = lambda: register_tool
-    return server
-
-
-@pytest.fixture
-def registered_tools(
-    mock_server: MagicMock,
+def tools(
     experience_clusterer: ExperienceClusterer,
     value_store: ValueStore,
-) -> MagicMock:
-    """Register learning tools and return the server."""
-    register_learning_tools(mock_server, experience_clusterer, value_store)
-    return mock_server
+) -> dict[str, Any]:
+    """Get learning tools."""
+    return get_learning_tools(experience_clusterer, value_store)
 
 
 class TestGetClusters:
@@ -109,10 +94,10 @@ class TestGetClusters:
 
     @pytest.mark.asyncio
     async def test_get_clusters_success(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test successful cluster retrieval."""
-        tool = registered_tools.tools["get_clusters"]
+        tool = tools["get_clusters"]
         result = await tool(axis="full")
 
         assert "error" not in result
@@ -125,10 +110,10 @@ class TestGetClusters:
 
     @pytest.mark.asyncio
     async def test_get_clusters_invalid_axis(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for invalid axis."""
-        tool = registered_tools.tools["get_clusters"]
+        tool = tools["get_clusters"]
         result = await tool(axis="invalid")
 
         assert "error" in result
@@ -138,14 +123,14 @@ class TestGetClusters:
     @pytest.mark.asyncio
     async def test_get_clusters_insufficient_data(
         self,
-        registered_tools: MagicMock,
+        tools: dict[str, Any],
         experience_clusterer: ExperienceClusterer,
     ) -> None:
         """Test error when not enough experiences exist."""
         # Mock count to return insufficient data
         experience_clusterer.count_experiences = AsyncMock(return_value=15)
 
-        tool = registered_tools.tools["get_clusters"]
+        tool = tools["get_clusters"]
         result = await tool(axis="full")
 
         assert "error" in result
@@ -158,10 +143,10 @@ class TestGetClusterMembers:
 
     @pytest.mark.asyncio
     async def test_get_cluster_members_success(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test successful cluster member retrieval."""
-        tool = registered_tools.tools["get_cluster_members"]
+        tool = tools["get_cluster_members"]
         result = await tool(cluster_id="full_0")
 
         assert "error" not in result
@@ -172,10 +157,10 @@ class TestGetClusterMembers:
 
     @pytest.mark.asyncio
     async def test_get_cluster_members_invalid_format(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for invalid cluster_id format."""
-        tool = registered_tools.tools["get_cluster_members"]
+        tool = tools["get_cluster_members"]
         result = await tool(cluster_id="invalid")
 
         assert "error" in result
@@ -184,10 +169,10 @@ class TestGetClusterMembers:
 
     @pytest.mark.asyncio
     async def test_get_cluster_members_invalid_axis(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for invalid axis in cluster_id."""
-        tool = registered_tools.tools["get_cluster_members"]
+        tool = tools["get_cluster_members"]
         result = await tool(cluster_id="invalid_0")
 
         assert "error" in result
@@ -195,10 +180,10 @@ class TestGetClusterMembers:
 
     @pytest.mark.asyncio
     async def test_get_cluster_members_invalid_limit(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for invalid limit."""
-        tool = registered_tools.tools["get_cluster_members"]
+        tool = tools["get_cluster_members"]
         result = await tool(cluster_id="full_0", limit=0)
 
         assert "error" in result
@@ -211,10 +196,10 @@ class TestValidateValue:
 
     @pytest.mark.asyncio
     async def test_validate_value_success(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test successful value validation."""
-        tool = registered_tools.tools["validate_value"]
+        tool = tools["validate_value"]
         result = await tool(
             text="Always check assumptions first",
             cluster_id="strategy_0",
@@ -226,10 +211,10 @@ class TestValidateValue:
 
     @pytest.mark.asyncio
     async def test_validate_value_empty_text(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for empty text."""
-        tool = registered_tools.tools["validate_value"]
+        tool = tools["validate_value"]
         result = await tool(
             text="",
             cluster_id="strategy_0",
@@ -241,10 +226,10 @@ class TestValidateValue:
 
     @pytest.mark.asyncio
     async def test_validate_value_text_too_long(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for text exceeding limit."""
-        tool = registered_tools.tools["validate_value"]
+        tool = tools["validate_value"]
         result = await tool(
             text="x" * 501,
             cluster_id="strategy_0",
@@ -256,10 +241,10 @@ class TestValidateValue:
 
     @pytest.mark.asyncio
     async def test_validate_value_invalid_cluster_id(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for invalid cluster_id."""
-        tool = registered_tools.tools["validate_value"]
+        tool = tools["validate_value"]
         result = await tool(
             text="Test value",
             cluster_id="invalid",
@@ -274,10 +259,10 @@ class TestStoreValue:
 
     @pytest.mark.asyncio
     async def test_store_value_success(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test successful value storage."""
-        tool = registered_tools.tools["store_value"]
+        tool = tools["store_value"]
         result = await tool(
             text="Always check assumptions first",
             cluster_id="strategy_0",
@@ -292,10 +277,10 @@ class TestStoreValue:
 
     @pytest.mark.asyncio
     async def test_store_value_empty_text(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for empty text."""
-        tool = registered_tools.tools["store_value"]
+        tool = tools["store_value"]
         result = await tool(
             text="",
             cluster_id="strategy_0",
@@ -308,10 +293,10 @@ class TestStoreValue:
 
     @pytest.mark.asyncio
     async def test_store_value_invalid_axis(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for invalid axis."""
-        tool = registered_tools.tools["store_value"]
+        tool = tools["store_value"]
         result = await tool(
             text="Test value",
             cluster_id="invalid_0",
@@ -328,10 +313,10 @@ class TestListValues:
 
     @pytest.mark.asyncio
     async def test_list_values_default(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test listing values with default parameters."""
-        tool = registered_tools.tools["list_values"]
+        tool = tools["list_values"]
         result = await tool()
 
         assert "error" not in result
@@ -340,10 +325,10 @@ class TestListValues:
 
     @pytest.mark.asyncio
     async def test_list_values_with_axis_filter(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test listing values with axis filter."""
-        tool = registered_tools.tools["list_values"]
+        tool = tools["list_values"]
         result = await tool(axis="strategy")
 
         assert "error" not in result
@@ -351,10 +336,10 @@ class TestListValues:
 
     @pytest.mark.asyncio
     async def test_list_values_invalid_axis(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for invalid axis."""
-        tool = registered_tools.tools["list_values"]
+        tool = tools["list_values"]
         result = await tool(axis="invalid")
 
         assert "error" in result
@@ -362,10 +347,10 @@ class TestListValues:
 
     @pytest.mark.asyncio
     async def test_list_values_invalid_limit(
-        self, registered_tools: MagicMock
+        self, tools: dict[str, Any]
     ) -> None:
         """Test validation error for invalid limit."""
-        tool = registered_tools.tools["list_values"]
+        tool = tools["list_values"]
         result = await tool(limit=101)
 
         assert "error" in result
