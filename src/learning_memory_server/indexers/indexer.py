@@ -42,9 +42,11 @@ class CodeIndexer:
         Called automatically from index_file() and index_directory() entry points.
         Uses instance-level caching to avoid repeated creation attempts.
 
-        Note: VectorStore.create_collection() raises ValueError if collection
-        already exists. This is the documented behavior for both InMemoryVectorStore
-        and QdrantVectorStore implementations.
+        Note: VectorStore.create_collection() raises different exceptions depending
+        on the backend when a collection already exists:
+        - InMemoryVectorStore: raises ValueError
+        - QdrantVectorStore (server mode): raises UnexpectedResponse (HTTP 409)
+        We catch both by checking for "already exists" in the error message.
         """
         if self._collection_ensured:
             return  # Already verified in this instance
@@ -55,10 +57,15 @@ class CodeIndexer:
                 dimension=self.embedding_service.dimension,
             )
             logger.info("collection_created", name=self.COLLECTION_NAME)
-        except ValueError:
+        except Exception as e:
             # Collection already exists - this is expected on subsequent runs
-            # ValueError is the documented exception for duplicate collections
-            logger.debug("collection_exists", name=self.COLLECTION_NAME)
+            # Check if it's a "collection exists" error (works for both backends)
+            error_msg = str(e).lower()
+            if "already exists" in error_msg or "409" in str(e):
+                logger.debug("collection_exists", name=self.COLLECTION_NAME)
+            else:
+                # Unexpected error - re-raise
+                raise
 
         self._collection_ensured = True
 
