@@ -8,7 +8,7 @@
 #   clams-review check <task_id> <artifact_type>
 #   clams-review clear <task_id> [<artifact_type>]
 #
-# Artifact types: spec, proposal, code
+# Artifact types: spec, proposal, code, bugfix
 # Results: approved, changes_requested
 
 set -euo pipefail
@@ -30,7 +30,7 @@ usage() {
     echo "  clams-review check <task_id> <artifact_type>"
     echo "  clams-review clear <task_id> [<artifact_type>]"
     echo ""
-    echo "Artifact types: spec, proposal, code"
+    echo "Artifact types: spec, proposal, code, bugfix"
     echo "Results: approved, changes_requested"
     echo ""
     echo "Options for 'record':"
@@ -48,9 +48,9 @@ usage() {
 validate_artifact_type() {
     local type="$1"
     case "$type" in
-        spec|proposal|code) return 0 ;;
+        spec|proposal|code|bugfix) return 0 ;;
         *)
-            echo "Error: Invalid artifact type '$type'. Must be: spec, proposal, code" >&2
+            echo "Error: Invalid artifact type '$type'. Must be: spec, proposal, code, bugfix" >&2
             exit 1
             ;;
     esac
@@ -184,7 +184,7 @@ cmd_list() {
 
     echo ""
     echo "=== Summary ==="
-    for type in spec proposal code; do
+    for type in spec proposal code bugfix; do
         local count
         count=$(sqlite3 "$DB_PATH" \
             "SELECT COUNT(*) FROM reviews WHERE task_id = '$task_id' AND artifact_type = '$type' AND result = 'approved';")

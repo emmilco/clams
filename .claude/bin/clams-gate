@@ -6,8 +6,11 @@
 #   clams-gate check <task_id> <transition>
 #   clams-gate list
 #
-# Transitions: SPEC-DESIGN, DESIGN-IMPLEMENT, IMPLEMENT-CODE_REVIEW,
-#              CODE_REVIEW-TEST, TEST-INTEGRATE, INTEGRATE-VERIFY, VERIFY-DONE
+# Feature transitions: SPEC-DESIGN, DESIGN-IMPLEMENT, IMPLEMENT-CODE_REVIEW,
+#                      CODE_REVIEW-TEST, TEST-INTEGRATE, INTEGRATE-VERIFY, VERIFY-DONE
+#
+# Bug transitions: REPORTED-INVESTIGATED, INVESTIGATED-FIXED, FIXED-REVIEWED,
+#                  REVIEWED-TESTED, TESTED-MERGED, MERGED-DONE
 
 set -euo pipefail
 
@@ -36,7 +39,7 @@ usage() {
 }
 
 cmd_list() {
-    echo "=== Gate Requirements by Transition ==="
+    echo "=== Feature Gate Requirements by Transition ==="
     echo ""
     echo "SPEC → DESIGN (semi-automated)"
     echo "  - [auto] 2 spec reviews with APPROVED status"
@@ -68,6 +71,36 @@ cmd_list() {
     echo "  - Run tests on main branch"
     echo "  - Verify acceptance criteria met"
     echo "  - Check for orphaned code"
+    echo ""
+    echo "=== Bug Gate Requirements by Transition ==="
+    echo ""
+    echo "REPORTED → INVESTIGATED (automated)"
+    echo "  - [auto] Bug report exists (bug_reports/BUG-XXX.md)"
+    echo "  - [auto] Reproduction steps documented"
+    echo "  - [auto] Root cause section filled"
+    echo "  - [auto] Fix plan documented"
+    echo ""
+    echo "INVESTIGATED → FIXED (automated)"
+    echo "  - [auto] Tests pass (check_tests.sh)"
+    echo "  - [auto] Linter clean (check_linter.sh)"
+    echo "  - [auto] Type check clean (check_types.sh)"
+    echo "  - [auto] Implementation code exists in src/ or tests/"
+    echo "  - [auto] Regression test added (new test file or test function)"
+    echo ""
+    echo "FIXED → REVIEWED (automated)"
+    echo "  - [auto] 2 bugfix reviews with APPROVED status"
+    echo ""
+    echo "REVIEWED → TESTED (automated)"
+    echo "  - [auto] Full test suite passes, no skipped tests (check_tests.sh)"
+    echo ""
+    echo "TESTED → MERGED (semi-automated)"
+    echo "  - [auto] Changelog entry exists (changelog.d/BUG-XXX.md)"
+    echo "  - Then run: clams-worktree merge BUG-XXX"
+    echo ""
+    echo "MERGED → DONE (manual - worktree gone)"
+    echo "  - Run tests on main branch"
+    echo "  - Verify bug is fixed"
+    echo "  - Verify regression test passes"
 }
 
 run_gate() {
@@ -271,6 +304,130 @@ cmd_check() {
             echo "  1. Run tests on main: pytest -xvs"
             echo "  2. Verify all acceptance criteria are met"
             echo "  3. Check for orphaned code (unused imports, dead functions)"
+            echo ""
+            echo "If all checks pass, transition with:"
+            echo "  .claude/bin/clams-task transition $task_id DONE --gate-result pass"
+            exit 0
+            ;;
+
+        # ========== BUG TRANSITIONS ==========
+
+        REPORTED-INVESTIGATED)
+            echo ""
+            # Check bug report exists
+            if ! check_file_exists "$worktree/bug_reports/$task_id.md" "Bug report exists"; then
+                failed=1
+            fi
+            echo ""
+            # Check required sections are filled
+            echo "--- Gate: Bug report sections complete ---"
+            local bug_report="$worktree/bug_reports/$task_id.md"
+            local missing_sections=()
+
+            if ! grep -q "## Reproduction Steps" "$bug_report" 2>/dev/null; then
+                missing_sections+=("Reproduction Steps")
+            fi
+            if ! grep -q "### Root Cause" "$bug_report" 2>/dev/null; then
+                missing_sections+=("Root Cause")
+            fi
+            if ! grep -q "## Fix Plan" "$bug_report" 2>/dev/null; then
+                missing_sections+=("Fix Plan")
+            fi
+
+            if [[ ${#missing_sections[@]} -gt 0 ]]; then
+                echo "✗ Bug report sections: FAIL"
+                echo "  Missing sections:"
+                for section in "${missing_sections[@]}"; do
+                    echo "    - $section"
+                done
+                failed=1
+            else
+                echo "✓ Bug report sections: PASS"
+            fi
+            ;;
+
+        INVESTIGATED-FIXED)
+            echo ""
+            # Check for actual implementation code
+            echo "--- Gate: Implementation code exists ---"
+            local code_changes
+            code_changes=$(cd "$worktree" && git diff main...HEAD --name-only -- 'src/' 'tests/' 2>/dev/null | grep -v '__pycache__' | head -10)
+            if [[ -z "$code_changes" ]]; then
+                echo "✗ Implementation code exists: FAIL"
+                echo ""
+                echo "No changes found in src/ or tests/ directories."
+                failed=1
+            else
+                echo "✓ Implementation code exists: PASS"
+                echo "Changed files:"
+                echo "$code_changes" | sed 's/^/  /'
+            fi
+            echo ""
+
+            # Check regression test was added
+            echo "--- Gate: Regression test added ---"
+            local test_changes
+            test_changes=$(cd "$worktree" && git diff main...HEAD --name-only -- 'tests/' 2>/dev/null | grep -v '__pycache__' | grep '\.py$')
+            if [[ -z "$test_changes" ]]; then
+                echo "✗ Regression test added: FAIL"
+                echo ""
+                echo "Bug fixes must include regression tests."
+                echo "No test file changes found in tests/ directory."
+                failed=1
+            else
+                echo "✓ Regression test added: PASS"
+                echo "Test files changed:"
+                echo "$test_changes" | sed 's/^/  /'
+            fi
+            echo ""
+
+            if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
+                failed=1
+            fi
+            echo ""
+            if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
+                failed=1
+            fi
+            echo ""
+            if ! run_gate "Type check clean" "check_types.sh" "$worktree"; then
+                failed=1
+            fi
+            ;;
+
+        FIXED-REVIEWED)
+            echo "This transition requires 2 bugfix reviews with APPROVED status."
+            echo ""
+            if ! check_reviews "$task_id" "bugfix"; then
+                failed=1
+            fi
+            ;;
+
+        REVIEWED-TESTED)
+            echo ""
+            # check_tests.sh already enforces no skipped tests (fails if any are skipped)
+            # So this single gate covers both "tests pass" and "no skipped tests"
+            if ! run_gate "Full test suite passes (no skipped tests)" "check_tests.sh" "$worktree"; then
+                failed=1
+            fi
+            ;;
+
+        TESTED-MERGED)
+            echo ""
+            if ! check_file_exists "$worktree/changelog.d/$task_id.md" "Changelog entry exists"; then
+                failed=1
+            fi
+            echo ""
+            echo "NOTE: Merge handled by clams-worktree merge"
+            ;;
+
+        MERGED-DONE)
+            echo "NOTE: MERGED phase runs on main branch after merge."
+            echo "Worktree no longer exists - automated checks limited."
+            echo ""
+            echo "MANUAL CHECKS REQUIRED:"
+            echo "  1. Run tests on main: pytest -xvs"
+            echo "  2. Verify the bug is fixed"
+            echo "  3. Verify regression test catches the original bug"
             echo ""
             echo "If all checks pass, transition with:"
             echo "  .claude/bin/clams-task transition $task_id DONE --gate-result pass"

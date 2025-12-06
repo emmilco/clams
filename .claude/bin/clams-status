@@ -107,11 +107,11 @@ cmd_health() {
 }
 
 cmd_tasks() {
-    echo "=== Tasks by Phase ==="
+    echo "=== Feature Tasks by Phase ==="
 
-    for phase in SPEC DESIGN IMPLEMENT REVIEW TEST INTEGRATE VERIFY DONE; do
+    for phase in SPEC DESIGN IMPLEMENT CODE_REVIEW TEST INTEGRATE VERIFY DONE; do
         local count
-        count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM tasks WHERE phase = '$phase';")
+        count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM tasks WHERE phase = '$phase' AND task_type = 'feature';")
 
         if [[ "$count" -gt 0 ]]; then
             echo ""
@@ -119,16 +119,36 @@ cmd_tasks() {
             sqlite3 -column "$DB_PATH" <<EOF
 SELECT id, title, assigned_specialist, blocked_by
 FROM tasks
-WHERE phase = '$phase'
+WHERE phase = '$phase' AND task_type = 'feature'
 ORDER BY updated_at DESC;
 EOF
         fi
     done
 
-    local total
-    total=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM tasks;")
     echo ""
-    echo "Total tasks: $total"
+    echo "=== Bug Tasks by Phase ==="
+
+    for phase in REPORTED INVESTIGATED FIXED REVIEWED TESTED MERGED DONE; do
+        local count
+        count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM tasks WHERE phase = '$phase' AND task_type = 'bug';")
+
+        if [[ "$count" -gt 0 ]]; then
+            echo ""
+            echo "--- $phase ($count) ---"
+            sqlite3 -column "$DB_PATH" <<EOF
+SELECT id, title, assigned_specialist, blocked_by
+FROM tasks
+WHERE phase = '$phase' AND task_type = 'bug'
+ORDER BY updated_at DESC;
+EOF
+        fi
+    done
+
+    local feature_count bug_count
+    feature_count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM tasks WHERE task_type = 'feature';")
+    bug_count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM tasks WHERE task_type = 'bug';")
+    echo ""
+    echo "Total: $feature_count feature(s), $bug_count bug(s)"
 }
 
 cmd_workers() {
@@ -169,7 +189,7 @@ EOF
 cmd_worktrees() {
     echo "=== Active Worktrees ==="
     sqlite3 -header -column "$DB_PATH" <<EOF
-SELECT id, phase, title, worktree_path
+SELECT id, task_type, phase, title, worktree_path
 FROM tasks
 WHERE worktree_path IS NOT NULL AND worktree_path != ''
 ORDER BY updated_at DESC;

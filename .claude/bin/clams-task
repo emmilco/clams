@@ -3,8 +3,8 @@
 # clams-task: Task CRUD operations
 #
 # Usage:
-#   clams-task create <id> <title> [--spec <spec_id>]
-#   clams-task list [--phase <phase>] [--spec <spec_id>]
+#   clams-task create <id> <title> [--spec <spec_id>] [--type <feature|bug>]
+#   clams-task list [--phase <phase>] [--spec <spec_id>] [--type <feature|bug>]
 #   clams-task show <id>
 #   clams-task update <id> --phase <phase>
 #   clams-task update <id> --specialist <specialist>
@@ -13,6 +13,10 @@
 #   clams-task update <id> --worktree <path>
 #   clams-task transition <id> <to_phase> [--gate-result <pass|fail>] [--gate-details <details>]
 #   clams-task delete <id>
+#
+# Task types:
+#   feature (default): SPEC → DESIGN → IMPLEMENT → CODE_REVIEW → TEST → INTEGRATE → VERIFY → DONE
+#   bug: REPORTED → INVESTIGATED → FIXED → REVIEWED → TESTED → MERGED → DONE
 
 set -euo pipefail
 
@@ -26,12 +30,16 @@ fi
 
 usage() {
     echo "Usage:"
-    echo "  clams-task create <id> <title> [--spec <spec_id>]"
-    echo "  clams-task list [--phase <phase>] [--spec <spec_id>]"
+    echo "  clams-task create <id> <title> [--spec <spec_id>] [--type <feature|bug>]"
+    echo "  clams-task list [--phase <phase>] [--spec <spec_id>] [--type <feature|bug>]"
     echo "  clams-task show <id>"
     echo "  clams-task update <id> <--field value>..."
     echo "  clams-task transition <id> <to_phase> [--gate-result <result>] [--gate-details <details>]"
     echo "  clams-task delete <id>"
+    echo ""
+    echo "Task types:"
+    echo "  feature (default): SPEC → DESIGN → IMPLEMENT → CODE_REVIEW → TEST → INTEGRATE → VERIFY → DONE"
+    echo "  bug: REPORTED → INVESTIGATED → FIXED → REVIEWED → TESTED → MERGED → DONE"
     exit 1
 }
 
@@ -41,10 +49,19 @@ cmd_create() {
     shift 2
 
     local spec_id=""
+    local task_type="feature"
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --spec)
                 spec_id="$2"
+                shift 2
+                ;;
+            --type)
+                task_type="$2"
+                if [[ "$task_type" != "feature" && "$task_type" != "bug" ]]; then
+                    echo "Error: Invalid task type '$task_type'. Must be 'feature' or 'bug'." >&2
+                    exit 1
+                fi
                 shift 2
                 ;;
             *)
@@ -54,17 +71,24 @@ cmd_create() {
         esac
     done
 
+    # Set initial phase based on task type
+    local initial_phase="SPEC"
+    if [[ "$task_type" == "bug" ]]; then
+        initial_phase="REPORTED"
+    fi
+
     sqlite3 "$DB_PATH" <<EOF
-INSERT INTO tasks (id, title, spec_id, phase)
-VALUES ('$id', '$(echo "$title" | sed "s/'/''/g")', $([ -n "$spec_id" ] && echo "'$spec_id'" || echo "NULL"), 'SPEC');
+INSERT INTO tasks (id, title, spec_id, task_type, phase)
+VALUES ('$id', '$(echo "$title" | sed "s/'/''/g")', $([ -n "$spec_id" ] && echo "'$spec_id'" || echo "NULL"), '$task_type', '$initial_phase');
 EOF
 
-    echo "Created task: $id"
+    echo "Created $task_type: $id (phase: $initial_phase)"
 }
 
 cmd_list() {
     local phase=""
     local spec_id=""
+    local task_type=""
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -76,6 +100,10 @@ cmd_list() {
                 spec_id="$2"
                 shift 2
                 ;;
+            --type)
+                task_type="$2"
+                shift 2
+                ;;
             *)
                 echo "Unknown option: $1" >&2
                 usage
@@ -83,20 +111,24 @@ cmd_list() {
         esac
     done
 
-    local where_clause=""
+    local where_clauses=()
     if [[ -n "$phase" ]]; then
-        where_clause="WHERE phase = '$phase'"
+        where_clauses+=("phase = '$phase'")
     fi
     if [[ -n "$spec_id" ]]; then
-        if [[ -n "$where_clause" ]]; then
-            where_clause="$where_clause AND spec_id = '$spec_id'"
-        else
-            where_clause="WHERE spec_id = '$spec_id'"
-        fi
+        where_clauses+=("spec_id = '$spec_id'")
+    fi
+    if [[ -n "$task_type" ]]; then
+        where_clauses+=("task_type = '$task_type'")
+    fi
+
+    local where_clause=""
+    if [[ ${#where_clauses[@]} -gt 0 ]]; then
+        where_clause="WHERE $(IFS=' AND '; echo "${where_clauses[*]}")"
     fi
 
     sqlite3 -header -column "$DB_PATH" <<EOF
-SELECT id, title, phase, assigned_specialist, blocked_by
+SELECT id, title, task_type, phase, assigned_specialist, blocked_by
 FROM tasks
 $where_clause
 ORDER BY created_at DESC;
@@ -211,13 +243,39 @@ cmd_transition() {
         esac
     done
 
-    # Get current phase
-    local from_phase
-    from_phase=$(sqlite3 "$DB_PATH" "SELECT phase FROM tasks WHERE id = '$id';")
+    # Get current phase and task type
+    local from_phase task_type
+    read -r from_phase task_type < <(sqlite3 "$DB_PATH" "SELECT phase, task_type FROM tasks WHERE id = '$id';" | tr '|' ' ')
 
     if [[ -z "$from_phase" ]]; then
         echo "Error: Task not found: $id" >&2
         exit 1
+    fi
+
+    # Validate phase transition is valid for task type
+    local valid_transition=false
+    if [[ "$task_type" == "bug" ]]; then
+        case "${from_phase}-${to_phase}" in
+            REPORTED-INVESTIGATED|INVESTIGATED-FIXED|FIXED-REVIEWED|REVIEWED-TESTED|TESTED-MERGED|MERGED-DONE)
+                valid_transition=true
+                ;;
+        esac
+        if [[ "$valid_transition" == "false" ]]; then
+            echo "Error: Invalid bug transition: $from_phase → $to_phase" >&2
+            echo "Valid bug transitions: REPORTED→INVESTIGATED→FIXED→REVIEWED→TESTED→MERGED→DONE" >&2
+            exit 1
+        fi
+    else
+        case "${from_phase}-${to_phase}" in
+            SPEC-DESIGN|DESIGN-IMPLEMENT|IMPLEMENT-CODE_REVIEW|CODE_REVIEW-TEST|TEST-INTEGRATE|INTEGRATE-VERIFY|VERIFY-DONE)
+                valid_transition=true
+                ;;
+        esac
+        if [[ "$valid_transition" == "false" ]]; then
+            echo "Error: Invalid feature transition: $from_phase → $to_phase" >&2
+            echo "Valid feature transitions: SPEC→DESIGN→IMPLEMENT→CODE_REVIEW→TEST→INTEGRATE→VERIFY→DONE" >&2
+            exit 1
+        fi
     fi
 
     # Get worktree path for implementation checks
@@ -255,6 +313,7 @@ cmd_transition() {
     local artifact_type=""
 
     case "${from_phase}-${to_phase}" in
+        # Feature review gates
         SPEC-DESIGN)
             artifact_type="spec"
             required_reviews=2
@@ -265,6 +324,11 @@ cmd_transition() {
             ;;
         CODE_REVIEW-TEST)
             artifact_type="code"
+            required_reviews=2
+            ;;
+        # Bug review gates
+        FIXED-REVIEWED)
+            artifact_type="bugfix"
             required_reviews=2
             ;;
     esac

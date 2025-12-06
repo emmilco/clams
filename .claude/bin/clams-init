@@ -17,10 +17,14 @@ echo "Initializing CLAMS database at $DB_PATH"
 
 sqlite3 "$DB_PATH" <<'EOF'
 -- Tasks
+-- task_type: 'feature' (default) or 'bug'
+-- Feature phases: SPEC → DESIGN → IMPLEMENT → CODE_REVIEW → TEST → INTEGRATE → VERIFY → DONE
+-- Bug phases: REPORTED → INVESTIGATED → FIXED → REVIEWED → TESTED → MERGED → DONE
 CREATE TABLE IF NOT EXISTS tasks (
     id TEXT PRIMARY KEY,
     spec_id TEXT,
     title TEXT NOT NULL,
+    task_type TEXT NOT NULL DEFAULT 'feature',
     phase TEXT NOT NULL DEFAULT 'SPEC',
     assigned_specialist TEXT,
     worktree_path TEXT,
@@ -128,7 +132,16 @@ CREATE INDEX IF NOT EXISTS idx_test_runs_task ON test_runs(task_id);
 CREATE INDEX IF NOT EXISTS idx_violations_task ON violations(task_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_task ON reviews(task_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_artifact ON reviews(task_id, artifact_type);
+
+-- Migration: Add task_type column if it doesn't exist (for existing databases)
+-- SQLite doesn't have IF NOT EXISTS for ALTER TABLE, so we check first
 EOF
+
+# Add task_type column if missing (migration for existing databases)
+if ! sqlite3 "$DB_PATH" "PRAGMA table_info(tasks);" | grep -q "task_type"; then
+    echo "Migrating: Adding task_type column to tasks table..."
+    sqlite3 "$DB_PATH" "ALTER TABLE tasks ADD COLUMN task_type TEXT NOT NULL DEFAULT 'feature';"
+fi
 
 echo "Database initialized successfully."
 echo ""

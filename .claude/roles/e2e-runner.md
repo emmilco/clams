@@ -65,7 +65,7 @@ Report failure to orchestrator with:
 The orchestrator will:
 - Set system to DEGRADED
 - Activate merge lock
-- Dispatch Debugger agent
+- Create a bug report for the E2E failure (follows bug workflow)
 
 ## Test Output Requirements
 

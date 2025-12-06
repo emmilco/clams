@@ -74,7 +74,7 @@ Agents are domain specialists, dynamically allocated based on bottlenecks.
 | **QA Engineer** | Testing, test design, verification | Review, test, verify phases |
 | **Product** | Spec validation, acceptance criteria | Spec phase, final verification |
 | **UX** | User experience review | Design review, final verification |
-| **Debugger** | Root cause analysis, failure investigation | Reactive - when things fail |
+| **Bug Investigator** | Root cause analysis, differential diagnosis, fix planning | Bug workflow (REPORTED→INVESTIGATED) |
 | **AI/DL** | ML/AI implementation | AI-specific tasks |
 | **Doc Writer** | Documentation updates | Batch job every ~12 merges |
 | **E2E Runner** | End-to-end test execution | Batch job every ~12 merges |
@@ -374,7 +374,7 @@ def on_merge_complete(self):
 
 **If E2E fails**:
 1. Merge lock activated - no new merges to main
-2. Debugger agent assigned to investigate
+2. Bug report created, Bug Investigator assigned (follows bug workflow)
 3. Workers continue on their branches but pause before INTEGRATE
 4. Once E2E passes, merge lock released, queued merges proceed
 
@@ -406,7 +406,7 @@ Doc Writer agent:
 │    DEGRADED      │
 │                  │
 │ - Merges blocked │
-│ - Debugger active│
+│ - Bug investigation│
 │ - Work continues │
 │   in branches    │
 └────────┬─────────┘

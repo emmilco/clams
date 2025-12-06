@@ -33,9 +33,9 @@ cd .worktrees/SPEC-002-01 && .claude/bin/clams-status  # DON'T DO THIS
 .claude/bin/clams-status health     # System health check
 .claude/bin/clams-status worktrees  # Active worktrees
 
-# Tasks
-.claude/bin/clams-task create <id> <title> [--spec <spec_id>]
-.claude/bin/clams-task list [--phase <phase>]
+# Tasks (features and bugs)
+.claude/bin/clams-task create <id> <title> [--spec <spec_id>] [--type <feature|bug>]
+.claude/bin/clams-task list [--phase <phase>] [--type <feature|bug>]
 .claude/bin/clams-task show <id>
 .claude/bin/clams-task update <id> --phase|--specialist|--notes|--blocked-by <value>
 .claude/bin/clams-task transition <id> <phase> [--gate-result <pass|fail>] [--gate-details <text>]
@@ -95,7 +95,7 @@ Available in `.claude/roles/`:
 | Frontend | `frontend.md` | Client-side implementation |
 | QA | `qa.md` | Review, test, verify phases |
 | Reviewer | `reviewer.md` | Code review (2x before TEST phase) |
-| Debugger | `debugger.md` | Failure investigation |
+| Bug Investigator | `bug-investigator.md` | Bug investigation, root cause analysis, fix planning |
 | Infra | `infra.md` | DevOps, deployment |
 | Doc Writer | `doc-writer.md` | Documentation batch job |
 | E2E Runner | `e2e-runner.md` | E2E test batch job |
@@ -105,11 +105,17 @@ Available in `.claude/roles/`:
 
 ## Phase Model
 
+### Feature Phases
 ```
 SPEC → DESIGN → IMPLEMENT → CODE_REVIEW → TEST → INTEGRATE → VERIFY → DONE
 ```
 
-### Phase Transitions
+### Bug Phases
+```
+REPORTED → INVESTIGATED → FIXED → REVIEWED → TESTED → MERGED → DONE
+```
+
+### Feature Phase Transitions
 
 | Transition | Requirements | Type |
 |------------|-------------|------|
@@ -120,6 +126,17 @@ SPEC → DESIGN → IMPLEMENT → CODE_REVIEW → TEST → INTEGRATE → VERIFY 
 | TEST → INTEGRATE | Full test suite passes | Automated |
 | INTEGRATE → VERIFY | Changelog exists, then merge | Semi-auto |
 | VERIFY → DONE | Tests on main, acceptance verified, no orphans | Manual (on main) |
+
+### Bug Phase Transitions
+
+| Transition | Requirements | Type |
+|------------|-------------|------|
+| REPORTED → INVESTIGATED | Bug report complete, root cause proven, fix plan documented | Automated |
+| INVESTIGATED → FIXED | Tests pass, linter clean, type check, regression test added | Automated |
+| FIXED → REVIEWED | 2 bugfix reviews approved | Automated |
+| REVIEWED → TESTED | Full test suite passes, no skipped tests | Automated |
+| TESTED → MERGED | Changelog exists, then merge | Semi-auto |
+| MERGED → DONE | Tests on main, bug verified fixed | Manual (on main) |
 
 ### Review Gates
 
@@ -161,6 +178,7 @@ Use **sonnet** for all reviews to ensure thorough, high-quality feedback.
 
 - `SPEC-NNN`: A specification (parent record, tracks overall feature)
 - `SPEC-NNN-NN`: Individual implementation tasks spawned from a spec
+- `BUG-NNN`: A bug report (follows bug workflow, not feature workflow)
 
 **Spec Lifecycle**: The parent SPEC record stays in DESIGN phase while subtasks progress. When all subtasks reach DONE, transition the parent SPEC to DONE.
 
@@ -284,6 +302,118 @@ After worker completes:
 
 Note: VERIFY phase happens on main after merge. Automated gate checks are limited since worktree no longer exists.
 
+## Bug Workflow
+
+Bugs follow a different workflow from features, focused on rigorous investigation before implementation.
+
+### Reporting a Bug
+
+When a bug is discovered:
+
+```bash
+# Create bug record
+.claude/bin/clams-task create BUG-001 "Description of the bug" --type bug
+
+# Create worktree (creates bug_reports/ with template)
+.claude/bin/clams-worktree create BUG-001
+```
+
+The orchestrator or reporter must fill in the initial bug report at `bug_reports/BUG-001.md`:
+- **First noticed on commit**: The commit SHA where the bug was first observed
+- **Reproduction steps**: Exact steps to reproduce the bug
+- **Expected vs Actual**: What should happen vs what actually happens
+
+### Bug Phase-by-Phase Guide
+
+**REPORTED → INVESTIGATED**
+
+1. Dispatch Bug Investigator
+2. Investigator reproduces the bug exactly as documented
+3. Investigator forms initial hypothesis
+4. **CRITICAL**: Investigator performs differential diagnosis:
+   - Lists ALL plausible causes (not just first guess)
+   - For each hypothesis, identifies discriminating evidence
+   - Builds evidentiary scaffold (logging/assertions)
+   - Runs scaffold to gather evidence
+   - Eliminates hypotheses until root cause is PROVEN
+5. Investigator documents:
+   - Root cause with evidence
+   - Why alternatives were eliminated
+   - Detailed fix plan with regression test requirements
+6. **Investigator runs**: `.claude/bin/clams-gate check BUG-001 REPORTED-INVESTIGATED`
+7. **Investigator runs**: `.claude/bin/clams-task transition BUG-001 INVESTIGATED --gate-result pass`
+
+**INVESTIGATED → FIXED**
+
+1. Dispatch Implementer (Backend/Frontend as appropriate)
+2. Implementer follows the fix plan from the investigation
+3. Implementer adds regression test that:
+   - Sets up the exact conditions that triggered the bug
+   - Verifies the bug is fixed
+   - Would fail if the bug regresses
+4. **Implementer runs**: `.claude/bin/clams-gate check BUG-001 INVESTIGATED-FIXED`
+5. **Implementer runs**: `.claude/bin/clams-task transition BUG-001 FIXED --gate-result pass`
+
+**FIXED → REVIEWED**
+
+1. Dispatch Reviewer #1
+2. Reviewer verifies:
+   - Fix matches the root cause analysis
+   - Regression test is adequate
+   - No new bugs introduced
+3. If changes requested: Implementer fixes, restart from step 1
+4. If approved: **Reviewer records**: `.claude/bin/clams-review record BUG-001 bugfix approved --worker W-xxx`
+5. Dispatch Reviewer #2
+6. If changes requested: Implementer fixes, restart from step 1
+7. If approved: **Reviewer records**: `.claude/bin/clams-review record BUG-001 bugfix approved --worker W-yyy`
+8. **Reviewer #2 runs**: `.claude/bin/clams-gate check BUG-001 FIXED-REVIEWED`
+9. **Reviewer #2 runs**: `.claude/bin/clams-task transition BUG-001 REVIEWED --gate-result pass`
+
+**REVIEWED → TESTED**
+
+1. **Implementer runs**: `.claude/bin/clams-gate check BUG-001 REVIEWED-TESTED`
+   - Gate verifies: all tests pass, NO skipped tests
+2. **Implementer runs**: `.claude/bin/clams-task transition BUG-001 TESTED --gate-result pass`
+
+**TESTED → MERGED**
+
+1. **Implementer writes** changelog entry: `changelog.d/BUG-001.md`
+2. **Implementer runs**: `.claude/bin/clams-gate check BUG-001 TESTED-MERGED`
+3. **Implementer runs**: `.claude/bin/clams-task transition BUG-001 MERGED --gate-result pass`
+4. **Orchestrator verifies** main is HEALTHY: `.claude/bin/clams-status health`
+5. **Orchestrator runs**: `.claude/bin/clams-worktree merge BUG-001` (merges and removes worktree)
+
+**MERGED → DONE** (on main branch, worktree is gone)
+
+1. **Orchestrator runs** tests on main: `pytest -vvsx`
+2. Verify the bug is actually fixed
+3. Verify regression test passes
+4. **Orchestrator runs**: `.claude/bin/clams-task transition BUG-001 DONE --gate-result pass`
+
+### Bug Investigation Requirements
+
+The investigation phase is critical. The Bug Investigator must:
+
+1. **Reproduce first**: Never investigate without reproducing
+2. **Consider alternatives**: List all plausible causes, not just the obvious one
+3. **Prove, don't guess**: Use evidence to eliminate hypotheses
+4. **Build a scaffold**: Add logging/assertions to gather discriminating evidence
+5. **Document everything**: Root cause, evidence, and why alternatives were eliminated
+
+The gate check verifies:
+- Bug report exists with required sections
+- Root cause section is filled
+- Fix plan is documented
+
+### Skipped Tests Not Allowed
+
+Bug fixes must NOT have any skipped tests. This ensures:
+- The regression test actually runs
+- No existing functionality is broken
+- The fix is complete
+
+If tests need to be skipped for valid reasons, escalate to the human for approval.
+
 ### Phase Advancement
 
 **Workers run their own transitions.** The worker completing the work runs the gate check and transition:
@@ -355,7 +485,7 @@ Check counters with: `.claude/bin/clams-counter list`
 When `merges_since_e2e >= 12`:
 1. Dispatch E2E Runner worker
 2. If passes: `.claude/bin/clams-counter reset merges_since_e2e`
-3. If fails: set system DEGRADED, dispatch Debugger
+3. If fails: set system DEGRADED, create a bug report for the failure
 
 ### Documentation (every ~12 merges)
 
@@ -367,7 +497,7 @@ When `merges_since_docs >= 12`:
 
 - **HEALTHY**: Normal operations, merges allowed
 - **ATTENTION**: E2E tests due (12+ merges since last run), merges still allowed
-- **DEGRADED**: E2E failed, merge lock active, Debugger dispatched
+- **DEGRADED**: E2E failed, merge lock active, bug investigation required
 
 Check with: `.claude/bin/clams-status health`
 
@@ -375,8 +505,9 @@ Check with: `.claude/bin/clams-status health`
 
 When E2E fails:
 1. Activate lock: `.claude/bin/clams-counter set merge_lock 1`
-2. Dispatch Debugger to fix
-3. After E2E passes: `.claude/bin/clams-counter reset merge_lock`
+2. Create bug report for the E2E failure
+3. Follow bug workflow (REPORTED → INVESTIGATED → FIXED → ...)
+4. After E2E passes: `.claude/bin/clams-counter reset merge_lock`
 
 The `clams-worktree merge` command will refuse to merge while lock is active.
 

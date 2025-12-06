@@ -30,7 +30,7 @@ usage() {
     echo "  clams-worker list                             List active workers"
     echo ""
     echo "Roles:"
-    echo "  planning, architect, backend, frontend, qa, debugger, infra"
+    echo "  planning, architect, backend, frontend, qa, bug-investigator, infra"
     echo "  spec-reviewer, proposal-reviewer, reviewer"
     echo "  doc-writer, e2e-runner, product, ux, ai-dl"
     exit 1
