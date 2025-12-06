@@ -22,6 +22,35 @@ if [[ ! -f "$DB_PATH" ]]; then
     exit 1
 fi
 
+# Record a successful gate pass in the database.
+# The UNIQUE constraint on (task_id, transition, commit_sha) means:
+# - Same commit can only have one record per gate (INSERT OR REPLACE updates timestamp)
+# - Different commits create new records, preserving history
+record_gate_pass() {
+    local task_id="$1"
+    local transition="$2"
+    local worktree="$3"
+
+    # Get current commit SHA
+    local commit_sha
+    commit_sha=$(cd "$worktree" && git rev-parse HEAD)
+
+    if [[ -z "$commit_sha" ]]; then
+        echo "Error: Could not determine commit SHA" >&2
+        return 1
+    fi
+
+    # Record in database with proper SQL escaping
+    # Task IDs and transitions are controlled strings (alphanumeric + hyphen)
+    # Commit SHAs are hex strings from git - safe but we escape anyway
+    sqlite3 "$DB_PATH" <<EOF
+INSERT OR REPLACE INTO gate_passes (task_id, transition, commit_sha)
+VALUES ('$(echo "$task_id" | sed "s/'/''/g")', '$(echo "$transition" | sed "s/'/''/g")', '$(echo "$commit_sha" | sed "s/'/''/g")');
+EOF
+
+    echo "Gate pass recorded for commit ${commit_sha:0:7}"
+}
+
 usage() {
     echo "Usage:"
     echo "  clams-gate check <task_id> <transition>   Run gate checks"
@@ -445,6 +474,14 @@ cmd_check() {
     echo "=========================================="
     if [[ $failed -eq 0 ]]; then
         echo "GATE RESULT: PASS"
+
+        # Record gate pass for transitions that require verification
+        case "$transition" in
+            IMPLEMENT-CODE_REVIEW|TEST-INTEGRATE|INVESTIGATED-FIXED|REVIEWED-TESTED)
+                record_gate_pass "$task_id" "$transition" "$worktree"
+                ;;
+        esac
+
         echo ""
         echo "Proceed with transition:"
         echo "  .claude/bin/clams-task transition $task_id <next_phase> --gate-result pass"

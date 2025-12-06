@@ -133,6 +133,20 @@ CREATE INDEX IF NOT EXISTS idx_violations_task ON violations(task_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_task ON reviews(task_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_artifact ON reviews(task_id, artifact_type);
 
+-- Gate passes (for commit-anchored gate verification)
+-- Records when a gate check passes, anchored to the commit SHA at that time.
+-- Transitions verify the current commit matches the recorded commit.
+CREATE TABLE IF NOT EXISTS gate_passes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id TEXT NOT NULL,
+    transition TEXT NOT NULL,
+    commit_sha TEXT NOT NULL,
+    passed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(task_id, transition, commit_sha)
+);
+
+CREATE INDEX IF NOT EXISTS idx_gate_passes_task ON gate_passes(task_id, transition);
+
 -- Migration: Add task_type column if it doesn't exist (for existing databases)
 -- SQLite doesn't have IF NOT EXISTS for ALTER TABLE, so we check first
 EOF
