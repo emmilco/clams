@@ -1,105 +1,69 @@
-# Session Handoff - 2025-12-05 (Night)
+# Session Handoff - 2025-12-05 (Evening)
 
 ## Session Summary
 
-Completed the MCP tool discovery fix. The server now properly exposes all 23 tools to Claude Code.
+This session accomplished two main tasks:
 
-## Key Changes
+### 1. Completed MCP Tool Discovery Fix (on main)
+- Updated 3 test files to use the new dispatcher pattern:
+  - `tests/server/tools/test_ghap.py`
+  - `tests/server/tools/test_learning.py`
+  - `tests/server/tools/test_search.py`
+- All 518 tests now pass
+- Committed as `146a525`
 
-### Root Cause (from previous session)
-1. Missing `@server.list_tools()` handler - Claude Code asks "what tools?" and got "Method not found"
-2. Each `@server.call_tool()` decorator REPLACED the previous handler - only the last tool was active
-3. Logs were going to stdout instead of stderr (fixed in previous session)
+### 2. SPEC-003: MCP Protocol Test Performance Optimization
+Created and partially implemented a task to optimize slow MCP protocol tests:
 
-### Fix Implemented This Session
+**Problem**: Tests took ~130 seconds due to:
+1. Function-scoped fixture creating new server per test (10 startups)
+2. Server loading embedding model 3 times on startup
 
-Refactored all tool modules from the old pattern to a dispatcher pattern:
+**Solution implemented**:
+- Part 1: Module-scoped test fixture (10 startups → 1)
+- Part 2: Single model load during server startup (3 loads → 1)
 
-**Old Pattern** (broken):
-```python
-def register_foo_tools(server, ...):
-    @server.call_tool()  # Each decorator REPLACED the previous!
-    async def tool_a(): ...
+**Results achieved**:
+- Before: ~130 seconds
+- After: **7.75 seconds** (17x improvement!)
 
-    @server.call_tool()  # Only last tool was registered
-    async def tool_b(): ...
-```
+**Current state**:
+- Phase: IMPLEMENT (implementation complete, code review pending)
+- All 519 tests pass
+- Commit: `e84e8f5` in worktree
 
-**New Pattern** (working):
-```python
-def get_foo_tools(...) -> dict[str, Any]:
-    async def tool_a(): ...
-    async def tool_b(): ...
-    return {"tool_a": tool_a, "tool_b": tool_b}
+## Active Task
 
-# Central dispatcher in __init__.py:
-tool_registry.update(get_foo_tools(...))
+### SPEC-003 - Optimize MCP protocol test performance
+- **Phase**: IMPLEMENT
+- **Worktree**: `.worktrees/SPEC-003`
+- **Status**: Implementation complete, tests pass, needs gate transition
 
-@server.call_tool()  # Single dispatcher for ALL tools
-async def handle_call_tool(name, arguments):
-    return await tool_registry[name](**arguments)
-
-@server.list_tools()  # Returns all 23 tool schemas
-async def handle_list_tools():
-    return _get_all_tool_definitions()
-```
-
-### Files Modified
-- `src/learning_memory_server/server/tools/__init__.py` - Added `Any` import, central dispatcher
-- `src/learning_memory_server/server/tools/ghap.py` - Added return dict and stub
-- `src/learning_memory_server/server/tools/code.py` - Refactored to dispatcher pattern
-- `src/learning_memory_server/server/tools/git.py` - Refactored to dispatcher pattern
-- `src/learning_memory_server/server/tools/learning.py` - Refactored to dispatcher pattern
-- `src/learning_memory_server/server/tools/search.py` - Refactored to dispatcher pattern
-- `tests/server/tools/test_code.py` - Updated to use get_code_tools
-- `tests/server/tools/test_git.py` - Updated to use get_git_tools
-- `tests/server/tools/test_memory.py` - Updated to use get_memory_tools
-
-## Test Status
-
-### Passing
-- **MCP Protocol Tests**: 10/10 (the critical regression tests)
-- `tests/server/tools/test_code.py`: All pass
-- `tests/server/tools/test_git.py`: All pass
-- `tests/server/tools/test_memory.py`: All pass
-- `tests/server/tools/test_enums.py`: All pass
-- `tests/server/tools/test_errors.py`: All pass
-
-### Still Need Update
-These test files still use the old `register_*_tools` pattern with `server.tools` dict:
-- `tests/server/tools/test_ghap.py` - Needs refactor to use `get_ghap_tools`
-- `tests/server/tools/test_learning.py` - Needs refactor to use `get_learning_tools`
-- `tests/server/tools/test_search.py` - Needs refactor to use `get_search_tools`
-
-The fix pattern is the same as the other tests:
-1. Import `get_*_tools` instead of `register_*_tools`
-2. Call `get_*_tools(...)` directly to get tools dict
-3. Access tools via `tools["tool_name"]` instead of `server.tools["tool_name"]`
-
-## Next Steps
-
-1. **Update remaining test files** - Follow the pattern from test_code.py/test_git.py/test_memory.py
-2. **Run full test suite** - After all tests updated
-3. **Verify with Claude Code** - Restart Claude Code and confirm tools appear as `mcp__learning-memory-server__*`
-
-## Commands to Resume
-
-```bash
-# Check current state
-.claude/bin/clams-status
-
-# Run tool tests
-TOKENIZERS_PARALLELISM=false uv run pytest tests/server/tools/ -v --tb=short
-
-# Run full test suite after fixes
-TOKENIZERS_PARALLELISM=false uv run pytest -vvsx --ignore=tests/e2e
-
-# After all tests pass, verify with Claude Code
-claude mcp list
-```
+**Next steps**:
+1. Run gate check: `.claude/bin/clams-gate check SPEC-003 IMPLEMENT-CODE_REVIEW`
+2. Transition: `.claude/bin/clams-task transition SPEC-003 CODE_REVIEW --gate-result pass`
+3. Dispatch 2 code reviewers (sequential)
+4. After code review: TEST → INTEGRATE → VERIFY → DONE
 
 ## Friction Points
 
-- The MCP SDK's dual pattern (call_tool for execution, list_tools for discovery) is non-obvious
-- Each @server.call_tool() decorator REPLACES the previous handler - easy to miss in code review
-- Tests that mock `server.call_tool` decorator behavior need manual updates when architecture changes
+1. **Module-scoped async fixtures in pytest-asyncio**: Requires careful configuration with `loop_scope="module"`. Initial attempts hung the tests until proper `pytestmark` configuration was added.
+
+2. **Background process management**: Multiple zombie pytest processes accumulated. Need to ensure cleanup between test runs.
+
+3. **Gate check timing**: The full test suite takes ~90-120 seconds, which can make gate checks appear stuck.
+
+## Recommendations for Next Session
+
+1. **Continue SPEC-003**: Run the gate check and transition to CODE_REVIEW. The implementation is complete and tested.
+
+2. **Code review focus**: The changes are surgical - main.py refactor to thread embedding_service, and test fixture scope change. Both are low-risk.
+
+3. **After merge**: Update spec.md with actual performance numbers (7.75s actual vs 15s projected).
+
+## System State
+
+- **Health**: HEALTHY
+- **Merge lock**: inactive
+- **Tasks**: 19 DONE, 1 IMPLEMENT (SPEC-003)
+- **Worktrees**: 1 active (SPEC-003)
