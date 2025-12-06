@@ -81,7 +81,7 @@ def validate_configuration(settings: ServerSettings) -> None:
         ("sqlite_path", settings.sqlite_path),
         ("journal_path", settings.journal_path),
     ]:
-        path = Path(path_value)
+        path = Path(path_value).expanduser()
         parent = path.parent
         if not parent.exists():
             try:
@@ -98,7 +98,7 @@ def validate_configuration(settings: ServerSettings) -> None:
 
     # 3. Validate git repo if provided (optional - just log warning)
     if settings.repo_path:
-        repo_path = Path(settings.repo_path)
+        repo_path = Path(settings.repo_path).expanduser()
         if not repo_path.exists() or not (repo_path / ".git").exists():
             logger.warning(
                 "git_repo.invalid",

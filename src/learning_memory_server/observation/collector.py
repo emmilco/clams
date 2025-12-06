@@ -49,7 +49,7 @@ class ObservationCollector:
         Args:
             journal_dir: Path to journal directory
         """
-        self.journal_dir = Path(journal_dir)
+        self.journal_dir = Path(journal_dir).expanduser()
         self.journal_dir.mkdir(parents=True, exist_ok=True)
         self.archive_dir = self.journal_dir / "archive"
         self.archive_dir.mkdir(parents=True, exist_ok=True)

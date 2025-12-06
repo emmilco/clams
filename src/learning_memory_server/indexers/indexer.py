@@ -258,7 +258,7 @@ class CodeIndexer:
         supported_exts = set(EXTENSION_MAP.keys())
         files: list[str] = []
 
-        root_path = Path(root)
+        root_path = Path(root).expanduser()
         pattern = "**/*" if recursive else "*"
 
         try:

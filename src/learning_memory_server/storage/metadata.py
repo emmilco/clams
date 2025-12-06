@@ -70,7 +70,7 @@ class MetadataStore:
         Args:
             db_path: Path to the SQLite database file
         """
-        self.db_path = Path(db_path)
+        self.db_path = Path(db_path).expanduser()
         self._conn: aiosqlite.Connection | None = None
 
     async def initialize(self) -> None:

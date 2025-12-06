@@ -722,7 +722,7 @@ def register_all_tools(
 
     # Initialize and register GHAP tools (from SPEC-002-15)
     observation_collector = ObservationCollector(
-        journal_dir=Path(settings.journal_path),
+        journal_dir=Path(settings.journal_path).expanduser(),
     )
     observation_persister = ObservationPersister(
         embedding_service=services.embedding_service,

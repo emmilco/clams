@@ -52,7 +52,7 @@ def get_code_tools(services: ServiceContainer) -> dict[str, Any]:
 
         try:
             # Validate directory exists
-            dir_path = Path(directory)
+            dir_path = Path(directory).expanduser()
             if not dir_path.exists():
                 raise ValidationError(f"Directory not found: {directory}")
             if not dir_path.is_dir():
