@@ -439,3 +439,40 @@ class TestListGhapEntries:
         assert "error" in result
         assert result["error"]["type"] == "validation_error"
         assert "Invalid date format" in result["error"]["message"]
+
+
+def test_bug_001_schema_validation_alignment() -> None:
+    """Regression test for BUG-001: JSON schema must match server validation.
+
+    The JSON schema in _get_all_tool_definitions() must define the same
+    strategy enum values that the server validates against in enums.STRATEGIES.
+    This ensures that MCP clients can successfully call the tools using
+    the strategy values advertised in the schema.
+    """
+    from learning_memory_server.server.tools import _get_all_tool_definitions
+    from learning_memory_server.server.tools.enums import STRATEGIES, validate_strategy
+
+    # Get tool definitions
+    tools = _get_all_tool_definitions()
+
+    # Find start_ghap tool
+    start_ghap_tool = next(t for t in tools if t.name == "start_ghap")
+    schema_strategies = start_ghap_tool.inputSchema["properties"]["strategy"]["enum"]
+
+    # Verify schema matches server validation
+    assert set(schema_strategies) == set(STRATEGIES), \
+        f"start_ghap schema strategies {schema_strategies} don't match STRATEGIES {STRATEGIES}"
+
+    # Verify all schema values are valid (would have failed before fix)
+    for strategy in schema_strategies:
+        validate_strategy(strategy)  # Should not raise
+
+    # Also check update_ghap tool
+    update_ghap_tool = next(t for t in tools if t.name == "update_ghap")
+    update_schema_strategies = update_ghap_tool.inputSchema["properties"]["strategy"]["enum"]
+    assert set(update_schema_strategies) == set(STRATEGIES), \
+        f"update_ghap schema strategies {update_schema_strategies} don't match STRATEGIES {STRATEGIES}"
+
+    # Verify all update_ghap schema values are valid
+    for strategy in update_schema_strategies:
+        validate_strategy(strategy)  # Should not raise
