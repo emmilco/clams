@@ -8,7 +8,7 @@ import structlog
 from mcp.server import Server
 from mcp.types import Tool
 
-from learning_memory_server.clustering import ExperienceClusterer
+from learning_memory_server.clustering import Clusterer, ExperienceClusterer
 from learning_memory_server.embedding import EmbeddingService
 from learning_memory_server.observation import (
     ObservationCollector,
@@ -745,14 +745,20 @@ async def register_all_tools(
     register_ghap_tools(server, observation_collector, observation_persister)
 
     # Initialize and register learning tools (from SPEC-002-15)
+    clusterer = Clusterer(
+        min_cluster_size=5,
+        min_samples=3,
+        metric="cosine",
+        cluster_selection_method="eom",
+    )
     experience_clusterer = ExperienceClusterer(
         vector_store=services.vector_store,
-        clusterer=None,  # type: ignore[arg-type]  # Will be initialized when needed
+        clusterer=clusterer,
     )
     value_store = ValueStore(
         embedding_service=services.embedding_service,
         vector_store=services.vector_store,
-        clusterer=None,  # type: ignore[arg-type]  # Will be initialized when needed
+        clusterer=experience_clusterer,
     )
     register_learning_tools(server, experience_clusterer, value_store)
 
