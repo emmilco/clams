@@ -1,25 +1,27 @@
-# Session Handoff - 2025-12-05 (Late Evening)
+# Session Handoff - 2025-12-05 (Night)
 
 ## Session Summary
 
-Completed SPEC-003: MCP Protocol Test Performance Optimization. This task reduced MCP protocol test execution time from ~130 seconds to ~8.77 seconds (17x improvement).
+Maintenance and bug fix session focused on codebase cleanup and MCP tool testing.
 
 ### Work Completed
 
-1. **Resumed from previous session** - SPEC-003 was in IMPLEMENT phase with code complete
-2. **Ran gate checks** - IMPLEMENT → CODE_REVIEW transition passed
-3. **Code Reviews** - Dispatched 2 sequential code reviewers, both approved
-4. **Full workflow completion** - CODE_REVIEW → TEST → INTEGRATE → VERIFY → DONE
-5. **Merged to main** - All changes now on main branch
+1. **Codebase cleanup analysis** - Identified transient files and misplaced documentation
+2. **Fixed tilde expansion bug** - `Path("~/.learning-memory")` wasn't expanding tildes, creating literal `~` directories
+3. **Deleted test artifacts** - Removed `test_output*.log` files from root
+4. **Organized task docs** - Moved `GATE_CHECK_NOTES.md` and `IMPLEMENTATION_SUMMARY.md` to their respective `planning_docs/SPEC-XXX/` directories
+5. **Cleaned stale worktrees** - Removed SPEC-002-16 worktree and cleared stale database records for 6 other DONE tasks
+6. **Fixed MetadataStore initialization** - Made `initialize_services` and `register_all_tools` async to call `await metadata_store.initialize()`
+7. **Manual MCP tool testing** - Tested all tool categories, identified schema mismatch bug
 
-### Changes Merged
+### Commits Made
 
-- `src/learning_memory_server/server/main.py` - Added `create_embedding_service()`, refactored initialization chain
-- `src/learning_memory_server/server/tools/__init__.py` - Updated to accept embedding service parameter
-- `tests/integration/test_mcp_protocol.py` - Module-scoped fixture with `loop_scope="module"`
-- `tests/server/test_main.py` - New test for `create_embedding_service()`
-- `planning_docs/SPEC-003/` - Spec and proposal preserved
-- `changelog.d/SPEC-003.md` - Changelog entry added
+1. `632ef41` - Fix tilde expansion in Path() calls to prevent literal ~ directories
+2. `dec2148` - Clean up transient files and organize task documentation
+
+### Uncommitted Changes
+
+- MetadataStore async initialization fix (needs commit)
 
 ## Active Tasks
 
@@ -31,21 +33,22 @@ None.
 
 ## Friction Points This Session
 
-1. **Background process management** - BashOutput showed "running" status for processes that were already killed. The system reminders persisted even after killing shells. Workaround: ignore stale reminders.
+1. **Path.expanduser() missing** - Multiple places in the codebase used `Path(path_value)` without `.expanduser()`, causing literal `~` directories to be created. Fixed in 7 locations.
 
-2. **Gate check duration** - Full test suite takes ~90-120 seconds, causing gate checks to run in background. Reading `test_output.log` directly was more reliable than BashOutput.
+2. **MetadataStore never initialized** - The `initialize_services` function was sync and never called `await metadata_store.initialize()`. This caused "Database not initialized" errors for code indexing. Fixed by making the initialization chain async.
 
-3. **Uncommitted changes on main** - The merge failed initially because `benchmark_results.json` had uncommitted changes on main (from previous session). Resolved with `git stash`.
+3. **GHAP strategy enum schema mismatch** - The JSON schema defines strategies with underscores (`hypothesis_testing`, `divide_and_conquer`) but the server validates with hyphens (`systematic-elimination`, `root-cause-analysis`). Blocks `start_ghap` tool usage.
 
-4. **Stale HANDOFF.md** - Previous session's handoff document was still showing in status output even though it had been consumed. Minor cosmetic issue.
+4. **Git tools not configured** - `repo_path` setting isn't set, so GitAnalyzer doesn't initialize and all git tools return "not available" errors.
+
+5. **MCP server needs restart for fixes** - Code changes don't take effect until the MCP server is restarted by Claude Code.
 
 ## Recommendations for Next Session
 
-1. **E2E tests approaching** - Currently at 4 merges since last E2E run (threshold is 12). No action needed yet.
-
-2. **Consider additional optimizations** - The test suite still takes ~90 seconds total. Other slow test files could potentially benefit from similar module-scoped fixture patterns.
-
-3. **Clean up benchmark_results.json** - This file seems to get modified during test runs. Consider either gitignoring it or committing it as part of each relevant task.
+1. **Commit the async initialization fix** - There are uncommitted changes for the MetadataStore fix
+2. **Fix GHAP strategy enum mismatch** - Update either the JSON schema or the server validation to use consistent naming
+3. **Configure repo_path for git tools** - Set `LMS_REPO_PATH` environment variable to enable git analysis
+4. **Restart MCP server** - To pick up the MetadataStore fix and test code indexing
 
 ## System State
 
@@ -58,6 +61,7 @@ None.
 
 ## Next Steps
 
-1. No pending work - system is idle and healthy
-2. Ready to accept new specs/features
-3. E2E batch job will trigger after 8 more merges (at 12 total)
+1. Commit uncommitted MetadataStore async fix
+2. Fix GHAP strategy enum schema mismatch
+3. Restart MCP server and verify code indexing works
+4. Configure and test git tools

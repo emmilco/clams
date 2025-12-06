@@ -163,7 +163,7 @@ async def initialize_collections(
                 raise
 
 
-def create_server(
+async def create_server(
     settings: ServerSettings,
     embedding_service: NomicEmbedding,
 ) -> Server:
@@ -179,7 +179,7 @@ def create_server(
     server = Server("learning-memory-server")
 
     # Register all tools
-    register_all_tools(server, settings, embedding_service)
+    await register_all_tools(server, settings, embedding_service)
 
     logger.info("server.created", server_name=server.name)
     return server
@@ -206,7 +206,7 @@ async def run_server(
         raise  # Fail fast - cannot proceed without storage
 
     # Create the server
-    server = create_server(settings, embedding_service)
+    server = await create_server(settings, embedding_service)
 
     # Run using stdio transport
     async with stdio_server() as (read_stream, write_stream):

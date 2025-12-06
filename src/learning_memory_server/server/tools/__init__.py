@@ -40,7 +40,7 @@ class ServiceContainer:
     searcher: object | None = None  # Will be Searcher when SPEC-002-09 complete
 
 
-def initialize_services(
+async def initialize_services(
     settings: ServerSettings,
     embedding_service: EmbeddingService,
 ) -> ServiceContainer:
@@ -63,6 +63,7 @@ def initialize_services(
     # Use provided embedding service (no more NomicEmbedding() call here)
     vector_store = QdrantVectorStore(url=settings.qdrant_url)
     metadata_store = MetadataStore(db_path=settings.sqlite_path)
+    await metadata_store.initialize()
 
     # Code indexing (optional - graceful degradation)
     code_indexer = None
@@ -692,7 +693,7 @@ def _get_all_tool_definitions() -> list[Tool]:
     ]
 
 
-def register_all_tools(
+async def register_all_tools(
     server: Server,
     settings: ServerSettings,
     embedding_service: EmbeddingService,
@@ -705,7 +706,7 @@ def register_all_tools(
         embedding_service: Pre-initialized embedding service
     """
     # Initialize shared services
-    services = initialize_services(settings, embedding_service)
+    services = await initialize_services(settings, embedding_service)
 
     # Import and register tool modules
     from .code import register_code_tools
