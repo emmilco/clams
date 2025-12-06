@@ -415,7 +415,7 @@ def _get_all_tool_definitions() -> list[Tool]:
                     "strategy": {
                         "type": "string",
                         "description": "Problem-solving strategy",
-                        "enum": ["hypothesis_testing", "divide_and_conquer", "pattern_matching", "root_cause_analysis", "incremental", "other"],
+                        "enum": ["systematic-elimination", "trial-and-error", "research-first", "divide-and-conquer", "root-cause-analysis", "copy-from-similar", "check-assumptions", "read-the-error", "ask-user"],
                     },
                     "goal": {
                         "type": "string",
@@ -458,7 +458,7 @@ def _get_all_tool_definitions() -> list[Tool]:
                     "strategy": {
                         "type": "string",
                         "description": "Updated strategy",
-                        "enum": ["hypothesis_testing", "divide_and_conquer", "pattern_matching", "root_cause_analysis", "incremental", "other"],
+                        "enum": ["systematic-elimination", "trial-and-error", "research-first", "divide-and-conquer", "root-cause-analysis", "copy-from-similar", "check-assumptions", "read-the-error", "ask-user"],
                     },
                     "note": {
                         "type": "string",
