@@ -17,10 +17,35 @@ from learning_memory_server.storage.qdrant import QdrantVectorStore
 logger = structlog.get_logger()
 
 
+def create_embedding_service(settings: ServerSettings) -> NomicEmbedding:
+    """Create the embedding service (loads model once).
+
+    Args:
+        settings: Server configuration
+
+    Returns:
+        Initialized NomicEmbedding service
+
+    Raises:
+        ValueError: If model loading fails
+    """
+    try:
+        embedding_settings = EmbeddingSettings(model_name=settings.embedding_model)
+        embedding_service = NomicEmbedding(settings=embedding_settings)
+        logger.info("embedding_model.loaded", model=settings.embedding_model)
+        return embedding_service
+    except Exception as e:
+        raise ValueError(
+            f"Invalid embedding model '{settings.embedding_model}': {e}"
+        ) from e
+
+
 def validate_configuration(settings: ServerSettings) -> None:
     """Validate configuration before server start.
 
     Fails fast with clear error messages.
+
+    Note: Embedding model validation happens separately in create_embedding_service().
 
     Args:
         settings: Server configuration
@@ -50,18 +75,7 @@ def validate_configuration(settings: ServerSettings) -> None:
             "Check network connectivity."
         ) from e
 
-    # 2. Validate embedding model (will fail on first embed if invalid)
-    try:
-        from sentence_transformers import SentenceTransformer
-        # Try to load model (downloads if needed)
-        _ = SentenceTransformer(settings.embedding_model, trust_remote_code=True)
-        logger.info("embedding_model.validated", model=settings.embedding_model)
-    except Exception as e:
-        raise ValueError(
-            f"Invalid embedding model '{settings.embedding_model}': {e}"
-        ) from e
-
-    # 3. Validate paths are writable
+    # 2. Validate paths are writable
     for path_name, path_value in [
         ("storage_path", settings.storage_path),
         ("sqlite_path", settings.sqlite_path),
@@ -82,7 +96,7 @@ def validate_configuration(settings: ServerSettings) -> None:
                 f"{path_name} parent is not a directory: {parent}"
             )
 
-    # 4. Validate git repo if provided (optional - just log warning)
+    # 3. Validate git repo if provided (optional - just log warning)
     if settings.repo_path:
         repo_path = Path(settings.repo_path)
         if not repo_path.exists() or not (repo_path / ".git").exists():
@@ -93,7 +107,10 @@ def validate_configuration(settings: ServerSettings) -> None:
             )
 
 
-async def initialize_collections(settings: ServerSettings) -> None:
+async def initialize_collections(
+    settings: ServerSettings,
+    embedding_service: NomicEmbedding,
+) -> None:
     """Ensure all required collections exist.
 
     Creates collections if they don't exist. Idempotent - safe to call
@@ -101,13 +118,11 @@ async def initialize_collections(settings: ServerSettings) -> None:
 
     Args:
         settings: Server configuration
+        embedding_service: Pre-initialized embedding service
 
     Raises:
         Exception: If collection creation fails or Qdrant is unreachable
     """
-    # Initialize services
-    embedding_settings = EmbeddingSettings(model_name=settings.embedding_model)
-    embedding_service = NomicEmbedding(settings=embedding_settings)
     vector_store = QdrantVectorStore(url=settings.qdrant_url)
 
     # Determine embedding dimension
@@ -148,11 +163,15 @@ async def initialize_collections(settings: ServerSettings) -> None:
                 raise
 
 
-def create_server(settings: ServerSettings) -> Server:
+def create_server(
+    settings: ServerSettings,
+    embedding_service: NomicEmbedding,
+) -> Server:
     """Create and configure the MCP server.
 
     Args:
         settings: Server configuration
+        embedding_service: Pre-initialized embedding service
 
     Returns:
         Configured MCP Server instance
@@ -160,30 +179,34 @@ def create_server(settings: ServerSettings) -> Server:
     server = Server("learning-memory-server")
 
     # Register all tools
-    register_all_tools(server, settings)
+    register_all_tools(server, settings, embedding_service)
 
     logger.info("server.created", server_name=server.name)
     return server
 
 
-async def run_server(settings: ServerSettings) -> None:
+async def run_server(
+    settings: ServerSettings,
+    embedding_service: NomicEmbedding,
+) -> None:
     """Run the MCP server.
 
     Args:
         settings: Server configuration
+        embedding_service: Pre-initialized embedding service
     """
     logger.info("server.starting")
 
     # Initialize collections before accepting requests
     try:
-        await initialize_collections(settings)
+        await initialize_collections(settings, embedding_service)
         logger.info("collections.initialized")
     except Exception as e:
         logger.error("collections.init_failed", error=str(e), exc_info=True)
         raise  # Fail fast - cannot proceed without storage
 
     # Create the server
-    server = create_server(settings)
+    server = create_server(settings, embedding_service)
 
     # Run using stdio transport
     async with stdio_server() as (read_stream, write_stream):
@@ -205,7 +228,7 @@ def main() -> None:
 
     logger.info("learning_memory_server.starting", version="0.1.0")
 
-    # Validate configuration before starting
+    # Validate configuration before starting (Qdrant, paths, git repo)
     try:
         validate_configuration(settings)
         logger.info("configuration.validated")
@@ -213,9 +236,16 @@ def main() -> None:
         logger.error("configuration.invalid", error=str(e))
         sys.exit(1)
 
+    # Create embedding service (loads model ONCE)
+    try:
+        embedding_service = create_embedding_service(settings)
+    except ValueError as e:
+        logger.error("embedding.invalid", error=str(e))
+        sys.exit(1)
+
     try:
         # Run the async server
-        asyncio.run(run_server(settings))
+        asyncio.run(run_server(settings, embedding_service))
     except KeyboardInterrupt:
         logger.info("server.shutdown", reason="keyboard_interrupt")
     except Exception as e:
