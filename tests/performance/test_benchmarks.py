@@ -27,6 +27,9 @@ from learning_memory_server.storage import QdrantVectorStore
 
 pytest_plugins = ("pytest_asyncio",)
 
+# Mark as integration tests (require external Qdrant server)
+pytestmark = pytest.mark.integration
+
 # Performance targets (HARD requirements)
 TARGETS = {
     "code_search_p95_ms": 200.0,

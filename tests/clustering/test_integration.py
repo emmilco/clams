@@ -14,6 +14,9 @@ from learning_memory_server.storage import QdrantVectorStore
 
 pytest_plugins = ("pytest_asyncio",)
 
+# Mark all tests in this module as integration tests (require external services)
+pytestmark = pytest.mark.integration
+
 
 @pytest.fixture
 async def store() -> AsyncIterator[QdrantVectorStore]:

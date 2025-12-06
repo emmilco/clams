@@ -15,6 +15,9 @@ from learning_memory_server.embedding import EmbeddingSettings, NomicEmbedding
 from learning_memory_server.server.config import ServerSettings
 from learning_memory_server.server.tools import initialize_services
 
+# Mark as slow tests (load heavy embedding models)
+pytestmark = pytest.mark.slow
+
 
 @pytest.fixture
 def embedding_service():

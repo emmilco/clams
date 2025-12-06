@@ -14,6 +14,9 @@ from uuid import uuid4
 import httpx
 import pytest
 
+# Mark all tests in this module as integration tests (require external services)
+pytestmark = pytest.mark.integration
+
 from learning_memory_server.clustering import ExperienceClusterer
 from learning_memory_server.clustering.clusterer import Clusterer
 from learning_memory_server.embedding import MockEmbedding

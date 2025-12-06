@@ -21,7 +21,11 @@ pytest_plugins = ("pytest_asyncio",)
 
 # Configure module-scoped event loop for async fixtures
 # This allows all tests in this module to share a single server instance
-pytestmark = pytest.mark.asyncio(loop_scope="module")
+# Also mark as integration tests (require external services)
+pytestmark = [
+    pytest.mark.asyncio(loop_scope="module"),
+    pytest.mark.integration,
+]
 
 # Expected tools that should be discoverable
 EXPECTED_TOOLS = {
