@@ -28,6 +28,55 @@ if [[ ! -f "$DB_PATH" ]]; then
     exit 1
 fi
 
+# Verify that a gate check passed for this task at the current commit.
+# We query for the most recent gate pass and compare commit SHAs.
+# This ensures code hasn't changed since the gate check passed.
+verify_gate_pass() {
+    local task_id="$1"
+    local transition="$2"
+    local worktree="$3"
+
+    # Get current commit SHA
+    local current_sha
+    current_sha=$(cd "$worktree" && git rev-parse HEAD)
+
+    if [[ -z "$current_sha" ]]; then
+        echo "Error: Could not determine commit SHA" >&2
+        return 1
+    fi
+
+    # Check for matching gate pass (with SQL escaping)
+    # ORDER BY passed_at DESC LIMIT 1 gets the most recent pass for this gate
+    local recorded_sha
+    recorded_sha=$(sqlite3 "$DB_PATH" \
+        "SELECT commit_sha FROM gate_passes
+         WHERE task_id = '$(echo "$task_id" | sed "s/'/''/g")'
+         AND transition = '$(echo "$transition" | sed "s/'/''/g")'
+         ORDER BY passed_at DESC LIMIT 1;")
+
+    if [[ -z "$recorded_sha" ]]; then
+        echo "Error: No gate pass found for $transition transition" >&2
+        echo "" >&2
+        echo "Run the gate check first:" >&2
+        echo "  .claude/bin/clams-gate check $task_id $transition" >&2
+        return 1
+    fi
+
+    if [[ "$current_sha" != "$recorded_sha" ]]; then
+        echo "Error: Code has changed since gate check passed" >&2
+        echo "" >&2
+        echo "Gate passed at commit: ${recorded_sha:0:7}" >&2
+        echo "Current commit: ${current_sha:0:7}" >&2
+        echo "" >&2
+        echo "Re-run the gate check:" >&2
+        echo "  .claude/bin/clams-gate check $task_id $transition" >&2
+        return 1
+    fi
+
+    echo "✓ Gate verification passed (commit ${current_sha:0:7})"
+    return 0
+}
+
 usage() {
     echo "Usage:"
     echo "  clams-task create <id> <title> [--spec <spec_id>] [--type <feature|bug>]"
@@ -281,6 +330,33 @@ cmd_transition() {
     # Get worktree path for implementation checks
     local worktree_path
     worktree_path=$(sqlite3 "$DB_PATH" "SELECT worktree_path FROM tasks WHERE id = '$id';")
+
+    # Verify gate pass for transitions that require it
+    local gate_transition=""
+    case "${from_phase}-${to_phase}" in
+        IMPLEMENT-CODE_REVIEW)
+            gate_transition="IMPLEMENT-CODE_REVIEW"
+            ;;
+        TEST-INTEGRATE)
+            gate_transition="TEST-INTEGRATE"
+            ;;
+        INVESTIGATED-FIXED)
+            gate_transition="INVESTIGATED-FIXED"
+            ;;
+        REVIEWED-TESTED)
+            gate_transition="REVIEWED-TESTED"
+            ;;
+    esac
+
+    if [[ -n "$gate_transition" ]]; then
+        if [[ -z "$worktree_path" || ! -d "$worktree_path" ]]; then
+            echo "Error: No worktree found for task $id" >&2
+            exit 1
+        fi
+        if ! verify_gate_pass "$id" "$gate_transition" "$worktree_path"; then
+            exit 1
+        fi
+    fi
 
     # Enforce implementation exists for IMPLEMENT → CODE_REVIEW
     if [[ "${from_phase}-${to_phase}" == "IMPLEMENT-CODE_REVIEW" ]]; then
