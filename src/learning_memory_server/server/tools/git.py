@@ -144,7 +144,7 @@ def get_git_tools(services: ServiceContainer) -> dict[str, Any]:
 
         try:
             # Delegate to GitAnalyzer
-            commits = await services.git_analyzer.search_commits(  # type: ignore[attr-defined]
+            search_results = await services.git_analyzer.search_commits(  # type: ignore[attr-defined]
                 query=query,
                 author=author,
                 since=since_dt,
@@ -154,18 +154,18 @@ def get_git_tools(services: ServiceContainer) -> dict[str, Any]:
             # Format results
             formatted = [
                 {
-                    "sha": c.sha,
-                    "message": c.message,
-                    "author": c.author,
-                    "author_email": c.author_email,
-                    "timestamp": c.timestamp.isoformat(),
-                    "files_changed": c.files_changed,
-                    "file_count": len(c.files_changed),
-                    "insertions": c.insertions,
-                    "deletions": c.deletions,
-                    "score": c.score,  # Added by search
+                    "sha": r.commit.sha,
+                    "message": r.commit.message,
+                    "author": r.commit.author,
+                    "author_email": r.commit.author_email,
+                    "timestamp": r.commit.timestamp.isoformat(),
+                    "files_changed": r.commit.files_changed,
+                    "file_count": len(r.commit.files_changed),
+                    "insertions": r.commit.insertions,
+                    "deletions": r.commit.deletions,
+                    "score": r.score,  # Score from CommitSearchResult
                 }
-                for c in commits
+                for r in search_results
             ]
 
             logger.info("git.commits_found", count=len(formatted))
