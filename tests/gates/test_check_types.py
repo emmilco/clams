@@ -3,14 +3,25 @@
 This test verifies BUG-007 fix: gate check hangs due to tokenizer parallelism.
 """
 
+import os
 import subprocess
 from pathlib import Path
 
 
-def test_check_types_completes() -> None:
-    """Verify that check_types.sh completes without hanging."""
+def test_check_types_completes_standalone() -> None:
+    """Verify that check_types.sh completes without hanging when run standalone.
+
+    This test explicitly clears TOKENIZERS_PARALLELISM from the environment
+    to verify the script handles it correctly on its own (either via inline
+    setting or by sourcing clams-common.sh).
+    """
     gate_script = Path(__file__).parent.parent.parent / ".claude" / "gates" / "check_types.sh"
     worktree = Path(__file__).parent.parent.parent
+
+    # Create an environment WITHOUT TOKENIZERS_PARALLELISM to verify
+    # the script handles it correctly on its own
+    env = os.environ.copy()
+    env.pop("TOKENIZERS_PARALLELISM", None)
 
     # Run the gate script with a timeout - it should complete in reasonable time
     # If it hangs, this will fail with TimeoutExpired
@@ -19,6 +30,7 @@ def test_check_types_completes() -> None:
         capture_output=True,
         text=True,
         timeout=60,  # 60 seconds should be more than enough
+        env=env,
     )
 
     # We don't care if mypy finds type errors (it will), we just care that it completes
