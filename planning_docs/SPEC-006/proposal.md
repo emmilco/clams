@@ -1,5 +1,23 @@
 # SPEC-006 Technical Proposal: Dual Embedding Model Support
 
+## Revision Summary
+
+**Revision 2 - Addresses Proposal Review Feedback**
+
+This revision fixes all issues identified in proposal review:
+
+1. **BLOCKING #1 - Lazy loading violated:** Removed `initialize_collections()` at startup. Collections now created lazily per tool type via `_ensure_collection()` pattern on first use.
+
+2. **BLOCKING #2 - ServiceContainer breaking change:** Added `embedding_service` property to `ServiceContainer` returning `semantic_embedder` for backward compatibility.
+
+3. **SHOULD-FIX #3 - Configuration inconsistency:** Added `code_model` and `semantic_model` to `ServerSettings`. Registry receives settings object, not direct `os.getenv()`.
+
+4. **SHOULD-FIX #4 - Collection name mismatch:** Specified `CodeIndexer.COLLECTION_NAME = "code_units"` used consistently everywhere.
+
+5. **SHOULD-FIX #5 - Incomplete `get_collection_info()` specification:** Added error handling details, protocol contract, and in-memory implementation.
+
+6. **SHOULD-FIX #6 - Server initialization flow unclear:** Clarified single initialization flow: registry initialized at startup with settings, models load on first tool use.
+
 ## Overview
 
 This proposal outlines the implementation of dual embedding model support to accelerate code indexing while maintaining quality for memory/GHAP operations. The system will use MiniLM (384-dim) for code and Nomic (768-dim) for semantic operations, with lazy loading to minimize memory overhead.
@@ -24,43 +42,48 @@ class EmbeddingRegistry:
     Thread safety is not required since the MCP server is single-threaded asyncio.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, settings: ServerSettings) -> None:
         self._code_embedder: EmbeddingService | None = None
         self._semantic_embedder: EmbeddingService | None = None
-        self._code_model_name: str = os.getenv(
-            "LMS_CODE_MODEL",
-            "sentence-transformers/all-MiniLM-L6-v2"
-        )
-        self._semantic_model_name: str = os.getenv(
-            "LMS_SEMANTIC_MODEL",
-            "nomic-ai/nomic-embed-text-v1.5"
-        )
+        self._settings = settings
 
     def get_code_embedder(self) -> EmbeddingService:
         """Get or create the code embedder (MiniLM, 384-dim)."""
         if self._code_embedder is None:
-            settings = EmbeddingSettings(model_name=self._code_model_name)
-            self._code_embedder = MiniLMEmbedding(settings=settings)
-            logger.info("code_embedder.loaded", model=self._code_model_name)
+            embedding_settings = EmbeddingSettings(model_name=self._settings.code_model)
+            self._code_embedder = MiniLMEmbedding(settings=embedding_settings)
+            logger.info("code_embedder.loaded", model=self._settings.code_model)
         return self._code_embedder
 
     def get_semantic_embedder(self) -> EmbeddingService:
         """Get or create the semantic embedder (Nomic, 768-dim)."""
         if self._semantic_embedder is None:
-            settings = EmbeddingSettings(model_name=self._semantic_model_name)
-            self._semantic_embedder = NomicEmbedding(settings=settings)
-            logger.info("semantic_embedder.loaded", model=self._semantic_model_name)
+            embedding_settings = EmbeddingSettings(model_name=self._settings.semantic_model)
+            self._semantic_embedder = NomicEmbedding(settings=embedding_settings)
+            logger.info("semantic_embedder.loaded", model=self._settings.semantic_model)
         return self._semantic_embedder
 
-# Module-level singleton
-_registry = EmbeddingRegistry()
+# Module-level singleton (initialized in main.py with settings)
+_registry: EmbeddingRegistry | None = None
+
+def initialize_registry(settings: ServerSettings) -> None:
+    """Initialize the global registry with settings.
+
+    Must be called from main.py before any tool uses embedders.
+    """
+    global _registry
+    _registry = EmbeddingRegistry(settings)
 
 def get_code_embedder() -> EmbeddingService:
     """Get the code embedder from the global registry."""
+    if _registry is None:
+        raise RuntimeError("Registry not initialized. Call initialize_registry() first.")
     return _registry.get_code_embedder()
 
 def get_semantic_embedder() -> EmbeddingService:
     """Get the semantic embedder from the global registry."""
+    if _registry is None:
+        raise RuntimeError("Registry not initialized. Call initialize_registry() first.")
     return _registry.get_semantic_embedder()
 ```
 
@@ -68,8 +91,9 @@ def get_semantic_embedder() -> EmbeddingService:
 - Module-level singleton pattern matches MCP server lifecycle (single process, no fork/spawn)
 - Lazy loading prevents both models loading at startup (saves ~2-3 seconds + memory)
 - No thread safety needed (MCP server is single-threaded asyncio)
-- Environment variables allow override for testing/experimentation
+- Settings-based configuration for discoverability, environment variables for override
 - Function exports (`get_code_embedder()`, `get_semantic_embedder()`) provide clean API
+- Explicit initialization prevents accidental use before settings available
 
 ### 2. MiniLM Embedding Implementation
 
@@ -218,6 +242,16 @@ class ServiceContainer:
     code_indexer: object | None = None
     git_analyzer: object | None = None
     searcher: object | None = None
+
+    @property
+    def embedding_service(self) -> EmbeddingService:
+        """Backward compatibility: returns semantic embedder.
+
+        DEPRECATED: Use semantic_embedder directly.
+        Maintained for compatibility with existing code that expects
+        embedding_service field.
+        """
+        return self.semantic_embedder
 ```
 
 **Tool registration updates:**
@@ -291,7 +325,10 @@ def main() -> None:
         logger.error("configuration.invalid", error=str(e))
         sys.exit(1)
 
-    # NO MODEL LOADING HERE - models load lazily on first tool use
+    # Initialize embedding registry (does NOT load models)
+    from learning_memory_server.embedding.registry import initialize_registry
+    initialize_registry(settings)
+    logger.info("embedding_registry.initialized")
 
     try:
         asyncio.run(run_server(settings))
@@ -311,120 +348,89 @@ async def run_server(settings: ServerSettings) -> None:
         get_semantic_embedder,
     )
 
-    # Get lazy-loaded embedders (don't call yet - will load on first tool use)
-    # Pass functions to create_server, which calls them as needed
-    code_embedder_fn = get_code_embedder
-    semantic_embedder_fn = get_semantic_embedder
+    # Create server with embedder accessor functions
+    # Models load lazily when first tool calls these functions
+    server, services = await create_server(settings, get_code_embedder, get_semantic_embedder)
 
-    # Initialize collections (needs to handle dynamic dimensions)
-    await initialize_collections(settings, code_embedder_fn, semantic_embedder_fn)
-
-    # Create server with embedder functions
-    server, services = await create_server(settings, code_embedder_fn(), semantic_embedder_fn())
-
-    # ... rest unchanged
-
-async def initialize_collections(
-    settings: ServerSettings,
-    code_embedder_fn: Callable[[], EmbeddingService],
-    semantic_embedder_fn: Callable[[], EmbeddingService],
-) -> None:
-    """Ensure all required collections exist.
-
-    Collections are created with appropriate dimensions:
-    - code_units: 384-dim (MiniLM)
-    - memories, commits, GHAP axes, values: 768-dim (Nomic)
-    """
-    vector_store = QdrantVectorStore(url=settings.qdrant_url)
-
-    # Code collections use MiniLM dimensions
-    code_embedder = code_embedder_fn()  # Triggers lazy load
-    await _create_collection_if_needed(vector_store, "code_units", code_embedder.dimension)
-
-    # Semantic collections use Nomic dimensions
-    semantic_embedder = semantic_embedder_fn()  # Triggers lazy load
-    for collection_name in ["memories", "commits", "ghap_full", "ghap_strategy",
-                            "ghap_surprise", "ghap_root_cause", "values"]:
-        await _create_collection_if_needed(vector_store, collection_name, semantic_embedder.dimension)
-
-async def _create_collection_if_needed(
-    vector_store: VectorStore,
-    name: str,
-    dimension: int
-) -> None:
-    """Create collection if it doesn't exist."""
-    try:
-        await vector_store.create_collection(name=name, dimension=dimension)
-        logger.info("collection.created", name=name, dimension=dimension)
-    except Exception as e:
-        if "already exists" in str(e) or "409" in str(e):
-            logger.debug("collection.exists", name=name)
-        else:
-            logger.error("collection.create_failed", name=name, error=str(e))
-            raise
+    # ... rest unchanged (run server, etc.)
 ```
 
 **Design rationale:**
-- Models load during `initialize_collections()`, not at startup
-- First tool call triggers model load via registry
-- `ping` tool will NOT load any models (validates lazy loading)
-- Collection dimensions determined by embedder type
+- Registry initialized at startup with settings, but models NOT loaded
+- No `initialize_collections()` at startup - collections created lazily by each tool type
+- Tools call `_ensure_collection()` on first use, which loads model and creates collection
+- `ping` tool does NOT load any models (validates lazy loading)
+- Collection dimensions determined by embedder type when collection is created
 
-### 5. Code Units Collection Migration
+### 5. Lazy Collection Creation per Tool Type
 
-The `CodeIndexer._ensure_collection()` method already has logic to create collections. We'll enhance it to handle dimension mismatches:
+Each tool type creates its collection lazily via `_ensure_collection()` pattern. We'll enhance `CodeIndexer._ensure_collection()` to handle dimension mismatches:
 
 ```python
-async def _ensure_collection(self) -> None:
-    """Create collection if it doesn't exist, recreate if dimension mismatches.
+class CodeIndexer:
+    """Indexes code into vector storage for semantic search."""
 
-    Automatically migrates from 768-dim (Nomic) to 384-dim (MiniLM) by
-    recreating the collection. User's next index_codebase call will repopulate.
-    """
-    if self._collection_ensured:
-        return
+    COLLECTION_NAME = "code_units"  # Consistent name used everywhere
 
-    try:
-        # Check if collection exists and verify dimension
+    async def _ensure_collection(self) -> None:
+        """Create collection if it doesn't exist, recreate if dimension mismatches.
+
+        Automatically migrates from 768-dim (Nomic) to 384-dim (MiniLM) by
+        recreating the collection. User's next index_codebase call will repopulate.
+
+        This is called on first indexing operation (lazy creation).
+        """
+        if self._collection_ensured:
+            return
+
         try:
-            info = await self.vector_store.get_collection_info(self.COLLECTION_NAME)
-            if info and info.dimension != self.embedding_service.dimension:
-                logger.warning(
-                    "dimension_mismatch",
-                    collection=self.COLLECTION_NAME,
-                    expected=self.embedding_service.dimension,
-                    actual=info.dimension,
-                    action="recreating_collection"
-                )
-                await self.vector_store.delete_collection(self.COLLECTION_NAME)
-        except Exception:
-            # Collection doesn't exist - that's fine
-            pass
+            # Check if collection exists and verify dimension
+            try:
+                info = await self.vector_store.get_collection_info(self.COLLECTION_NAME)
+                if info and info.dimension != self.embedding_service.dimension:
+                    logger.warning(
+                        "dimension_mismatch",
+                        collection=self.COLLECTION_NAME,
+                        expected=self.embedding_service.dimension,
+                        actual=info.dimension,
+                        action="recreating_collection"
+                    )
+                    await self.vector_store.delete_collection(self.COLLECTION_NAME)
+            except Exception:
+                # Collection doesn't exist - that's fine
+                pass
 
-        # Create with correct dimension
-        await self.vector_store.create_collection(
-            name=self.COLLECTION_NAME,
-            dimension=self.embedding_service.dimension,
-        )
-        logger.info("collection_created", name=self.COLLECTION_NAME,
-                   dimension=self.embedding_service.dimension)
-    except Exception as e:
-        error_msg = str(e).lower()
-        if "already exists" in error_msg or "409" in str(e):
-            logger.debug("collection_exists", name=self.COLLECTION_NAME)
-        else:
-            raise
+            # Create with correct dimension
+            await self.vector_store.create_collection(
+                name=self.COLLECTION_NAME,
+                dimension=self.embedding_service.dimension,
+            )
+            logger.info("collection_created", name=self.COLLECTION_NAME,
+                       dimension=self.embedding_service.dimension)
+        except Exception as e:
+            error_msg = str(e).lower()
+            if "already exists" in error_msg or "409" in str(e):
+                logger.debug("collection_exists", name=self.COLLECTION_NAME)
+            else:
+                raise
 
-    self._collection_ensured = True
+        self._collection_ensured = True
 ```
+
+**Similar pattern for other tools:**
+- `MemoryStore._ensure_collection()` → creates "memories" collection (768-dim Nomic)
+- `GitAnalyzer._ensure_collection()` → creates "commits" collection (768-dim Nomic)
+- `ObservationPersister._ensure_collection()` → creates GHAP axis collections (768-dim Nomic)
+- `ValueStore._ensure_collection()` → creates "values" collection (768-dim Nomic)
 
 **Migration flow:**
 1. User upgrades to SPEC-006 implementation
-2. First `index_codebase` call checks collection
-3. Finds 768-dim collection (from old Nomic embeddings)
+2. First `index_codebase` call triggers `CodeIndexer._ensure_collection()`
+3. Finds 768-dim "code_units" collection (from old Nomic embeddings)
 4. Logs warning and deletes collection
 5. Recreates with 384-dim
 6. Indexing proceeds normally with MiniLM
+7. Other tool types (memories, GHAP) continue using 768-dim Nomic unchanged
 
 **Note:** We need to add `get_collection_info()` to the `VectorStore` protocol if it doesn't exist.
 
@@ -454,6 +460,9 @@ class VectorStore(ABC):
 
         Returns:
             CollectionInfo if collection exists, None otherwise
+
+        Raises:
+            Exception: For network/connection errors (NOT for missing collections)
         """
         ...
 ```
@@ -462,7 +471,17 @@ Implement in `QdrantVectorStore`:
 
 ```python
 async def get_collection_info(self, name: str) -> CollectionInfo | None:
-    """Get collection metadata from Qdrant."""
+    """Get collection metadata from Qdrant.
+
+    Args:
+        name: Collection name
+
+    Returns:
+        CollectionInfo if collection exists, None if not found
+
+    Raises:
+        Exception: For Qdrant connection/network errors
+    """
     try:
         collection = await self.client.get_collection(name)
         return CollectionInfo(
@@ -470,9 +489,42 @@ async def get_collection_info(self, name: str) -> CollectionInfo | None:
             dimension=collection.config.params.vectors.size,
             vector_count=collection.points_count,
         )
-    except Exception:
-        return None
+    except Exception as e:
+        # Distinguish between "not found" vs real errors
+        if "not found" in str(e).lower() or "404" in str(e):
+            return None
+        # Re-raise connection/network errors
+        raise
 ```
+
+Implement in `InMemoryVectorStore`:
+
+```python
+async def get_collection_info(self, name: str) -> CollectionInfo | None:
+    """Get collection metadata from in-memory storage.
+
+    Args:
+        name: Collection name
+
+    Returns:
+        CollectionInfo if collection exists, None if not found
+    """
+    if name not in self.collections:
+        return None
+
+    collection = self.collections[name]
+    return CollectionInfo(
+        name=name,
+        dimension=collection["dimension"],
+        vector_count=len(collection["vectors"]),
+    )
+```
+
+**Design notes:**
+- Protocol defines clear error handling contract: None for missing, exception for errors
+- Implementations distinguish "not found" from connection/network failures
+- In-memory implementation is simple (no network errors possible)
+- Used by `_ensure_collection()` to detect dimension mismatches
 
 ## Files Modified
 
@@ -482,13 +534,13 @@ async def get_collection_info(self, name: str) -> CollectionInfo | None:
 
 ### Modified Files
 1. `src/learning_memory_server/embedding/__init__.py` - Export new classes
-2. `src/learning_memory_server/embedding/base.py` - Add `CollectionInfo` (optional)
-3. `src/learning_memory_server/storage/base.py` - Add `get_collection_info()` to protocol
-4. `src/learning_memory_server/storage/qdrant.py` - Implement `get_collection_info()`
-5. `src/learning_memory_server/indexers/indexer.py` - Add dimension mismatch handling
-6. `src/learning_memory_server/server/tools/__init__.py` - Dual embedder support
-7. `src/learning_memory_server/server/main.py` - Lazy loading, remove upfront model creation
-8. `src/learning_memory_server/server/config.py` - Add code/semantic model config (optional)
+2. `src/learning_memory_server/storage/base.py` - Add `CollectionInfo` dataclass and `get_collection_info()` to protocol
+3. `src/learning_memory_server/storage/qdrant.py` - Implement `get_collection_info()`
+4. `src/learning_memory_server/storage/memory.py` - Implement `get_collection_info()` for in-memory store
+5. `src/learning_memory_server/indexers/indexer.py` - Update `COLLECTION_NAME`, add dimension mismatch handling
+6. `src/learning_memory_server/server/tools/__init__.py` - Dual embedder support, add `embedding_service` property
+7. `src/learning_memory_server/server/main.py` - Registry initialization, remove upfront model creation
+8. `src/learning_memory_server/server/config.py` - Add `code_model` and `semantic_model` settings
 
 ### Test Files to Create/Modify
 1. `tests/embedding/test_minilm.py` - MiniLM implementation tests
@@ -505,7 +557,30 @@ No new dependencies required:
 
 ## Configuration
 
-### Environment Variables (Optional)
+### Server Settings
+
+Add to `src/learning_memory_server/server/config.py`:
+
+```python
+class ServerSettings(BaseSettings):
+    """Server configuration settings."""
+
+    # ... existing settings (qdrant_url, sqlite_path, etc.)
+
+    # Embedding models (overridable via environment variables)
+    code_model: str = Field(
+        default="sentence-transformers/all-MiniLM-L6-v2",
+        description="Model for code indexing (fast, 384-dim)",
+        env="LMS_CODE_MODEL",
+    )
+    semantic_model: str = Field(
+        default="nomic-ai/nomic-embed-text-v1.5",
+        description="Model for memories/GHAP (quality, 768-dim)",
+        env="LMS_SEMANTIC_MODEL",
+    )
+```
+
+### Environment Variables
 
 Users can override models for testing/experimentation:
 
@@ -517,22 +592,12 @@ export LMS_CODE_MODEL="sentence-transformers/paraphrase-MiniLM-L6-v2"
 export LMS_SEMANTIC_MODEL="nomic-ai/nomic-embed-text-v1.5"
 ```
 
-### Server Settings (Optional Enhancement)
-
-Could add to `ServerSettings` for discoverability:
-
-```python
-class ServerSettings(BaseSettings):
-    # ... existing settings
-
-    # Embedding models (overridable via LMS_CODE_MODEL, LMS_SEMANTIC_MODEL)
-    code_model: str = "sentence-transformers/all-MiniLM-L6-v2"
-    semantic_model: str = "nomic-ai/nomic-embed-text-v1.5"
-```
-
-Then registry reads from settings instead of direct `os.getenv()`.
-
-**Decision point:** Do we want settings-based config or just environment variables?
+**Benefits of ServerSettings approach:**
+- Centralized configuration with defaults
+- Environment variable override support via `env` parameter
+- Type checking and validation via Pydantic
+- Discoverability (developers can see all config options)
+- Registry receives settings object, cleaner than direct `os.getenv()`
 
 ## Test Strategy
 
@@ -650,52 +715,85 @@ Based on benchmark results in spec:
 - **Mitigation:** Code indexing is transient (user re-indexes on demand)
 - **Note:** Memories/GHAP unaffected (no dimension change)
 
-## Open Questions
+## Resolved Design Decisions
 
-1. **Settings vs Environment Variables:** Should model names be in `ServerSettings` or just environment variables?
-   - Recommendation: Settings for discoverability, env vars for override
+Based on proposal review feedback, these decisions have been made:
 
-2. **Collection Info Method:** Should `get_collection_info()` be added to base `VectorStore` protocol or just Qdrant?
-   - Recommendation: Add to protocol for consistency, implement in both stores
+1. **Settings vs Environment Variables:** ✅ RESOLVED
+   - Using `ServerSettings` with `code_model` and `semantic_model` fields
+   - Environment variables (`LMS_CODE_MODEL`, `LMS_SEMANTIC_MODEL`) for override via Pydantic `env` parameter
+   - Registry receives settings object, not direct `os.getenv()` calls
 
-3. **Migration Logging Level:** Should dimension mismatch be WARNING or INFO?
-   - Recommendation: WARNING - it's unexpected but handled, user should know
+2. **Collection Info Method:** ✅ RESOLVED
+   - Added `get_collection_info()` to base `VectorStore` protocol
+   - Implemented in both `QdrantVectorStore` and `InMemoryVectorStore`
+   - Clear error handling contract: None for missing, exception for errors
 
-4. **Embedder Function vs Instance:** Should `initialize_collections()` take embedder functions or instances?
-   - Recommendation: Call functions to trigger lazy load explicitly, clearer intent
+3. **Migration Logging Level:** ✅ RESOLVED
+   - Using WARNING level for dimension mismatch
+   - It's unexpected but handled automatically - user should be aware
+
+4. **Lazy Loading vs Upfront Initialization:** ✅ RESOLVED
+   - No `initialize_collections()` at startup
+   - Each tool type creates its collection lazily via `_ensure_collection()` on first use
+   - Registry initialized at startup, but models load on first tool use
+   - `ping` tool will NOT load any models (validates lazy loading)
+
+5. **Backward Compatibility:** ✅ RESOLVED
+   - Added `embedding_service` property to `ServiceContainer` returning `semantic_embedder`
+   - Prevents breaking change for existing code expecting `embedding_service` field
+   - Marked as deprecated, migrate to explicit `semantic_embedder` over time
+
+6. **Collection Name Consistency:** ✅ RESOLVED
+   - Using `"code_units"` everywhere (constant `CodeIndexer.COLLECTION_NAME`)
+   - No mismatch between initialization and indexer
 
 ## Implementation Order
 
-1. **Phase 1: Core Implementation**
-   - Add `MiniLMEmbedding` class
-   - Add `EmbeddingRegistry` class
+1. **Phase 1: Configuration**
+   - Add `code_model` and `semantic_model` to `ServerSettings`
+   - Verify Pydantic environment variable override works
+
+2. **Phase 2: Core Embedding**
+   - Add `MiniLMEmbedding` class (with MPS CPU fallback)
+   - Add `EmbeddingRegistry` class (takes `ServerSettings`)
    - Update embedding module exports
 
-2. **Phase 2: Infrastructure**
-   - Add `get_collection_info()` to VectorStore protocol
-   - Implement in QdrantVectorStore
-   - Update `CodeIndexer._ensure_collection()` for migration
+3. **Phase 3: Vector Store Protocol**
+   - Add `CollectionInfo` dataclass to storage base
+   - Add `get_collection_info()` to `VectorStore` protocol
+   - Implement in `QdrantVectorStore`
+   - Implement in `InMemoryVectorStore`
 
-3. **Phase 3: Service Wiring**
+4. **Phase 4: Collection Management**
+   - Update `CodeIndexer.COLLECTION_NAME` to `"code_units"`
+   - Update `CodeIndexer._ensure_collection()` for dimension migration
+   - Verify other tools have `_ensure_collection()` pattern
+
+5. **Phase 5: Service Container**
    - Update `ServiceContainer` to hold both embedders
+   - Add `embedding_service` property for backward compatibility
    - Update `initialize_services()` to use dual embedders
    - Update `register_all_tools()` to wire correct embedder per tool
 
-4. **Phase 4: Server Startup**
-   - Remove upfront model loading from `main.py`
-   - Update `initialize_collections()` for lazy loading
-   - Update `create_server()` signature
+6. **Phase 6: Server Initialization**
+   - Update `main.py` to initialize registry with settings
+   - Remove upfront model loading
+   - Pass embedder accessor functions to `create_server()`
+   - Verify lazy loading (no models at startup)
 
-5. **Phase 5: Testing**
+7. **Phase 7: Testing**
    - Unit tests for MiniLM
-   - Unit tests for registry
+   - Unit tests for registry (lazy loading, caching)
+   - Unit tests for `get_collection_info()`
    - Integration test for dual embeddings
+   - Integration test for dimension migration
    - Performance benchmark verification
 
-6. **Phase 6: Documentation**
-   - Update README if needed
+8. **Phase 8: Documentation**
    - Add CHANGELOG entry
    - Document migration behavior
+   - Document environment variable override
 
 ## Success Criteria
 
