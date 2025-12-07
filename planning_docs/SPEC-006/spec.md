@@ -49,6 +49,12 @@ Models load lazily on first use to avoid memory overhead when only one is needed
 2. **Memory**: Peak memory should not exceed single-model usage (lazy loading prevents both being loaded simultaneously in typical usage)
 3. **Backward Compatibility**: Existing memories/GHAP data remains searchable (no dimension change)
 
+### Error Handling Requirements
+
+1. **Model Loading Failures**: If a model fails to load (network issue, missing model, OOM), propagate a clear `EmbeddingModelError` with the model name and underlying cause
+2. **Dimension Mismatch**: If a query is made against a collection with mismatched dimensions, raise a descriptive error explaining the mismatch (e.g., "Query vector has 384 dims but collection expects 768")
+3. **Invalid Configuration**: If environment variable specifies an invalid model name, fail fast on first model load with a clear error message listing the invalid value
+
 ## Design
 
 ### Embedding Service Architecture
@@ -67,6 +73,34 @@ EmbeddingRegistry
 NomicEmbedding(EmbeddingService)  # 768-dim, existing
 MiniLMEmbedding(EmbeddingService)  # 384-dim, new
 ```
+
+### Registry Design Details
+
+1. **Instantiation Pattern**: `EmbeddingRegistry` is a module-level singleton created on first import. The MCP server uses this single instance throughout its lifetime.
+
+2. **Thread Safety**: Not required. The MCP server processes requests sequentially (single-threaded asyncio). Model loading happens synchronously within the async context via `run_in_executor`.
+
+3. **Model Lifecycle**: Models are never unloaded during server lifetime. This is intentional:
+   - Loading is expensive (~2-3 seconds)
+   - Memory is acceptable (~500MB-1GB per model)
+   - Typical usage patterns load one or the other, rarely both
+
+4. **Lazy Loading Implementation**:
+   ```python
+   class EmbeddingRegistry:
+       _code_embedder: EmbeddingService | None = None
+       _semantic_embedder: EmbeddingService | None = None
+
+       def get_code_embedder(self) -> EmbeddingService:
+           if self._code_embedder is None:
+               self._code_embedder = MiniLMEmbedding()
+           return self._code_embedder
+
+       def get_semantic_embedder(self) -> EmbeddingService:
+           if self._semantic_embedder is None:
+               self._semantic_embedder = NomicEmbedding()
+           return self._semantic_embedder
+   ```
 
 ### Tool → Embedder Mapping
 
@@ -93,6 +127,24 @@ The `code_units` collection dimension will change from 768 to 384. Options:
 
 Recommend option 1 since code indexing is fast and transient (re-index on demand).
 
+#### Migration Process (Option 1)
+
+1. On `index_codebase` call, `CodeIndexer._ensure_collection()` checks if collection exists
+2. If collection exists, verify dimension matches expected (384):
+   ```python
+   collection_info = await vector_store.get_collection_info("code_units")
+   if collection_info and collection_info.dimension != self.embedding_service.dimension:
+       logger.warning("dimension_mismatch",
+           expected=self.embedding_service.dimension,
+           actual=collection_info.dimension,
+           action="recreating_collection")
+       await vector_store.delete_collection("code_units")
+   ```
+3. If dimension mismatches or collection doesn't exist, create with correct dimension
+4. User's `index_codebase` call proceeds normally, re-indexing all files
+
+**User Communication**: The dimension change is logged as a warning. No user action required - the collection auto-recreates and re-indexes on next use.
+
 ## Acceptance Criteria
 
 1. [ ] `MiniLMEmbedding` class implemented with 384-dim output
@@ -100,10 +152,20 @@ Recommend option 1 since code indexing is fast and transient (re-index on demand
 3. [ ] `CodeIndexer` uses code embedder (MiniLM)
 4. [ ] Memory/GHAP tools use semantic embedder (Nomic)
 5. [ ] Neither model loads until first tool use
+   - **Test**: Start server, call `ping`, verify no model loaded (check memory or mock)
 6. [ ] Code indexing completes in <1 minute for clams repo
+   - **Test**: `test_indexing_performance` times `index_codebase` on clams repo, asserts <60s
 7. [ ] Existing memory/GHAP search continues to work
+   - **Test**: Store memory with Nomic, search with Nomic, verify results returned
 8. [ ] Environment variable overrides work for both models
+   - **Test**: Set `LMS_CODE_MODEL` to different model, verify it loads
 9. [ ] Tests cover both embedders and lazy loading behavior
+   - **Test**: `test_lazy_loading` - access code embedder, verify only MiniLM loaded
+   - **Test**: `test_registry_caches_instances` - call `get_code_embedder()` twice, verify same instance
+10. [ ] Dimension mismatch triggers collection recreation
+    - **Test**: Create 768-dim collection, call `index_codebase`, verify collection recreated as 384-dim
+11. [ ] Model loading errors propagate clearly
+    - **Test**: Configure invalid model name, verify `EmbeddingModelError` raised with model name
 
 ## Out of Scope
 
