@@ -4,8 +4,8 @@ import pytest
 
 from learning_memory_server.embedding import (
     EmbeddingService,
-    initialize_registry,
     get_semantic_embedder,
+    initialize_registry,
 )
 from learning_memory_server.server.config import ServerSettings
 from learning_memory_server.server.main import create_server
