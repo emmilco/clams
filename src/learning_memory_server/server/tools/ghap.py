@@ -57,8 +57,6 @@ def get_ghap_tools(
     Returns:
         Dictionary mapping tool names to their implementations
     """
-    # Access vector store from persister for list_ghap_entries
-    vector_store = persister._vector_store
 
     async def start_ghap(
         domain: str,
@@ -501,6 +499,9 @@ def get_ghap_tools(
             List of GHAP entries matching filters
         """
         try:
+            # Access vector store at call time, not registration time
+            vector_store = persister._vector_store
+
             # Validate limit
             if limit < 1 or limit > 100:
                 raise ValidationError(

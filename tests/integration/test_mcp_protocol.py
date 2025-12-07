@@ -284,3 +284,24 @@ class TestMCPToolDiscoveryRegression:
         assert tool_count <= expected_count + 10, (
             f"Unexpectedly many tools: got {tool_count}, expected ~{expected_count}"
         )
+
+    async def test_list_ghap_entries_callable(
+        self, mcp_session: ClientSession
+    ) -> None:
+        """Regression test for BUG-008: list_ghap_entries returns internal error.
+
+        This test verifies that list_ghap_entries can be called through MCP
+        protocol without returning internal_error. The bug was caused by
+        vector_store being captured at registration time instead of call time.
+        """
+        result = await mcp_session.call_tool("list_ghap_entries", {"limit": 5})
+
+        assert result is not None
+        assert len(result.content) > 0
+
+        # Response should contain results and count, NOT error
+        content = result.content[0]
+        assert content.type == "text"
+        assert "results" in content.text
+        assert "count" in content.text
+        assert "error" not in content.text
