@@ -684,3 +684,40 @@ class TestGetCluster:
         """Test that non-existent cluster raises ValueError."""
         with pytest.raises(ValueError, match="Cluster not found"):
             await value_store._get_cluster("full_999")
+
+
+class TestInsufficientDataRegression:
+    """Regression tests for BUG-010: handling insufficient data for clustering."""
+
+    async def test_get_clusters_with_insufficient_data(self, value_store, mock_clusterer):
+        """Test that get_clusters raises ValueError when clustering fails."""
+        # Mock clusterer to raise ValueError (insufficient data)
+        mock_clusterer.cluster_axis.side_effect = ValueError("No embeddings found for axis 'full'")
+
+        with pytest.raises(ValueError, match="Cannot get clusters for axis 'full'"):
+            await value_store.get_clusters("full")
+
+    async def test_validate_value_with_insufficient_data(self, value_store, mock_clusterer):
+        """Test that validate_value returns ValidationResult with valid=False."""
+        # Mock clusterer to raise ValueError (insufficient data)
+        mock_clusterer.cluster_axis.side_effect = ValueError("No embeddings found for axis 'full'")
+
+        result = await value_store.validate_value_candidate(
+            text="Test value",
+            cluster_id="full_0"
+        )
+
+        assert result.valid is False
+        assert "cluster" in result.reason.lower() or "embeddings" in result.reason.lower()
+
+    async def test_store_value_with_insufficient_data(self, value_store, mock_clusterer):
+        """Test that store_value raises ValueError when cluster doesn't exist."""
+        # Mock clusterer to raise ValueError (insufficient data)
+        mock_clusterer.cluster_axis.side_effect = ValueError("No embeddings found for axis 'full'")
+
+        with pytest.raises(ValueError, match="Value failed validation"):
+            await value_store.store_value(
+                text="Test value",
+                cluster_id="full_0",
+                axis="full"
+            )

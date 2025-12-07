@@ -83,9 +83,13 @@ class ValueStore:
             ClusterInfo as ClusteringClusterInfo,
         )
 
-        clustering_results: list[
-            ClusteringClusterInfo
-        ] = await self.clusterer.cluster_axis(axis)
+        try:
+            clustering_results: list[
+                ClusteringClusterInfo
+            ] = await self.clusterer.cluster_axis(axis)
+        except ValueError as e:
+            # Re-raise with context about insufficient data
+            raise ValueError(f"Cannot get clusters for axis '{axis}': {e}") from e
 
         # Convert to values.ClusterInfo and add cluster_id
         cluster_result = [
@@ -170,13 +174,11 @@ class ValueStore:
 
         Returns:
             ValidationResult with validity and metrics
-
-        Raises:
-            ValueError: If cluster_id is invalid
         """
         # Get cluster and members
         try:
             cluster = await self._get_cluster(cluster_id)
+            members = await self.get_cluster_members(cluster_id)
         except ValueError as e:
             # Handle insufficient experiences gracefully
             if "Not enough experiences" in str(e):
@@ -184,10 +186,8 @@ class ValueStore:
                     valid=False,
                     reason=str(e),
                 )
-            # Re-raise other ValueError (invalid cluster_id, etc.)
-            raise
-
-        members = await self.get_cluster_members(cluster_id)
+            # Return validation failure for other ValueError (invalid cluster_id, etc.)
+            return ValidationResult(valid=False, reason=str(e))
 
         if len(members) == 0:
             return ValidationResult(valid=False, reason="Cluster has no members")
