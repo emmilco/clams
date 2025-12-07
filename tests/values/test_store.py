@@ -100,6 +100,17 @@ class TestGetClusters:
         # Just verify no exception is raised
         await value_store.get_clusters(axis)
 
+    async def test_insufficient_experiences(self, value_store, mock_clusterer):
+        """Test that get_clusters raises ValueError with < 20 experiences."""
+        # Mock count_experiences to return insufficient count
+        mock_clusterer.count_experiences.return_value = 10
+
+        with pytest.raises(ValueError, match="Not enough experiences"):
+            await value_store.get_clusters("full")
+
+        # Verify count_experiences was called
+        mock_clusterer.count_experiences.assert_called_once_with("full")
+
 
 class TestGetClusterMembers:
     """Tests for get_cluster_members method."""
@@ -320,6 +331,31 @@ class TestValidateValueCandidate:
         assert result.threshold is not None
         expected_threshold = result.mean_distance + 0.5 * result.std_distance
         assert abs(result.threshold - expected_threshold) < 1e-6
+
+    async def test_validate_with_insufficient_experiences(
+        self, value_store, mock_clusterer
+    ):
+        """Regression test for BUG-009: validate_value with < 20 experiences.
+
+        When < 20 experiences exist, validate_value_candidate should return
+        ValidationResult with valid=False and appropriate error message,
+        not raise an internal server error.
+        """
+        # Mock count_experiences to return insufficient count
+        mock_clusterer.count_experiences.return_value = 15
+
+        result = await value_store.validate_value_candidate(
+            text="Test value", cluster_id="full_0"
+        )
+
+        assert result.valid is False
+        assert result.reason is not None
+        assert "Not enough experiences" in result.reason
+        assert "15" in result.reason
+        assert "20" in result.reason
+
+        # Verify count_experiences was called
+        mock_clusterer.count_experiences.assert_called_once_with("full")
 
 
 class TestStoreValue:
