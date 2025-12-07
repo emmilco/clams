@@ -2,25 +2,17 @@
 
 ## Revision Summary
 
-**Revision 2 - Addresses Proposal Review Feedback**
+**Revision 3 - Addresses Human Feedback**
 
-This revision fixes all issues identified in proposal review:
+This revision addresses feedback from human review:
 
-1. **BLOCKING #1 - Lazy loading violated:** Removed `initialize_collections()` at startup. Collections now created lazily per tool type via `_ensure_collection()` pattern on first use.
+1. **Removed backward compatibility:** Eliminated `embedding_service` property from `ServiceContainer`. No users exist, so no need for compatibility shims. Tools use `code_embedder` or `semantic_embedder` directly.
 
-2. **BLOCKING #2 - ServiceContainer breaking change:** Added `embedding_service` property to `ServiceContainer` returning `semantic_embedder` for backward compatibility.
-
-3. **SHOULD-FIX #3 - Configuration inconsistency:** Added `code_model` and `semantic_model` to `ServerSettings`. Registry receives settings object, not direct `os.getenv()`.
-
-4. **SHOULD-FIX #4 - Collection name mismatch:** Specified `CodeIndexer.COLLECTION_NAME = "code_units"` used consistently everywhere.
-
-5. **SHOULD-FIX #5 - Incomplete `get_collection_info()` specification:** Added error handling details, protocol contract, and in-memory implementation.
-
-6. **SHOULD-FIX #6 - Server initialization flow unclear:** Clarified single initialization flow: registry initialized at startup with settings, models load on first tool use.
+2. **Abstracted model-specific constants:** Removed all hardcoded model names and dimensions. Model names come from `ServerSettings` (configurable via env vars). Dimensions queried from loaded model at runtime via `embedding_service.dimension`.
 
 ## Overview
 
-This proposal outlines the implementation of dual embedding model support to accelerate code indexing while maintaining quality for memory/GHAP operations. The system will use MiniLM (384-dim) for code and Nomic (768-dim) for semantic operations, with lazy loading to minimize memory overhead.
+This proposal outlines the implementation of dual embedding model support to accelerate code indexing while maintaining quality for memory/GHAP operations. The system uses separate models for code (optimized for speed) and semantic operations (optimized for quality), with lazy loading to minimize memory overhead. Default models are MiniLM for code and Nomic for semantic operations, both configurable via environment variables.
 
 ## Architecture
 
@@ -35,11 +27,12 @@ class EmbeddingRegistry:
     """Singleton registry for dual embedding models.
 
     Provides lazy-loaded embedders by purpose:
-    - Code embedder: Fast MiniLM (384-dim) for code indexing/search
-    - Semantic embedder: Quality Nomic (768-dim) for memories/GHAP/clustering
+    - Code embedder: Fast model (configurable) for code indexing/search
+    - Semantic embedder: Quality model (configurable) for memories/GHAP/clustering
 
     Models are loaded on first use and cached for the server's lifetime.
     Thread safety is not required since the MCP server is single-threaded asyncio.
+    Model names and dimensions determined by ServerSettings.
     """
 
     def __init__(self, settings: ServerSettings) -> None:
@@ -48,19 +41,23 @@ class EmbeddingRegistry:
         self._settings = settings
 
     def get_code_embedder(self) -> EmbeddingService:
-        """Get or create the code embedder (MiniLM, 384-dim)."""
+        """Get or create the code embedder (configured via settings)."""
         if self._code_embedder is None:
             embedding_settings = EmbeddingSettings(model_name=self._settings.code_model)
             self._code_embedder = MiniLMEmbedding(settings=embedding_settings)
-            logger.info("code_embedder.loaded", model=self._settings.code_model)
+            logger.info("code_embedder.loaded",
+                       model=self._settings.code_model,
+                       dimension=self._code_embedder.dimension)
         return self._code_embedder
 
     def get_semantic_embedder(self) -> EmbeddingService:
-        """Get or create the semantic embedder (Nomic, 768-dim)."""
+        """Get or create the semantic embedder (configured via settings)."""
         if self._semantic_embedder is None:
             embedding_settings = EmbeddingSettings(model_name=self._settings.semantic_model)
             self._semantic_embedder = NomicEmbedding(settings=embedding_settings)
-            logger.info("semantic_embedder.loaded", model=self._settings.semantic_model)
+            logger.info("semantic_embedder.loaded",
+                       model=self._settings.semantic_model,
+                       dimension=self._semantic_embedder.dimension)
         return self._semantic_embedder
 
 # Module-level singleton (initialized in main.py with settings)
@@ -103,29 +100,24 @@ Create `src/learning_memory_server/embedding/minilm.py`:
 class MiniLMEmbedding(EmbeddingService):
     """MiniLM embedding service using sentence-transformers.
 
-    Uses sentence-transformers/all-MiniLM-L6-v2 by default, producing
-    384-dimensional embeddings. Optimized for speed while maintaining
-    acceptable quality for code search.
+    Model and dimension determined by settings. Optimized for speed while
+    maintaining acceptable quality for code search.
 
     Attributes:
         model: The loaded SentenceTransformer model
         settings: Configuration settings for the embedding service
     """
 
-    _DIMENSION = 384
-
-    def __init__(self, settings: EmbeddingSettings | None = None) -> None:
+    def __init__(self, settings: EmbeddingSettings) -> None:
         """Initialize the MiniLM embedding service.
 
         Args:
-            settings: Configuration settings (uses defaults if not provided)
+            settings: Configuration settings (model_name required)
 
         Raises:
             EmbeddingModelError: If model loading fails
         """
-        self.settings = settings or EmbeddingSettings(
-            model_name="sentence-transformers/all-MiniLM-L6-v2"
-        )
+        self.settings = settings
         try:
             self.model = SentenceTransformer(
                 self.settings.model_name,
@@ -140,15 +132,19 @@ class MiniLMEmbedding(EmbeddingService):
                 f"Failed to load model {self.settings.model_name}: {e}"
             ) from e
 
+    @property
+    def dimension(self) -> int:
+        """Get embedding dimension from the loaded model."""
+        return self.model.get_sentence_embedding_dimension()
+
     # embed() and embed_batch() implementations identical to NomicEmbedding
-    # except _DIMENSION = 384
 ```
 
 **Design rationale:**
 - Identical structure to `NomicEmbedding` for consistency
 - Reuses MPS workaround (BUG-014 fix applies to all sentence-transformers models)
-- 384-dim matches benchmark results and model spec
-- Default model name in constructor allows override via `EmbeddingSettings`
+- Dimension queried from model at runtime (no hardcoded constants)
+- Model name comes from settings (configured via `ServerSettings` and env vars)
 
 ### 3. Service Container Updates
 
@@ -194,11 +190,11 @@ async def initialize_services(
         code_parser = TreeSitterParser()
         code_indexer = CodeIndexer(
             parser=code_parser,
-            embedding_service=code_embedder,  # MiniLM for speed
+            embedding_service=code_embedder,  # Fast model for speed
             vector_store=vector_store,
             metadata_store=metadata_store,
         )
-        logger.info("code.initialized", model="MiniLM")
+        logger.info("code.initialized")
     except ImportError as e:
         logger.warning("code.init_skipped", reason="module_not_found", error=str(e))
 
@@ -214,7 +210,7 @@ async def initialize_services(
                 vector_store=vector_store,
                 metadata_store=metadata_store,
             )
-            logger.info("git.initialized", model="Nomic")
+            logger.info("git.initialized")
         except Exception as e:
             logger.warning("git.init_failed", error=str(e))
 
@@ -235,23 +231,13 @@ async def initialize_services(
 class ServiceContainer:
     """Container for shared services used by MCP tools."""
 
-    code_embedder: EmbeddingService        # NEW: MiniLM for code
-    semantic_embedder: EmbeddingService    # NEW: Nomic for memories/GHAP
+    code_embedder: EmbeddingService        # For code indexing/search
+    semantic_embedder: EmbeddingService    # For memories/GHAP/commits
     vector_store: VectorStore
     metadata_store: MetadataStore
     code_indexer: object | None = None
     git_analyzer: object | None = None
     searcher: object | None = None
-
-    @property
-    def embedding_service(self) -> EmbeddingService:
-        """Backward compatibility: returns semantic embedder.
-
-        DEPRECATED: Use semantic_embedder directly.
-        Maintained for compatibility with existing code that expects
-        embedding_service field.
-        """
-        return self.semantic_embedder
 ```
 
 **Tool registration updates:**
@@ -418,19 +404,19 @@ class CodeIndexer:
 ```
 
 **Similar pattern for other tools:**
-- `MemoryStore._ensure_collection()` → creates "memories" collection (768-dim Nomic)
-- `GitAnalyzer._ensure_collection()` → creates "commits" collection (768-dim Nomic)
-- `ObservationPersister._ensure_collection()` → creates GHAP axis collections (768-dim Nomic)
-- `ValueStore._ensure_collection()` → creates "values" collection (768-dim Nomic)
+- `MemoryStore._ensure_collection()` → creates "memories" collection (uses semantic_embedder.dimension)
+- `GitAnalyzer._ensure_collection()` → creates "commits" collection (uses semantic_embedder.dimension)
+- `ObservationPersister._ensure_collection()` → creates GHAP axis collections (uses semantic_embedder.dimension)
+- `ValueStore._ensure_collection()` → creates "values" collection (uses semantic_embedder.dimension)
 
 **Migration flow:**
 1. User upgrades to SPEC-006 implementation
 2. First `index_codebase` call triggers `CodeIndexer._ensure_collection()`
-3. Finds 768-dim "code_units" collection (from old Nomic embeddings)
+3. Finds collection with mismatched dimension (old Nomic embeddings vs new code_embedder)
 4. Logs warning and deletes collection
-5. Recreates with 384-dim
-6. Indexing proceeds normally with MiniLM
-7. Other tool types (memories, GHAP) continue using 768-dim Nomic unchanged
+5. Recreates with correct dimension from `code_embedder.dimension`
+6. Indexing proceeds normally with configured code embedder
+7. Other tool types (memories, GHAP) continue using semantic embedder unchanged
 
 **Note:** We need to add `get_collection_info()` to the `VectorStore` protocol if it doesn't exist.
 
@@ -570,12 +556,12 @@ class ServerSettings(BaseSettings):
     # Embedding models (overridable via environment variables)
     code_model: str = Field(
         default="sentence-transformers/all-MiniLM-L6-v2",
-        description="Model for code indexing (fast, 384-dim)",
+        description="Model for code indexing (optimized for speed)",
         env="LMS_CODE_MODEL",
     )
     semantic_model: str = Field(
         default="nomic-ai/nomic-embed-text-v1.5",
-        description="Model for memories/GHAP (quality, 768-dim)",
+        description="Model for memories/GHAP (optimized for quality)",
         env="LMS_SEMANTIC_MODEL",
     )
 ```
@@ -585,11 +571,11 @@ class ServerSettings(BaseSettings):
 Users can override models for testing/experimentation:
 
 ```bash
-# Use different code model (must be 384-dim compatible)
+# Use different code model (any sentence-transformers compatible model)
 export LMS_CODE_MODEL="sentence-transformers/paraphrase-MiniLM-L6-v2"
 
-# Use different semantic model (must be 768-dim compatible)
-export LMS_SEMANTIC_MODEL="nomic-ai/nomic-embed-text-v1.5"
+# Use different semantic model (any sentence-transformers compatible model)
+export LMS_SEMANTIC_MODEL="sentence-transformers/all-mpnet-base-v2"
 ```
 
 **Benefits of ServerSettings approach:**
@@ -605,7 +591,7 @@ export LMS_SEMANTIC_MODEL="nomic-ai/nomic-embed-text-v1.5"
 
 1. **MiniLM Implementation** (`test_minilm.py`)
    - Test embedding generation (single + batch)
-   - Verify 384-dim output
+   - Verify dimension matches model spec (query from model)
    - Test MPS CPU fallback
    - Test error handling
 
@@ -616,42 +602,42 @@ export LMS_SEMANTIC_MODEL="nomic-ai/nomic-embed-text-v1.5"
    - Test error propagation from model loading
 
 3. **Dimension Migration** (`test_indexer.py`)
-   - Create 768-dim collection
-   - Initialize indexer with 384-dim embedder
-   - Verify collection recreated with correct dimension
+   - Create collection with one dimension
+   - Initialize indexer with embedder of different dimension
+   - Verify collection recreated with embedder's dimension
    - Verify re-indexing works
 
 ### Integration Tests
 
 1. **Dual Embeddings E2E** (`test_dual_embeddings.py`)
-   - Index code with MiniLM (verify 384-dim vectors)
-   - Store memory with Nomic (verify 768-dim vectors)
+   - Index code with code_embedder (verify vectors match embedder dimension)
+   - Store memory with semantic_embedder (verify vectors match embedder dimension)
    - Search code (verify results)
    - Retrieve memories (verify results)
    - Verify both models loaded after use
    - Verify `ping` doesn't load models
 
 2. **Performance Benchmark** (existing `tests/performance/benchmark_indexing.py`)
-   - Run code indexing benchmark
+   - Run code indexing benchmark with configured code model
    - Verify <60s for clams repo (155 files, 986 units)
-   - Compare to baseline (currently 3.4 min)
+   - Compare to baseline (currently 3.4 min with Nomic)
 
 ### Manual Verification
 
 1. Start server, call `ping`, verify no model load logs
-2. Call `index_codebase`, verify MiniLM loads, indexing fast
-3. Call `store_memory`, verify Nomic loads
-4. Check Qdrant collections: `code_units` is 384-dim, `memories` is 768-dim
+2. Call `index_codebase`, verify code model loads, indexing fast
+3. Call `store_memory`, verify semantic model loads
+4. Check Qdrant collections have correct dimensions matching their embedders
 
 ## Migration Path
 
 ### For Existing Deployments
 
 **On upgrade:**
-1. First `index_codebase` call detects 768-dim `code_units` collection
+1. First `index_codebase` call detects dimension mismatch in `code_units` collection
 2. Logs warning: "dimension_mismatch: recreating collection"
 3. Deletes old collection
-4. Creates new 384-dim collection
+4. Creates new collection with code_embedder's dimension
 5. Re-indexes all files (user-initiated, part of normal `index_codebase` call)
 
 **Impact:**
@@ -668,24 +654,24 @@ export LMS_SEMANTIC_MODEL="nomic-ai/nomic-embed-text-v1.5"
 
 If issues arise:
 1. Stop server
-2. Manually delete 384-dim `code_units` collection via Qdrant API
+2. Manually delete `code_units` collection via Qdrant API
 3. Revert code to previous version
 4. Restart server
-5. Re-index code (creates 768-dim collection)
+5. Re-index code (creates collection with previous embedder's dimension)
 
 ## Performance Expectations
 
-Based on benchmark results in spec:
+Based on benchmark results in spec (using default models):
 
-**Before (Nomic):**
+**Before (Nomic for code):**
 - Code indexing: ~230ms per unit
 - Clams repo (986 units): ~3.4 minutes
 
-**After (MiniLM):**
+**After (MiniLM for code):**
 - Code indexing: ~37ms per unit (6.2x faster)
 - Clams repo (986 units): ~33 seconds (6x improvement)
 
-**Target:** <60 seconds for clams repo indexing
+**Target:** <60 seconds for clams repo indexing with default code model
 
 **Memory:**
 - Typical usage: One model loaded (~500MB-1GB)
@@ -695,9 +681,9 @@ Based on benchmark results in spec:
 ## Risk Mitigation
 
 ### Quality Regression
-- **Risk:** MiniLM code search quality lower than Nomic
-- **Mitigation:** Benchmark shows 95% MRR (9/10 vs 10/10 hits@1) - acceptable
-- **Fallback:** Environment variable allows reverting to Nomic for code
+- **Risk:** Default code model (MiniLM) has lower quality than semantic model (Nomic)
+- **Mitigation:** Benchmark shows 95% MRR (9/10 vs 10/10 hits@1) - acceptable for code
+- **Fallback:** Environment variable allows using semantic model for code if needed
 
 ### Memory Issues
 - **Risk:** Both models load, excessive memory usage
@@ -717,7 +703,7 @@ Based on benchmark results in spec:
 
 ## Resolved Design Decisions
 
-Based on proposal review feedback, these decisions have been made:
+Based on proposal review and human feedback, these decisions have been made:
 
 1. **Settings vs Environment Variables:** ✅ RESOLVED
    - Using `ServerSettings` with `code_model` and `semantic_model` fields
@@ -739,14 +725,19 @@ Based on proposal review feedback, these decisions have been made:
    - Registry initialized at startup, but models load on first tool use
    - `ping` tool will NOT load any models (validates lazy loading)
 
-5. **Backward Compatibility:** ✅ RESOLVED
-   - Added `embedding_service` property to `ServiceContainer` returning `semantic_embedder`
-   - Prevents breaking change for existing code expecting `embedding_service` field
-   - Marked as deprecated, migrate to explicit `semantic_embedder` over time
+5. **Backward Compatibility:** ✅ RESOLVED (Revision 3)
+   - NO backward compatibility needed - no users exist
+   - Removed `embedding_service` property from `ServiceContainer`
+   - Tools use `code_embedder` or `semantic_embedder` directly
 
 6. **Collection Name Consistency:** ✅ RESOLVED
    - Using `"code_units"` everywhere (constant `CodeIndexer.COLLECTION_NAME`)
    - No mismatch between initialization and indexer
+
+7. **Model-Specific Constants:** ✅ RESOLVED (Revision 3)
+   - NO hardcoded model names outside `ServerSettings` defaults
+   - NO hardcoded dimensions - all queried from loaded model via `dimension` property
+   - Configuration-driven design enables easy model swapping
 
 ## Implementation Order
 
