@@ -220,8 +220,8 @@ def test_build_metadata_structure(
 
     assert metadata["ghap_id"] == "ghap_20251204_120000_abc123"
     assert metadata["session_id"] == "session_20251204_120000_xyz789"
-    assert isinstance(metadata["created_at"], float)
-    assert isinstance(metadata["captured_at"], float)
+    assert isinstance(metadata["created_at"], str)  # ISO format string for ExperienceResult
+    assert isinstance(metadata["captured_at"], float)  # Unix timestamp (not used by ExperienceResult)
     assert metadata["domain"] == "debugging"
     assert metadata["strategy"] == "systematic-elimination"
     assert metadata["outcome_status"] == "confirmed"
@@ -232,14 +232,13 @@ def test_build_metadata_structure(
 def test_metadata_timestamp_conversion(
     persister: ObservationPersister, confirmed_entry: GHAPEntry
 ) -> None:
-    """Verify datetime → Unix epoch conversion."""
+    """Verify datetime → timestamp/ISO format conversion."""
     metadata = persister._build_metadata(confirmed_entry)
 
-    # Verify created_at timestamp
-    created_timestamp = datetime(2025, 12, 4, 12, 0, 0, tzinfo=UTC).timestamp()
-    assert metadata["created_at"] == created_timestamp
+    # Verify created_at is ISO format string (used by ExperienceResult.from_search_result)
+    assert metadata["created_at"] == "2025-12-04T12:00:00+00:00"
 
-    # Verify captured_at timestamp
+    # Verify captured_at is Unix timestamp (float)
     captured_timestamp = datetime(2025, 12, 4, 12, 5, 0, tzinfo=UTC).timestamp()
     assert metadata["captured_at"] == captured_timestamp
 
@@ -247,26 +246,35 @@ def test_metadata_timestamp_conversion(
 def test_axis_specific_metadata(
     persister: ObservationPersister, falsified_entry: GHAPEntry
 ) -> None:
-    """Verify root_cause_category added for surprise/root_cause axes."""
+    """Verify axis-specific metadata including content fields and root_cause dict."""
     base_metadata = persister._build_metadata(falsified_entry)
 
-    # Full axis should not have root_cause_category
+    # Full axis should have all content fields and axis identifier
     full_metadata = persister._build_axis_metadata(
         falsified_entry, "full", base_metadata
     )
-    assert "root_cause_category" not in full_metadata
+    assert full_metadata["axis"] == "full"
+    assert full_metadata["goal"] == falsified_entry.goal
+    assert full_metadata["hypothesis"] == falsified_entry.hypothesis
+    assert full_metadata["action"] == falsified_entry.action
+    assert full_metadata["prediction"] == falsified_entry.prediction
+    # Falsified entry has root_cause, so it should be present
+    assert full_metadata["root_cause"]["category"] == "wrong-assumption"
+    assert "credentials issue" in full_metadata["root_cause"]["description"]
 
-    # Surprise axis should have root_cause_category
+    # Surprise axis should have same fields with correct axis
     surprise_metadata = persister._build_axis_metadata(
         falsified_entry, "surprise", base_metadata
     )
-    assert surprise_metadata["root_cause_category"] == "wrong-assumption"
+    assert surprise_metadata["axis"] == "surprise"
+    assert surprise_metadata["root_cause"]["category"] == "wrong-assumption"
 
-    # Root cause axis should have root_cause_category
+    # Root cause axis should have same fields with correct axis
     root_cause_metadata = persister._build_axis_metadata(
         falsified_entry, "root_cause", base_metadata
     )
-    assert root_cause_metadata["root_cause_category"] == "wrong-assumption"
+    assert root_cause_metadata["axis"] == "root_cause"
+    assert root_cause_metadata["root_cause"]["category"] == "wrong-assumption"
 
 
 # Axis Determination Tests
@@ -598,10 +606,10 @@ async def test_persist_falsified_entry_with_surprise(
     assert "ghap_surprise" in collections
     assert "ghap_root_cause" in collections
 
-    # Verify root_cause_category in surprise/root_cause metadata
+    # Verify root_cause dict in surprise/root_cause metadata
     for call in calls:
         if call.kwargs["collection"] in ["ghap_surprise", "ghap_root_cause"]:
-            assert call.kwargs["payload"]["root_cause_category"] == "wrong-assumption"
+            assert call.kwargs["payload"]["root_cause"]["category"] == "wrong-assumption"
 
 
 @pytest.mark.asyncio
