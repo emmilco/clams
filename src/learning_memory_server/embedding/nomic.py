@@ -5,6 +5,7 @@ from functools import partial
 from typing import Any
 
 import numpy as np
+import torch
 from sentence_transformers import SentenceTransformer
 
 from .base import EmbeddingModelError, EmbeddingService, EmbeddingSettings, Vector
@@ -40,6 +41,11 @@ class NomicEmbedding(EmbeddingService):
                 cache_folder=self.settings.cache_dir,
                 trust_remote_code=True,
             )
+            # Force CPU to avoid MPS memory leak
+            # MPS backend in PyTorch has known memory management issues
+            # that cause severe memory accumulation during batch embeddings
+            if torch.backends.mps.is_available():
+                self.model = self.model.to(torch.device("cpu"))
         except Exception as e:
             raise EmbeddingModelError(
                 f"Failed to load model {self.settings.model_name}: {e}"
