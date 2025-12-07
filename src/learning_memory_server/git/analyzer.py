@@ -19,6 +19,7 @@ from .base import (
     BlameSearchResult,
     ChurnRecord,
     Commit,
+    CommitSearchResult,
     FileNotInRepoError,
     GitAnalyzerError,
     GitReader,
@@ -313,7 +314,7 @@ class GitAnalyzer:
         author: str | None = None,
         since: datetime | None = None,
         limit: int = 10,
-    ) -> list[Commit]:
+    ) -> list[CommitSearchResult]:
         """Semantic search over commit messages.
 
         Embeds query, searches VectorStore, returns matched commits.
@@ -325,7 +326,7 @@ class GitAnalyzer:
             limit: Maximum number of results
 
         Returns:
-            List of matching commits ordered by similarity
+            List of matching commits with scores ordered by similarity
         """
         # Generate query embedding
         query_vector = await self.embedding_service.embed(query)
@@ -345,24 +346,23 @@ class GitAnalyzer:
             filters=filters or None,
         )
 
-        # Convert payloads back to Commit objects
-        commits = []
+        # Convert payloads to CommitSearchResult objects (preserving scores)
+        search_results = []
         for result in results:
             p = result.payload
-            commits.append(
-                Commit(
-                    sha=p["sha"],
-                    message=p["message"],
-                    author=p["author"],
-                    author_email=p["author_email"],
-                    timestamp=datetime.fromisoformat(p["timestamp_iso"]),
-                    files_changed=p["files_changed"],
-                    insertions=p["insertions"],
-                    deletions=p["deletions"],
-                )
+            commit = Commit(
+                sha=p["sha"],
+                message=p["message"],
+                author=p["author"],
+                author_email=p["author_email"],
+                timestamp=datetime.fromisoformat(p["timestamp_iso"]),
+                files_changed=p["files_changed"],
+                insertions=p["insertions"],
+                deletions=p["deletions"],
             )
+            search_results.append(CommitSearchResult(commit=commit, score=result.score))
 
-        return commits
+        return search_results
 
     async def get_churn_hotspots(
         self,

@@ -190,11 +190,14 @@ class TestGitAnalyzer:
         # Should find commits related to hello
         assert len(results) > 0
         # With mock embeddings, order is not meaningful
-        # but we should get Commit objects back
-        for commit in results:
-            assert commit.sha
-            assert commit.message
-            assert commit.author
+        # but we should get CommitSearchResult objects back
+        for result in results:
+            assert result.commit.sha
+            assert result.commit.message
+            assert result.commit.author
+            assert isinstance(result.score, float)
+            # Cosine similarity ranges from -1 to 1
+            assert -1.0 <= result.score <= 1.0
 
     async def test_search_commits_with_author_filter(self, analyzer):
         """Test commit search with author filter."""
@@ -203,8 +206,8 @@ class TestGitAnalyzer:
         results = await analyzer.search_commits("hello", author="Test User", limit=5)
         assert len(results) > 0
 
-        for commit in results:
-            assert commit.author == "Test User"
+        for result in results:
+            assert result.commit.author == "Test User"
 
     async def test_search_commits_with_date_filter(self, analyzer):
         """Test commit search with date filter."""

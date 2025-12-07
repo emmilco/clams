@@ -61,6 +61,14 @@ class Commit:
 
 
 @dataclass
+class CommitSearchResult:
+    """Represents a commit with search relevance score."""
+
+    commit: Commit
+    score: float
+
+
+@dataclass
 class BlameEntry:
     """Represents blame information for a range of lines."""
 

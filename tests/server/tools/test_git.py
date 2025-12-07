@@ -5,7 +5,12 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from learning_memory_server.git.base import Commit, IndexingError, IndexingStats
+from learning_memory_server.git.base import (
+    Commit,
+    CommitSearchResult,
+    IndexingError,
+    IndexingStats,
+)
 from learning_memory_server.server.errors import MCPError, ValidationError
 from learning_memory_server.server.tools.git import get_git_tools
 
@@ -261,20 +266,23 @@ async def test_index_and_search_commits_workflow(mock_services):
     assert index_result["errors"] == []
 
     # 3. Search after indexing - should find results
-    mock_commit = Commit(
-        sha="abc123",
-        message="Add test feature",
-        author="Test Author",
-        author_email="test@example.com",
-        timestamp=datetime(2025, 1, 1, 12, 0, 0),
-        files_changed=["test.py"],
-        insertions=10,
-        deletions=5,
-    )
-    # Add score attribute dynamically (as done by search results)
-    mock_commit.score = 0.95  # type: ignore[attr-defined]
+    from datetime import UTC
 
-    mock_services.git_analyzer.search_commits = AsyncMock(return_value=[mock_commit])
+    mock_result = CommitSearchResult(
+        commit=Commit(
+            sha="abc123",
+            message="Add test feature",
+            author="Test Author",
+            author_email="test@example.com",
+            timestamp=datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
+            files_changed=["test.py"],
+            insertions=10,
+            deletions=5,
+        ),
+        score=0.95,
+    )
+
+    mock_services.git_analyzer.search_commits = AsyncMock(return_value=[mock_result])
 
     results_after = await search_commits(query="test", limit=5)
     assert results_after["count"] == 1
@@ -319,3 +327,83 @@ async def test_index_commits_with_errors(mock_services):
     assert result["errors"][0]["sha"] == "bad123"
     assert result["errors"][0]["error_type"] == "embedding_failed"
     assert result["errors"][0]["message"] == "Failed to embed commit"
+
+
+# Regression test for BUG-013
+
+
+@pytest.mark.asyncio
+async def test_search_commits_includes_scores(mock_services):
+    """Regression test for BUG-013: search_commits must return similarity scores.
+
+    BUG-013 occurred because GitAnalyzer.search_commits() discarded similarity scores
+    when converting SearchResult objects to Commit objects. The tool handler then
+    tried to access a non-existent .score attribute, causing AttributeError.
+
+    The fix introduced CommitSearchResult to wrap Commit objects with their scores.
+    This test verifies that scores are properly preserved and returned.
+    """
+    from datetime import UTC
+
+    # Setup: Create mock commits with scores
+    mock_results = [
+        CommitSearchResult(
+            commit=Commit(
+                sha="abc123",
+                message="Fix bug in parser",
+                author="Test Author",
+                author_email="test@example.com",
+                timestamp=datetime(2024, 1, 1, 12, 0, tzinfo=UTC),
+                files_changed=["parser.py"],
+                insertions=10,
+                deletions=5,
+            ),
+            score=0.95,
+        ),
+        CommitSearchResult(
+            commit=Commit(
+                sha="def456",
+                message="Update documentation",
+                author="Doc Writer",
+                author_email="docs@example.com",
+                timestamp=datetime(2024, 1, 2, 14, 0, tzinfo=UTC),
+                files_changed=["README.md"],
+                insertions=20,
+                deletions=3,
+            ),
+            score=0.82,
+        ),
+    ]
+
+    # Mock GitAnalyzer to return search results
+    mock_analyzer = Mock()
+    mock_analyzer.search_commits = AsyncMock(return_value=mock_results)
+    mock_services.git_analyzer = mock_analyzer
+
+    # Action: Call search_commits tool
+    tools = get_git_tools(mock_services)
+    search_commits = tools["search_commits"]
+    result = await search_commits(query="bug fix", limit=5)
+
+    # Assert: Verify scores are included in response
+    assert result["count"] == 2
+    assert len(result["results"]) == 2
+
+    # Check first result has all fields including score
+    first_result = result["results"][0]
+    assert first_result["sha"] == "abc123"
+    assert first_result["message"] == "Fix bug in parser"
+    assert first_result["author"] == "Test Author"
+    assert first_result["author_email"] == "test@example.com"
+    assert first_result["timestamp"] == "2024-01-01T12:00:00+00:00"
+    assert first_result["files_changed"] == ["parser.py"]
+    assert first_result["file_count"] == 1
+    assert first_result["insertions"] == 10
+    assert first_result["deletions"] == 5
+    assert first_result["score"] == 0.95  # Would fail before fix with AttributeError
+
+    # Check second result
+    second_result = result["results"][1]
+    assert second_result["sha"] == "def456"
+    assert second_result["message"] == "Update documentation"
+    assert second_result["score"] == 0.82
