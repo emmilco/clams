@@ -62,7 +62,8 @@ cleanup_stale_workers() {
 
     if [[ -n "$pending_handoff" ]]; then
         echo "=== Session Handoff (from previous session) ==="
-        sqlite3 "$DB_PATH" "SELECT handoff_content FROM sessions WHERE id = '$pending_handoff';"
+        # Handoff content is base64 encoded to avoid shell quoting issues
+        sqlite3 "$DB_PATH" "SELECT handoff_content FROM sessions WHERE id = '$pending_handoff';" | base64 -d
         echo ""
         echo "--- End of Handoff ---"
         # Mark as resumed

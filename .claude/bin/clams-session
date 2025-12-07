@@ -1,0 +1,164 @@
+#!/usr/bin/env bash
+#
+# clams-session: Manage session handoffs
+#
+# Usage:
+#   clams-session save [--continue]    Save handoff from stdin (base64 encoded automatically)
+#   clams-session list                 List recent sessions
+#   clams-session show <id>            Show a specific session's handoff
+#
+# The 'save' command reads the handoff content from stdin (raw markdown),
+# base64-encodes it, and stores it in the database. This avoids shell quoting issues.
+#
+# Examples:
+#   # Save a handoff (no continuation expected)
+#   cat <<'EOF' | .claude/bin/clams-session save
+#   # Session Handoff - 2024-01-15
+#   ## Summary
+#   Did some work...
+#   EOF
+#
+#   # Save a handoff that needs continuation
+#   cat <<'EOF' | .claude/bin/clams-session save --continue
+#   # Session Handoff - 2024-01-15
+#   ...
+#   EOF
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/clams-common.sh"
+
+if [[ ! -f "$DB_PATH" ]]; then
+    echo "Error: Database not found at $DB_PATH. Run clams-init first." >&2
+    exit 1
+fi
+
+cmd_save() {
+    local needs_continuation=0
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --continue)
+                needs_continuation=1
+                shift
+                ;;
+            *)
+                echo "Error: Unknown argument: $1" >&2
+                echo "Usage: clams-session save [--continue]" >&2
+                exit 1
+                ;;
+        esac
+    done
+
+    # Read content from stdin
+    local content
+    content=$(cat)
+
+    if [[ -z "$content" ]]; then
+        echo "Error: No content provided. Pipe handoff content to stdin." >&2
+        echo "Example: cat handoff.md | clams-session save" >&2
+        exit 1
+    fi
+
+    # Generate UUID (works on macOS and Linux)
+    local session_id
+    if command -v uuidgen &>/dev/null; then
+        session_id=$(uuidgen | tr '[:upper:]' '[:lower:]')
+    elif [[ -f /proc/sys/kernel/random/uuid ]]; then
+        session_id=$(cat /proc/sys/kernel/random/uuid)
+    else
+        # Fallback: use date + random
+        session_id=$(date +%s)-$$-$RANDOM
+    fi
+
+    # Base64 encode the content
+    local encoded_content
+    encoded_content=$(echo "$content" | base64)
+
+    # Insert into database
+    sqlite3 "$DB_PATH" <<EOF
+INSERT INTO sessions (id, created_at, handoff_content, needs_continuation)
+VALUES ('$session_id', datetime('now'), '$encoded_content', $needs_continuation);
+EOF
+
+    echo "Session saved: $session_id"
+    if [[ "$needs_continuation" -eq 1 ]]; then
+        echo "Marked for continuation (next session will see handoff)"
+    else
+        echo "Archived (no continuation expected)"
+    fi
+}
+
+cmd_list() {
+    echo "=== Recent Sessions ==="
+    sqlite3 -header -column "$DB_PATH" <<EOF
+SELECT
+    id,
+    created_at,
+    CASE WHEN needs_continuation THEN 'yes' ELSE 'no' END as needs_continue,
+    CASE WHEN resumed_at IS NOT NULL THEN resumed_at ELSE '-' END as resumed_at
+FROM sessions
+ORDER BY created_at DESC
+LIMIT 10;
+EOF
+}
+
+cmd_show() {
+    local session_id="$1"
+
+    if [[ -z "$session_id" ]]; then
+        echo "Error: Session ID required" >&2
+        echo "Usage: clams-session show <id>" >&2
+        exit 1
+    fi
+
+    local encoded_content
+    encoded_content=$(sqlite3 "$DB_PATH" "SELECT handoff_content FROM sessions WHERE id = '$session_id';")
+
+    if [[ -z "$encoded_content" ]]; then
+        echo "Error: Session not found: $session_id" >&2
+        exit 1
+    fi
+
+    echo "=== Session: $session_id ==="
+    echo "$encoded_content" | base64 -d
+}
+
+# Main
+command="${1:-}"
+
+case "$command" in
+    save)
+        shift
+        cmd_save "$@"
+        ;;
+    list)
+        cmd_list
+        ;;
+    show)
+        shift
+        cmd_show "${1:-}"
+        ;;
+    *)
+        echo "Usage:"
+        echo "  clams-session save [--continue]    Save handoff from stdin"
+        echo "  clams-session list                 List recent sessions"
+        echo "  clams-session show <id>            Show a session's handoff"
+        echo ""
+        echo "Examples:"
+        echo "  # Save handoff (pipe markdown content to stdin)"
+        echo "  cat <<'EOF' | .claude/bin/clams-session save"
+        echo "  # Session Handoff"
+        echo "  ## Summary"
+        echo "  Did some work..."
+        echo "  EOF"
+        echo ""
+        echo "  # Save with continuation flag"
+        echo "  cat <<'EOF' | .claude/bin/clams-session save --continue"
+        echo "  ..."
+        echo "  EOF"
+        exit 1
+        ;;
+esac
