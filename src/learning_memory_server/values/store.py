@@ -65,10 +65,18 @@ class ValueStore:
             List of ClusterInfo objects sorted by size (descending)
 
         Raises:
-            ValueError: If axis is invalid
+            ValueError: If axis is invalid or insufficient experiences
         """
         if axis not in VALID_AXES:
             raise ValueError(f"Invalid axis '{axis}'. Must be one of: {VALID_AXES}")
+
+        # Check if enough experiences exist for clustering
+        experience_count = await self.clusterer.count_experiences(axis)
+        if experience_count < 20:
+            raise ValueError(
+                f"Not enough experiences for clustering. "
+                f"Found {experience_count}, need at least 20."
+            )
 
         # Delegate to ExperienceClusterer (returns clustering.ClusterInfo)
         from learning_memory_server.clustering.types import (
@@ -167,7 +175,18 @@ class ValueStore:
             ValueError: If cluster_id is invalid
         """
         # Get cluster and members
-        cluster = await self._get_cluster(cluster_id)
+        try:
+            cluster = await self._get_cluster(cluster_id)
+        except ValueError as e:
+            # Handle insufficient experiences gracefully
+            if "Not enough experiences" in str(e):
+                return ValidationResult(
+                    valid=False,
+                    reason=str(e),
+                )
+            # Re-raise other ValueError (invalid cluster_id, etc.)
+            raise
+
         members = await self.get_cluster_members(cluster_id)
 
         if len(members) == 0:

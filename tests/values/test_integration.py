@@ -83,6 +83,8 @@ async def integration_setup():
             avg_weight=0.9,
         )
     ]
+    # Mock count_experiences to return sufficient count (> 20)
+    clusterer.count_experiences.return_value = 25
 
     # Create ValueStore
     value_store = ValueStore(embedding_service, vector_store, clusterer)
