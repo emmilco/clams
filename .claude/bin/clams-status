@@ -56,15 +56,18 @@ cleanup_stale_workers() {
         echo ""
     fi
 
-    # Check for HANDOFF.md - display contents and delete to prevent reuse
-    local handoff_path="$MAIN_REPO/.claude/HANDOFF.md"
-    if [[ -f "$handoff_path" ]]; then
+    # Check for pending handoff in database (needs_continuation = true, resumed_at is null)
+    local pending_handoff
+    pending_handoff=$(sqlite3 "$DB_PATH" "SELECT id FROM sessions WHERE needs_continuation = 1 AND resumed_at IS NULL ORDER BY created_at DESC LIMIT 1;" 2>/dev/null || echo "")
+
+    if [[ -n "$pending_handoff" ]]; then
         echo "=== Session Handoff (from previous session) ==="
-        cat "$handoff_path"
+        sqlite3 "$DB_PATH" "SELECT handoff_content FROM sessions WHERE id = '$pending_handoff';"
         echo ""
         echo "--- End of Handoff ---"
-        rm "$handoff_path"
-        echo "(Handoff document consumed and deleted)"
+        # Mark as resumed
+        sqlite3 "$DB_PATH" "UPDATE sessions SET resumed_at = datetime('now') WHERE id = '$pending_handoff';"
+        echo "(Handoff marked as resumed)"
         echo ""
     fi
 }

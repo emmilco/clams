@@ -541,27 +541,33 @@ When you need human input, ask clearly and wait for response.
 
 ### Ending a Session
 
-Use the `/wrapup` command before ending a session. This:
+Use the `/wrapup` command before ending a session:
+
+- `/wrapup` - Archive session (no continuation expected)
+- `/wrapup continue` - Handoff for continuation (next session should pick this up)
+
+This command:
 1. Marks all active workers as `session_ended`
 2. Creates a database backup
-3. Generates `.claude/HANDOFF.md` with:
+3. Saves handoff to the `sessions` table with:
    - Session summary
    - Active tasks and their status
    - **Friction points** encountered this session
    - Recommendations for next session
    - Next steps
-4. Commits the handoff document
+4. Sets `needs_continuation` flag based on command variant
 
 ### Starting a New Session
 
 Simply run `.claude/bin/clams-status`. The system will:
 1. Auto-cleanup stale workers (active > 2 hours)
 2. Detect if previous session ended with workers in progress
-3. Note if `HANDOFF.md` exists for review
-4. Show current task states and health
+3. Check database for pending handoffs (where `needs_continuation = true` and not yet resumed)
+4. Display handoff content and mark it as resumed
+5. Show current task states and health
 
 Then review context as needed:
-- Read `.claude/HANDOFF.md` for previous session context
+- The handoff content is displayed automatically if one exists
 - Check `planning_docs/` for task details
 - Resume work based on task phases
 

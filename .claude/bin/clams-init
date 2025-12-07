@@ -147,6 +147,18 @@ CREATE TABLE IF NOT EXISTS gate_passes (
 
 CREATE INDEX IF NOT EXISTS idx_gate_passes_task ON gate_passes(task_id, transition);
 
+-- Sessions (for handoff tracking)
+-- Stores session handoffs with optional continuation flag
+CREATE TABLE IF NOT EXISTS sessions (
+    id TEXT PRIMARY KEY,              -- UUID, generated at /wrapup time
+    created_at TEXT NOT NULL,         -- when /wrapup was called
+    handoff_content TEXT,             -- the markdown summary
+    needs_continuation BOOLEAN DEFAULT 0,
+    resumed_at TEXT                   -- when next session picked it up (null = unread)
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_pending ON sessions(needs_continuation, resumed_at);
+
 -- Migration: Add task_type column if it doesn't exist (for existing databases)
 -- SQLite doesn't have IF NOT EXISTS for ALTER TABLE, so we check first
 EOF
