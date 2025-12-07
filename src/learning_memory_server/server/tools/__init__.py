@@ -334,6 +334,29 @@ def _get_all_tool_definitions() -> list[Tool]:
         ),
         # === Git Tools (SPEC-002-11) ===
         Tool(
+            name="index_commits",
+            description="Index git commits for semantic search.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "since": {
+                        "type": "string",
+                        "description": "Optional date filter (ISO format YYYY-MM-DD)",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Optional max commits to index (default: all from last 5 years)",
+                    },
+                    "force": {
+                        "type": "boolean",
+                        "description": "Force reindex all commits (default: false, incremental)",
+                        "default": False,
+                    },
+                },
+                "required": [],
+            },
+        ),
+        Tool(
             name="search_commits",
             description="Search git commits semantically.",
             inputSchema={
