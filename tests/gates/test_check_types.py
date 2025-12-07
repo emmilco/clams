@@ -4,7 +4,6 @@ This test verifies BUG-007 fix: gate check hangs due to tokenizer parallelism.
 """
 
 import subprocess
-import sys
 from pathlib import Path
 
 
