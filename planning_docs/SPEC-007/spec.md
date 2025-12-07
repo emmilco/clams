@@ -68,6 +68,10 @@ This is a **comprehensive rename** that must touch every file containing referen
 - Git history (commit messages stay as-is)
 - External URLs (if any)
 - Third-party package names
+- `.claude/journal/session_entries.jsonl` (historical session logs)
+- Existing `changelog.d/*.md` entries (historical changelogs)
+- `tests/fixtures/` (test data files, not production references)
+- Historical references in `planning_docs/` (acceptable for context, e.g., "formerly known as CLAMS")
 
 ## Requirements
 
@@ -77,7 +81,7 @@ This is a **comprehensive rename** that must touch every file containing referen
 2. **Working Imports**: All Python imports must work after rename
 3. **Working Scripts**: All `.claude/bin/` scripts must work after rename
 4. **Database Migration**: Existing `.claude/clams.db` must be migrated or recreated as `.claude/claws.db`
-5. **MCP Server**: Server must register with new name (clams or claude-learning-memory-system)
+5. **MCP Server**: Server must register as `clams` (short, memorable)
 
 ### Non-Functional Requirements
 
@@ -92,14 +96,16 @@ This is a **comprehensive rename** that must touch every file containing referen
 Run comprehensive search for all references:
 
 ```bash
-# Find all CLAMS references
-grep -r "clams" --include="*.py" --include="*.md" --include="*.sh" --include="*.toml" --include="*.json" .
-grep -r "CLAMS" --include="*.py" --include="*.md" --include="*.sh" --include="*.toml" --include="*.json" .
+# Find all learning-memory-server references (case-insensitive)
+grep -ri "learning.memory" --include="*.py" --include="*.md" --include="*.sh" --include="*.toml" --include="*.json" .
+grep -ri "learning_memory" --include="*.py" --include="*.md" --include="*.sh" --include="*.toml" --include="*.json" .
+grep -ri "LMS_" --include="*.py" --include="*.md" --include="*.sh" --include="*.toml" --include="*.json" .
 
-# Find all learning-memory-server references
-grep -r "learning.memory" --include="*.py" --include="*.md" --include="*.sh" --include="*.toml" --include="*.json" .
-grep -r "learning_memory" --include="*.py" --include="*.md" --include="*.sh" --include="*.toml" --include="*.json" .
-grep -r "LMS_" --include="*.py" --include="*.md" --include="*.sh" --include="*.toml" --include="*.json" .
+# Find config files that might have references
+find . -name "*.json" -o -name "settings*.json" | xargs grep -l "learning.memory\|LMS_\|clams"
+
+# Check GETTING_STARTED.md specifically (known to have LMS references)
+grep -n "LMS_\|learning" GETTING_STARTED.md
 ```
 
 Create a complete manifest of files to change.
@@ -124,8 +130,10 @@ Create a complete manifest of files to change.
 1. Update `CLAUDE.md` (extensive changes - CLAMS → CLAWS for workflow)
 2. Update all `.claude/roles/*.md`
 3. Update `README.md`
-4. Update all `planning_docs/` references
-5. Update code comments and docstrings
+4. Update `GETTING_STARTED.md` (has `LMS_*` env vars and "Learning Memory Server" references)
+5. Update `.claude/settings.local.json` if it exists
+6. Update all `planning_docs/` references (except historical context)
+7. Update code comments and docstrings
 
 ### Phase 5: Verification
 
@@ -147,7 +155,8 @@ Create a complete manifest of files to change.
 6. [ ] Environment variables use `CLAMS_*` prefix (for memory system)
 7. [ ] `grep -ri "learning.memory\|learning_memory\|LMS_" --include="*.py" --include="*.md" --include="*.sh" --include="*.toml"` returns no matches (excluding git/planning history)
 8. [ ] Full test suite passes
-9. [ ] MCP server registers as "clams" or "claude-learning-memory-system"
+9. [ ] MCP server registers as `clams`
+10. [ ] `GETTING_STARTED.md` updated with CLAMS references and `CLAMS_*` environment variables
 
 ## Risks
 
