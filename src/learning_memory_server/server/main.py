@@ -11,7 +11,7 @@ from mcp.server.stdio import stdio_server
 from learning_memory_server.embedding import EmbeddingSettings, NomicEmbedding
 from learning_memory_server.server.config import ServerSettings
 from learning_memory_server.server.logging import configure_logging
-from learning_memory_server.server.tools import register_all_tools
+from learning_memory_server.server.tools import ServiceContainer, register_all_tools
 from learning_memory_server.storage.qdrant import QdrantVectorStore
 
 logger = structlog.get_logger()
@@ -166,7 +166,7 @@ async def initialize_collections(
 async def create_server(
     settings: ServerSettings,
     embedding_service: NomicEmbedding,
-) -> tuple[Server, "ServiceContainer"]:
+) -> tuple[Server, ServiceContainer]:
     """Create and configure the MCP server.
 
     Args:
@@ -178,8 +178,6 @@ async def create_server(
         services.close() when done to release resources and prevent
         shutdown hangs.
     """
-    from learning_memory_server.server.tools import ServiceContainer
-
     server = Server("learning-memory-server")
 
     # Register all tools
