@@ -5,8 +5,6 @@ from the current working directory when repo_path is not explicitly configured.
 """
 
 import os
-import tempfile
-from pathlib import Path
 
 import pytest
 from git import Repo

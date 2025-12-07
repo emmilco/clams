@@ -303,8 +303,8 @@ class ObservationPersister:
         return {
             "ghap_id": entry.id,
             "session_id": entry.session_id,
-            # Timestamps are float (Unix epoch with fractional seconds)
-            "created_at": entry.created_at.timestamp(),
+            # Store created_at as ISO format string for datetime.fromisoformat()
+            "created_at": entry.created_at.isoformat(),
             "captured_at": entry.outcome.captured_at.timestamp(),  # type: ignore[union-attr]
             "domain": entry.domain.value,
             "strategy": entry.strategy.value,
@@ -330,8 +330,32 @@ class ObservationPersister:
         """
         metadata = base_metadata.copy()
 
-        # Add root_cause_category for surprise and root_cause axes
-        if axis in ["surprise", "root_cause"] and entry.root_cause:
-            metadata["root_cause_category"] = entry.root_cause.category
+        # Add axis identifier
+        metadata["axis"] = axis
+
+        # Add GHAP content fields (required by ExperienceResult.from_search_result)
+        metadata["goal"] = entry.goal
+        metadata["hypothesis"] = entry.hypothesis
+        metadata["action"] = entry.action
+        metadata["prediction"] = entry.prediction
+        metadata["outcome_result"] = entry.outcome.result  # type: ignore[union-attr]
+
+        # Add optional fields (if present)
+        if entry.surprise:
+            metadata["surprise"] = entry.surprise
+
+        if entry.root_cause:
+            # Store as dict for nested dataclass reconstruction
+            metadata["root_cause"] = {
+                "category": entry.root_cause.category,
+                "description": entry.root_cause.description,
+            }
+
+        if entry.lesson:
+            # Store as dict for nested dataclass reconstruction
+            metadata["lesson"] = {
+                "what_worked": entry.lesson.what_worked,
+                "takeaway": entry.lesson.takeaway,
+            }
 
         return metadata

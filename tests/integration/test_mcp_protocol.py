@@ -9,7 +9,6 @@ These tests verify the full MCP protocol flow as Claude Code would experience it
 This catches bugs where tools are implemented but not discoverable.
 """
 
-import asyncio
 from collections.abc import AsyncIterator
 
 import pytest
@@ -70,7 +69,6 @@ async def mcp_session() -> AsyncIterator[ClientSession]:
     Module scope dramatically improves test performance by avoiding
     repeated server startup (each takes ~5s for model loading).
     """
-    import signal
 
     server_params = StdioServerParameters(
         command=".venv/bin/learning-memory-server",

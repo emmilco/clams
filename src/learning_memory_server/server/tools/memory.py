@@ -1,7 +1,8 @@
 """Memory tools for MCP server."""
 
+from collections.abc import Callable, Coroutine
 from datetime import UTC, datetime
-from typing import Any, Callable, Coroutine
+from typing import Any
 from uuid import uuid4
 
 import structlog

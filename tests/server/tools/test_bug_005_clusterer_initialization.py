@@ -5,7 +5,6 @@ with non-None Clusterer instances, preventing AttributeError when
 clustering operations are attempted.
 """
 
-import pytest
 
 from learning_memory_server.clustering import Clusterer, ExperienceClusterer
 from learning_memory_server.embedding import EmbeddingSettings, NomicEmbedding

@@ -94,7 +94,7 @@ async def initialize_services(
         try:
             from git import Repo
             repo = Repo(search_parent_directories=True)
-            repo_path_to_use = repo.working_dir
+            repo_path_to_use = str(repo.working_dir) if repo.working_dir else None
             logger.info("git.repo_auto_detected", repo_path=repo_path_to_use)
         except Exception:
             # Not in a git repo or git not available - that's fine
@@ -773,11 +773,11 @@ async def register_all_tools(
     tool_registry: dict[str, Any] = {}
 
     # Import tool implementations (they register themselves in the registry)
-    from .memory import get_memory_tools
     from .code import get_code_tools
-    from .git import get_git_tools
     from .ghap import get_ghap_tools
+    from .git import get_git_tools
     from .learning import get_learning_tools
+    from .memory import get_memory_tools
     from .search import get_search_tools
 
     # Register all tool implementations
@@ -808,8 +808,9 @@ async def register_all_tools(
         Returns:
             Tool result as a list of content items
         """
-        from mcp.types import TextContent
         import json
+
+        from mcp.types import TextContent
 
         if name not in tool_registry:
             return [TextContent(type="text", text=f"Unknown tool: {name}")]
@@ -835,7 +836,7 @@ async def register_all_tools(
             return [TextContent(type="text", text=f"Error: {str(e)}")]
 
     # Register list_tools handler - REQUIRED for Claude Code to discover tools
-    @server.list_tools()  # type: ignore[untyped-decorator]
+    @server.list_tools()  # type: ignore[no-untyped-call, untyped-decorator]
     async def handle_list_tools() -> list[Tool]:
         """Return all available tools with their schemas.
 

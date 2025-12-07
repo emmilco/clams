@@ -1,6 +1,5 @@
 """Tests for memory MCP tools."""
 
-from unittest.mock import Mock
 from uuid import UUID
 
 import pytest
