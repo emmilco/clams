@@ -564,6 +564,9 @@ class GitAnalyzer:
             cmd.extend(["--glob", file_pattern])
 
         # Run in executor (subprocess is blocking)
+        # Note: stdin=subprocess.DEVNULL is required because without it,
+        # ripgrep will try to read from stdin if no path is provided.
+        # In async context, stdin may be closed causing rg to exit with no matches.
         loop = asyncio.get_event_loop()
         try:
             result = await loop.run_in_executor(
@@ -573,6 +576,7 @@ class GitAnalyzer:
                     cwd=repo_root,
                     capture_output=True,
                     text=True,
+                    stdin=subprocess.DEVNULL,
                 ),
             )
         except FileNotFoundError:
