@@ -1,11 +1,11 @@
-# SPEC-007: Rename Systems to CAMS and CAWS
+# SPEC-007: Rename Systems to CLAMS and CLAWS
 
 ## Problem Statement
 
 The project currently contains two systems with unclear naming:
 
 1. **learning-memory-server**: An MCP server providing semantic memory, code indexing, git analysis, GHAP tracking, and value formation
-2. **CLAMS**: An agent orchestration workflow system for coordinating AI workers
+2. **CLAMS**: An agent orchestration workflow system for coordinating AI workers (currently "Claude Agent Management System")
 
 The current names don't clearly communicate what each system does or their relationship to Claude.
 
@@ -13,13 +13,14 @@ The current names don't clearly communicate what each system does or their relat
 
 | Current Name | New Name | Acronym | Purpose |
 |--------------|----------|---------|---------|
-| learning-memory-server | Claude Agent Memory System | **CAMS** | Semantic memory, code indexing, experience learning |
-| CLAMS (Claude Agent Management System) | Claude Agent Workflow System | **CAWS** | Agent orchestration, task management, phase gates |
+| learning-memory-server | Claude Learning and Memory System | **CLAMS** | Semantic memory, code indexing, experience learning |
+| CLAMS (Claude Agent Management System) | Claude Learning Agent Workflow System | **CLAWS** | Agent orchestration, task management, phase gates |
 
-Both are "Claude Agent *X* System" - a consistent naming pattern that:
+Both are "Claude L* A* *S" - a consistent naming pattern that:
 - Clearly identifies them as Claude-related tooling
 - Distinguishes their purposes (Memory vs Workflow)
-- Creates memorable, pronounceable acronyms
+- Creates memorable, pronounceable acronyms (CLAMS and CLAWS)
+- CLAMS keeps its name but changes meaning; workflow system becomes CLAWS
 
 ## Scope
 
@@ -27,11 +28,11 @@ This is a **comprehensive rename** that must touch every file containing referen
 
 ### Files and Patterns to Update
 
-#### CAMS (formerly learning-memory-server)
+#### CLAMS (formerly learning-memory-server)
 
 **Package/Module Names:**
-- `src/learning_memory_server/` → `src/cams/`
-- All imports: `from learning_memory_server.` → `from cams.`
+- `src/learning_memory_server/` → `src/clams/`
+- All imports: `from learning_memory_server.` → `from clams.`
 - `pyproject.toml`: package name, entry points
 - Test imports in `tests/`
 
@@ -43,23 +44,23 @@ This is a **comprehensive rename** that must touch every file containing referen
 
 **Configuration:**
 - MCP server name in configs
-- Environment variable prefixes: `LMS_*` → `CAMS_*`
+- Environment variable prefixes: `LMS_*` → `CLAMS_*`
 - Any hardcoded strings
 
-#### CAWS (formerly CLAMS)
+#### CLAWS (formerly CLAMS workflow system)
 
 **Scripts and Utilities:**
-- `.claude/bin/clams-*` → `.claude/bin/caws-*`
-- Database: `.claude/clams.db` → `.claude/caws.db`
+- `.claude/bin/clams-*` → `.claude/bin/claws-*`
+- Database: `.claude/clams.db` → `.claude/claws.db`
 - All script internals referencing "clams"
 
 **Documentation:**
-- `CLAUDE.md` - extensive CLAMS references
+- `CLAUDE.md` - extensive CLAMS references → CLAWS
 - `.claude/roles/*.md` - role definitions
-- Planning docs mentioning CLAMS
+- Planning docs mentioning CLAMS workflow
 
 **Code References:**
-- Any Python/shell scripts referencing CLAMS
+- Any Python/shell scripts referencing CLAMS workflow
 - Comments and docstrings
 
 ### Exclusions
@@ -75,8 +76,8 @@ This is a **comprehensive rename** that must touch every file containing referen
 1. **Complete Rename**: Every file in the repository must be checked for old name references
 2. **Working Imports**: All Python imports must work after rename
 3. **Working Scripts**: All `.claude/bin/` scripts must work after rename
-4. **Database Migration**: Existing `.claude/clams.db` must be migrated or recreated as `.claude/caws.db`
-5. **MCP Server**: Server must register with new name
+4. **Database Migration**: Existing `.claude/clams.db` must be migrated or recreated as `.claude/claws.db`
+5. **MCP Server**: Server must register with new name (clams or claude-learning-memory-system)
 
 ### Non-Functional Requirements
 
@@ -103,24 +104,24 @@ grep -r "LMS_" --include="*.py" --include="*.md" --include="*.sh" --include="*.t
 
 Create a complete manifest of files to change.
 
-### Phase 2: Package Rename (CAMS)
+### Phase 2: Package Rename (CLAMS - memory system)
 
-1. Rename `src/learning_memory_server/` → `src/cams/`
+1. Rename `src/learning_memory_server/` → `src/clams/`
 2. Update all imports in `src/` and `tests/`
 3. Update `pyproject.toml`
 4. Update any `__init__.py` module docstrings
-5. Rename environment variables `LMS_*` → `CAMS_*`
+5. Rename environment variables `LMS_*` → `CLAMS_*`
 
-### Phase 3: Script Rename (CAWS)
+### Phase 3: Script Rename (CLAWS - workflow system)
 
-1. Rename `.claude/bin/clams-*` → `.claude/bin/caws-*`
+1. Rename `.claude/bin/clams-*` → `.claude/bin/claws-*`
 2. Update internal references in each script
-3. Rename `.claude/clams.db` → `.claude/caws.db`
+3. Rename `.claude/clams.db` → `.claude/claws.db`
 4. Update all scripts that reference the database path
 
 ### Phase 4: Documentation Update
 
-1. Update `CLAUDE.md` (extensive changes)
+1. Update `CLAUDE.md` (extensive changes - CLAMS → CLAWS for workflow)
 2. Update all `.claude/roles/*.md`
 3. Update `README.md`
 4. Update all `planning_docs/` references
@@ -131,22 +132,22 @@ Create a complete manifest of files to change.
 1. Run `grep -r` to verify no orphaned references
 2. Run full test suite
 3. Manually test key workflows:
-   - MCP server startup
-   - `caws-status`
-   - `caws-task` operations
+   - MCP server startup (CLAMS)
+   - `claws-status`
+   - `claws-task` operations
    - Code indexing
 
 ## Acceptance Criteria
 
-1. [ ] `src/cams/` exists and `src/learning_memory_server/` is removed
-2. [ ] All Python imports use `from cams.` and work correctly
-3. [ ] `.claude/bin/caws-*` scripts exist and `.claude/bin/clams-*` are removed
-4. [ ] `.claude/caws.db` is the database path (migration handled)
-5. [ ] `CLAUDE.md` references CAWS throughout
-6. [ ] Environment variables use `CAMS_*` prefix
-7. [ ] `grep -ri "clams\|learning.memory\|learning_memory" --include="*.py" --include="*.md" --include="*.sh" --include="*.toml"` returns no matches (excluding git/planning history)
+1. [ ] `src/clams/` exists and `src/learning_memory_server/` is removed
+2. [ ] All Python imports use `from clams.` and work correctly
+3. [ ] `.claude/bin/claws-*` scripts exist and `.claude/bin/clams-*` are removed
+4. [ ] `.claude/claws.db` is the database path (migration handled)
+5. [ ] `CLAUDE.md` references CLAWS throughout (for workflow system)
+6. [ ] Environment variables use `CLAMS_*` prefix (for memory system)
+7. [ ] `grep -ri "learning.memory\|learning_memory\|LMS_" --include="*.py" --include="*.md" --include="*.sh" --include="*.toml"` returns no matches (excluding git/planning history)
 8. [ ] Full test suite passes
-9. [ ] MCP server registers as "cams" or "claude-agent-memory-system"
+9. [ ] MCP server registers as "clams" or "claude-learning-memory-system"
 
 ## Risks
 
