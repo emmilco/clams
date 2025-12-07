@@ -166,7 +166,7 @@ async def initialize_collections(
 async def create_server(
     settings: ServerSettings,
     embedding_service: NomicEmbedding,
-) -> Server:
+) -> tuple[Server, "ServiceContainer"]:
     """Create and configure the MCP server.
 
     Args:
@@ -174,15 +174,19 @@ async def create_server(
         embedding_service: Pre-initialized embedding service
 
     Returns:
-        Configured MCP Server instance
+        Tuple of (Server, ServiceContainer). Caller should call
+        services.close() when done to release resources and prevent
+        shutdown hangs.
     """
+    from learning_memory_server.server.tools import ServiceContainer
+
     server = Server("learning-memory-server")
 
     # Register all tools
-    await register_all_tools(server, settings, embedding_service)
+    services = await register_all_tools(server, settings, embedding_service)
 
     logger.info("server.created", server_name=server.name)
-    return server
+    return server, services
 
 
 async def run_server(
@@ -206,16 +210,21 @@ async def run_server(
         raise  # Fail fast - cannot proceed without storage
 
     # Create the server
-    server = await create_server(settings, embedding_service)
+    server, services = await create_server(settings, embedding_service)
 
-    # Run using stdio transport
-    async with stdio_server() as (read_stream, write_stream):
-        logger.info("server.ready", transport="stdio")
-        await server.run(
-            read_stream,
-            write_stream,
-            server.create_initialization_options(),
-        )
+    try:
+        # Run using stdio transport
+        async with stdio_server() as (read_stream, write_stream):
+            logger.info("server.ready", transport="stdio")
+            await server.run(
+                read_stream,
+                write_stream,
+                server.create_initialization_options(),
+            )
+    finally:
+        # Clean up services to prevent process hang
+        await services.close()
+        logger.info("server.services_closed")
 
 
 def main() -> None:
