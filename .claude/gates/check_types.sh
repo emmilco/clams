@@ -25,7 +25,8 @@ if [[ -f "pyproject.toml" ]] || [[ -f "setup.py" ]] || [[ -d "src" && -f "$(find
     if command -v mypy &> /dev/null || [[ -f ".venv/bin/mypy" ]]; then
         echo "Running: mypy --strict (via uv run)"
         # Use uv run to ensure we're in the right venv
-        if ! uv run mypy --strict src/ 2>&1; then
+        # Set TOKENIZERS_PARALLELISM=false to prevent hangs when type-checking sentence-transformers
+        if ! TOKENIZERS_PARALLELISM=false uv run mypy --strict src/ 2>&1; then
             PASS=false
         fi
     else
