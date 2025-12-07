@@ -55,7 +55,10 @@ class MiniLMEmbedding(EmbeddingService):
         Returns:
             int: Number of dimensions in output vectors
         """
-        return self.model.get_sentence_embedding_dimension()
+        dim = self.model.get_sentence_embedding_dimension()
+        if dim is None:
+            raise EmbeddingModelError("Model did not return embedding dimension")
+        return dim
 
     async def embed(self, text: str) -> Vector:
         """Generate embedding for a single text.

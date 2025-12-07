@@ -306,10 +306,19 @@ class QdrantVectorStore(VectorStore):
         """
         try:
             collection = await self._client.get_collection(name)
+            # Handle both single vector and named vector configs
+            vectors_config = collection.config.params.vectors
+            if isinstance(vectors_config, dict):
+                # Named vectors - get dimension from first vector config
+                first_config = next(iter(vectors_config.values()))
+                dimension = first_config.size
+            else:
+                # Single vector config
+                dimension = vectors_config.size if vectors_config else 0
             return CollectionInfo(
                 name=name,
-                dimension=collection.config.params.vectors.size,
-                vector_count=collection.points_count,
+                dimension=dimension,
+                vector_count=collection.points_count or 0,
             )
         except Exception as e:
             # Distinguish between "not found" vs real errors

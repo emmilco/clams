@@ -1,7 +1,5 @@
 """Embedding service registry for dual embedding models."""
 
-from typing import Any
-
 import structlog
 
 from .base import EmbeddingService, EmbeddingSettings
@@ -97,7 +95,8 @@ def get_code_embedder() -> EmbeddingService:
         RuntimeError: If registry not initialized
     """
     if _registry is None:
-        raise RuntimeError("Registry not initialized. Call initialize_registry() first.")
+        msg = "Registry not initialized. Call initialize_registry() first."
+        raise RuntimeError(msg)
     return _registry.get_code_embedder()
 
 
@@ -111,5 +110,6 @@ def get_semantic_embedder() -> EmbeddingService:
         RuntimeError: If registry not initialized
     """
     if _registry is None:
-        raise RuntimeError("Registry not initialized. Call initialize_registry() first.")
+        msg = "Registry not initialized. Call initialize_registry() first."
+        raise RuntimeError(msg)
     return _registry.get_semantic_embedder()

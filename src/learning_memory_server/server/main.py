@@ -94,7 +94,10 @@ async def create_server(
         services.close() when done to release resources and prevent
         shutdown hangs.
     """
-    from learning_memory_server.embedding import get_code_embedder, get_semantic_embedder
+    from learning_memory_server.embedding import (
+        get_code_embedder,
+        get_semantic_embedder,
+    )
 
     server = Server("learning-memory-server")
 
