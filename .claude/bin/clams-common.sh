@@ -43,6 +43,10 @@ GATES_DIR="$CLAUDE_DIR/gates"
 ROLES_DIR="$CLAUDE_DIR/roles"
 WORKTREE_DIR="$MAIN_REPO/.worktrees"
 
+# Prevent tokenizers library from hanging on fork (sentence-transformers, etc.)
+# This must be set before importing any HuggingFace libraries
+export TOKENIZERS_PARALLELISM=false
+
 # Export for subprocesses
 export MAIN_REPO CLAUDE_DIR DB_PATH GATES_DIR ROLES_DIR WORKTREE_DIR
 

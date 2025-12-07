@@ -79,6 +79,11 @@ cd .worktrees/SPEC-002-01 && .claude/bin/clams-status  # DON'T DO THIS
 .claude/bin/clams-review list <task_id>                    # List reviews for task
 .claude/bin/clams-review check <task_id> <type>            # Check if reviews pass
 .claude/bin/clams-review clear <task_id> [<type>]          # Clear reviews (restart cycle)
+
+# Sessions (handoff tracking)
+.claude/bin/clams-session save [--continue]    # Save handoff from stdin
+.claude/bin/clams-session list                 # List recent sessions
+.claude/bin/clams-session show <id>            # Show a session's handoff
 ```
 
 ## Specialist Roles

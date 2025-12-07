@@ -345,37 +345,40 @@ class TestGitWorkflow:
             metadata_store = MetadataStore(Path(tmpdir) / "metadata.db")
             await metadata_store.initialize()
 
-            analyzer = GitAnalyzer(
-                git_reader=git_reader,
-                embedding_service=embedding_service,
-                vector_store=vector_store,
-                metadata_store=metadata_store,
-            )
+            try:
+                analyzer = GitAnalyzer(
+                    git_reader=git_reader,
+                    embedding_service=embedding_service,
+                    vector_store=vector_store,
+                    metadata_store=metadata_store,
+                )
 
-            # Get churn hotspots (files with most changes in last 90 days)
-            hotspots = await analyzer.get_churn_hotspots(
-                days=90,
-                limit=10,
-                min_changes=1,  # Low threshold to ensure we get results
-            )
+                # Get churn hotspots (files with most changes in last 90 days)
+                hotspots = await analyzer.get_churn_hotspots(
+                    days=90,
+                    limit=10,
+                    min_changes=1,  # Low threshold to ensure we get results
+                )
 
-            # Verify we get a list of churn records
-            assert isinstance(hotspots, list)
+                # Verify we get a list of churn records
+                assert isinstance(hotspots, list)
 
-            # If there are results, verify structure
-            if len(hotspots) > 0:
-                first_hotspot = hotspots[0]
-                # Verify ChurnRecord structure
-                assert hasattr(first_hotspot, "file_path")
-                assert hasattr(first_hotspot, "change_count")
-                assert hasattr(first_hotspot, "total_insertions")
-                assert hasattr(first_hotspot, "total_deletions")
-                assert hasattr(first_hotspot, "authors")
-                assert hasattr(first_hotspot, "last_changed")
+                # If there are results, verify structure
+                if len(hotspots) > 0:
+                    first_hotspot = hotspots[0]
+                    # Verify ChurnRecord structure
+                    assert hasattr(first_hotspot, "file_path")
+                    assert hasattr(first_hotspot, "change_count")
+                    assert hasattr(first_hotspot, "total_insertions")
+                    assert hasattr(first_hotspot, "total_deletions")
+                    assert hasattr(first_hotspot, "authors")
+                    assert hasattr(first_hotspot, "last_changed")
 
-                # Verify ordering (most changes first)
-                for i in range(1, len(hotspots)):
-                    assert hotspots[i - 1].change_count >= hotspots[i].change_count
+                    # Verify ordering (most changes first)
+                    for i in range(1, len(hotspots)):
+                        assert hotspots[i - 1].change_count >= hotspots[i].change_count
+            finally:
+                await metadata_store.close()
 
     async def test_code_authors(
         self,
@@ -396,39 +399,42 @@ class TestGitWorkflow:
             metadata_store = MetadataStore(Path(tmpdir) / "metadata.db")
             await metadata_store.initialize()
 
-            analyzer = GitAnalyzer(
-                git_reader=git_reader,
-                embedding_service=embedding_service,
-                vector_store=vector_store,
-                metadata_store=metadata_store,
-            )
+            try:
+                analyzer = GitAnalyzer(
+                    git_reader=git_reader,
+                    embedding_service=embedding_service,
+                    vector_store=vector_store,
+                    metadata_store=metadata_store,
+                )
 
-            # Get authors for a file that exists in the repo
-            # Use this test file itself as it definitely exists
-            test_file = "tests/integration/test_e2e.py"
-            authors = await analyzer.get_file_authors(test_file)
+                # Get authors for a file that exists in the repo
+                # Use this test file itself as it definitely exists
+                test_file = "tests/integration/test_e2e.py"
+                authors = await analyzer.get_file_authors(test_file)
 
-            # Verify we get a list of author stats
-            assert isinstance(authors, list)
+                # Verify we get a list of author stats
+                assert isinstance(authors, list)
 
-            # If there are results, verify structure
-            if len(authors) > 0:
-                first_author = authors[0]
-                # Verify AuthorStats structure
-                assert hasattr(first_author, "author")
-                assert hasattr(first_author, "author_email")
-                assert hasattr(first_author, "commit_count")
-                assert hasattr(first_author, "lines_added")
-                assert hasattr(first_author, "lines_removed")
-                assert hasattr(first_author, "first_commit")
-                assert hasattr(first_author, "last_commit")
+                # If there are results, verify structure
+                if len(authors) > 0:
+                    first_author = authors[0]
+                    # Verify AuthorStats structure
+                    assert hasattr(first_author, "author")
+                    assert hasattr(first_author, "author_email")
+                    assert hasattr(first_author, "commit_count")
+                    assert hasattr(first_author, "lines_added")
+                    assert hasattr(first_author, "lines_removed")
+                    assert hasattr(first_author, "first_commit")
+                    assert hasattr(first_author, "last_commit")
 
-                # Verify we have at least one commit for this file
-                assert first_author.commit_count >= 1
+                    # Verify we have at least one commit for this file
+                    assert first_author.commit_count >= 1
 
-                # Verify ordering (most commits first)
-                for i in range(1, len(authors)):
-                    assert authors[i - 1].commit_count >= authors[i].commit_count
+                    # Verify ordering (most commits first)
+                    for i in range(1, len(authors)):
+                        assert authors[i - 1].commit_count >= authors[i].commit_count
+            finally:
+                await metadata_store.close()
 
 
 class TestGHAPLearningLoop:

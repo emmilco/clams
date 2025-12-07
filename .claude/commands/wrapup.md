@@ -7,7 +7,7 @@ You are ending a CLAMS session. Complete the following steps:
 - `/wrapup` - Archive session (default, `needs_continuation = false`)
 - `/wrapup continue` - Handoff for continuation (`needs_continuation = true`)
 
-Check if the user specified `continue` - this determines whether the next session should pick up this handoff.
+Check if the user specified `continue` - this determines whether the next session should pick this up.
 
 ## 1. Mark Active Workers as Ended
 
@@ -37,11 +37,13 @@ Reflect on this session and identify the **top 3-5 friction points**:
 - Missing artifacts or unclear requirements
 - Process issues or workflow gaps
 
-## 5. Compose Handoff Content
+## 5. Save Handoff to Database
 
-Create the handoff markdown content (do NOT write to a file):
+Use `clams-session save` to store the handoff. This command reads from stdin and handles encoding automatically.
 
-```markdown
+**For `/wrapup` (no continuation expected):**
+```bash
+cat <<'EOF' | .claude/bin/clams-session save
 # Session Handoff - [DATE]
 
 ## Session Summary
@@ -68,26 +70,20 @@ For each task not in DONE:
 1. [Immediate priority]
 2. [Secondary priority]
 3. ...
+EOF
 ```
 
-## 6. Save to Database
-
-Insert the handoff into the sessions table. Use a UUID for the id.
-
+**For `/wrapup continue` (continuation expected):**
 ```bash
-# Generate UUID
-SESSION_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
-
-# For /wrapup (no continuation expected):
-sqlite3 .claude/clams.db "INSERT INTO sessions (id, created_at, handoff_content, needs_continuation) VALUES ('$SESSION_ID', datetime('now'), '<HANDOFF_CONTENT>', 0);"
-
-# For /wrapup continue (continuation expected):
-sqlite3 .claude/clams.db "INSERT INTO sessions (id, created_at, handoff_content, needs_continuation) VALUES ('$SESSION_ID', datetime('now'), '<HANDOFF_CONTENT>', 1);"
+cat <<'EOF' | .claude/bin/clams-session save --continue
+# Session Handoff - [DATE]
+...
+EOF
 ```
 
-**Important**: Escape single quotes in the handoff content by doubling them (`'` becomes `''`).
+**IMPORTANT**: Use the `'EOF'` marker (with quotes) to prevent shell expansion. Replace the content between `cat <<'EOF'` and `EOF` with your actual handoff content.
 
-## 7. Output Summary
+## 6. Output Summary
 
 Tell the human:
 - What was accomplished this session
