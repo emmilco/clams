@@ -20,11 +20,15 @@ pytestmark = pytest.mark.integration
 from learning_memory_server.embedding import MockEmbedding
 from learning_memory_server.observation import (
     Domain,
-    Lesson as GHAPLesson,
     ObservationCollector,
     OutcomeStatus,
-    RootCause as GHAPRootCause,
     Strategy,
+)
+from learning_memory_server.observation import (
+    Lesson as GHAPLesson,
+)
+from learning_memory_server.observation import (
+    RootCause as GHAPRootCause,
 )
 from learning_memory_server.observation.persister import ObservationPersister
 from learning_memory_server.search import Searcher
