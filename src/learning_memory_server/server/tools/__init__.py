@@ -30,6 +30,10 @@ class ServiceContainer:
 
     Services that depend on incomplete specs (SPEC-002-06, 07, 09) are optional
     and initialized lazily when needed.
+
+    IMPORTANT: Call close() when done to release resources and prevent
+    process hangs during shutdown (the MetadataStore's aiosqlite connection
+    creates a non-daemon thread that blocks interpreter exit).
     """
 
     embedding_service: EmbeddingService
@@ -38,6 +42,17 @@ class ServiceContainer:
     code_indexer: object | None = None  # Will be CodeIndexer when SPEC-002-06 complete
     git_analyzer: object | None = None  # Will be GitAnalyzer when SPEC-002-07 complete
     searcher: object | None = None  # Will be Searcher when SPEC-002-09 complete
+
+    async def close(self) -> None:
+        """Close all services and release resources.
+
+        This must be called to prevent process hangs during shutdown.
+        The MetadataStore's aiosqlite connection creates a non-daemon
+        background thread that blocks Python interpreter exit if not closed.
+        """
+        if self.metadata_store:
+            await self.metadata_store.close()
+            logger.debug("services.metadata_store_closed")
 
 
 async def initialize_services(
@@ -710,13 +725,17 @@ async def register_all_tools(
     server: Server,
     settings: ServerSettings,
     embedding_service: EmbeddingService,
-) -> None:
+) -> ServiceContainer:
     """Register all MCP tools with the server.
 
     Args:
         server: MCP Server instance
         settings: Server configuration
         embedding_service: Pre-initialized embedding service
+
+    Returns:
+        ServiceContainer with initialized services (caller should call close()
+        when done to release resources and prevent shutdown hangs)
     """
     # Initialize shared services
     services = await initialize_services(settings, embedding_service)
@@ -852,3 +871,5 @@ async def register_all_tools(
         has_searcher=services.searcher is not None,
         tool_count=len(_get_all_tool_definitions()),
     )
+
+    return services

@@ -36,6 +36,7 @@ async def test_git_auto_detection_in_repo(tmp_path, embedding_service):
     # Change to repo directory
     original_cwd = os.getcwd()
     os.chdir(tmp_path)
+    services = None
 
     try:
         # Action: Initialize services without repo_path config
@@ -50,6 +51,8 @@ async def test_git_auto_detection_in_repo(tmp_path, embedding_service):
         assert services.git_analyzer is not None
         assert services.git_analyzer.git_reader.get_repo_root() == str(tmp_path)
     finally:
+        if services:
+            await services.close()
         os.chdir(original_cwd)
 
 
@@ -70,6 +73,7 @@ async def test_git_explicit_config_overrides_auto_detection(tmp_path, embedding_
     # Change to repo1
     original_cwd = os.getcwd()
     os.chdir(tmp_path / "repo1")
+    services = None
 
     try:
         # Action: Initialize with explicit path to repo2
@@ -84,6 +88,8 @@ async def test_git_explicit_config_overrides_auto_detection(tmp_path, embedding_
         assert services.git_analyzer is not None
         assert services.git_analyzer.git_reader.get_repo_root() == str(tmp_path / "repo2")
     finally:
+        if services:
+            await services.close()
         os.chdir(original_cwd)
 
 
@@ -95,6 +101,7 @@ async def test_git_graceful_failure_when_not_in_repo(tmp_path, embedding_service
 
     original_cwd = os.getcwd()
     os.chdir(tmp_path / "not_a_repo")
+    services = None
 
     try:
         # Action: Initialize services
@@ -108,4 +115,6 @@ async def test_git_graceful_failure_when_not_in_repo(tmp_path, embedding_service
         # Assert: Git analyzer should be None (graceful degradation)
         assert services.git_analyzer is None
     finally:
+        if services:
+            await services.close()
         os.chdir(original_cwd)

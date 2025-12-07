@@ -26,17 +26,23 @@ def test_create_embedding_service() -> None:
 async def test_create_server(embedding_service: NomicEmbedding) -> None:
     """Test that create_server creates a properly configured server."""
     settings = ServerSettings()
-    server = await create_server(settings, embedding_service)
+    server, services = await create_server(settings, embedding_service)
 
-    assert server is not None
-    assert server.name == "learning-memory-server"
+    try:
+        assert server is not None
+        assert server.name == "learning-memory-server"
+    finally:
+        await services.close()
 
 
 async def test_server_has_ping_tool(embedding_service: NomicEmbedding) -> None:
     """Test that the server has the ping tool registered."""
     settings = ServerSettings()
-    server = await create_server(settings, embedding_service)
+    server, services = await create_server(settings, embedding_service)
 
-    # Check that tools were registered
-    # The server should have the ping tool available
-    assert hasattr(server, "call_tool")
+    try:
+        # Check that tools were registered
+        # The server should have the ping tool available
+        assert hasattr(server, "call_tool")
+    finally:
+        await services.close()
