@@ -22,6 +22,75 @@ def get_git_tools(services: ServiceContainer) -> dict[str, Any]:
         Dictionary mapping tool names to their implementations
     """
 
+    async def index_commits(
+        since: str | None = None,
+        limit: int | None = None,
+        force: bool = False,
+    ) -> dict[str, Any]:
+        """Index git commits for semantic search.
+
+        Args:
+            since: Optional date filter (ISO format YYYY-MM-DD)
+            limit: Optional max commits to index
+            force: Force reindex all commits (default: incremental)
+
+        Returns:
+            Indexing statistics
+
+        Raises:
+            ValidationError: If parameters are invalid
+            MCPError: If indexing fails or GitAnalyzer not available
+        """
+        logger.info("git.index_commits", since=since, limit=limit, force=force)
+
+        # Check if git analyzer is available
+        if not services.git_analyzer:
+            raise MCPError(
+                "Git commit indexing not available. "
+                "GitAnalyzer service not initialized."
+            )
+
+        # Parse date if provided
+        since_dt = None
+        if since:
+            try:
+                since_dt = datetime.fromisoformat(since)
+            except ValueError as e:
+                raise ValidationError(
+                    f"Invalid date format '{since}'. Use ISO format: YYYY-MM-DD"
+                ) from e
+
+        # Validate limit if provided
+        if limit is not None and limit < 1:
+            raise ValidationError(f"Limit must be positive, got {limit}")
+
+        try:
+            # Delegate to GitAnalyzer
+            stats = await services.git_analyzer.index_commits(  # type: ignore[attr-defined]
+                since=since_dt,
+                limit=limit,
+                force=force,
+            )
+
+            # Format response
+            return {
+                "commits_indexed": stats.commits_indexed,
+                "commits_skipped": stats.commits_skipped,
+                "duration_ms": stats.duration_ms,
+                "errors": [
+                    {
+                        "sha": e.sha,
+                        "error_type": e.error_type,
+                        "message": e.message,
+                    }
+                    for e in stats.errors
+                ],
+            }
+
+        except Exception as e:
+            logger.error("git.index_commits_failed", error=str(e), exc_info=True)
+            raise MCPError(f"Failed to index commits: {e}") from e
+
     async def search_commits(
         query: str,
         author: str | None = None,
@@ -289,6 +358,7 @@ def get_git_tools(services: ServiceContainer) -> dict[str, Any]:
             raise MCPError(f"Failed to get code authors: {e}") from e
 
     return {
+        "index_commits": index_commits,
         "search_commits": search_commits,
         "get_file_history": get_file_history,
         "get_churn_hotspots": get_churn_hotspots,
