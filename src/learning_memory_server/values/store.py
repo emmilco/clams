@@ -65,7 +65,7 @@ class ValueStore:
             List of ClusterInfo objects sorted by size (descending)
 
         Raises:
-            ValueError: If axis is invalid
+            ValueError: If axis is invalid or insufficient data for clustering
         """
         if axis not in VALID_AXES:
             raise ValueError(f"Invalid axis '{axis}'. Must be one of: {VALID_AXES}")
@@ -75,9 +75,13 @@ class ValueStore:
             ClusterInfo as ClusteringClusterInfo,
         )
 
-        clustering_results: list[
-            ClusteringClusterInfo
-        ] = await self.clusterer.cluster_axis(axis)
+        try:
+            clustering_results: list[
+                ClusteringClusterInfo
+            ] = await self.clusterer.cluster_axis(axis)
+        except ValueError as e:
+            # Re-raise with context about insufficient data
+            raise ValueError(f"Cannot get clusters for axis '{axis}': {e}") from e
 
         # Convert to values.ClusterInfo and add cluster_id
         cluster_result = [
@@ -162,13 +166,14 @@ class ValueStore:
 
         Returns:
             ValidationResult with validity and metrics
-
-        Raises:
-            ValueError: If cluster_id is invalid
         """
         # Get cluster and members
-        cluster = await self._get_cluster(cluster_id)
-        members = await self.get_cluster_members(cluster_id)
+        try:
+            cluster = await self._get_cluster(cluster_id)
+            members = await self.get_cluster_members(cluster_id)
+        except ValueError as e:
+            # Return validation failure instead of raising exception
+            return ValidationResult(valid=False, reason=str(e))
 
         if len(members) == 0:
             return ValidationResult(valid=False, reason="Cluster has no members")
