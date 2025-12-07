@@ -196,7 +196,8 @@ class TestGitAnalyzer:
             assert result.commit.message
             assert result.commit.author
             assert isinstance(result.score, float)
-            assert 0.0 <= result.score <= 1.0
+            # Cosine similarity ranges from -1 to 1
+            assert -1.0 <= result.score <= 1.0
 
     async def test_search_commits_with_author_filter(self, analyzer):
         """Test commit search with author filter."""
