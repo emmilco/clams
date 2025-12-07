@@ -55,6 +55,8 @@ def mock_clusterer():
             avg_weight=0.8,
         ),
     ]
+    # Mock count_experiences to return sufficient count (> 20) by default
+    clusterer.count_experiences.return_value = 25
     return clusterer
 
 
