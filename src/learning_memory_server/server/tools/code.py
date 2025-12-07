@@ -58,6 +58,25 @@ def get_code_tools(services: ServiceContainer) -> dict[str, Any]:
             if not dir_path.is_dir():
                 raise ValidationError(f"Not a directory: {directory}")
 
+            # Define default exclusion patterns to avoid indexing
+            # virtual environments, dependencies, and build artifacts
+            default_exclusions = [
+                "**/.venv/**",
+                "**/venv/**",
+                "**/node_modules/**",
+                "**/.git/**",
+                "**/__pycache__/**",
+                "**/dist/**",
+                "**/build/**",
+                "**/target/**",
+                "**/.pytest_cache/**",
+                "**/.mypy_cache/**",
+                "**/.ruff_cache/**",
+                "**/htmlcov/**",
+                "**/.coverage",
+                "**/*.egg-info/**",
+            ]
+
             # Index
             # Note: This will need the actual CodeIndexer interface
             # when SPEC-002-06 is complete
@@ -65,6 +84,7 @@ def get_code_tools(services: ServiceContainer) -> dict[str, Any]:
                 path=directory,
                 project=project,
                 recursive=recursive,
+                exclude_patterns=default_exclusions,
             )
 
             logger.info(
