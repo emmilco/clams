@@ -762,8 +762,7 @@ Based on proposal review and human feedback, these decisions have been made:
    - Verify other tools have `_ensure_collection()` pattern
 
 5. **Phase 5: Service Container**
-   - Update `ServiceContainer` to hold both embedders
-   - Add `embedding_service` property for backward compatibility
+   - Update `ServiceContainer` to hold both embedders (`code_embedder`, `semantic_embedder`)
    - Update `initialize_services()` to use dual embedders
    - Update `register_all_tools()` to wire correct embedder per tool
 
