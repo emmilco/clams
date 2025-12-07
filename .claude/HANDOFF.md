@@ -2,54 +2,75 @@
 
 ## Session Summary
 
-This session focused on completing bug merges and implementing a new gate pass verification feature:
+This session focused on SPEC-005: Portable Installation for learning-memory-server. The spec defines a one-command installation system for the learning-memory-server MCP server, including:
 
-1. **BUG-003 Merged**: Fixed `index_codebase` 409 error on re-index. Successfully merged to main and transitioned to DONE.
-
-2. **SPEC-004 Implementation**: Designed and implemented commit-anchored gate pass verification to ensure transitions cannot happen without proper gate checks. Implementation complete, pending gate check and review.
+- Docker Compose for Qdrant (pinned v1.12.1)
+- Installation script with `--global` and `--skip-qdrant` flags
+- Hook registration for SessionStart, UserPromptSubmit, PreToolUse, PostToolUse
+- Journal directory initialization
+- Safe JSON merging that preserves existing user configuration
 
 ## Active Tasks
 
-### Features
-- **SPEC-004**: IMPLEMENT - Implementation complete (committed). Gate check in progress but may fail because changes are in `.claude/bin/` not `src/`/`tests/`. This is infrastructure code (bash scripts) that doesn't follow the standard Python project structure.
+### SPEC-005: Portable Installation (IMPLEMENT phase)
+- **Status**: Implementation complete, waiting for gate check
+- **Files created**:
+  - `docker-compose.yml` - Qdrant service config
+  - `scripts/install.sh` - Full installer (~600 lines)
+  - `.mcp.json` - Project-local MCP config
+  - `tests/installation/test_install_script.py` - Validation tests
+  - Updated `README.md` and `GETTING_STARTED.md`
+- **Next**: Gate check running (tests pass: 489/489), needs transition to CODE_REVIEW
+- **Worktree**: `.worktrees/SPEC-005`
+- **Commit**: `639fd60` (latest)
 
-### Bugs
-- **BUG-004**: INVESTIGATED - Duplicate of BUG-003. Will be auto-fixed now that BUG-003 is merged. Should transition directly to DONE.
-- **BUG-005**: REVIEWED - Ready for REVIEWED-TESTED gate check and merge. Three tools return internal server errors due to missing Clusterer init.
+### BUG-006: search_experiences KeyError (INVESTIGATED phase)
+- **Status**: A bug was discovered and investigated during this session
+- **Root cause**: Incomplete GHAP payload schema in search results
+- **Worktree**: `.worktrees/BUG-006`
+- **Worker**: W-1765065056-47820 (backend) dispatched but session ending
 
-## Blocked Items
+## Friction Points
 
-- **SPEC-004** is soft-blocked: The `IMPLEMENT-CODE_REVIEW` gate expects code changes in `src/` or `tests/`, but SPEC-004 modifies bash scripts in `.claude/bin/`. Need to either:
-  1. Modify gate to accept `.claude/` changes for infrastructure tasks
-  2. Manually bypass the gate for this task
-  3. Create a special "infrastructure" task type
+1. **Gate check timing**: The IMPLEMENT-CODE_REVIEW gate check runs all tests (~50s) and can appear to hang due to output buffering. The tests pass but the gate script may not complete cleanly.
 
-## Friction Points This Session
+2. **Background process management**: Multiple background gate checks were started which needed to be killed. Future: run gate checks in foreground.
 
-1. **Gate check expects src/tests changes** - SPEC-004 modifies CLAMS infrastructure (bash scripts in `.claude/bin/`), but the gate only looks for `src/` or `tests/` changes. The gate definition doesn't account for infrastructure code.
-
-2. **BashOutput polling inefficiency** - Spent excessive turns polling BashOutput waiting for test results. Should use foreground commands or read log files directly instead.
-
-3. **Stale background process** - The BUG-003 gate check process (af8ee5) continued showing as "running" throughout the session even after being killed. System reminders about it were distracting.
-
-4. **Gate pass verification came from this session's bug** - We discovered the gap when BUG-003 was transitioned to DONE without verifying tests passed. This led to SPEC-004 being created mid-session.
+3. **Review cycle iterations**: The spec and proposal went through multiple review cycles due to:
+   - Initial spec incorrectly proposed removing hooks (they're integral)
+   - JSON merging strategy needed correction for array concatenation
+   - Hook deduplication needed case statements and matcher parameters
 
 ## Recommendations for Next Session
 
-1. **Handle SPEC-004 infrastructure exception** - Either modify the gate check to accept `.claude/` changes, or manually transition this task since it's infrastructure code.
+1. **For SPEC-005**:
+   - Run `.claude/bin/clams-gate check SPEC-005 IMPLEMENT-CODE_REVIEW` in foreground
+   - If passes, run `.claude/bin/clams-task transition SPEC-005 CODE_REVIEW --gate-result pass`
+   - Dispatch code reviewers (2 required)
 
-2. **Complete BUG-005 merge** - Run gate check and merge (similar to BUG-003 process).
+2. **For BUG-006**:
+   - Check worktree status in `.worktrees/BUG-006`
+   - Review bug report at `bug_reports/BUG-006.md`
+   - Continue with fix implementation if investigation is complete
 
-3. **Close BUG-004** - Transition directly to DONE with note that BUG-003 fix resolved it.
+3. **General**:
+   - System is HEALTHY, no merge lock
+   - 9 merges since E2E (threshold is 12)
+   - All tests passing
 
-4. **Re-test MCP server** - After all bugs are merged, verify all MCP tools work correctly.
+## Files Modified This Session
 
-5. **Consider infrastructure task type** - CLAMS infrastructure changes don't fit the standard feature/bug workflow. May need a lighter-weight process for `.claude/` changes.
+In `.worktrees/SPEC-005`:
+- `docker-compose.yml` (new)
+- `scripts/install.sh` (new)
+- `.mcp.json` (new)
+- `tests/installation/test_install_script.py` (new)
+- `README.md` (updated)
+- `GETTING_STARTED.md` (updated)
+- `planning_docs/SPEC-005/spec.md` (updated)
+- `planning_docs/SPEC-005/proposal.md` (updated)
 
-## Next Steps
+## Active Workers at Session End
 
-1. Decide how to handle SPEC-004 gate check (infrastructure code exception)
-2. Complete SPEC-004 through merge if approved
-3. Run `clams-gate check BUG-005 REVIEWED-TESTED` and complete merge
-4. Close BUG-004 as duplicate
-5. Verify MCP server tools work after all merges
+1. W-1765063872-13349 (spec-reviewer, SPEC-005) - stale, should be cleaned up
+2. W-1765065056-47820 (backend, BUG-006) - active investigation
