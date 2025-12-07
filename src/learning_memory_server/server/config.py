@@ -23,6 +23,10 @@ class ServerSettings(BaseSettings):
     embedding_model: str = "nomic-ai/nomic-embed-text-v1.5"
     embedding_dimension: int = 768
 
+    # Dual embedding model configuration
+    code_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    semantic_model: str = "nomic-ai/nomic-embed-text-v1.5"
+
     # Clustering configuration
     hdbscan_min_cluster_size: int = 5
     hdbscan_min_samples: int = 3

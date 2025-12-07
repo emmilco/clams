@@ -37,34 +37,50 @@ class CodeIndexer:
         self._collection_ensured = False
 
     async def _ensure_collection(self) -> None:
-        """Create collection if it doesn't exist.
+        """Create collection if it doesn't exist, recreate if dimension mismatches.
+
+        Automatically migrates from different dimension (e.g., 768-dim Nomic to
+        384-dim MiniLM) by recreating the collection. User's next index_codebase
+        call will repopulate.
 
         Called automatically from index_file() and index_directory() entry points.
         Uses instance-level caching to avoid repeated creation attempts.
-
-        Note: VectorStore.create_collection() raises different exceptions depending
-        on the backend when a collection already exists:
-        - InMemoryVectorStore: raises ValueError
-        - QdrantVectorStore (server mode): raises UnexpectedResponse (HTTP 409)
-        We catch both by checking for "already exists" in the error message.
         """
         if self._collection_ensured:
             return  # Already verified in this instance
 
         try:
+            # Check if collection exists and verify dimension
+            try:
+                info = await self.vector_store.get_collection_info(self.COLLECTION_NAME)
+                if info and info.dimension != self.embedding_service.dimension:
+                    logger.warning(
+                        "dimension_mismatch",
+                        collection=self.COLLECTION_NAME,
+                        expected=self.embedding_service.dimension,
+                        actual=info.dimension,
+                        action="recreating_collection",
+                    )
+                    await self.vector_store.delete_collection(self.COLLECTION_NAME)
+            except Exception:
+                # Collection doesn't exist - that's fine
+                pass
+
+            # Create with correct dimension
             await self.vector_store.create_collection(
                 name=self.COLLECTION_NAME,
                 dimension=self.embedding_service.dimension,
             )
-            logger.info("collection_created", name=self.COLLECTION_NAME)
+            logger.info(
+                "collection_created",
+                name=self.COLLECTION_NAME,
+                dimension=self.embedding_service.dimension,
+            )
         except Exception as e:
-            # Collection already exists - this is expected on subsequent runs
-            # Check if it's a "collection exists" error (works for both backends)
             error_msg = str(e).lower()
             if "already exists" in error_msg or "409" in str(e):
                 logger.debug("collection_exists", name=self.COLLECTION_NAME)
             else:
-                # Unexpected error - re-raise
                 raise
 
         self._collection_ensured = True

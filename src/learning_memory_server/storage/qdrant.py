@@ -7,7 +7,7 @@ import numpy as np
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http import models as qmodels
 
-from .base import SearchResult, StorageSettings, Vector, VectorStore
+from .base import CollectionInfo, SearchResult, StorageSettings, Vector, VectorStore
 
 # Namespace UUID for generating deterministic UUIDs from string IDs
 _NAMESPACE = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
@@ -291,3 +291,29 @@ class QdrantVectorStore(VectorStore):
 
         # Qdrant accepts Sequence but list is covariant-compatible
         return qmodels.Filter(must=conditions if conditions else None)
+
+    async def get_collection_info(self, name: str) -> CollectionInfo | None:
+        """Get collection metadata from Qdrant.
+
+        Args:
+            name: Collection name
+
+        Returns:
+            CollectionInfo if collection exists, None if not found
+
+        Raises:
+            Exception: For Qdrant connection/network errors
+        """
+        try:
+            collection = await self._client.get_collection(name)
+            return CollectionInfo(
+                name=name,
+                dimension=collection.config.params.vectors.size,
+                vector_count=collection.points_count,
+            )
+        except Exception as e:
+            # Distinguish between "not found" vs real errors
+            if "not found" in str(e).lower() or "404" in str(e):
+                return None
+            # Re-raise connection/network errors
+            raise

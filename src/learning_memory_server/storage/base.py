@@ -22,6 +22,15 @@ class SearchResult:
     vector: Vector | None = None
 
 
+@dataclass
+class CollectionInfo:
+    """Information about a vector collection."""
+
+    name: str
+    dimension: int
+    vector_count: int
+
+
 class VectorStore(ABC):
     """Abstract base class for vector storage implementations."""
 
@@ -145,6 +154,21 @@ class VectorStore(ABC):
 
         Returns:
             SearchResult if found, None otherwise
+        """
+        pass
+
+    @abstractmethod
+    async def get_collection_info(self, name: str) -> CollectionInfo | None:
+        """Get collection metadata.
+
+        Args:
+            name: Collection name
+
+        Returns:
+            CollectionInfo if collection exists, None otherwise
+
+        Raises:
+            Exception: For network/connection errors (NOT for missing collections)
         """
         pass
 

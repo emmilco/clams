@@ -158,7 +158,7 @@ def get_code_tools(services: ServiceContainer) -> dict[str, Any]:
 
         try:
             # Generate query embedding
-            query_embedding = await services.embedding_service.embed(query)
+            query_embedding = await services.code_embedder.embed(query)
 
             # Build filters
             filters = {}
@@ -240,7 +240,7 @@ def get_code_tools(services: ServiceContainer) -> dict[str, Any]:
 
         try:
             # Generate embedding from snippet
-            snippet_embedding = await services.embedding_service.embed(snippet)
+            snippet_embedding = await services.code_embedder.embed(snippet)
 
             # Build filters
             filters = {"project": project} if project else None
