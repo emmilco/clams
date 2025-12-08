@@ -99,7 +99,7 @@ def get_search_tools(searcher: Searcher) -> dict[str, Any]:
                 count=len(results),
             )
 
-            # BUG-021: Convert ExperienceResult dataclasses to dicts for JSON serialization
+            # BUG-021: Convert ExperienceResult dataclasses to dicts for JSON
             formatted = [
                 {
                     "id": r.id,
