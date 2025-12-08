@@ -785,6 +785,8 @@ async def register_all_tools(
         embedding_service=services.semantic_embedder,  # Nomic
         vector_store=services.vector_store,
     )
+    # BUG-016: Ensure GHAP collections exist before registering tools
+    await observation_persister.ensure_collections()
     register_ghap_tools(server, observation_collector, observation_persister)
 
     # Initialize and register learning tools - use semantic_embedder
