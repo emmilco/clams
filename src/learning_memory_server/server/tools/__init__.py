@@ -36,7 +36,8 @@ class ServiceContainer:
     creates a non-daemon thread that blocks interpreter exit).
     """
 
-    embedding_service: EmbeddingService
+    code_embedder: EmbeddingService  # For code indexing/search
+    semantic_embedder: EmbeddingService  # For memories/GHAP/commits
     vector_store: VectorStore
     metadata_store: MetadataStore
     code_indexer: object | None = None  # Will be CodeIndexer when SPEC-002-06 complete
@@ -57,30 +58,27 @@ class ServiceContainer:
 
 async def initialize_services(
     settings: ServerSettings,
-    embedding_service: EmbeddingService,
+    get_code_embedder_func: Any,
+    get_semantic_embedder_func: Any,
 ) -> ServiceContainer:
     """Initialize all services for MCP tools.
 
-    Core services (embedding, vector, metadata) are always initialized.
-    Optional services (code, git, search) are only initialized if their
-    dependencies (SPEC-002-06, 07, 09) are complete.
-
     Args:
         settings: Server configuration
-        embedding_service: Pre-initialized embedding service
+        get_code_embedder_func: Function that returns code embedder (MiniLM)
+        get_semantic_embedder_func: Function that returns semantic embedder (Nomic)
 
     Returns:
         ServiceContainer with initialized services
     """
     logger.info("services.initializing")
 
-    # Core infrastructure (always available)
-    # Use provided embedding service (no more NomicEmbedding() call here)
+    # Core infrastructure
     vector_store = QdrantVectorStore(url=settings.qdrant_url)
     metadata_store = MetadataStore(db_path=settings.sqlite_path)
     await metadata_store.initialize()
 
-    # Code indexing (optional - graceful degradation)
+    # Code indexing - call accessor to get embedder (loads on first use)
     code_indexer = None
     try:
         from learning_memory_server.indexers import (
@@ -90,7 +88,7 @@ async def initialize_services(
         code_parser = TreeSitterParser()
         code_indexer = CodeIndexer(
             parser=code_parser,
-            embedding_service=embedding_service,
+            embedding_service=get_code_embedder_func(),  # Lazy load on first embed
             vector_store=vector_store,
             metadata_store=metadata_store,
         )
@@ -100,7 +98,7 @@ async def initialize_services(
     except Exception as e:
         logger.warning("code.init_failed", error=str(e))
 
-    # Git analysis (optional - graceful degradation)
+    # Git analysis - call accessor to get embedder (loads on first use)
     git_analyzer = None
 
     # Auto-detect repo if not configured
@@ -124,7 +122,7 @@ async def initialize_services(
             git_reader = GitPythonReader(repo_path=repo_path_to_use)
             git_analyzer = GitAnalyzer(
                 git_reader=git_reader,
-                embedding_service=embedding_service,
+                embedding_service=get_semantic_embedder_func(),  # Lazy load on first embed
                 vector_store=vector_store,
                 metadata_store=metadata_store,
             )
@@ -150,7 +148,8 @@ async def initialize_services(
     )
 
     return ServiceContainer(
-        embedding_service=embedding_service,
+        code_embedder=get_code_embedder_func(),  # Get embedder for tools
+        semantic_embedder=get_semantic_embedder_func(),  # Get embedder for tools
         vector_store=vector_store,
         metadata_store=metadata_store,
         code_indexer=code_indexer,
@@ -747,21 +746,23 @@ def _get_all_tool_definitions() -> list[Tool]:
 async def register_all_tools(
     server: Server,
     settings: ServerSettings,
-    embedding_service: EmbeddingService,
+    get_code_embedder_func: Any,
+    get_semantic_embedder_func: Any,
 ) -> ServiceContainer:
     """Register all MCP tools with the server.
 
     Args:
         server: MCP Server instance
         settings: Server configuration
-        embedding_service: Pre-initialized embedding service
+        get_code_embedder_func: Function that returns code embedder (called on first use)
+        get_semantic_embedder_func: Function that returns semantic embedder (called on first use)
 
     Returns:
         ServiceContainer with initialized services (caller should call close()
         when done to release resources and prevent shutdown hangs)
     """
     # Initialize shared services
-    services = await initialize_services(settings, embedding_service)
+    services = await initialize_services(settings, get_code_embedder_func, get_semantic_embedder_func)
 
     # Import and register tool modules
     from .code import register_code_tools
@@ -776,17 +777,17 @@ async def register_all_tools(
     register_code_tools(server, services)
     register_git_tools(server, services)
 
-    # Initialize and register GHAP tools (from SPEC-002-15)
+    # Initialize and register GHAP tools - use semantic_embedder
     observation_collector = ObservationCollector(
         journal_dir=Path(settings.journal_path).expanduser(),
     )
     observation_persister = ObservationPersister(
-        embedding_service=services.embedding_service,
+        embedding_service=services.semantic_embedder,  # Nomic
         vector_store=services.vector_store,
     )
     register_ghap_tools(server, observation_collector, observation_persister)
 
-    # Initialize and register learning tools (from SPEC-002-15)
+    # Initialize and register learning tools - use semantic_embedder
     clusterer = Clusterer(
         min_cluster_size=5,
         min_samples=3,
@@ -798,15 +799,15 @@ async def register_all_tools(
         clusterer=clusterer,
     )
     value_store = ValueStore(
-        embedding_service=services.embedding_service,
+        embedding_service=services.semantic_embedder,  # Nomic
         vector_store=services.vector_store,
         clusterer=experience_clusterer,
     )
     register_learning_tools(server, experience_clusterer, value_store)
 
-    # Initialize and register search tools (from SPEC-002-15)
+    # Initialize and register search tools - use semantic_embedder
     searcher = Searcher(
-        embedding_service=services.embedding_service,
+        embedding_service=services.semantic_embedder,  # Nomic
         vector_store=services.vector_store,
     )
     register_search_tools(server, searcher)

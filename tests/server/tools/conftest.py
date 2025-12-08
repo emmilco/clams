@@ -9,8 +9,18 @@ from learning_memory_server.storage.base import SearchResult
 
 
 @pytest.fixture
-def mock_embedding_service():
-    """Create mock embedding service."""
+def mock_code_embedder():
+    """Create mock code embedding service."""
+    service = AsyncMock()
+    service.embed.return_value = [0.1] * 384
+    service.embed_batch.return_value = [[0.1] * 384, [0.2] * 384]
+    service.dimension = 384
+    return service
+
+
+@pytest.fixture
+def mock_semantic_embedder():
+    """Create mock semantic embedding service."""
     service = AsyncMock()
     service.embed.return_value = [0.1] * 768
     service.embed_batch.return_value = [[0.1] * 768, [0.2] * 768]
@@ -38,10 +48,13 @@ def mock_metadata_store():
 
 
 @pytest.fixture
-def mock_services(mock_embedding_service, mock_vector_store, mock_metadata_store):
+def mock_services(
+    mock_code_embedder, mock_semantic_embedder, mock_vector_store, mock_metadata_store
+):
     """Create mock service container with core services."""
     return ServiceContainer(
-        embedding_service=mock_embedding_service,
+        code_embedder=mock_code_embedder,
+        semantic_embedder=mock_semantic_embedder,
         vector_store=mock_vector_store,
         metadata_store=mock_metadata_store,
         code_indexer=None,

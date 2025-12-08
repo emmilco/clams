@@ -2,31 +2,43 @@
 
 import pytest
 
-from learning_memory_server.embedding import NomicEmbedding
+from learning_memory_server.embedding import (
+    EmbeddingService,
+    get_semantic_embedder,
+    initialize_registry,
+)
 from learning_memory_server.server.config import ServerSettings
-from learning_memory_server.server.main import create_embedding_service, create_server
+from learning_memory_server.server.main import create_server
 
 
 @pytest.fixture
-def embedding_service() -> NomicEmbedding:
+def settings() -> ServerSettings:
+    """Create settings for testing."""
+    return ServerSettings()
+
+
+@pytest.fixture
+def embedding_service(settings: ServerSettings) -> EmbeddingService:
     """Create an embedding service for testing."""
-    settings = ServerSettings()
-    return create_embedding_service(settings)
+    # Initialize registry before getting embedder
+    initialize_registry(settings.code_model, settings.semantic_model)
+    return get_semantic_embedder()
 
 
-def test_create_embedding_service() -> None:
-    """Test that create_embedding_service creates a valid embedding service."""
-    settings = ServerSettings()
-    embedding_service = create_embedding_service(settings)
+def test_registry_provides_embedder(settings: ServerSettings) -> None:
+    """Test that registry provides a valid embedding service."""
+    initialize_registry(settings.code_model, settings.semantic_model)
+    embedder = get_semantic_embedder()
 
-    assert embedding_service is not None
-    assert embedding_service.dimension > 0
+    assert embedder is not None
+    assert embedder.dimension > 0
 
 
-async def test_create_server(embedding_service: NomicEmbedding) -> None:
+async def test_create_server(
+    settings: ServerSettings, embedding_service: EmbeddingService
+) -> None:
     """Test that create_server creates a properly configured server."""
-    settings = ServerSettings()
-    server, services = await create_server(settings, embedding_service)
+    server, services = await create_server(settings)
 
     try:
         assert server is not None
@@ -35,10 +47,11 @@ async def test_create_server(embedding_service: NomicEmbedding) -> None:
         await services.close()
 
 
-async def test_server_has_ping_tool(embedding_service: NomicEmbedding) -> None:
+async def test_server_has_ping_tool(
+    settings: ServerSettings, embedding_service: EmbeddingService
+) -> None:
     """Test that the server has the ping tool registered."""
-    settings = ServerSettings()
-    server, services = await create_server(settings, embedding_service)
+    server, services = await create_server(settings)
 
     try:
         # Check that tools were registered

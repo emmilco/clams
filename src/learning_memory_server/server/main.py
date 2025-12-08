@@ -8,44 +8,18 @@ import structlog
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 
-from learning_memory_server.embedding import EmbeddingSettings, NomicEmbedding
+from learning_memory_server.embedding import initialize_registry
 from learning_memory_server.server.config import ServerSettings
 from learning_memory_server.server.logging import configure_logging
 from learning_memory_server.server.tools import ServiceContainer, register_all_tools
-from learning_memory_server.storage.qdrant import QdrantVectorStore
 
 logger = structlog.get_logger()
-
-
-def create_embedding_service(settings: ServerSettings) -> NomicEmbedding:
-    """Create the embedding service (loads model once).
-
-    Args:
-        settings: Server configuration
-
-    Returns:
-        Initialized NomicEmbedding service
-
-    Raises:
-        ValueError: If model loading fails
-    """
-    try:
-        embedding_settings = EmbeddingSettings(model_name=settings.embedding_model)
-        embedding_service = NomicEmbedding(settings=embedding_settings)
-        logger.info("embedding_model.loaded", model=settings.embedding_model)
-        return embedding_service
-    except Exception as e:
-        raise ValueError(
-            f"Invalid embedding model '{settings.embedding_model}': {e}"
-        ) from e
 
 
 def validate_configuration(settings: ServerSettings) -> None:
     """Validate configuration before server start.
 
     Fails fast with clear error messages.
-
-    Note: Embedding model validation happens separately in create_embedding_service().
 
     Args:
         settings: Server configuration
@@ -107,108 +81,47 @@ def validate_configuration(settings: ServerSettings) -> None:
             )
 
 
-async def initialize_collections(
-    settings: ServerSettings,
-    embedding_service: NomicEmbedding,
-) -> None:
-    """Ensure all required collections exist.
-
-    Creates collections if they don't exist. Idempotent - safe to call
-    multiple times.
-
-    Args:
-        settings: Server configuration
-        embedding_service: Pre-initialized embedding service
-
-    Raises:
-        Exception: If collection creation fails or Qdrant is unreachable
-    """
-    vector_store = QdrantVectorStore(url=settings.qdrant_url)
-
-    # Determine embedding dimension
-    dimension = embedding_service.dimension
-
-    # Define all required collections
-    collections = [
-        "memories",
-        "code",
-        "commits",
-        "ghap_full",
-        "ghap_strategy",
-        "ghap_surprise",
-        "ghap_root_cause",
-        "values",
-    ]
-
-    # Create each collection (idempotent)
-    for collection_name in collections:
-        try:
-            await vector_store.create_collection(
-                name=collection_name,
-                dimension=dimension,
-                distance="cosine"
-            )
-            logger.info("collection.created", name=collection_name, dimension=dimension)
-        except Exception as e:
-            # Check if collection already exists (409 Conflict)
-            if "already exists" in str(e) or "409" in str(e):
-                logger.debug("collection.exists", name=collection_name)
-            else:
-                logger.error(
-                    "collection.create_failed",
-                    name=collection_name,
-                    error=str(e),
-                    exc_info=True
-                )
-                raise
-
-
 async def create_server(
     settings: ServerSettings,
-    embedding_service: NomicEmbedding,
 ) -> tuple[Server, ServiceContainer]:
     """Create and configure the MCP server.
 
     Args:
         settings: Server configuration
-        embedding_service: Pre-initialized embedding service
 
     Returns:
         Tuple of (Server, ServiceContainer). Caller should call
         services.close() when done to release resources and prevent
         shutdown hangs.
     """
+    from learning_memory_server.embedding import (
+        get_code_embedder,
+        get_semantic_embedder,
+    )
+
     server = Server("learning-memory-server")
 
-    # Register all tools
-    services = await register_all_tools(server, settings, embedding_service)
+    # Pass accessor functions to tools - embedders load lazily on first use
+    # Do NOT call get_code_embedder() here - that would load models at startup
+    # Tools call the accessor functions when they actually need embeddings
+    services = await register_all_tools(
+        server, settings, get_code_embedder, get_semantic_embedder
+    )
 
     logger.info("server.created", server_name=server.name)
     return server, services
 
 
-async def run_server(
-    settings: ServerSettings,
-    embedding_service: NomicEmbedding,
-) -> None:
+async def run_server(settings: ServerSettings) -> None:
     """Run the MCP server.
 
     Args:
         settings: Server configuration
-        embedding_service: Pre-initialized embedding service
     """
     logger.info("server.starting")
 
-    # Initialize collections before accepting requests
-    try:
-        await initialize_collections(settings, embedding_service)
-        logger.info("collections.initialized")
-    except Exception as e:
-        logger.error("collections.init_failed", error=str(e), exc_info=True)
-        raise  # Fail fast - cannot proceed without storage
-
     # Create the server
-    server, services = await create_server(settings, embedding_service)
+    server, services = await create_server(settings)
 
     try:
         # Run using stdio transport
@@ -243,16 +156,13 @@ def main() -> None:
         logger.error("configuration.invalid", error=str(e))
         sys.exit(1)
 
-    # Create embedding service (loads model ONCE)
-    try:
-        embedding_service = create_embedding_service(settings)
-    except ValueError as e:
-        logger.error("embedding.invalid", error=str(e))
-        sys.exit(1)
+    # Initialize embedding registry (does NOT load models)
+    initialize_registry(settings.code_model, settings.semantic_model)
+    logger.info("embedding_registry.initialized")
 
     try:
         # Run the async server
-        asyncio.run(run_server(settings, embedding_service))
+        asyncio.run(run_server(settings))
     except KeyboardInterrupt:
         logger.info("server.shutdown", reason="keyboard_interrupt")
     except Exception as e:

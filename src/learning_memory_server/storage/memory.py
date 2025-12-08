@@ -4,7 +4,7 @@ from typing import Any
 
 import numpy as np
 
-from .base import SearchResult, Vector, VectorStore
+from .base import CollectionInfo, SearchResult, Vector, VectorStore
 
 
 class InMemoryVectorStore(VectorStore):
@@ -203,3 +203,22 @@ class InMemoryVectorStore(VectorStore):
                 matching_ids.append(id)
 
         return matching_ids
+
+    async def get_collection_info(self, name: str) -> CollectionInfo | None:
+        """Get collection metadata from in-memory storage.
+
+        Args:
+            name: Collection name
+
+        Returns:
+            CollectionInfo if collection exists, None if not found
+        """
+        if name not in self._collections:
+            return None
+
+        collection = self._collections[name]
+        return CollectionInfo(
+            name=name,
+            dimension=collection["dimension"],
+            vector_count=len(collection["vectors"]),
+        )

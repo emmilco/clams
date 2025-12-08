@@ -7,7 +7,7 @@ import numpy as np
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http import models as qmodels
 
-from .base import SearchResult, StorageSettings, Vector, VectorStore
+from .base import CollectionInfo, SearchResult, StorageSettings, Vector, VectorStore
 
 # Namespace UUID for generating deterministic UUIDs from string IDs
 _NAMESPACE = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
@@ -291,3 +291,53 @@ class QdrantVectorStore(VectorStore):
 
         # Qdrant accepts Sequence but list is covariant-compatible
         return qmodels.Filter(must=conditions if conditions else None)
+
+    async def get_collection_info(self, name: str) -> CollectionInfo | None:
+        """Get collection metadata from Qdrant.
+
+        Args:
+            name: Collection name
+
+        Returns:
+            CollectionInfo if collection exists, None if not found
+
+        Raises:
+            ValueError: If collection exists but dimension cannot be determined
+            Exception: For Qdrant connection/network errors
+        """
+        try:
+            collection = await self._client.get_collection(name)
+            # Handle both single vector and named vector configs
+            vectors_config = collection.config.params.vectors
+            if isinstance(vectors_config, dict):
+                # Named vectors - get dimension from first vector config
+                if not vectors_config:
+                    raise ValueError(
+                        f"Collection '{name}' has no vector configurations"
+                    )
+                first_config = next(iter(vectors_config.values()))
+                dimension = first_config.size
+            else:
+                # Single vector config
+                if vectors_config is None:
+                    raise ValueError(
+                        f"Collection '{name}' has no vector configuration"
+                    )
+                dimension = vectors_config.size
+
+            if dimension <= 0:
+                raise ValueError(
+                    f"Collection '{name}' has invalid dimension: {dimension}"
+                )
+
+            return CollectionInfo(
+                name=name,
+                dimension=dimension,
+                vector_count=collection.points_count or 0,
+            )
+        except Exception as e:
+            # Distinguish between "not found" vs real errors
+            if "not found" in str(e).lower() or "404" in str(e):
+                return None
+            # Re-raise connection/network errors and dimension errors
+            raise

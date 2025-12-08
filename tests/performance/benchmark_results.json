@@ -853,5 +853,41 @@
     "iterations": 1,
     "timestamp": 1765068004.1255648,
     "percentage_of_target": 2.561622499997611
+  },
+  {
+    "name": "code_search",
+    "value_ms": 5.347372304095188,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1765152141.3577569,
+    "percentage_of_target": 2.673686152047594
+  },
+  {
+    "name": "memory_retrieval",
+    "value_ms": 5.263721154915401,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1765152141.780591,
+    "percentage_of_target": 2.6318605774577004
+  },
+  {
+    "name": "context_assembly",
+    "value_ms": 15.549758306588036,
+    "target_ms": 500.0,
+    "passed": true,
+    "iterations": 10,
+    "timestamp": 1765152141.8924968,
+    "percentage_of_target": 3.109951661317607
+  },
+  {
+    "name": "clustering_4_axes",
+    "value_s": 0.13722212499123998,
+    "target_s": 5.0,
+    "passed": true,
+    "iterations": 1,
+    "timestamp": 1765152142.031779,
+    "percentage_of_target": 2.7444424998247996
   }
 ]

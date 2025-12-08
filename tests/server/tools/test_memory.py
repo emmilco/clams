@@ -31,7 +31,7 @@ async def test_store_memory_success(mock_services):
     assert "created_at" in result
 
     # Verify service calls
-    mock_services.embedding_service.embed.assert_called_once_with("Test memory")
+    mock_services.semantic_embedder.embed.assert_called_once_with("Test memory")
     mock_services.vector_store.upsert.assert_called_once()
 
 
@@ -98,7 +98,7 @@ async def test_retrieve_memories_success(mock_services, mock_search_result):
     assert result["results"][0]["content"] == "Test content"
 
     # Verify service calls
-    mock_services.embedding_service.embed.assert_called_once_with("test query")
+    mock_services.semantic_embedder.embed.assert_called_once_with("test query")
     mock_services.vector_store.search.assert_called_once()
 
 
@@ -112,7 +112,7 @@ async def test_retrieve_memories_empty_query(mock_services):
 
     assert result["count"] == 0
     assert result["results"] == []
-    mock_services.embedding_service.embed.assert_not_called()
+    mock_services.semantic_embedder.embed.assert_not_called()
 
 
 @pytest.mark.asyncio

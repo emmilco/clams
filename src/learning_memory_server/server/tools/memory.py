@@ -77,7 +77,7 @@ def get_memory_tools(services: ServiceContainer) -> dict[str, ToolFunc]:
             created_at = datetime.now(UTC)
 
             # Generate embedding
-            embedding = await services.embedding_service.embed(content)
+            embedding = await services.semantic_embedder.embed(content)
 
             # Store in vector store
             payload = {
@@ -132,7 +132,7 @@ def get_memory_tools(services: ServiceContainer) -> dict[str, ToolFunc]:
 
         try:
             # Generate query embedding
-            query_embedding = await services.embedding_service.embed(query)
+            query_embedding = await services.semantic_embedder.embed(query)
 
             # Build filters
             filters: dict[str, Any] = {}
