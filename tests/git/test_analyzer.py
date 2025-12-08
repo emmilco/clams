@@ -8,10 +8,10 @@ from pathlib import Path
 import git
 import pytest
 
-from learning_memory_server.embedding.mock import MockEmbedding
-from learning_memory_server.git import GitAnalyzer, GitPythonReader
-from learning_memory_server.storage.metadata import MetadataStore
-from learning_memory_server.storage.qdrant import QdrantVectorStore
+from clams.embedding.mock import MockEmbedding
+from clams.git import GitAnalyzer, GitPythonReader
+from clams.storage.metadata import MetadataStore
+from clams.storage.qdrant import QdrantVectorStore
 
 # Check if ripgrep is available
 HAS_RIPGREP = shutil.which("rg") is not None
@@ -295,7 +295,7 @@ class TestGitAnalyzer:
 
     async def test_embedding_text_format(self, analyzer):
         """Test that embedding text is formatted correctly."""
-        from learning_memory_server.git.base import Commit
+        from clams.git.base import Commit
 
         commit = Commit(
             sha="abc123",
@@ -317,7 +317,7 @@ class TestGitAnalyzer:
 
     async def test_embedding_text_truncation(self, analyzer):
         """Test that long file lists are truncated."""
-        from learning_memory_server.git.base import Commit
+        from clams.git.base import Commit
 
         # Create commit with many files
         many_files = [f"file{i}.py" for i in range(100)]

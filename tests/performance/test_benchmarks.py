@@ -1,4 +1,4 @@
-"""Performance benchmarks for Learning Memory Server.
+"""Performance benchmarks for CLAMS.
 
 Benchmarks measure critical operations against HARD performance targets:
 - Code search: p95 < 200ms
@@ -20,10 +20,10 @@ import httpx
 import numpy as np
 import pytest
 
-from learning_memory_server.clustering import ExperienceClusterer
-from learning_memory_server.clustering.clusterer import Clusterer
-from learning_memory_server.embedding import MockEmbedding
-from learning_memory_server.storage import QdrantVectorStore
+from clams.clustering import ExperienceClusterer
+from clams.clustering.clusterer import Clusterer
+from clams.embedding import MockEmbedding
+from clams.storage import QdrantVectorStore
 
 pytest_plugins = ("pytest_asyncio",)
 
@@ -470,7 +470,7 @@ class TestClusteringPerformance:
 
         # Use patch.dict for proper cleanup even on test failure
         with patch.dict(
-            "learning_memory_server.clustering.experience.AXIS_COLLECTIONS",
+            "clams.clustering.experience.AXIS_COLLECTIONS",
             test_axis_collections,
             clear=True,
         ):

@@ -5,14 +5,14 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from learning_memory_server.git.base import (
+from clams.git.base import (
     Commit,
     CommitSearchResult,
     IndexingError,
     IndexingStats,
 )
-from learning_memory_server.server.errors import MCPError, ValidationError
-from learning_memory_server.server.tools.git import get_git_tools
+from clams.server.errors import MCPError, ValidationError
+from clams.server.tools.git import get_git_tools
 
 
 @pytest.mark.asyncio

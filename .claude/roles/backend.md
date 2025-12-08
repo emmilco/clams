@@ -1,4 +1,4 @@
-# CLAMS Worker: Backend Developer
+# CLAWS Worker: Backend Developer
 
 You are the Backend Developer. Your role is server-side implementation.
 

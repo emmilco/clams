@@ -9,8 +9,8 @@ from collections.abc import AsyncIterator
 import numpy as np
 import pytest
 
-from learning_memory_server.clustering import Clusterer, ExperienceClusterer
-from learning_memory_server.storage import QdrantVectorStore
+from clams.clustering import Clusterer, ExperienceClusterer
+from clams.storage import QdrantVectorStore
 
 pytest_plugins = ("pytest_asyncio",)
 
@@ -66,7 +66,7 @@ async def test_end_to_end_clustering(
     exp_clusterer = ExperienceClusterer(store, clusterer)
 
     # Mock the collection mapping for test
-    from learning_memory_server.clustering import experience
+    from clams.clustering import experience
 
     original_mapping = experience.AXIS_COLLECTIONS.copy()
     experience.AXIS_COLLECTIONS = {"full": test_collection}
@@ -137,7 +137,7 @@ async def test_multi_axis_clustering(store: QdrantVectorStore) -> None:
         exp_clusterer = ExperienceClusterer(store, clusterer)
 
         # Mock the collection mapping
-        from learning_memory_server.clustering import experience
+        from clams.clustering import experience
 
         original_mapping = experience.AXIS_COLLECTIONS.copy()
         experience.AXIS_COLLECTIONS = collections
@@ -199,7 +199,7 @@ async def test_clustering_with_mixed_confidence_tiers(
     exp_clusterer = ExperienceClusterer(store, clusterer)
 
     # Mock the collection mapping
-    from learning_memory_server.clustering import experience
+    from clams.clustering import experience
 
     original_mapping = experience.AXIS_COLLECTIONS.copy()
     experience.AXIS_COLLECTIONS = {"full": test_collection}
@@ -243,7 +243,7 @@ async def test_clustering_performance(
     exp_clusterer = ExperienceClusterer(store, clusterer)
 
     # Mock the collection mapping
-    from learning_memory_server.clustering import experience
+    from clams.clustering import experience
 
     original_mapping = experience.AXIS_COLLECTIONS.copy()
     experience.AXIS_COLLECTIONS = {"full": test_collection}
@@ -272,7 +272,7 @@ async def test_clustering_empty_collection(
     exp_clusterer = ExperienceClusterer(store, clusterer)
 
     # Mock the collection mapping
-    from learning_memory_server.clustering import experience
+    from clams.clustering import experience
 
     original_mapping = experience.AXIS_COLLECTIONS.copy()
     experience.AXIS_COLLECTIONS = {"full": test_collection}

@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock
 import numpy as np
 import pytest
 
-from learning_memory_server.observation.models import (
+from clams.observation.models import (
     ConfidenceTier,
     Domain,
     GHAPEntry,
@@ -16,7 +16,7 @@ from learning_memory_server.observation.models import (
     RootCause,
     Strategy,
 )
-from learning_memory_server.observation.persister import (
+from clams.observation.persister import (
     TEMPLATE_FULL,
     TEMPLATE_ROOT_CAUSE,
     TEMPLATE_STRATEGY,
@@ -700,7 +700,7 @@ async def test_embedding_failure_propagates(
     mock_embedding_service: AsyncMock,
 ) -> None:
     """Test that EmbeddingModelError is propagated."""
-    from learning_memory_server.embedding.base import EmbeddingModelError
+    from clams.embedding.base import EmbeddingModelError
 
     mock_embedding_service.embed.side_effect = EmbeddingModelError("Model failed")
 

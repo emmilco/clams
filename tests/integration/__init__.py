@@ -1,1 +1,1 @@
-"""Integration tests for Learning Memory Server."""
+"""Integration tests for CLAMS."""

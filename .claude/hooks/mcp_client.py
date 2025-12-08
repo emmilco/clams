@@ -129,7 +129,7 @@ async def main() -> None:
 
     # Create client
     client = MCPClient(
-        server_command=["python", "-m", "learning_memory_server"], timeout=10.0
+        server_command=["python", "-m", "clams"], timeout=10.0
     )
 
     # Connect

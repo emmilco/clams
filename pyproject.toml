@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "learning-memory-server"
+name = "clams"
 version = "0.1.0"
 description = "MCP server providing semantic code search and git history analysis"
 readme = "README.md"
@@ -43,7 +43,7 @@ dev = [
 ]
 
 [project.scripts]
-learning-memory-server = "learning_memory_server.server.main:main"
+clams-server = "clams.server.main:main"
 
 [tool.ruff]
 line-length = 88
@@ -55,9 +55,9 @@ select = ["E", "F", "I", "N", "W", "UP"]
 
 [tool.ruff.lint.per-file-ignores]
 # JSON schema definitions have long string literals that can't be easily wrapped
-"src/learning_memory_server/server/tools/__init__.py" = ["E501"]
+"src/clams/server/tools/__init__.py" = ["E501"]
 # Docstrings with long parameter descriptions
-"src/learning_memory_server/search/searcher.py" = ["E501"]
+"src/clams/search/searcher.py" = ["E501"]
 # Test files with module-level imports after sys.path manipulation
 "tests/integration/test_e2e.py" = ["E402"]
 "tests/test_bug_006_experience_schema.py" = ["E402"]

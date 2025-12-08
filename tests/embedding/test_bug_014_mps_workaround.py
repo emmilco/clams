@@ -10,11 +10,11 @@ from pathlib import Path
 import pytest
 import torch
 
-from learning_memory_server.embedding.nomic import NomicEmbedding
-from learning_memory_server.indexers.indexer import CodeIndexer
-from learning_memory_server.indexers.tree_sitter import TreeSitterParser
-from learning_memory_server.storage.metadata import MetadataStore
-from learning_memory_server.storage.qdrant import QdrantVectorStore
+from clams.embedding.nomic import NomicEmbedding
+from clams.indexers.indexer import CodeIndexer
+from clams.indexers.tree_sitter import TreeSitterParser
+from clams.storage.metadata import MetadataStore
+from clams.storage.qdrant import QdrantVectorStore
 
 
 @pytest.mark.skipif(

@@ -1,0 +1,271 @@
+#!/usr/bin/env bash
+#
+# claws-worker: Worker management utilities
+#
+# Usage:
+#   claws-worker prompt <role>                    Output role prompt for worker
+#   claws-worker context <task_id> <role>         Output full context (role + task info)
+#   claws-worker start <task_id> <role>           Register worker start in database
+#   claws-worker complete <worker_id>             Mark worker as complete
+#   claws-worker fail <worker_id> [--reason <reason>]  Mark worker as failed
+#   claws-worker list                             List active workers
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/claws-common.sh"
+
+if [[ ! -f "$DB_PATH" ]]; then
+    echo "Error: Database not found at $DB_PATH. Run claws-init first." >&2
+    exit 1
+fi
+
+usage() {
+    echo "Usage:"
+    echo "  claws-worker prompt <role>                    Output role prompt"
+    echo "  claws-worker context <task_id> <role>         Output full context"
+    echo "  claws-worker start <task_id> <role>           Register worker start"
+    echo "  claws-worker complete <worker_id>             Mark worker complete"
+    echo "  claws-worker fail <worker_id> [--reason <r>]  Mark worker failed"
+    echo "  claws-worker list                             List active workers"
+    echo ""
+    echo "Roles:"
+    echo "  planning, architect, backend, frontend, qa, bug-investigator, infra"
+    echo "  spec-reviewer, proposal-reviewer, reviewer"
+    echo "  doc-writer, e2e-runner, product, ux, ai-dl"
+    exit 1
+}
+
+cmd_prompt() {
+    local role="$1"
+    local role_file="$ROLES_DIR/$role.md"
+    local base_file="$ROLES_DIR/_base.md"
+
+    if [[ ! -f "$role_file" ]]; then
+        echo "Error: Role not found: $role" >&2
+        echo "Available roles:" >&2
+        ls "$ROLES_DIR" | grep -v '^_' | sed 's/.md$//' >&2
+        exit 1
+    fi
+
+    # Output base norms first, then role-specific
+    if [[ -f "$base_file" ]]; then
+        cat "$base_file"
+        echo ""
+        echo "---"
+        echo ""
+    fi
+
+    cat "$role_file"
+}
+
+cmd_context() {
+    local task_id="$1"
+    local role="$2"
+
+    # Get task info
+    local task_info
+    task_info=$(sqlite3 -line "$DB_PATH" "SELECT * FROM tasks WHERE id = '$task_id';")
+
+    if [[ -z "$task_info" ]]; then
+        echo "Error: Task not found: $task_id" >&2
+        exit 1
+    fi
+
+    local worktree_path
+    worktree_path=$(sqlite3 "$DB_PATH" "SELECT worktree_path FROM tasks WHERE id = '$task_id';")
+
+    # Output role prompt
+    cmd_prompt "$role"
+
+    echo ""
+    echo "---"
+    echo ""
+    echo "# Current Task"
+    echo ""
+    echo "**Task ID**: $task_id"
+    echo ""
+    echo "$task_info" | while IFS= read -r line; do
+        if [[ -n "$line" ]]; then
+            echo "- $line"
+        fi
+    done
+
+    if [[ -n "$worktree_path" && -d "$worktree_path" ]]; then
+        # Get branch name from worktree
+        local branch_name
+        branch_name=$(cd "$worktree_path" && git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+
+        # Get main repo path
+        local main_repo
+        main_repo=$(cd "$worktree_path" && git worktree list --porcelain | grep -m1 '^worktree ' | sed 's/^worktree //')
+
+        echo ""
+        echo "---"
+        echo ""
+        echo "# Working Environment"
+        echo ""
+        echo "**IMPORTANT: Read this before making any changes.**"
+        echo ""
+        echo "| Setting | Value |"
+        echo "|---------|-------|"
+        echo "| Working Directory | \`$worktree_path\` |"
+        echo "| Branch | \`$branch_name\` |"
+        echo "| Main Repo | \`$main_repo\` |"
+        echo ""
+        echo "## Directory Rules"
+        echo ""
+        echo "- **Your code changes** go in: \`$worktree_path/src/\`"
+        echo "- **Your tests** go in: \`$worktree_path/tests/\`"
+        echo "- **Your planning docs** go in: \`$worktree_path/planning_docs/$task_id/\`"
+        echo "- **Your changelog** goes in: \`$worktree_path/changelog.d/$task_id.md\`"
+        echo ""
+        echo "**DO NOT** edit files in \`$main_repo\` unless explicitly instructed."
+        echo "Parent specs (SPEC-NNN.md) live in main and require explicit checkout."
+        echo ""
+
+        # Check for planning docs
+        local planning_dir="$worktree_path/planning_docs/$task_id"
+        if [[ -d "$planning_dir" ]]; then
+            echo "**Planning Documents**:"
+            for doc in "$planning_dir"/*.md; do
+                if [[ -f "$doc" ]]; then
+                    echo "- $(basename "$doc")"
+                fi
+            done
+        fi
+    fi
+}
+
+cmd_start() {
+    local task_id="$1"
+    local role="$2"
+
+    # Generate worker ID
+    local worker_id="W-$(date +%s)-$$"
+
+    # Check task exists
+    local task_exists
+    task_exists=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM tasks WHERE id = '$task_id';")
+    if [[ "$task_exists" -eq 0 ]]; then
+        echo "Error: Task not found: $task_id" >&2
+        exit 1
+    fi
+
+    # Insert or update worker
+    sqlite3 "$DB_PATH" <<EOF
+INSERT INTO workers (id, specialist_type, current_task_id, status, started_at)
+VALUES ('$worker_id', '$role', '$task_id', 'active', CURRENT_TIMESTAMP);
+
+UPDATE tasks
+SET assigned_specialist = '$role', updated_at = CURRENT_TIMESTAMP
+WHERE id = '$task_id';
+EOF
+
+    echo "$worker_id"
+}
+
+cmd_complete() {
+    local worker_id="$1"
+
+    sqlite3 "$DB_PATH" <<EOF
+UPDATE workers
+SET status = 'completed', current_task_id = NULL, ended_at = datetime('now')
+WHERE id = '$worker_id';
+EOF
+
+    echo "Worker $worker_id marked complete"
+}
+
+cmd_fail() {
+    local worker_id="$1"
+    shift
+
+    local reason=""
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --reason)
+                reason="$2"
+                shift 2
+                ;;
+            *)
+                echo "Unknown option: $1" >&2
+                usage
+                ;;
+        esac
+    done
+
+    # Get task ID before updating
+    local task_id
+    task_id=$(sqlite3 "$DB_PATH" "SELECT current_task_id FROM workers WHERE id = '$worker_id';")
+
+    sqlite3 "$DB_PATH" <<EOF
+UPDATE workers
+SET status = 'failed', current_task_id = NULL, ended_at = datetime('now')
+WHERE id = '$worker_id';
+EOF
+
+    # Record violation if reason provided
+    if [[ -n "$reason" && -n "$task_id" ]]; then
+        sqlite3 "$DB_PATH" <<EOF
+INSERT INTO violations (task_id, worker_id, violation_type, description, detected_by)
+VALUES ('$task_id', '$worker_id', 'worker_failure', '$(echo "$reason" | sed "s/'/''/g")', 'claws-worker');
+EOF
+    fi
+
+    echo "Worker $worker_id marked failed"
+}
+
+cmd_list() {
+    echo "=== Active Workers ==="
+    sqlite3 -header -column "$DB_PATH" <<EOF
+SELECT w.id, w.specialist_type, w.current_task_id, t.title, w.started_at
+FROM workers w
+LEFT JOIN tasks t ON w.current_task_id = t.id
+WHERE w.status = 'active'
+ORDER BY w.started_at DESC;
+EOF
+
+    local count
+    count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM workers WHERE status = 'active';")
+    echo ""
+    echo "Active workers: $count / 6 max"
+}
+
+# Main
+if [[ $# -lt 1 ]]; then
+    usage
+fi
+
+command="$1"
+shift
+
+case "$command" in
+    prompt)
+        [[ $# -lt 1 ]] && usage
+        cmd_prompt "$@"
+        ;;
+    context)
+        [[ $# -lt 2 ]] && usage
+        cmd_context "$@"
+        ;;
+    start)
+        [[ $# -lt 2 ]] && usage
+        cmd_start "$@"
+        ;;
+    complete)
+        [[ $# -lt 1 ]] && usage
+        cmd_complete "$@"
+        ;;
+    fail)
+        [[ $# -lt 1 ]] && usage
+        cmd_fail "$@"
+        ;;
+    list)
+        cmd_list
+        ;;
+    *)
+        echo "Unknown command: $command" >&2
+        usage
+        ;;
+esac

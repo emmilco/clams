@@ -1,4 +1,4 @@
-"""End-to-end integration tests for Learning Memory Server.
+"""End-to-end integration tests for CLAMS.
 
 These tests validate full workflows with real Qdrant at localhost:6333.
 They use isolated test collections to avoid touching production data.
@@ -17,18 +17,18 @@ import pytest
 # Mark all tests in this module as integration tests (require external services)
 pytestmark = pytest.mark.integration
 
-from learning_memory_server.clustering import ExperienceClusterer
-from learning_memory_server.clustering.clusterer import Clusterer
-from learning_memory_server.embedding import MockEmbedding
-from learning_memory_server.observation import (
+from clams.clustering import ExperienceClusterer
+from clams.clustering.clusterer import Clusterer
+from clams.embedding import MockEmbedding
+from clams.observation import (
     Domain,
     ObservationCollector,
     OutcomeStatus,
     Strategy,
 )
-from learning_memory_server.search import Searcher
-from learning_memory_server.storage import QdrantVectorStore
-from learning_memory_server.values import ValueStore
+from clams.search import Searcher
+from clams.storage import QdrantVectorStore
+from clams.values import ValueStore
 
 pytest_plugins = ("pytest_asyncio",)
 
@@ -333,8 +333,8 @@ class TestGitWorkflow:
         test_collections: dict[str, str],
     ) -> None:
         """Test get_churn_hotspots returns file change statistics."""
-        from learning_memory_server.git import GitAnalyzer, GitPythonReader
-        from learning_memory_server.storage.metadata import MetadataStore
+        from clams.git import GitAnalyzer, GitPythonReader
+        from clams.storage.metadata import MetadataStore
 
         # Use the actual repository for real git data
         repo_path = Path(__file__).parent.parent.parent
@@ -387,8 +387,8 @@ class TestGitWorkflow:
         test_collections: dict[str, str],
     ) -> None:
         """Test get_file_authors returns author statistics for a file."""
-        from learning_memory_server.git import GitAnalyzer, GitPythonReader
-        from learning_memory_server.storage.metadata import MetadataStore
+        from clams.git import GitAnalyzer, GitPythonReader
+        from clams.storage.metadata import MetadataStore
 
         # Use the actual repository for real git data
         repo_path = Path(__file__).parent.parent.parent
@@ -458,7 +458,7 @@ class TestGHAPLearningLoop:
 
         # Use patch.dict for proper cleanup even on test failure
         with patch.dict(
-            "learning_memory_server.clustering.experience.AXIS_COLLECTIONS",
+            "clams.clustering.experience.AXIS_COLLECTIONS",
             test_axis_collections,
             clear=True,
         ):
@@ -554,8 +554,8 @@ class TestContextAssembly:
         """Test populate -> assemble light -> assemble rich -> premortem workflow."""
         from unittest.mock import patch
 
-        from learning_memory_server.context import ContextAssembler
-        from learning_memory_server.search.collections import CollectionName
+        from clams.context import ContextAssembler
+        from clams.search.collections import CollectionName
 
         # Populate test data in memories collection
         memories = [

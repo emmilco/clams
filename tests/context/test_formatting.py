@@ -1,6 +1,6 @@
 """Tests for markdown formatting."""
 
-from learning_memory_server.context.formatting import (
+from clams.context.formatting import (
     assemble_markdown,
     format_code,
     format_commit,
@@ -8,7 +8,7 @@ from learning_memory_server.context.formatting import (
     format_memory,
     format_value,
 )
-from learning_memory_server.context.models import ContextItem
+from clams.context.models import ContextItem
 
 
 def test_format_memory() -> None:

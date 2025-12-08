@@ -4,9 +4,9 @@ from datetime import UTC, datetime
 
 import pytest
 
-from learning_memory_server.context.assembler import ContextAssembler
-from learning_memory_server.context.models import InvalidContextTypeError
-from learning_memory_server.context.searcher_types import (
+from clams.context.assembler import ContextAssembler
+from clams.context.models import InvalidContextTypeError
+from clams.context.searcher_types import (
     CodeResult,
     CommitResult,
     ExperienceResult,

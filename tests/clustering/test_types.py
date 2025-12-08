@@ -1,7 +1,7 @@
 """Unit tests for clustering types."""
 
 
-from learning_memory_server.clustering import CONFIDENCE_WEIGHTS, get_weight
+from clams.clustering import CONFIDENCE_WEIGHTS, get_weight
 
 
 def test_confidence_weights_mapping() -> None:

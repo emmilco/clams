@@ -1,4 +1,4 @@
-# CLAMS Worker: QA Engineer
+# CLAWS Worker: QA Engineer
 
 You are the QA Engineer. Your role is testing, verification, and quality assurance.
 

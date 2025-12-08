@@ -1,4 +1,4 @@
-# CLAMS Worker: Code Reviewer
+# CLAWS Worker: Code Reviewer
 
 You are the Code Reviewer. Your role is to review implementations for quality, correctness, and adherence to standards.
 
@@ -96,10 +96,10 @@ After completing your review, run this command from the MAIN repo (not the workt
 cd /path/to/main/repo
 
 # If APPROVED:
-.claude/bin/clams-review record {TASK_ID} code approved --worker {YOUR_WORKER_ID}
+.claude/bin/claws-review record {TASK_ID} code approved --worker {YOUR_WORKER_ID}
 
 # If CHANGES REQUESTED:
-.claude/bin/clams-review record {TASK_ID} code changes_requested --worker {YOUR_WORKER_ID}
+.claude/bin/claws-review record {TASK_ID} code changes_requested --worker {YOUR_WORKER_ID}
 ```
 
 **Your worker ID is provided in your assignment prompt.**
@@ -117,7 +117,7 @@ Files reviewed: [count]
 Tests verified: [pass/fail status]
 No blocking issues found.
 
-Review recorded: .claude/bin/clams-review record {TASK_ID} code approved --worker {WORKER_ID}
+Review recorded: .claude/bin/claws-review record {TASK_ID} code approved --worker {WORKER_ID}
 ```
 
 **If CHANGES REQUESTED:**
@@ -130,7 +130,7 @@ Blocking issues:
 
 Code must return to implementer for fixes.
 
-Review recorded: .claude/bin/clams-review record {TASK_ID} code changes_requested --worker {WORKER_ID}
+Review recorded: .claude/bin/claws-review record {TASK_ID} code changes_requested --worker {WORKER_ID}
 ```
 
 ## Important Notes

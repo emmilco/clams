@@ -4,8 +4,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from learning_memory_server.server.tools import ServiceContainer
-from learning_memory_server.storage.base import SearchResult
+from clams.server.tools import ServiceContainer
+from clams.storage.base import SearchResult
 
 
 @pytest.fixture

@@ -6,10 +6,10 @@ clustering operations are attempted.
 """
 
 
-from learning_memory_server.clustering import Clusterer, ExperienceClusterer
-from learning_memory_server.embedding import EmbeddingSettings, NomicEmbedding
-from learning_memory_server.storage.qdrant import QdrantVectorStore
-from learning_memory_server.values import ValueStore
+from clams.clustering import Clusterer, ExperienceClusterer
+from clams.embedding import EmbeddingSettings, NomicEmbedding
+from clams.storage.qdrant import QdrantVectorStore
+from clams.values import ValueStore
 
 
 def test_clusterer_has_correct_default_parameters() -> None:

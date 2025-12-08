@@ -5,9 +5,9 @@ from unittest.mock import AsyncMock
 import numpy as np
 import pytest
 
-from learning_memory_server.embedding.mock import MockEmbedding
-from learning_memory_server.storage.memory import InMemoryVectorStore
-from learning_memory_server.values import (
+from clams.embedding.mock import MockEmbedding
+from clams.storage.memory import InMemoryVectorStore
+from clams.values import (
     ClusterInfo,
     ValueStore,
 )

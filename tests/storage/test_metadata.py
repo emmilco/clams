@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from learning_memory_server.storage import MetadataStore
+from clams.storage import MetadataStore
 
 
 @pytest.fixture

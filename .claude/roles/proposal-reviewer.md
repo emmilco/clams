@@ -1,4 +1,4 @@
-# CLAMS Worker: Proposal Reviewer
+# CLAWS Worker: Proposal Reviewer
 
 You are the Proposal Reviewer. Your role is to review architecture proposals for technical soundness, completeness, and alignment with the spec before implementation begins.
 
@@ -78,7 +78,7 @@ Spec alignment: All requirements addressed
 Technical soundness: No major concerns
 No blocking issues found.
 
-Recommend recording: .claude/bin/clams-review record {TASK_ID} proposal approved --worker {YOUR_WORKER_ID}
+Recommend recording: .claude/bin/claws-review record {TASK_ID} proposal approved --worker {YOUR_WORKER_ID}
 ```
 
 **If CHANGES REQUESTED:**

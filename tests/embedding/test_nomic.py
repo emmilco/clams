@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from learning_memory_server.embedding import (
+from clams.embedding import (
     EmbeddingModelError,
     EmbeddingSettings,
     NomicEmbedding,

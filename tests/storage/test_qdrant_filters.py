@@ -2,7 +2,7 @@
 
 from qdrant_client.http import models as qmodels
 
-from learning_memory_server.storage.qdrant import QdrantVectorStore
+from clams.storage.qdrant import QdrantVectorStore
 
 
 class TestQdrantFilterBuilding:

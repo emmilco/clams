@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock, Mock
 import numpy as np
 import pytest
 
-from learning_memory_server.clustering import Clusterer, ExperienceClusterer
-from learning_memory_server.storage.base import SearchResult
+from clams.clustering import Clusterer, ExperienceClusterer
+from clams.storage.base import SearchResult
 
 
 @pytest.fixture

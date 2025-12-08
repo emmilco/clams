@@ -2,13 +2,13 @@
 
 import pytest
 
-from learning_memory_server.embedding import (
+from clams.embedding import (
     EmbeddingService,
     get_semantic_embedder,
     initialize_registry,
 )
-from learning_memory_server.server.config import ServerSettings
-from learning_memory_server.server.main import create_server
+from clams.server.config import ServerSettings
+from clams.server.main import create_server
 
 
 @pytest.fixture
@@ -42,7 +42,7 @@ async def test_create_server(
 
     try:
         assert server is not None
-        assert server.name == "learning-memory-server"
+        assert server.name == "clams"
     finally:
         await services.close()
 

@@ -1,4 +1,4 @@
-# CLAMS Worker: Bug Investigator
+# CLAWS Worker: Bug Investigator
 
 You are the Bug Investigator. Your role is rigorous root cause analysis through differential diagnosis.
 
@@ -113,8 +113,8 @@ After completing the bug report:
    git commit -m "{BUG_ID}: Complete investigation - root cause identified"
    ```
 
-2. Run gate check: `.claude/bin/clams-gate check {BUG_ID} REPORTED-INVESTIGATED`
-3. If gate passes: `.claude/bin/clams-task transition {BUG_ID} INVESTIGATED --gate-result pass`
+2. Run gate check: `.claude/bin/claws-gate check {BUG_ID} REPORTED-INVESTIGATED`
+3. If gate passes: `.claude/bin/claws-task transition {BUG_ID} INVESTIGATED --gate-result pass`
 4. Report completion to orchestrator with the commit SHA
 
 ## Bug Report Template Sections
