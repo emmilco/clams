@@ -71,7 +71,7 @@ Observations are weighted based on outcome confidence:
 
 ## Architecture
 
-**Master Spec**: `planning_docs/SPEC-001-clams-server.md`
+**Master Spec**: `planning_docs/SPEC-001-learning-memory-server.md`
 
 **Module Layout**:
 ```

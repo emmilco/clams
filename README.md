@@ -21,7 +21,7 @@ A Model Context Protocol (MCP) server for semantic memory, code indexing, and ex
 ```bash
 # Clone repository
 git clone <repo-url>
-cd clams-server
+cd clams
 
 # Install with uv
 uv pip install -e .
@@ -38,7 +38,7 @@ pip install -e .
 # Start Qdrant first
 docker run -p 6333:6333 qdrant/qdrant
 
-# Start CLAMS - Claude Learning and Memory System
+# Start CLAMS server
 clams-server
 ```
 
