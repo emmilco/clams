@@ -280,11 +280,14 @@ def get_learning_tools(
                 similarity=validation_result.similarity,
             )
 
-            return {
+            # BUG-019: Only include similarity when it's not None
+            result: dict[str, Any] = {
                 "valid": validation_result.valid,
-                "similarity": validation_result.similarity,
                 "cluster_id": cluster_id,
             }
+            if validation_result.similarity is not None:
+                result["similarity"] = validation_result.similarity
+            return result
 
         except (ValidationError, NotFoundError) as e:
             logger.warning("learning.error", error=str(e))
