@@ -125,7 +125,7 @@ Total: ~2800 lines of shell scripts
     - Command: `learning-memory-server` → `clams-server`
 
 **Keep Historical Context**:
-- `planning_docs/SPEC-002-*/`: Add note at top "Note: This spec predates rename; 'learning-memory-server' refers to what is now CLAMS"
+- `planning_docs/SPEC-002-*/`: **Leave UNCHANGED** - these are historical records, acceptable for context
 - `changelog.d/*.md`: Leave as-is (historical record)
 
 ### Workflow System (CLAMS → CLAWS)
@@ -138,7 +138,7 @@ Total: ~2800 lines of shell scripts
    - Error messages with script names
 3. Database path in scripts:
    - `.claude/bin/claws-common.sh`: `DB_PATH="$CLAUDE_DIR/clams.db"` → `DB_PATH="$CLAUDE_DIR/claws.db"`
-   - `.claude/gates/check_tests.sh`: Same change
+   - `.claude/gates/check_tests.sh`: Same change (add to manifest)
 4. `CLAUDE.md` (~600 lines):
    - Title: "CLAMS Orchestrator" → "CLAWS Orchestrator"
    - First paragraph: "CLAMS (Claude Agent Management System)" → "CLAWS (Claude Learning Agent Workflow System)"
@@ -376,6 +376,7 @@ pytest -vvsx
 # 4. MCP server registration
 clams-server &  # Should register as "clams" MCP server
 sleep 5
+# Verify server logs or output show registered name "clams"
 pkill -f clams-server
 
 # 5. Workflow commands
@@ -474,6 +475,7 @@ pkill -f clams-server
    - **VERIFY**: Scripts reference correct path
 
 6. **Phase 5: Final verification**:
+   - Run gate check: `.claude/bin/claws-gate check SPEC-007 IMPLEMENT-CODE_REVIEW`
    - Run all grep checks (zero orphans)
    - Run all functional tests
    - Manually test MCP server and workflow commands
@@ -542,12 +544,9 @@ pkill -f clams-server
 
 **Question**: Should we add a note to ALL SPEC-002-* planning docs, or just leave them as historical context?
 
-**Recommendation**: Add a single-line note at the top of each SPEC-002-*/spec.md and proposal.md:
-```markdown
-> **Note**: This spec predates the SPEC-007 rename. References to "learning-memory-server" now refer to CLAMS (Claude Learning and Memory System).
-```
+**Recommendation**: Leave UNCHANGED - these are historical records.
 
-**Reasoning**: Minimal disruption, preserves history, adds clarity for future readers.
+**Reasoning**: The spec says historical references in planning_docs are "acceptable for context". This means we preserve them as-is - no notes added. They remain as historical record. We don't need to hunt down and change old references.
 
 ### 2. Entry Point Name
 
