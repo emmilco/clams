@@ -1,11 +1,10 @@
 """Tests for embedding registry."""
 
 import os
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 
-from clams.embedding.base import EmbeddingSettings
 from clams.embedding.registry import (
     EmbeddingRegistry,
     get_code_embedder,
