@@ -17,22 +17,22 @@ import pytest
 # Mark all tests in this module as integration tests (require Qdrant)
 pytestmark = pytest.mark.integration
 
-from learning_memory_server.embedding import MockEmbedding
-from learning_memory_server.observation import (
+from clams.embedding import MockEmbedding
+from clams.observation import (
     Domain,
     ObservationCollector,
     OutcomeStatus,
     Strategy,
 )
-from learning_memory_server.observation import (
+from clams.observation import (
     Lesson as GHAPLesson,
 )
-from learning_memory_server.observation import (
+from clams.observation import (
     RootCause as GHAPRootCause,
 )
-from learning_memory_server.observation.persister import ObservationPersister
-from learning_memory_server.search import Searcher
-from learning_memory_server.storage import QdrantVectorStore
+from clams.observation.persister import ObservationPersister
+from clams.search import Searcher
+from clams.storage import QdrantVectorStore
 
 # Test collection names (using production names for integration test)
 # The searcher has hardcoded collection names, so we use the production ones

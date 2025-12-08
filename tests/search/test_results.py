@@ -2,7 +2,7 @@
 
 from datetime import UTC, datetime
 
-from learning_memory_server.search.results import (
+from clams.search.results import (
     CodeResult,
     CommitResult,
     ExperienceResult,
@@ -11,7 +11,7 @@ from learning_memory_server.search.results import (
     RootCause,
     ValueResult,
 )
-from learning_memory_server.storage.base import SearchResult
+from clams.storage.base import SearchResult
 
 
 class TestMemoryResult:

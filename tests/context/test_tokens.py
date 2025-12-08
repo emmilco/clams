@@ -1,6 +1,6 @@
 """Tests for token estimation and budget management."""
 
-from learning_memory_server.context.tokens import (
+from clams.context.tokens import (
     cap_item_tokens,
     distribute_budget,
     estimate_tokens,

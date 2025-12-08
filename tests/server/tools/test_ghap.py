@@ -7,11 +7,11 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from learning_memory_server.observation import (
+from clams.observation import (
     ObservationCollector,
     ObservationPersister,
 )
-from learning_memory_server.server.tools.ghap import get_ghap_tools
+from clams.server.tools.ghap import get_ghap_tools
 
 
 @pytest.fixture
@@ -449,8 +449,8 @@ def test_bug_001_schema_validation_alignment() -> None:
     This ensures that MCP clients can successfully call the tools using
     the strategy values advertised in the schema.
     """
-    from learning_memory_server.server.tools import _get_all_tool_definitions
-    from learning_memory_server.server.tools.enums import STRATEGIES, validate_strategy
+    from clams.server.tools import _get_all_tool_definitions
+    from clams.server.tools.enums import STRATEGIES, validate_strategy
 
     # Get tool definitions
     tools = _get_all_tool_definitions()

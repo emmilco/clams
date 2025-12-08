@@ -7,7 +7,7 @@ from typing import Any
 import structlog
 from mcp.server import Server
 
-from learning_memory_server.observation import (
+from clams.observation import (
     Domain,
     Lesson,
     ObservationCollector,
@@ -16,13 +16,13 @@ from learning_memory_server.observation import (
     RootCause,
     Strategy,
 )
-from learning_memory_server.server.tools.enums import (
+from clams.server.tools.enums import (
     validate_domain,
     validate_outcome_status,
     validate_root_cause_category,
     validate_strategy,
 )
-from learning_memory_server.server.tools.errors import (
+from clams.server.tools.errors import (
     MCPError,
     NotFoundError,
     ValidationError,

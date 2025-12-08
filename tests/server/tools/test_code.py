@@ -4,8 +4,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from learning_memory_server.server.errors import MCPError, ValidationError
-from learning_memory_server.server.tools.code import get_code_tools
+from clams.server.errors import MCPError, ValidationError
+from clams.server.tools.code import get_code_tools
 
 
 @pytest.mark.asyncio

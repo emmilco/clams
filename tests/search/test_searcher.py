@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock
 import numpy as np
 import pytest
 
-from learning_memory_server.embedding.base import EmbeddingService
-from learning_memory_server.search import (
+from clams.embedding.base import EmbeddingService
+from clams.search import (
     CodeResult,
     CollectionName,
     CollectionNotFoundError,
@@ -20,7 +20,7 @@ from learning_memory_server.search import (
     Searcher,
     ValueResult,
 )
-from learning_memory_server.storage.base import SearchResult, VectorStore
+from clams.storage.base import SearchResult, VectorStore
 
 
 @pytest.fixture

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from learning_memory_server.indexers import TreeSitterParser, UnitType
+from clams.indexers import TreeSitterParser, UnitType
 
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures" / "code_samples"
 

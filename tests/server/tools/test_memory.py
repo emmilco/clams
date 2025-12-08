@@ -4,8 +4,8 @@ from uuid import UUID
 
 import pytest
 
-from learning_memory_server.server.errors import ValidationError
-from learning_memory_server.server.tools.memory import get_memory_tools
+from clams.server.errors import ValidationError
+from clams.server.tools.memory import get_memory_tools
 
 
 @pytest.mark.asyncio

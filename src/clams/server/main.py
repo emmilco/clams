@@ -1,4 +1,4 @@
-"""Main entry point for the Learning Memory Server."""
+"""Main entry point for the CLAMS server."""
 
 import asyncio
 import sys
@@ -8,11 +8,11 @@ import structlog
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 
-from learning_memory_server.embedding import EmbeddingSettings, NomicEmbedding
-from learning_memory_server.server.config import ServerSettings
-from learning_memory_server.server.logging import configure_logging
-from learning_memory_server.server.tools import ServiceContainer, register_all_tools
-from learning_memory_server.storage.qdrant import QdrantVectorStore
+from clams.embedding import EmbeddingSettings, NomicEmbedding
+from clams.server.config import ServerSettings
+from clams.server.logging import configure_logging
+from clams.server.tools import ServiceContainer, register_all_tools
+from clams.storage.qdrant import QdrantVectorStore
 
 logger = structlog.get_logger()
 
@@ -178,7 +178,7 @@ async def create_server(
         services.close() when done to release resources and prevent
         shutdown hangs.
     """
-    server = Server("learning-memory-server")
+    server = Server("clams")
 
     # Register all tools
     services = await register_all_tools(server, settings, embedding_service)
@@ -233,7 +233,7 @@ def main() -> None:
     # Configure logging
     configure_logging(log_level=settings.log_level, log_format=settings.log_format)
 
-    logger.info("learning_memory_server.starting", version="0.1.0")
+    logger.info("clams.starting", version="0.1.0")
 
     # Validate configuration before starting (Qdrant, paths, git repo)
     try:

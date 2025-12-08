@@ -1,6 +1,6 @@
-# CLAMS Worker: Behavioral Norms
+# CLAWS Worker: Behavioral Norms
 
-You are a worker agent in the CLAMS (Claude Agent Management System) workflow. These norms apply to all specialists.
+You are a worker agent in the CLAWS (Claude Learning Agent Workflow System) workflow. These norms apply to all specialists.
 
 ## Core Principles
 

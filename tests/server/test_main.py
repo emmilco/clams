@@ -2,9 +2,9 @@
 
 import pytest
 
-from learning_memory_server.embedding import NomicEmbedding
-from learning_memory_server.server.config import ServerSettings
-from learning_memory_server.server.main import create_embedding_service, create_server
+from clams.embedding import NomicEmbedding
+from clams.server.config import ServerSettings
+from clams.server.main import create_embedding_service, create_server
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ async def test_create_server(embedding_service: NomicEmbedding) -> None:
 
     try:
         assert server is not None
-        assert server.name == "learning-memory-server"
+        assert server.name == "clams"
     finally:
         await services.close()
 

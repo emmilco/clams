@@ -6,10 +6,10 @@ from unittest.mock import AsyncMock, MagicMock
 import numpy as np
 import pytest
 
-from learning_memory_server.clustering import ExperienceClusterer
-from learning_memory_server.clustering.types import ClusterInfo
-from learning_memory_server.server.tools.learning import get_learning_tools
-from learning_memory_server.values import ValueStore
+from clams.clustering import ExperienceClusterer
+from clams.clustering.types import ClusterInfo
+from clams.server.tools.learning import get_learning_tools
+from clams.values import ValueStore
 
 
 @pytest.fixture

@@ -3,7 +3,7 @@
 import os
 from unittest.mock import patch
 
-from learning_memory_server.server.config import ServerSettings
+from clams.server.config import ServerSettings
 
 
 def test_default_settings() -> None:
@@ -28,9 +28,9 @@ def test_env_override() -> None:
     with patch.dict(
         os.environ,
         {
-            "LMS_STORAGE_PATH": "/custom/path",
-            "LMS_LOG_LEVEL": "DEBUG",
-            "LMS_EMBEDDING_DIMENSION": "512",
+            "CLAMS_STORAGE_PATH": "/custom/path",
+            "CLAMS_LOG_LEVEL": "DEBUG",
+            "CLAMS_EMBEDDING_DIMENSION": "512",
         },
     ):
         settings = ServerSettings()
@@ -46,4 +46,4 @@ def test_settings_immutable() -> None:
 
     # Verify the settings are properly constructed
     assert hasattr(settings, "model_config")
-    assert settings.model_config["env_prefix"] == "LMS_"
+    assert settings.model_config["env_prefix"] == "CLAMS_"

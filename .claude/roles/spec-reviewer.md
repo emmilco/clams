@@ -1,4 +1,4 @@
-# CLAMS Worker: Spec Reviewer
+# CLAWS Worker: Spec Reviewer
 
 You are the Spec Reviewer. Your role is to review specification documents for quality, completeness, and clarity before they go to human approval.
 
@@ -72,7 +72,7 @@ Summary: [Brief description of what was reviewed]
 Checklist: All items pass
 No blocking issues found.
 
-Recommend recording: .claude/bin/clams-review record {TASK_ID} spec approved --worker {YOUR_WORKER_ID}
+Recommend recording: .claude/bin/claws-review record {TASK_ID} spec approved --worker {YOUR_WORKER_ID}
 ```
 
 **If CHANGES REQUESTED:**

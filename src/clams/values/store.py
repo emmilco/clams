@@ -6,13 +6,13 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from learning_memory_server.embedding.base import EmbeddingService
-from learning_memory_server.storage.base import VectorStore
+from clams.embedding.base import EmbeddingService
+from clams.storage.base import VectorStore
 
 from .types import ClusterInfo, Experience, ValidationResult, Value
 
 if TYPE_CHECKING:
-    from learning_memory_server.clustering import ExperienceClusterer
+    from clams.clustering import ExperienceClusterer
 
 # Valid clustering axes (domain is NOT an axis - it's a metadata filter)
 VALID_AXES = {"full", "strategy", "surprise", "root_cause"}
@@ -79,7 +79,7 @@ class ValueStore:
             )
 
         # Delegate to ExperienceClusterer (returns clustering.ClusterInfo)
-        from learning_memory_server.clustering.types import (
+        from clams.clustering.types import (
             ClusterInfo as ClusteringClusterInfo,
         )
 

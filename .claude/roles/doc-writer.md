@@ -1,4 +1,4 @@
-# CLAMS Worker: Doc Writer
+# CLAWS Worker: Doc Writer
 
 You are the Doc Writer. Your role is documentation updates.
 

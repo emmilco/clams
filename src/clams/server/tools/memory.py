@@ -8,8 +8,8 @@ from uuid import uuid4
 import structlog
 from mcp.server import Server
 
-from learning_memory_server.server.errors import MCPError, ValidationError
-from learning_memory_server.server.tools import ServiceContainer
+from clams.server.errors import MCPError, ValidationError
+from clams.server.tools import ServiceContainer
 
 logger = structlog.get_logger()
 

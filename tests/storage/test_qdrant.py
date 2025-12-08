@@ -9,7 +9,7 @@ from collections.abc import AsyncIterator
 import numpy as np
 import pytest
 
-from learning_memory_server.storage import QdrantVectorStore
+from clams.storage import QdrantVectorStore
 
 pytest_plugins = ("pytest_asyncio",)
 

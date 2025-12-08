@@ -2,7 +2,7 @@
 
 import pytest
 
-from learning_memory_server.server.tools.enums import (
+from clams.server.tools.enums import (
     DOMAINS,
     OUTCOME_STATUS_VALUES,
     ROOT_CAUSE_CATEGORIES,
@@ -14,7 +14,7 @@ from learning_memory_server.server.tools.enums import (
     validate_root_cause_category,
     validate_strategy,
 )
-from learning_memory_server.server.tools.errors import ValidationError
+from clams.server.tools.errors import ValidationError
 
 
 class TestDomains:

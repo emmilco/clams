@@ -5,10 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from learning_memory_server.embedding.mock import MockEmbedding
-from learning_memory_server.indexers import CodeIndexer, TreeSitterParser
-from learning_memory_server.storage.memory import InMemoryVectorStore
-from learning_memory_server.storage.metadata import MetadataStore
+from clams.embedding.mock import MockEmbedding
+from clams.indexers import CodeIndexer, TreeSitterParser
+from clams.storage.memory import InMemoryVectorStore
+from clams.storage.metadata import MetadataStore
 
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures" / "code_samples"
 

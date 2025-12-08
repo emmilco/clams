@@ -8,18 +8,18 @@ import structlog
 from mcp.server import Server
 from mcp.types import Tool
 
-from learning_memory_server.clustering import Clusterer, ExperienceClusterer
-from learning_memory_server.embedding import EmbeddingService
-from learning_memory_server.observation import (
+from clams.clustering import Clusterer, ExperienceClusterer
+from clams.embedding import EmbeddingService
+from clams.observation import (
     ObservationCollector,
     ObservationPersister,
 )
-from learning_memory_server.search import Searcher
-from learning_memory_server.server.config import ServerSettings
-from learning_memory_server.storage import VectorStore
-from learning_memory_server.storage.metadata import MetadataStore
-from learning_memory_server.storage.qdrant import QdrantVectorStore
-from learning_memory_server.values import ValueStore
+from clams.search import Searcher
+from clams.server.config import ServerSettings
+from clams.storage import VectorStore
+from clams.storage.metadata import MetadataStore
+from clams.storage.qdrant import QdrantVectorStore
+from clams.values import ValueStore
 
 logger = structlog.get_logger()
 
@@ -83,7 +83,7 @@ async def initialize_services(
     # Code indexing (optional - graceful degradation)
     code_indexer = None
     try:
-        from learning_memory_server.indexers import (
+        from clams.indexers import (
             CodeIndexer,
             TreeSitterParser,
         )
@@ -117,7 +117,7 @@ async def initialize_services(
 
     if repo_path_to_use:
         try:
-            from learning_memory_server.git import (
+            from clams.git import (
                 GitAnalyzer,
                 GitPythonReader,
             )

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 #
-# clams-common.sh: Shared configuration for CLAMS scripts
+# claws-common.sh: Shared configuration for CLAWS scripts
 #
-# Source this at the start of any CLAMS script to get:
+# Source this at the start of any CLAWS script to get:
 #   - MAIN_REPO: Path to the main (non-worktree) repository
 #   - CLAUDE_DIR: Path to .claude in main repo
 #   - DB_PATH: Path to the shared database
 #
 # Usage:
-#   source "$(dirname "${BASH_SOURCE[0]}")/clams-common.sh"
+#   source "$(dirname "${BASH_SOURCE[0]}")/claws-common.sh"
 
 # Find the script directory
 _SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[1]:-${BASH_SOURCE[0]}}")" && pwd)"
@@ -38,7 +38,7 @@ fi
 
 # Set shared paths
 CLAUDE_DIR="$MAIN_REPO/.claude"
-DB_PATH="$CLAUDE_DIR/clams.db"
+DB_PATH="$CLAUDE_DIR/claws.db"
 GATES_DIR="$CLAUDE_DIR/gates"
 ROLES_DIR="$CLAUDE_DIR/roles"
 WORKTREE_DIR="$MAIN_REPO/.worktrees"

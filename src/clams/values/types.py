@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from typing import Any
 
-from learning_memory_server.embedding.base import Vector
+from clams.embedding.base import Vector
 
 
 @dataclass

@@ -5,13 +5,13 @@ from typing import Any
 import structlog
 from mcp.server import Server
 
-from learning_memory_server.search import Searcher
-from learning_memory_server.server.tools.enums import (
+from clams.search import Searcher
+from clams.server.tools.enums import (
     validate_axis,
     validate_domain,
     validate_outcome_status,
 )
-from learning_memory_server.server.tools.errors import ValidationError
+from clams.server.tools.errors import ValidationError
 
 logger = structlog.get_logger()
 

@@ -22,7 +22,7 @@ else
     MAIN_REPO=$(cd "$_LOCAL_REPO" && git worktree list --porcelain 2>/dev/null | head -1 | sed 's/worktree //')
     MAIN_REPO="${MAIN_REPO:-$_LOCAL_REPO}"
     CLAUDE_DIR="$MAIN_REPO/.claude"
-    DB_PATH="$CLAUDE_DIR/clams.db"
+    DB_PATH="$CLAUDE_DIR/claws.db"
 fi
 
 WORKTREE="${1:-.}"

@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock
 import numpy as np
 import pytest
 
-from learning_memory_server.storage.base import SearchResult
-from learning_memory_server.values import (
+from clams.storage.base import SearchResult
+from clams.values import (
     ClusterInfo,
     ValueStore,
 )

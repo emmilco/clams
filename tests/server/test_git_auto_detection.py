@@ -9,9 +9,9 @@ import os
 import pytest
 from git import Repo
 
-from learning_memory_server.embedding import EmbeddingSettings, NomicEmbedding
-from learning_memory_server.server.config import ServerSettings
-from learning_memory_server.server.tools import initialize_services
+from clams.embedding import EmbeddingSettings, NomicEmbedding
+from clams.server.config import ServerSettings
+from clams.server.tools import initialize_services
 
 # Mark as slow tests (load heavy embedding models)
 pytestmark = pytest.mark.slow

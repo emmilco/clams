@@ -27,7 +27,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/clams-common.sh"
+source "$SCRIPT_DIR/claws-common.sh"
 
 if [[ ! -f "$DB_PATH" ]]; then
     echo "Error: Database not found at $DB_PATH. Run clams-init first." >&2

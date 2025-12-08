@@ -1,4 +1,4 @@
-# Learning Memory Server
+# CLAMS - Claude Learning and Memory System
 
 A Model Context Protocol (MCP) server for semantic memory, code indexing, and experience-based learning.
 
@@ -21,7 +21,7 @@ A Model Context Protocol (MCP) server for semantic memory, code indexing, and ex
 ```bash
 # Clone repository
 git clone <repo-url>
-cd learning-memory-server
+cd clams-server
 
 # Install with uv
 uv pip install -e .
@@ -38,20 +38,20 @@ pip install -e .
 # Start Qdrant first
 docker run -p 6333:6333 qdrant/qdrant
 
-# Start Learning Memory Server
-learning-memory-server
+# Start CLAMS - Claude Learning and Memory System
+clams-server
 ```
 
 ### Configuration
 
 Environment variables:
-- `LMS_QDRANT_URL` - Qdrant URL (default: http://localhost:6333)
-- `LMS_EMBEDDING_MODEL` - Embedding model (default: nomic-ai/nomic-embed-text-v1.5)
-- `LMS_LOG_LEVEL` - Logging level (default: INFO)
+- `CLAMS_QDRANT_URL` - Qdrant URL (default: http://localhost:6333)
+- `CLAMS_EMBEDDING_MODEL` - Embedding model (default: nomic-ai/nomic-embed-text-v1.5)
+- `CLAMS_LOG_LEVEL` - Logging level (default: INFO)
 
 ### Available Tools
 
-See `src/learning_memory_server/server/tools/` for all MCP tools:
+See `src/clams/server/tools/` for all MCP tools:
 - `memory.py` - store_memory, retrieve_memories, list_memories, delete_memory
 - `code.py` - index_codebase, search_code, find_similar_code
 - `git.py` - index_commits, search_commits, get_churn_hotspots, get_code_authors

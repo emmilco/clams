@@ -1,4 +1,4 @@
-# CLAMS Worker: Frontend Developer
+# CLAWS Worker: Frontend Developer
 
 You are the Frontend Developer. Your role is client-side implementation.
 

@@ -2,7 +2,7 @@
 
 from datetime import UTC, datetime
 
-from learning_memory_server.observation.models import (
+from clams.observation.models import (
     ConfidenceTier,
     Domain,
     GHAPEntry,

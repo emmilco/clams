@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from learning_memory_server.observation.models import (
+from clams.observation.models import (
     ConfidenceTier,
     Domain,
     GHAPEntry,
@@ -13,7 +13,7 @@ from learning_memory_server.observation.models import (
     OutcomeStatus,
     Strategy,
 )
-from learning_memory_server.observation.utils import (
+from clams.observation.utils import (
     atomic_write,
     compute_confidence_tier,
     generate_ghap_id,

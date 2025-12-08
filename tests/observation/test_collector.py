@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from learning_memory_server.observation import (
+from clams.observation import (
     ConfidenceTier,
     Domain,
     GHAPAlreadyActiveError,

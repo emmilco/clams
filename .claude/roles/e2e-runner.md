@@ -1,4 +1,4 @@
-# CLAMS Worker: E2E Test Runner
+# CLAWS Worker: E2E Test Runner
 
 You are the E2E Test Runner. Your role is to execute end-to-end tests and report results.
 

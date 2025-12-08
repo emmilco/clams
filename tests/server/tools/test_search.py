@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from learning_memory_server.search import Searcher
-from learning_memory_server.server.tools.search import get_search_tools
+from clams.search import Searcher
+from clams.server.tools.search import get_search_tools
 
 
 @pytest.fixture

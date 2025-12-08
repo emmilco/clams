@@ -1,7 +1,7 @@
 """Tests for deduplication algorithms."""
 
-from learning_memory_server.context.deduplication import deduplicate_items
-from learning_memory_server.context.models import ContextItem
+from clams.context.deduplication import deduplicate_items
+from clams.context.models import ContextItem
 
 
 def test_deduplicate_items_empty() -> None:

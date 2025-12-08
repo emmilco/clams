@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from learning_memory_server.embedding import MockEmbedding
+from clams.embedding import MockEmbedding
 
 
 class TestMockEmbedding:

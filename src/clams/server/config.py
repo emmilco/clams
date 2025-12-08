@@ -4,12 +4,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class ServerSettings(BaseSettings):
-    """Configuration for the Learning Memory Server.
+    """Configuration for the CLAMS server.
 
-    All settings can be overridden via environment variables with LMS_ prefix.
+    All settings can be overridden via environment variables with CLAMS_ prefix.
     """
 
-    model_config = SettingsConfigDict(env_prefix="LMS_")
+    model_config = SettingsConfigDict(env_prefix="CLAMS_")
 
     # Storage paths
     storage_path: str = "~/.learning-memory"

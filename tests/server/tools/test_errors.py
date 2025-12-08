@@ -2,7 +2,7 @@
 
 import pytest
 
-from learning_memory_server.server.tools.errors import (
+from clams.server.tools.errors import (
     InsufficientDataError,
     MCPError,
     NotFoundError,

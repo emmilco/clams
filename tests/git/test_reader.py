@@ -7,7 +7,7 @@ from pathlib import Path
 import git
 import pytest
 
-from learning_memory_server.git import (
+from clams.git import (
     BinaryFileError,
     FileNotInRepoError,
     GitPythonReader,

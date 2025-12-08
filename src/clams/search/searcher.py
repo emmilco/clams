@@ -3,8 +3,8 @@
 from datetime import datetime
 from typing import Any
 
-from learning_memory_server.embedding.base import EmbeddingService
-from learning_memory_server.storage.base import VectorStore
+from clams.embedding.base import EmbeddingService
+from clams.storage.base import VectorStore
 
 from .collections import CollectionName, InvalidAxisError
 from .results import (

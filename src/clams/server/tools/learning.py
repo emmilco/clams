@@ -5,14 +5,14 @@ from typing import Any
 import structlog
 from mcp.server import Server
 
-from learning_memory_server.clustering import ExperienceClusterer
-from learning_memory_server.server.tools.enums import validate_axis
-from learning_memory_server.server.tools.errors import (
+from clams.clustering import ExperienceClusterer
+from clams.server.tools.enums import validate_axis
+from clams.server.tools.errors import (
     InsufficientDataError,
     NotFoundError,
     ValidationError,
 )
-from learning_memory_server.values import ValueStore
+from clams.values import ValueStore
 
 logger = structlog.get_logger()
 

@@ -5,7 +5,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from learning_memory_server.clustering import Clusterer, ClusterResult
+from clams.clustering import Clusterer, ClusterResult
 
 
 def test_cluster_basic() -> None:

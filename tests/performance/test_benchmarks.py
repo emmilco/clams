@@ -20,10 +20,10 @@ import httpx
 import numpy as np
 import pytest
 
-from learning_memory_server.clustering import ExperienceClusterer
-from learning_memory_server.clustering.clusterer import Clusterer
-from learning_memory_server.embedding import MockEmbedding
-from learning_memory_server.storage import QdrantVectorStore
+from clams.clustering import ExperienceClusterer
+from clams.clustering.clusterer import Clusterer
+from clams.embedding import MockEmbedding
+from clams.storage import QdrantVectorStore
 
 pytest_plugins = ("pytest_asyncio",)
 

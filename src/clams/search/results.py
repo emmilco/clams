@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from learning_memory_server.storage.base import SearchResult
+from clams.storage.base import SearchResult
 
 
 @dataclass
