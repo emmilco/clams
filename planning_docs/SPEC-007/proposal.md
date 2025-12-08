@@ -112,12 +112,14 @@ Total: ~2800 lines of shell scripts
 7. `tests/server/test_config.py`:
    - All `"LMS_*"` env var strings
 8. All test files with imports (~30+ files)
-9. `README.md`:
-   - Title: "Learning Memory Server" → "CLAMS - Claude Learning and Memory System"
-   - All `LMS_*` env var references → `CLAMS_*`
-   - Tool path references
-   - Installation commands: `learning-memory-server` → `clams-server`
-10. `GETTING_STARTED.md`:
+9. `.claude/hooks/mcp_client.py`:
+   - Line 132: `server_command=["python", "-m", "learning_memory_server"]` → `server_command=["python", "-m", "clams"]`
+10. `README.md`:
+    - Title: "Learning Memory Server" → "CLAMS - Claude Learning and Memory System"
+    - All `LMS_*` env var references → `CLAMS_*`
+    - Tool path references
+    - Installation commands: `learning-memory-server` → `clams-server`
+11. `GETTING_STARTED.md`:
     - Title: "Learning Memory Server: Getting Started" → "CLAMS: Getting Started"
     - All descriptive references
     - All `LMS_*` → `CLAMS_*`
@@ -211,7 +213,13 @@ Total: ~2800 lines of shell scripts
    - `tests/server/test_main.py`: `server.name == "clams"`
    - `tests/server/test_config.py`: All `"LMS_*"` → `"CLAMS_*"`
 
-7. **Verify with mypy and tests**:
+7. **Update MCP hooks**:
+   - `.claude/hooks/mcp_client.py` line 132:
+     ```python
+     server_command=["python", "-m", "clams"]
+     ```
+
+8. **Verify with mypy and tests**:
    ```bash
    mypy src --strict
    pytest -vvsx
