@@ -1,4 +1,4 @@
-"""End-to-end integration tests for Learning Memory Server.
+"""End-to-end integration tests for CLAMS.
 
 These tests validate full workflows with real Qdrant at localhost:6333.
 They use isolated test collections to avoid touching production data.
@@ -458,7 +458,7 @@ class TestGHAPLearningLoop:
 
         # Use patch.dict for proper cleanup even on test failure
         with patch.dict(
-            "learning_memory_server.clustering.experience.AXIS_COLLECTIONS",
+            "clams.clustering.experience.AXIS_COLLECTIONS",
             test_axis_collections,
             clear=True,
         ):

@@ -26,8 +26,8 @@ class TestMCPClient:
     @pytest.mark.asyncio
     async def test_init(self) -> None:
         """Test MCPClient initialization."""
-        client = MCPClient(["python", "-m", "learning_memory_server"], timeout=5.0)
-        assert client.server_command == ["python", "-m", "learning_memory_server"]
+        client = MCPClient(["python", "-m", "clams"], timeout=5.0)
+        assert client.server_command == ["python", "-m", "clams"]
         assert client.timeout == 5.0
         assert client.session is None
 

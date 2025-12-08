@@ -10,8 +10,8 @@ def test_default_settings() -> None:
     """Test that default settings are loaded correctly."""
     settings = ServerSettings()
 
-    assert settings.storage_path == "~/.learning-memory"
-    assert settings.sqlite_path == "~/.learning-memory/metadata.db"
+    assert settings.storage_path == "~/.clams"
+    assert settings.sqlite_path == "~/.clams/metadata.db"
     assert settings.journal_path == ".claude/journal"
     assert settings.qdrant_url == "http://localhost:6333"
     assert settings.embedding_model == "nomic-ai/nomic-embed-text-v1.5"

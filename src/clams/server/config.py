@@ -12,8 +12,8 @@ class ServerSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="CLAMS_")
 
     # Storage paths
-    storage_path: str = "~/.learning-memory"
-    sqlite_path: str = "~/.learning-memory/metadata.db"
+    storage_path: str = "~/.clams"
+    sqlite_path: str = "~/.clams/metadata.db"
     journal_path: str = ".claude/journal"
 
     # Qdrant configuration

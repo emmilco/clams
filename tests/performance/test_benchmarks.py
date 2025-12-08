@@ -1,4 +1,4 @@
-"""Performance benchmarks for Learning Memory Server.
+"""Performance benchmarks for CLAMS.
 
 Benchmarks measure critical operations against HARD performance targets:
 - Code search: p95 < 200ms
@@ -470,7 +470,7 @@ class TestClusteringPerformance:
 
         # Use patch.dict for proper cleanup even on test failure
         with patch.dict(
-            "learning_memory_server.clustering.experience.AXIS_COLLECTIONS",
+            "clams.clustering.experience.AXIS_COLLECTIONS",
             test_axis_collections,
             clear=True,
         ):

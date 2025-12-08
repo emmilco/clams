@@ -165,5 +165,5 @@ class StorageSettings(BaseSettings):
     qdrant_timeout: float = 30.0
 
     # Storage paths
-    storage_path: str = "~/.learning-memory"
-    sqlite_path: str = "~/.learning-memory/metadata.db"
+    storage_path: str = "~/.clams"
+    sqlite_path: str = "~/.clams/metadata.db"

@@ -1,1 +1,1 @@
-"""Test suite for learning-memory-server."""
+"""Test suite for CLAMS."""
