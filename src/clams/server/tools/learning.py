@@ -368,6 +368,10 @@ def get_learning_tools(
                 else "not_found"
             )
             return {"error": {"type": error_type, "message": str(e)}}
+        except ValueError as e:
+            # BUG-020: ValueStore.store_value raises ValueError for validation failures
+            logger.warning("learning.validation_error", error=str(e))
+            return {"error": {"type": "validation_error", "message": str(e)}}
         except Exception as e:
             logger.error(
                 "learning.unexpected_error",
