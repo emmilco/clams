@@ -131,9 +131,8 @@ class ObservationPersister:
         Creates collections if they don't exist. Safe to call multiple times.
 
         Note: VectorStore.create_collection() raises ValueError if collection
-        already exists. This is the documented behavior observed in the codebase
-        (see indexers/indexer.py lines 58-61) and matches both InMemoryVectorStore
-        and QdrantVectorStore implementations.
+        already exists (InMemoryVectorStore). QdrantVectorStore raises
+        UnexpectedResponse with status 409. Both cases are handled here.
         """
         axes = ["full", "strategy", "surprise", "root_cause"]
         dimension = self._embedding_service.dimension  # 768 for Nomic
@@ -151,14 +150,19 @@ class ObservationPersister:
                     collection=collection_name,
                     dimension=dimension,
                 )
-            except ValueError as e:
+            except Exception as e:
                 # Collection already exists - this is expected and safe
-                # ValueError is the documented exception for duplicate collections
-                self._logger.debug(
-                    "collection_already_exists",
-                    collection=collection_name,
-                    error=str(e),
-                )
+                # InMemoryVectorStore raises ValueError
+                # QdrantVectorStore raises UnexpectedResponse with 409
+                error_msg = str(e).lower()
+                if "already exists" in error_msg or "409" in str(e):
+                    self._logger.debug(
+                        "collection_already_exists",
+                        collection=collection_name,
+                        error=str(e),
+                    )
+                else:
+                    raise
 
     def _render_template(self, template: str, entry: GHAPEntry) -> str:
         """Render a template with optional fields.
