@@ -12,9 +12,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$(dirname "$SCRIPT_DIR")/bin"
 
-# Use clams-common.sh to resolve to main repo database
-if [[ -f "$BIN_DIR/clams-common.sh" ]]; then
-    source "$BIN_DIR/clams-common.sh"
+# Use claws-common.sh to resolve to main repo database
+if [[ -f "$BIN_DIR/claws-common.sh" ]]; then
+    source "$BIN_DIR/claws-common.sh"
 else
     # Fallback for standalone execution
     CLAUDE_DIR="$(dirname "$SCRIPT_DIR")"

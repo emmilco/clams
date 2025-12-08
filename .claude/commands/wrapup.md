@@ -13,19 +13,19 @@ Check if the user specified `continue` - this determines whether the next sessio
 
 Run this to mark all active workers as session_ended:
 ```bash
-sqlite3 .claude/clams.db "UPDATE workers SET status = 'session_ended', ended_at = datetime('now') WHERE status = 'active';"
+sqlite3 .claude/claws.db "UPDATE workers SET status = 'session_ended', ended_at = datetime('now') WHERE status = 'active';"
 ```
 
 ## 2. Create Database Backup
 
 ```bash
-.claude/bin/clams-backup auto
+.claude/bin/claws-backup auto
 ```
 
 ## 3. Get Current State
 
 ```bash
-.claude/bin/clams-status
+.claude/bin/claws-status
 ```
 
 ## 4. Identify Friction Points
@@ -39,11 +39,11 @@ Reflect on this session and identify the **top 3-5 friction points**:
 
 ## 5. Save Handoff to Database
 
-Use `clams-session save` to store the handoff. This command reads from stdin and handles encoding automatically.
+Use `claws-session save` to store the handoff. This command reads from stdin and handles encoding automatically.
 
 **For `/wrapup` (no continuation expected):**
 ```bash
-cat <<'EOF' | .claude/bin/clams-session save
+cat <<'EOF' | .claude/bin/claws-session save
 # Session Handoff - [DATE]
 
 ## Session Summary
@@ -75,7 +75,7 @@ EOF
 
 **For `/wrapup continue` (continuation expected):**
 ```bash
-cat <<'EOF' | .claude/bin/clams-session save --continue
+cat <<'EOF' | .claude/bin/claws-session save --continue
 # Session Handoff - [DATE]
 ...
 EOF

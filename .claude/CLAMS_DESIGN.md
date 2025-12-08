@@ -1,4 +1,4 @@
-# CLAMS: Claude Agent Management System
+# CLAWS: Claude Learning Agent Workflow System
 
 A fault-tolerant workflow system for AI agent orchestration in software development.
 
