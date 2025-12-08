@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 #
-# clams-status: Query system state
+# claws-status: Query system state
 #
 # Usage:
-#   clams-status              Full status overview
-#   clams-status tasks        Tasks grouped by phase
-#   clams-status workers      Active workers
-#   clams-status merges       Recent merge log
-#   clams-status counters     System counters
-#   clams-status violations   Recent violations
-#   clams-status health       System health check
+#   claws-status              Full status overview
+#   claws-status tasks        Tasks grouped by phase
+#   claws-status workers      Active workers
+#   claws-status merges       Recent merge log
+#   claws-status counters     System counters
+#   claws-status violations   Recent violations
+#   claws-status health       System health check
 
 set -euo pipefail
 
@@ -29,7 +29,7 @@ else
 fi
 
 if [[ ! -f "$DB_PATH" ]]; then
-    echo "Error: Database not found at $DB_PATH. Run clams-init first." >&2
+    echo "Error: Database not found at $DB_PATH. Run claws-init first." >&2
     exit 1
 fi
 
@@ -92,7 +92,7 @@ cmd_health() {
     if [[ "$merge_lock" -gt 0 ]]; then
         echo "Status: DEGRADED"
         echo "Reason: Merge lock active (E2E failed)"
-        echo "Action: Fix E2E failures, then run: clams-counter reset merge_lock"
+        echo "Action: Fix E2E failures, then run: claws-counter reset merge_lock"
     elif [[ "$blocked_count" -gt 0 ]]; then
         echo "Status: DEGRADED"
         echo "Reason: $blocked_count task(s) blocked"
@@ -249,14 +249,14 @@ case "$command" in
         ;;
     *)
         echo "Usage:"
-        echo "  clams-status              Full status overview"
-        echo "  clams-status health       System health check"
-        echo "  clams-status tasks        Tasks grouped by phase"
-        echo "  clams-status worktrees    Active worktrees"
-        echo "  clams-status workers      Active workers"
-        echo "  clams-status merges       Recent merge log"
-        echo "  clams-status counters     System counters"
-        echo "  clams-status violations   Recent violations"
+        echo "  claws-status              Full status overview"
+        echo "  claws-status health       System health check"
+        echo "  claws-status tasks        Tasks grouped by phase"
+        echo "  claws-status worktrees    Active worktrees"
+        echo "  claws-status workers      Active workers"
+        echo "  claws-status merges       Recent merge log"
+        echo "  claws-status counters     System counters"
+        echo "  claws-status violations   Recent violations"
         exit 1
         ;;
 esac

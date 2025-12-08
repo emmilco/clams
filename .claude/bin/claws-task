@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 #
-# clams-task: Task CRUD operations
+# claws-task: Task CRUD operations
 #
 # Usage:
-#   clams-task create <id> <title> [--spec <spec_id>] [--type <feature|bug>]
-#   clams-task list [--phase <phase>] [--spec <spec_id>] [--type <feature|bug>]
-#   clams-task show <id>
-#   clams-task update <id> --phase <phase>
-#   clams-task update <id> --specialist <specialist>
-#   clams-task update <id> --blocked-by <task_id>
-#   clams-task update <id> --notes <notes>
-#   clams-task update <id> --worktree <path>
-#   clams-task transition <id> <to_phase> [--gate-result <pass|fail>] [--gate-details <details>]
-#   clams-task delete <id>
+#   claws-task create <id> <title> [--spec <spec_id>] [--type <feature|bug>]
+#   claws-task list [--phase <phase>] [--spec <spec_id>] [--type <feature|bug>]
+#   claws-task show <id>
+#   claws-task update <id> --phase <phase>
+#   claws-task update <id> --specialist <specialist>
+#   claws-task update <id> --blocked-by <task_id>
+#   claws-task update <id> --notes <notes>
+#   claws-task update <id> --worktree <path>
+#   claws-task transition <id> <to_phase> [--gate-result <pass|fail>] [--gate-details <details>]
+#   claws-task delete <id>
 #
 # Task types:
 #   feature (default): SPEC → DESIGN → IMPLEMENT → CODE_REVIEW → TEST → INTEGRATE → VERIFY → DONE
@@ -24,7 +24,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/claws-common.sh"
 
 if [[ ! -f "$DB_PATH" ]]; then
-    echo "Error: Database not found at $DB_PATH. Run clams-init first." >&2
+    echo "Error: Database not found at $DB_PATH. Run claws-init first." >&2
     exit 1
 fi
 
@@ -58,7 +58,7 @@ verify_gate_pass() {
         echo "Error: No gate pass found for $transition transition" >&2
         echo "" >&2
         echo "Run the gate check first:" >&2
-        echo "  .claude/bin/clams-gate check $task_id $transition" >&2
+        echo "  .claude/bin/claws-gate check $task_id $transition" >&2
         return 1
     fi
 
@@ -69,7 +69,7 @@ verify_gate_pass() {
         echo "Current commit: ${current_sha:0:7}" >&2
         echo "" >&2
         echo "Re-run the gate check:" >&2
-        echo "  .claude/bin/clams-gate check $task_id $transition" >&2
+        echo "  .claude/bin/claws-gate check $task_id $transition" >&2
         return 1
     fi
 
@@ -79,12 +79,12 @@ verify_gate_pass() {
 
 usage() {
     echo "Usage:"
-    echo "  clams-task create <id> <title> [--spec <spec_id>] [--type <feature|bug>]"
-    echo "  clams-task list [--phase <phase>] [--spec <spec_id>] [--type <feature|bug>]"
-    echo "  clams-task show <id>"
-    echo "  clams-task update <id> <--field value>..."
-    echo "  clams-task transition <id> <to_phase> [--gate-result <result>] [--gate-details <details>]"
-    echo "  clams-task delete <id>"
+    echo "  claws-task create <id> <title> [--spec <spec_id>] [--type <feature|bug>]"
+    echo "  claws-task list [--phase <phase>] [--spec <spec_id>] [--type <feature|bug>]"
+    echo "  claws-task show <id>"
+    echo "  claws-task update <id> <--field value>..."
+    echo "  claws-task transition <id> <to_phase> [--gate-result <result>] [--gate-details <details>]"
+    echo "  claws-task delete <id>"
     echo ""
     echo "Task types:"
     echo "  feature (default): SPEC → DESIGN → IMPLEMENT → CODE_REVIEW → TEST → INTEGRATE → VERIFY → DONE"
@@ -424,7 +424,7 @@ cmd_transition() {
             echo "" >&2
             echo "Reviews must be recorded in the database before transition." >&2
             echo "Record reviews with:" >&2
-            echo "  .claude/bin/clams-review record $id $artifact_type approved --worker <worker_id>" >&2
+            echo "  .claude/bin/claws-review record $id $artifact_type approved --worker <worker_id>" >&2
             exit 1
         fi
 
@@ -450,7 +450,7 @@ cmd_delete() {
     local id="$1"
 
     # Auto-backup before destructive operation
-    "$SCRIPT_DIR/clams-backup" auto 2>/dev/null || true
+    "$SCRIPT_DIR/claws-backup" auto 2>/dev/null || true
 
     # Check for worktree and remove if exists
     local worktree_path

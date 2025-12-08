@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
-# clams-init: Initialize the CLAMS database
+# claws-init: Initialize the CLAMS database
 #
-# Usage: clams-init
+# Usage: claws-init
 #
 # Creates .claude/claws.db with the required schema.
 # Safe to run multiple times (uses IF NOT EXISTS).

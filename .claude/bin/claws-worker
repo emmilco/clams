@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 #
-# clams-worker: Worker management utilities
+# claws-worker: Worker management utilities
 #
 # Usage:
-#   clams-worker prompt <role>                    Output role prompt for worker
-#   clams-worker context <task_id> <role>         Output full context (role + task info)
-#   clams-worker start <task_id> <role>           Register worker start in database
-#   clams-worker complete <worker_id>             Mark worker as complete
-#   clams-worker fail <worker_id> [--reason <reason>]  Mark worker as failed
-#   clams-worker list                             List active workers
+#   claws-worker prompt <role>                    Output role prompt for worker
+#   claws-worker context <task_id> <role>         Output full context (role + task info)
+#   claws-worker start <task_id> <role>           Register worker start in database
+#   claws-worker complete <worker_id>             Mark worker as complete
+#   claws-worker fail <worker_id> [--reason <reason>]  Mark worker as failed
+#   claws-worker list                             List active workers
 
 set -euo pipefail
 
@@ -16,18 +16,18 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/claws-common.sh"
 
 if [[ ! -f "$DB_PATH" ]]; then
-    echo "Error: Database not found at $DB_PATH. Run clams-init first." >&2
+    echo "Error: Database not found at $DB_PATH. Run claws-init first." >&2
     exit 1
 fi
 
 usage() {
     echo "Usage:"
-    echo "  clams-worker prompt <role>                    Output role prompt"
-    echo "  clams-worker context <task_id> <role>         Output full context"
-    echo "  clams-worker start <task_id> <role>           Register worker start"
-    echo "  clams-worker complete <worker_id>             Mark worker complete"
-    echo "  clams-worker fail <worker_id> [--reason <r>]  Mark worker failed"
-    echo "  clams-worker list                             List active workers"
+    echo "  claws-worker prompt <role>                    Output role prompt"
+    echo "  claws-worker context <task_id> <role>         Output full context"
+    echo "  claws-worker start <task_id> <role>           Register worker start"
+    echo "  claws-worker complete <worker_id>             Mark worker complete"
+    echo "  claws-worker fail <worker_id> [--reason <r>]  Mark worker failed"
+    echo "  claws-worker list                             List active workers"
     echo ""
     echo "Roles:"
     echo "  planning, architect, backend, frontend, qa, bug-investigator, infra"
@@ -209,7 +209,7 @@ EOF
     if [[ -n "$reason" && -n "$task_id" ]]; then
         sqlite3 "$DB_PATH" <<EOF
 INSERT INTO violations (task_id, worker_id, violation_type, description, detected_by)
-VALUES ('$task_id', '$worker_id', 'worker_failure', '$(echo "$reason" | sed "s/'/''/g")', 'clams-worker');
+VALUES ('$task_id', '$worker_id', 'worker_failure', '$(echo "$reason" | sed "s/'/''/g")', 'claws-worker');
 EOF
     fi
 

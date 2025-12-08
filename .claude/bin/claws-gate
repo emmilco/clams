@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 #
-# clams-gate: Run gate checks for phase transitions
+# claws-gate: Run gate checks for phase transitions
 #
 # Usage:
-#   clams-gate check <task_id> <transition>
-#   clams-gate list
+#   claws-gate check <task_id> <transition>
+#   claws-gate list
 #
 # Feature transitions: SPEC-DESIGN, DESIGN-IMPLEMENT, IMPLEMENT-CODE_REVIEW,
 #                      CODE_REVIEW-TEST, TEST-INTEGRATE, INTEGRATE-VERIFY, VERIFY-DONE
@@ -18,7 +18,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/claws-common.sh"
 
 if [[ ! -f "$DB_PATH" ]]; then
-    echo "Error: Database not found at $DB_PATH. Run clams-init first." >&2
+    echo "Error: Database not found at $DB_PATH. Run claws-init first." >&2
     exit 1
 fi
 
@@ -53,8 +53,8 @@ EOF
 
 usage() {
     echo "Usage:"
-    echo "  clams-gate check <task_id> <transition>   Run gate checks"
-    echo "  clams-gate list                           List transitions and their gates"
+    echo "  claws-gate check <task_id> <transition>   Run gate checks"
+    echo "  claws-gate list                           List transitions and their gates"
     echo ""
     echo "Transitions:"
     echo "  SPEC-DESIGN       Human approves spec"
@@ -94,7 +94,7 @@ cmd_list() {
     echo ""
     echo "INTEGRATE → VERIFY (semi-automated)"
     echo "  - [auto] Changelog entry exists (changelog.d/TASK-XXX.md)"
-    echo "  - Then run: clams-worktree merge TASK-XXX"
+    echo "  - Then run: claws-worktree merge TASK-XXX"
     echo ""
     echo "VERIFY → DONE (manual - worktree gone)"
     echo "  - Run tests on main branch"
@@ -124,7 +124,7 @@ cmd_list() {
     echo ""
     echo "TESTED → MERGED (semi-automated)"
     echo "  - [auto] Changelog entry exists (changelog.d/BUG-XXX.md)"
-    echo "  - Then run: clams-worktree merge BUG-XXX"
+    echo "  - Then run: claws-worktree merge BUG-XXX"
     echo ""
     echo "MERGED → DONE (manual - worktree gone)"
     echo "  - Run tests on main branch"
@@ -202,7 +202,7 @@ check_reviews() {
         echo "  Current:  $approved_count approved"
         echo ""
         echo "  Record reviews with:"
-        echo "    .claude/bin/clams-review record $task_id $artifact_type approved --worker <worker_id>"
+        echo "    .claude/bin/claws-review record $task_id $artifact_type approved --worker <worker_id>"
         return 1
     fi
 }
@@ -322,7 +322,7 @@ cmd_check() {
                 failed=1
             fi
             echo ""
-            echo "NOTE: Merge and post-merge tests handled by clams-worktree merge"
+            echo "NOTE: Merge and post-merge tests handled by claws-worktree merge"
             ;;
 
         VERIFY-DONE)
@@ -335,7 +335,7 @@ cmd_check() {
             echo "  3. Check for orphaned code (unused imports, dead functions)"
             echo ""
             echo "If all checks pass, transition with:"
-            echo "  .claude/bin/clams-task transition $task_id DONE --gate-result pass"
+            echo "  .claude/bin/claws-task transition $task_id DONE --gate-result pass"
             exit 0
             ;;
 
@@ -446,7 +446,7 @@ cmd_check() {
                 failed=1
             fi
             echo ""
-            echo "NOTE: Merge handled by clams-worktree merge"
+            echo "NOTE: Merge handled by claws-worktree merge"
             ;;
 
         MERGED-DONE)
@@ -459,7 +459,7 @@ cmd_check() {
             echo "  3. Verify regression test catches the original bug"
             echo ""
             echo "If all checks pass, transition with:"
-            echo "  .claude/bin/clams-task transition $task_id DONE --gate-result pass"
+            echo "  .claude/bin/claws-task transition $task_id DONE --gate-result pass"
             exit 0
             ;;
 
@@ -484,7 +484,7 @@ cmd_check() {
 
         echo ""
         echo "Proceed with transition:"
-        echo "  .claude/bin/clams-task transition $task_id <next_phase> --gate-result pass"
+        echo "  .claude/bin/claws-task transition $task_id <next_phase> --gate-result pass"
         exit 0
     else
         echo "GATE RESULT: FAIL"

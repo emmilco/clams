@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 #
-# clams-review: Manage artifact reviews
+# claws-review: Manage artifact reviews
 #
 # Usage:
-#   clams-review record <task_id> <artifact_type> <result> [--worker <id>] [--issues <text>]
-#   clams-review list <task_id> [<artifact_type>]
-#   clams-review check <task_id> <artifact_type>
-#   clams-review clear <task_id> [<artifact_type>]
+#   claws-review record <task_id> <artifact_type> <result> [--worker <id>] [--issues <text>]
+#   claws-review list <task_id> [<artifact_type>]
+#   claws-review check <task_id> <artifact_type>
+#   claws-review clear <task_id> [<artifact_type>]
 #
 # Artifact types: spec, proposal, code, bugfix
 # Results: approved, changes_requested
@@ -19,16 +19,16 @@ source "$SCRIPT_DIR/claws-common.sh"
 REQUIRED_REVIEWS=2
 
 if [[ ! -f "$DB_PATH" ]]; then
-    echo "Error: Database not found at $DB_PATH. Run clams-init first." >&2
+    echo "Error: Database not found at $DB_PATH. Run claws-init first." >&2
     exit 1
 fi
 
 usage() {
     echo "Usage:"
-    echo "  clams-review record <task_id> <artifact_type> <result> [options]"
-    echo "  clams-review list <task_id> [<artifact_type>]"
-    echo "  clams-review check <task_id> <artifact_type>"
-    echo "  clams-review clear <task_id> [<artifact_type>]"
+    echo "  claws-review record <task_id> <artifact_type> <result> [options]"
+    echo "  claws-review list <task_id> [<artifact_type>]"
+    echo "  claws-review check <task_id> <artifact_type>"
+    echo "  claws-review clear <task_id> [<artifact_type>]"
     echo ""
     echo "Artifact types: spec, proposal, code, bugfix"
     echo "Results: approved, changes_requested"
@@ -38,10 +38,10 @@ usage() {
     echo "  --issues <text>    Issues found (for changes_requested)"
     echo ""
     echo "Examples:"
-    echo "  clams-review record SPEC-001-01 spec approved --worker W-abc123"
-    echo "  clams-review record SPEC-001-01 proposal changes_requested --issues 'Missing error handling'"
-    echo "  clams-review check SPEC-001-01 spec"
-    echo "  clams-review list SPEC-001-01"
+    echo "  claws-review record SPEC-001-01 spec approved --worker W-abc123"
+    echo "  claws-review record SPEC-001-01 proposal changes_requested --issues 'Missing error handling'"
+    echo "  claws-review check SPEC-001-01 spec"
+    echo "  claws-review list SPEC-001-01"
     exit 1
 }
 
@@ -111,7 +111,7 @@ cmd_record() {
 
     if [[ "$existing_count" -ge "$REQUIRED_REVIEWS" ]]; then
         echo "Error: Already have $REQUIRED_REVIEWS reviews for $artifact_type on $task_id" >&2
-        echo "Use 'clams-review clear $task_id $artifact_type' to reset if needed." >&2
+        echo "Use 'claws-review clear $task_id $artifact_type' to reset if needed." >&2
         exit 1
     fi
 

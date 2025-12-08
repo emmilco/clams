@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 #
-# clams-counter: Manage system counters for batch job triggers
+# claws-counter: Manage system counters for batch job triggers
 #
 # Usage:
-#   clams-counter list                    Show all counters
-#   clams-counter get <name>              Get counter value
-#   clams-counter set <name> <value>      Set counter to value
-#   clams-counter reset <name>            Reset counter to 0
-#   clams-counter increment <name>        Increment counter by 1
-#   clams-counter add <name> [value]      Create new counter (default 0)
+#   claws-counter list                    Show all counters
+#   claws-counter get <name>              Get counter value
+#   claws-counter set <name> <value>      Set counter to value
+#   claws-counter reset <name>            Reset counter to 0
+#   claws-counter increment <name>        Increment counter by 1
+#   claws-counter add <name> [value]      Create new counter (default 0)
 
 set -euo pipefail
 
@@ -16,18 +16,18 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/claws-common.sh"
 
 if [[ ! -f "$DB_PATH" ]]; then
-    echo "Error: Database not found at $DB_PATH. Run clams-init first." >&2
+    echo "Error: Database not found at $DB_PATH. Run claws-init first." >&2
     exit 1
 fi
 
 usage() {
     echo "Usage:"
-    echo "  clams-counter list                    Show all counters"
-    echo "  clams-counter get <name>              Get counter value"
-    echo "  clams-counter set <name> <value>      Set counter to value"
-    echo "  clams-counter reset <name>            Reset counter to 0"
-    echo "  clams-counter increment <name>        Increment counter by 1"
-    echo "  clams-counter add <name> [value]      Create new counter"
+    echo "  claws-counter list                    Show all counters"
+    echo "  claws-counter get <name>              Get counter value"
+    echo "  claws-counter set <name> <value>      Set counter to value"
+    echo "  claws-counter reset <name>            Reset counter to 0"
+    echo "  claws-counter increment <name>        Increment counter by 1"
+    echo "  claws-counter add <name> [value]      Create new counter"
     echo ""
     echo "Built-in counters:"
     echo "  merges_since_e2e    Triggers E2E batch job at 12"
@@ -68,7 +68,7 @@ cmd_set() {
 
     if [[ "$exists" -eq 0 ]]; then
         echo "Error: Counter not found: $name" >&2
-        echo "Use 'clams-counter add $name $value' to create it" >&2
+        echo "Use 'claws-counter add $name $value' to create it" >&2
         exit 1
     fi
 

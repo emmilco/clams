@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #
-# clams-worktree: Git worktree lifecycle management
+# claws-worktree: Git worktree lifecycle management
 #
 # Usage:
-#   clams-worktree create <task_id>       Create worktree for task
-#   clams-worktree remove <task_id>       Remove worktree (no merge)
-#   clams-worktree list                   List all worktrees
-#   clams-worktree merge <task_id>        Merge to main and cleanup
-#   clams-worktree path <task_id>         Print worktree path
+#   claws-worktree create <task_id>       Create worktree for task
+#   claws-worktree remove <task_id>       Remove worktree (no merge)
+#   claws-worktree list                   List all worktrees
+#   claws-worktree merge <task_id>        Merge to main and cleanup
+#   claws-worktree path <task_id>         Print worktree path
 
 set -euo pipefail
 
@@ -15,17 +15,17 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/claws-common.sh"
 
 if [[ ! -f "$DB_PATH" ]]; then
-    echo "Error: Database not found at $DB_PATH. Run clams-init first." >&2
+    echo "Error: Database not found at $DB_PATH. Run claws-init first." >&2
     exit 1
 fi
 
 usage() {
     echo "Usage:"
-    echo "  clams-worktree create <task_id>   Create worktree for task"
-    echo "  clams-worktree remove <task_id>   Remove worktree (no merge)"
-    echo "  clams-worktree list               List all worktrees"
-    echo "  clams-worktree merge <task_id>    Merge to main and cleanup"
-    echo "  clams-worktree path <task_id>     Print worktree path"
+    echo "  claws-worktree create <task_id>   Create worktree for task"
+    echo "  claws-worktree remove <task_id>   Remove worktree (no merge)"
+    echo "  claws-worktree list               List all worktrees"
+    echo "  claws-worktree merge <task_id>    Merge to main and cleanup"
+    echo "  claws-worktree path <task_id>     Print worktree path"
     exit 1
 }
 
@@ -133,7 +133,7 @@ cmd_merge() {
     merge_lock=$(sqlite3 "$DB_PATH" "SELECT value FROM system_counters WHERE name = 'merge_lock';" 2>/dev/null || echo "0")
     if [[ "$merge_lock" -gt 0 ]]; then
         echo "Error: Merge lock is active (system DEGRADED)" >&2
-        echo "E2E tests must pass before merging. Run clams-status health for details." >&2
+        echo "E2E tests must pass before merging. Run claws-status health for details." >&2
         exit 1
     fi
 

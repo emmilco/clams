@@ -1,25 +1,25 @@
 #!/usr/bin/env bash
 #
-# clams-session: Manage session handoffs
+# claws-session: Manage session handoffs
 #
 # Usage:
-#   clams-session save [--continue]    Save handoff from stdin (base64 encoded automatically)
-#   clams-session list                 List recent sessions
-#   clams-session show <id>            Show a specific session's handoff
+#   claws-session save [--continue]    Save handoff from stdin (base64 encoded automatically)
+#   claws-session list                 List recent sessions
+#   claws-session show <id>            Show a specific session's handoff
 #
 # The 'save' command reads the handoff content from stdin (raw markdown),
 # base64-encodes it, and stores it in the database. This avoids shell quoting issues.
 #
 # Examples:
 #   # Save a handoff (no continuation expected)
-#   cat <<'EOF' | .claude/bin/clams-session save
+#   cat <<'EOF' | .claude/bin/claws-session save
 #   # Session Handoff - 2024-01-15
 #   ## Summary
 #   Did some work...
 #   EOF
 #
 #   # Save a handoff that needs continuation
-#   cat <<'EOF' | .claude/bin/clams-session save --continue
+#   cat <<'EOF' | .claude/bin/claws-session save --continue
 #   # Session Handoff - 2024-01-15
 #   ...
 #   EOF
@@ -30,7 +30,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/claws-common.sh"
 
 if [[ ! -f "$DB_PATH" ]]; then
-    echo "Error: Database not found at $DB_PATH. Run clams-init first." >&2
+    echo "Error: Database not found at $DB_PATH. Run claws-init first." >&2
     exit 1
 fi
 
@@ -46,7 +46,7 @@ cmd_save() {
                 ;;
             *)
                 echo "Error: Unknown argument: $1" >&2
-                echo "Usage: clams-session save [--continue]" >&2
+                echo "Usage: claws-session save [--continue]" >&2
                 exit 1
                 ;;
         esac
@@ -58,7 +58,7 @@ cmd_save() {
 
     if [[ -z "$content" ]]; then
         echo "Error: No content provided. Pipe handoff content to stdin." >&2
-        echo "Example: cat handoff.md | clams-session save" >&2
+        echo "Example: cat handoff.md | claws-session save" >&2
         exit 1
     fi
 
@@ -110,7 +110,7 @@ cmd_show() {
 
     if [[ -z "$session_id" ]]; then
         echo "Error: Session ID required" >&2
-        echo "Usage: clams-session show <id>" >&2
+        echo "Usage: claws-session show <id>" >&2
         exit 1
     fi
 
@@ -143,20 +143,20 @@ case "$command" in
         ;;
     *)
         echo "Usage:"
-        echo "  clams-session save [--continue]    Save handoff from stdin"
-        echo "  clams-session list                 List recent sessions"
-        echo "  clams-session show <id>            Show a session's handoff"
+        echo "  claws-session save [--continue]    Save handoff from stdin"
+        echo "  claws-session list                 List recent sessions"
+        echo "  claws-session show <id>            Show a session's handoff"
         echo ""
         echo "Examples:"
         echo "  # Save handoff (pipe markdown content to stdin)"
-        echo "  cat <<'EOF' | .claude/bin/clams-session save"
+        echo "  cat <<'EOF' | .claude/bin/claws-session save"
         echo "  # Session Handoff"
         echo "  ## Summary"
         echo "  Did some work..."
         echo "  EOF"
         echo ""
         echo "  # Save with continuation flag"
-        echo "  cat <<'EOF' | .claude/bin/clams-session save --continue"
+        echo "  cat <<'EOF' | .claude/bin/claws-session save --continue"
         echo "  ..."
         echo "  EOF"
         exit 1
