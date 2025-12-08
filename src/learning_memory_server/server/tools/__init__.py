@@ -58,15 +58,15 @@ class ServiceContainer:
 
 async def initialize_services(
     settings: ServerSettings,
-    code_embedder: EmbeddingService,
-    semantic_embedder: EmbeddingService,
+    get_code_embedder_func: Any,
+    get_semantic_embedder_func: Any,
 ) -> ServiceContainer:
     """Initialize all services for MCP tools.
 
     Args:
         settings: Server configuration
-        code_embedder: Embedding service for code indexing/search (MiniLM)
-        semantic_embedder: Embedding service for memories/GHAP (Nomic)
+        get_code_embedder_func: Function that returns code embedder (MiniLM)
+        get_semantic_embedder_func: Function that returns semantic embedder (Nomic)
 
     Returns:
         ServiceContainer with initialized services
@@ -78,7 +78,7 @@ async def initialize_services(
     metadata_store = MetadataStore(db_path=settings.sqlite_path)
     await metadata_store.initialize()
 
-    # Code indexing - uses code_embedder (MiniLM)
+    # Code indexing - call accessor to get embedder (loads on first use)
     code_indexer = None
     try:
         from learning_memory_server.indexers import (
@@ -88,7 +88,7 @@ async def initialize_services(
         code_parser = TreeSitterParser()
         code_indexer = CodeIndexer(
             parser=code_parser,
-            embedding_service=code_embedder,  # Fast model for speed
+            embedding_service=get_code_embedder_func(),  # Lazy load on first embed
             vector_store=vector_store,
             metadata_store=metadata_store,
         )
@@ -98,7 +98,7 @@ async def initialize_services(
     except Exception as e:
         logger.warning("code.init_failed", error=str(e))
 
-    # Git analysis - uses semantic_embedder (Nomic)
+    # Git analysis - call accessor to get embedder (loads on first use)
     git_analyzer = None
 
     # Auto-detect repo if not configured
@@ -122,7 +122,7 @@ async def initialize_services(
             git_reader = GitPythonReader(repo_path=repo_path_to_use)
             git_analyzer = GitAnalyzer(
                 git_reader=git_reader,
-                embedding_service=semantic_embedder,  # Nomic for quality
+                embedding_service=get_semantic_embedder_func(),  # Lazy load on first embed
                 vector_store=vector_store,
                 metadata_store=metadata_store,
             )
@@ -148,8 +148,8 @@ async def initialize_services(
     )
 
     return ServiceContainer(
-        code_embedder=code_embedder,
-        semantic_embedder=semantic_embedder,
+        code_embedder=get_code_embedder_func(),  # Get embedder for tools
+        semantic_embedder=get_semantic_embedder_func(),  # Get embedder for tools
         vector_store=vector_store,
         metadata_store=metadata_store,
         code_indexer=code_indexer,
@@ -746,23 +746,23 @@ def _get_all_tool_definitions() -> list[Tool]:
 async def register_all_tools(
     server: Server,
     settings: ServerSettings,
-    code_embedder: EmbeddingService,
-    semantic_embedder: EmbeddingService,
+    get_code_embedder_func: Any,
+    get_semantic_embedder_func: Any,
 ) -> ServiceContainer:
     """Register all MCP tools with the server.
 
     Args:
         server: MCP Server instance
         settings: Server configuration
-        code_embedder: Embedding service for code indexing/search
-        semantic_embedder: Embedding service for memories/GHAP
+        get_code_embedder_func: Function that returns code embedder (called on first use)
+        get_semantic_embedder_func: Function that returns semantic embedder (called on first use)
 
     Returns:
         ServiceContainer with initialized services (caller should call close()
         when done to release resources and prevent shutdown hangs)
     """
     # Initialize shared services
-    services = await initialize_services(settings, code_embedder, semantic_embedder)
+    services = await initialize_services(settings, get_code_embedder_func, get_semantic_embedder_func)
 
     # Import and register tool modules
     from .code import register_code_tools

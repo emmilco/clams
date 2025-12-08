@@ -101,13 +101,11 @@ async def create_server(
 
     server = Server("learning-memory-server")
 
-    # Get embedders from registry (loads lazily when first tool calls them)
-    code_embedder = get_code_embedder()
-    semantic_embedder = get_semantic_embedder()
-
-    # Register all tools
+    # Pass accessor functions to tools - embedders load lazily on first use
+    # Do NOT call get_code_embedder() here - that would load models at startup
+    # Tools call the accessor functions when they actually need embeddings
     services = await register_all_tools(
-        server, settings, code_embedder, semantic_embedder
+        server, settings, get_code_embedder, get_semantic_embedder
     )
 
     logger.info("server.created", server_name=server.name)

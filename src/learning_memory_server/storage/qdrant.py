@@ -302,6 +302,7 @@ class QdrantVectorStore(VectorStore):
             CollectionInfo if collection exists, None if not found
 
         Raises:
+            ValueError: If collection exists but dimension cannot be determined
             Exception: For Qdrant connection/network errors
         """
         try:
@@ -310,11 +311,25 @@ class QdrantVectorStore(VectorStore):
             vectors_config = collection.config.params.vectors
             if isinstance(vectors_config, dict):
                 # Named vectors - get dimension from first vector config
+                if not vectors_config:
+                    raise ValueError(
+                        f"Collection '{name}' has no vector configurations"
+                    )
                 first_config = next(iter(vectors_config.values()))
                 dimension = first_config.size
             else:
                 # Single vector config
-                dimension = vectors_config.size if vectors_config else 0
+                if vectors_config is None:
+                    raise ValueError(
+                        f"Collection '{name}' has no vector configuration"
+                    )
+                dimension = vectors_config.size
+
+            if dimension <= 0:
+                raise ValueError(
+                    f"Collection '{name}' has invalid dimension: {dimension}"
+                )
+
             return CollectionInfo(
                 name=name,
                 dimension=dimension,
@@ -324,5 +339,5 @@ class QdrantVectorStore(VectorStore):
             # Distinguish between "not found" vs real errors
             if "not found" in str(e).lower() or "404" in str(e):
                 return None
-            # Re-raise connection/network errors
+            # Re-raise connection/network errors and dimension errors
             raise
