@@ -9,7 +9,11 @@ import os
 import pytest
 from git import Repo
 
-from learning_memory_server.embedding import EmbeddingSettings, NomicEmbedding
+from learning_memory_server.embedding import (
+    EmbeddingSettings,
+    MiniLMEmbedding,
+    NomicEmbedding,
+)
 from learning_memory_server.server.config import ServerSettings
 from learning_memory_server.server.tools import initialize_services
 
@@ -18,14 +22,21 @@ pytestmark = pytest.mark.slow
 
 
 @pytest.fixture
-def embedding_service():
-    """Create a real embedding service for testing."""
+def code_embedder():
+    """Create a code embedder for testing."""
+    settings = EmbeddingSettings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    return MiniLMEmbedding(settings=settings)
+
+
+@pytest.fixture
+def semantic_embedder():
+    """Create a semantic embedder for testing."""
     settings = EmbeddingSettings(model_name="nomic-ai/nomic-embed-text-v1.5")
     return NomicEmbedding(settings=settings)
 
 
 @pytest.mark.asyncio
-async def test_git_auto_detection_in_repo(tmp_path, embedding_service):
+async def test_git_auto_detection_in_repo(tmp_path, code_embedder, semantic_embedder):
     """Test that git tools auto-detect repo when in a git directory."""
     # Setup: Create a git repo
     repo = Repo.init(tmp_path)
@@ -45,7 +56,9 @@ async def test_git_auto_detection_in_repo(tmp_path, embedding_service):
             qdrant_url="http://localhost:6333",
             sqlite_path=str(tmp_path / "test.db"),
         )
-        services = await initialize_services(settings, embedding_service)
+        services = await initialize_services(
+            settings, lambda: code_embedder, lambda: semantic_embedder
+        )
 
         # Assert: Git analyzer should be initialized
         assert services.git_analyzer is not None
@@ -57,7 +70,7 @@ async def test_git_auto_detection_in_repo(tmp_path, embedding_service):
 
 
 @pytest.mark.asyncio
-async def test_git_explicit_config_overrides_auto_detection(tmp_path, embedding_service):
+async def test_git_explicit_config_overrides_auto_detection(tmp_path, code_embedder, semantic_embedder):
     """Test that explicit repo_path config takes precedence."""
     # Setup: Create two git repos
     repo1 = Repo.init(tmp_path / "repo1")
@@ -82,7 +95,9 @@ async def test_git_explicit_config_overrides_auto_detection(tmp_path, embedding_
             qdrant_url="http://localhost:6333",
             sqlite_path=str(tmp_path / "test.db"),
         )
-        services = await initialize_services(settings, embedding_service)
+        services = await initialize_services(
+            settings, lambda: code_embedder, lambda: semantic_embedder
+        )
 
         # Assert: Should use repo2, not auto-detected repo1
         assert services.git_analyzer is not None
@@ -94,7 +109,7 @@ async def test_git_explicit_config_overrides_auto_detection(tmp_path, embedding_
 
 
 @pytest.mark.asyncio
-async def test_git_graceful_failure_when_not_in_repo(tmp_path, embedding_service):
+async def test_git_graceful_failure_when_not_in_repo(tmp_path, code_embedder, semantic_embedder):
     """Test that git tools are None when not in a git repository."""
     # Setup: Non-git directory
     os.makedirs(tmp_path / "not_a_repo", exist_ok=True)
@@ -110,7 +125,9 @@ async def test_git_graceful_failure_when_not_in_repo(tmp_path, embedding_service
             qdrant_url="http://localhost:6333",
             sqlite_path=str(tmp_path / "test.db"),
         )
-        services = await initialize_services(settings, embedding_service)
+        services = await initialize_services(
+            settings, lambda: code_embedder, lambda: semantic_embedder
+        )
 
         # Assert: Git analyzer should be None (graceful degradation)
         assert services.git_analyzer is None

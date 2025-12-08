@@ -198,8 +198,9 @@ run_pytest() {
 
         # Run pytest via venv python to ensure correct environment
         # Skip slow tests (embedding model loading) and integration tests (require external services)
+        # Set PYTHONPATH to ensure worktree code is used (not installed package from main repo)
         echo "Running tests..."
-        .venv/bin/python -m pytest -vvsx --ignore=tests/e2e -m "not slow and not integration" 2>&1 | tee test_output.log || exit_code=$?
+        PYTHONPATH="${WORKTREE}/src:${PYTHONPATH:-}" .venv/bin/python -m pytest -vvsx --ignore=tests/e2e -m "not slow and not integration" 2>&1 | tee test_output.log || exit_code=$?
         read -r total passed failed errors skipped duration <<< "$(parse_pytest_text test_output.log)"
     elif [[ -f "pyproject.toml" ]]; then
         # Fallback without uv
