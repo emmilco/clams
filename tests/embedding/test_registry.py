@@ -5,8 +5,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from learning_memory_server.embedding.base import EmbeddingSettings
-from learning_memory_server.embedding.registry import (
+from clams.embedding.base import EmbeddingSettings
+from clams.embedding.registry import (
     EmbeddingRegistry,
     get_code_embedder,
     get_semantic_embedder,
@@ -17,7 +17,7 @@ from learning_memory_server.embedding.registry import (
 def test_registry_not_initialized() -> None:
     """Test that accessing embedders before initialization raises error."""
     # Reset global registry
-    import learning_memory_server.embedding.registry as registry_module
+    import clams.embedding.registry as registry_module
 
     registry_module._registry = None
 
@@ -36,7 +36,7 @@ def test_registry_initialization() -> None:
     initialize_registry(code_model, semantic_model)
 
     # Verify registry is initialized (but models not loaded yet)
-    import learning_memory_server.embedding.registry as registry_module
+    import clams.embedding.registry as registry_module
 
     assert registry_module._registry is not None
     assert registry_module._registry._code_model == code_model
@@ -105,12 +105,12 @@ def test_instance_caching() -> None:
 
 
 def test_env_var_override_code_model() -> None:
-    """Test that LMS_CODE_MODEL env var is read by ServerSettings."""
+    """Test that CLAMS_CODE_MODEL env var is read by ServerSettings."""
     custom_model = "custom/code/model"
 
-    with patch.dict(os.environ, {"LMS_CODE_MODEL": custom_model}):
-        # ServerSettings reads the env var with LMS_ prefix
-        from learning_memory_server.server.config import ServerSettings
+    with patch.dict(os.environ, {"CLAMS_CODE_MODEL": custom_model}):
+        # ServerSettings reads the env var with CLAMS_ prefix
+        from clams.server.config import ServerSettings
 
         settings = ServerSettings()
         assert settings.code_model == custom_model
@@ -119,19 +119,19 @@ def test_env_var_override_code_model() -> None:
         initialize_registry(settings.code_model, settings.semantic_model)
 
         # Verify registry was initialized with the env var value
-        import learning_memory_server.embedding.registry as registry_module
+        import clams.embedding.registry as registry_module
 
         assert registry_module._registry is not None
         assert registry_module._registry._code_model == custom_model
 
 
 def test_env_var_override_semantic_model() -> None:
-    """Test that LMS_SEMANTIC_MODEL env var is read by ServerSettings."""
+    """Test that CLAMS_SEMANTIC_MODEL env var is read by ServerSettings."""
     custom_model = "custom/semantic/model"
 
-    with patch.dict(os.environ, {"LMS_SEMANTIC_MODEL": custom_model}):
-        # ServerSettings reads the env var with LMS_ prefix
-        from learning_memory_server.server.config import ServerSettings
+    with patch.dict(os.environ, {"CLAMS_SEMANTIC_MODEL": custom_model}):
+        # ServerSettings reads the env var with CLAMS_ prefix
+        from clams.server.config import ServerSettings
 
         settings = ServerSettings()
         assert settings.semantic_model == custom_model
@@ -140,7 +140,7 @@ def test_env_var_override_semantic_model() -> None:
         initialize_registry(settings.code_model, settings.semantic_model)
 
         # Verify registry was initialized with the env var value
-        import learning_memory_server.embedding.registry as registry_module
+        import clams.embedding.registry as registry_module
 
         assert registry_module._registry is not None
         assert registry_module._registry._semantic_model == custom_model

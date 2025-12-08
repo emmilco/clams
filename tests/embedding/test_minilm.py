@@ -4,8 +4,8 @@ import numpy as np
 import pytest
 import torch
 
-from learning_memory_server.embedding.base import EmbeddingModelError, EmbeddingSettings
-from learning_memory_server.embedding.minilm import MiniLMEmbedding
+from clams.embedding.base import EmbeddingModelError, EmbeddingSettings
+from clams.embedding.minilm import MiniLMEmbedding
 
 
 @pytest.fixture

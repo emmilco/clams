@@ -239,8 +239,8 @@ async def test_dimension_migration():
     require manual intervention (deleting the collection) since we can't
     automatically migrate embeddings between different models.
     """
-    from learning_memory_server.embedding.base import EmbeddingSettings
-    from learning_memory_server.embedding.minilm import MiniLMEmbedding
+    from clams.embedding.base import EmbeddingSettings
+    from clams.embedding.minilm import MiniLMEmbedding
 
     parser = TreeSitterParser()
     vector_store = InMemoryVectorStore()
