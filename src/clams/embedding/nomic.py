@@ -14,16 +14,13 @@ from .base import EmbeddingModelError, EmbeddingService, EmbeddingSettings, Vect
 class NomicEmbedding(EmbeddingService):
     """Nomic embedding service using sentence-transformers.
 
-    Uses nomic-ai/nomic-embed-text-v1.5 model by default, producing
-    768-dimensional embeddings. CPU-bound operations are run in
-    executor threads to avoid blocking the event loop.
+    Uses nomic-ai/nomic-embed-text-v1.5 model by default. CPU-bound
+    operations are run in executor threads to avoid blocking the event loop.
 
     Attributes:
         model: The loaded SentenceTransformer model
         settings: Configuration settings for the embedding service
     """
-
-    _DIMENSION = 768
 
     def __init__(self, settings: EmbeddingSettings | None = None) -> None:
         """Initialize the Nomic embedding service.
@@ -111,9 +108,15 @@ class NomicEmbedding(EmbeddingService):
 
     @property
     def dimension(self) -> int:
-        """Return the dimensionality of embeddings (768).
+        """Get embedding dimension from the loaded model.
 
         Returns:
-            int: 768
+            int: Number of dimensions in output vectors
+
+        Raises:
+            EmbeddingModelError: If model does not return embedding dimension
         """
-        return self._DIMENSION
+        dim = self.model.get_sentence_embedding_dimension()
+        if dim is None:
+            raise EmbeddingModelError("Model did not return embedding dimension")
+        return dim
