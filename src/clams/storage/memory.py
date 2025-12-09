@@ -31,7 +31,7 @@ class InMemoryVectorStore(VectorStore):
     async def delete_collection(self, name: str) -> None:
         """Delete a collection."""
         if name not in self._collections:
-            raise ValueError(f"Collection {name} does not exist")
+            raise ValueError(f"Collection {name} not found")
         del self._collections[name]
 
     async def upsert(
@@ -43,7 +43,7 @@ class InMemoryVectorStore(VectorStore):
     ) -> None:
         """Insert or update a vector."""
         if collection not in self._collections:
-            raise ValueError(f"Collection {collection} does not exist")
+            raise ValueError(f"Collection {collection} not found")
 
         coll = self._collections[collection]
         expected_dim = coll["dimension"]
@@ -66,7 +66,7 @@ class InMemoryVectorStore(VectorStore):
     ) -> list[SearchResult]:
         """Search for similar vectors using cosine similarity."""
         if collection not in self._collections:
-            raise ValueError(f"Collection {collection} does not exist")
+            raise ValueError(f"Collection {collection} not found")
 
         coll = self._collections[collection]
         vectors = coll["vectors"]
@@ -111,7 +111,7 @@ class InMemoryVectorStore(VectorStore):
     async def delete(self, collection: str, id: str) -> None:
         """Delete a vector by ID."""
         if collection not in self._collections:
-            raise ValueError(f"Collection {collection} does not exist")
+            raise ValueError(f"Collection {collection} not found")
 
         coll = self._collections[collection]
         if id in coll["vectors"]:
@@ -127,7 +127,7 @@ class InMemoryVectorStore(VectorStore):
     ) -> list[SearchResult]:
         """Retrieve vectors without search."""
         if collection not in self._collections:
-            raise ValueError(f"Collection {collection} does not exist")
+            raise ValueError(f"Collection {collection} not found")
 
         coll = self._collections[collection]
         payloads = coll["payloads"]
@@ -154,7 +154,7 @@ class InMemoryVectorStore(VectorStore):
     ) -> int:
         """Count vectors in a collection."""
         if collection not in self._collections:
-            raise ValueError(f"Collection {collection} does not exist")
+            raise ValueError(f"Collection {collection} not found")
 
         coll = self._collections[collection]
         payloads = coll["payloads"]
@@ -167,7 +167,7 @@ class InMemoryVectorStore(VectorStore):
     ) -> SearchResult | None:
         """Get a specific vector by ID."""
         if collection not in self._collections:
-            raise ValueError(f"Collection {collection} does not exist")
+            raise ValueError(f"Collection {collection} not found")
 
         coll = self._collections[collection]
         if id not in coll["vectors"]:

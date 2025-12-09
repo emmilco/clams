@@ -46,7 +46,7 @@ class TestInMemoryVectorStore:
         await store.delete_collection("test")
 
         # Verify collection is gone
-        with pytest.raises(ValueError, match="does not exist"):
+        with pytest.raises(ValueError, match="not found"):
             await store.count("test")
 
     async def test_upsert_and_get(
@@ -220,20 +220,20 @@ class TestInMemoryVectorStore:
         """Test that operations on nonexistent collection raise errors."""
         vector = np.array([1.0, 2.0, 3.0], dtype=np.float32)
 
-        with pytest.raises(ValueError, match="does not exist"):
+        with pytest.raises(ValueError, match="not found"):
             await store.upsert("nonexistent", "id1", vector, {})
 
-        with pytest.raises(ValueError, match="does not exist"):
+        with pytest.raises(ValueError, match="not found"):
             await store.search("nonexistent", vector)
 
-        with pytest.raises(ValueError, match="does not exist"):
+        with pytest.raises(ValueError, match="not found"):
             await store.delete("nonexistent", "id1")
 
-        with pytest.raises(ValueError, match="does not exist"):
+        with pytest.raises(ValueError, match="not found"):
             await store.scroll("nonexistent")
 
-        with pytest.raises(ValueError, match="does not exist"):
+        with pytest.raises(ValueError, match="not found"):
             await store.count("nonexistent")
 
-        with pytest.raises(ValueError, match="does not exist"):
+        with pytest.raises(ValueError, match="not found"):
             await store.get("nonexistent", "id1")
