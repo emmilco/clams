@@ -16,6 +16,13 @@ from clams.observation import (
 )
 from clams.search import Searcher
 from clams.server.config import ServerSettings
+from clams.server.tools.enums import (
+    DOMAINS,
+    OUTCOME_STATUS_VALUES,
+    ROOT_CAUSE_CATEGORIES,
+    STRATEGIES,
+    VALID_AXES,
+)
 from clams.storage import VectorStore
 from clams.storage.metadata import MetadataStore
 from clams.storage.qdrant import QdrantVectorStore
@@ -460,12 +467,12 @@ def _get_all_tool_definitions() -> list[Tool]:
                     "domain": {
                         "type": "string",
                         "description": "Task domain",
-                        "enum": ["debugging", "refactoring", "feature", "optimization", "testing", "documentation", "other"],
+                        "enum": DOMAINS,
                     },
                     "strategy": {
                         "type": "string",
                         "description": "Problem-solving strategy",
-                        "enum": ["systematic-elimination", "trial-and-error", "research-first", "divide-and-conquer", "root-cause-analysis", "copy-from-similar", "check-assumptions", "read-the-error", "ask-user"],
+                        "enum": STRATEGIES,
                     },
                     "goal": {
                         "type": "string",
@@ -508,7 +515,7 @@ def _get_all_tool_definitions() -> list[Tool]:
                     "strategy": {
                         "type": "string",
                         "description": "Updated strategy",
-                        "enum": ["systematic-elimination", "trial-and-error", "research-first", "divide-and-conquer", "root-cause-analysis", "copy-from-similar", "check-assumptions", "read-the-error", "ask-user"],
+                        "enum": STRATEGIES,
                     },
                     "note": {
                         "type": "string",
@@ -527,7 +534,7 @@ def _get_all_tool_definitions() -> list[Tool]:
                     "status": {
                         "type": "string",
                         "description": "Resolution status",
-                        "enum": ["confirmed", "falsified", "abandoned"],
+                        "enum": OUTCOME_STATUS_VALUES,
                     },
                     "result": {
                         "type": "string",
@@ -543,7 +550,7 @@ def _get_all_tool_definitions() -> list[Tool]:
                         "properties": {
                             "category": {
                                 "type": "string",
-                                "enum": ["incomplete_information", "wrong_assumption", "unexpected_behavior", "environment_issue", "other"],
+                                "enum": ROOT_CAUSE_CATEGORIES,
                             },
                             "description": {"type": "string"},
                         },
@@ -583,12 +590,12 @@ def _get_all_tool_definitions() -> list[Tool]:
                     "domain": {
                         "type": "string",
                         "description": "Filter by domain",
-                        "enum": ["debugging", "refactoring", "feature", "optimization", "testing", "documentation", "other"],
+                        "enum": DOMAINS,
                     },
                     "outcome": {
                         "type": "string",
                         "description": "Filter by outcome status",
-                        "enum": ["confirmed", "falsified", "abandoned"],
+                        "enum": OUTCOME_STATUS_VALUES,
                     },
                     "since": {
                         "type": "string",
@@ -608,7 +615,7 @@ def _get_all_tool_definitions() -> list[Tool]:
                     "axis": {
                         "type": "string",
                         "description": "Axis to cluster",
-                        "enum": ["full", "strategy", "surprise", "root_cause"],
+                        "enum": VALID_AXES,
                     },
                 },
                 "required": ["axis"],
@@ -668,7 +675,7 @@ def _get_all_tool_definitions() -> list[Tool]:
                     "axis": {
                         "type": "string",
                         "description": "Axis (full, strategy, surprise, root_cause)",
-                        "enum": ["full", "strategy", "surprise", "root_cause"],
+                        "enum": VALID_AXES,
                     },
                 },
                 "required": ["text", "cluster_id", "axis"],
@@ -683,7 +690,7 @@ def _get_all_tool_definitions() -> list[Tool]:
                     "axis": {
                         "type": "string",
                         "description": "Filter by axis (optional)",
-                        "enum": ["full", "strategy", "surprise", "root_cause"],
+                        "enum": VALID_AXES,
                     },
                     "limit": {
                         "type": "integer",
@@ -708,18 +715,18 @@ def _get_all_tool_definitions() -> list[Tool]:
                     "axis": {
                         "type": "string",
                         "description": "Axis to search (default: full)",
-                        "enum": ["full", "strategy", "surprise", "root_cause"],
+                        "enum": VALID_AXES,
                         "default": "full",
                     },
                     "domain": {
                         "type": "string",
                         "description": "Filter by domain (optional)",
-                        "enum": ["debugging", "refactoring", "feature", "optimization", "testing", "documentation", "other"],
+                        "enum": DOMAINS,
                     },
                     "outcome": {
                         "type": "string",
                         "description": "Filter by outcome status (optional)",
-                        "enum": ["confirmed", "falsified", "abandoned"],
+                        "enum": OUTCOME_STATUS_VALUES,
                     },
                     "limit": {
                         "type": "integer",
