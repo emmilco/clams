@@ -99,9 +99,48 @@ def get_search_tools(searcher: Searcher) -> dict[str, Any]:
                 count=len(results),
             )
 
+            # BUG-021: Convert ExperienceResult dataclasses to dicts for JSON
+            formatted = [
+                {
+                    "id": r.id,
+                    "ghap_id": r.ghap_id,
+                    "axis": r.axis,
+                    "domain": r.domain,
+                    "strategy": r.strategy,
+                    "goal": r.goal,
+                    "hypothesis": r.hypothesis,
+                    "action": r.action,
+                    "prediction": r.prediction,
+                    "outcome_status": r.outcome_status,
+                    "outcome_result": r.outcome_result,
+                    "surprise": r.surprise,
+                    "root_cause": (
+                        {
+                            "category": r.root_cause.category,
+                            "description": r.root_cause.description,
+                        }
+                        if r.root_cause
+                        else None
+                    ),
+                    "lesson": (
+                        {
+                            "what_worked": r.lesson.what_worked,
+                            "takeaway": r.lesson.takeaway,
+                        }
+                        if r.lesson
+                        else None
+                    ),
+                    "confidence_tier": r.confidence_tier,
+                    "iteration_count": r.iteration_count,
+                    "score": r.score,
+                    "created_at": r.created_at.isoformat(),
+                }
+                for r in results
+            ]
+
             return {
-                "results": results,
-                "count": len(results),
+                "results": formatted,
+                "count": len(formatted),
             }
 
         except ValidationError as e:
