@@ -14,8 +14,13 @@ class ContextItem:
     metadata: dict[str, Any]  # Source-specific metadata
 
     def __hash__(self) -> int:
-        """Make hashable for set operations (deduplication)."""
-        return hash((self.source, self.content[:100]))  # First 100 chars for perf
+        """Make hashable for set operations (deduplication).
+
+        Uses source, first 100 chars, and content length to reduce collisions
+        while maintaining performance. This ensures items with same prefix
+        but different lengths have different hashes.
+        """
+        return hash((self.source, self.content[:100], len(self.content)))
 
     def __eq__(self, other: object) -> bool:
         """Compare for equality (deduplication)."""
