@@ -370,18 +370,23 @@ class CodeIndexer:
 
     async def _delete_file_units(self, path: str, project: str) -> None:
         """Delete all vector store entries for a file."""
-        results = await self.vector_store.scroll(
-            collection=self.COLLECTION_NAME,
-            filters={"file_path": path, "project": project},
-            limit=1000,
-            with_vectors=False,
-        )
-        # Delete each unit
-        for result in results:
-            await self.vector_store.delete(
+        total_deleted = 0
+        while True:
+            results = await self.vector_store.scroll(
                 collection=self.COLLECTION_NAME,
-                id=result.id,
+                filters={"file_path": path, "project": project},
+                limit=1000,
+                with_vectors=False,
             )
+            if not results:
+                break
+            # Delete each unit
+            for result in results:
+                await self.vector_store.delete(
+                    collection=self.COLLECTION_NAME,
+                    id=result.id,
+                )
+            total_deleted += len(results)
         logger.debug(
-            "file_units_deleted", path=path, project=project, count=len(results)
+            "file_units_deleted", path=path, project=project, count=total_deleted
         )
