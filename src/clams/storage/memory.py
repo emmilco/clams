@@ -183,7 +183,7 @@ class InMemoryVectorStore(VectorStore):
     def _apply_filters(
         self, payloads: dict[str, dict[str, Any]], filters: dict[str, Any] | None
     ) -> list[str]:
-        """Apply equality filters to payloads.
+        """Apply filters to payloads, supporting operators like $gte/$lte/$gt/$lt/$in.
 
         Returns list of IDs that match all filters.
         """
@@ -195,14 +195,60 @@ class InMemoryVectorStore(VectorStore):
             # Check if all filter conditions match
             matches = True
             for key, value in filters.items():
-                if key not in payload or payload[key] != value:
+                if key not in payload:
                     matches = False
                     break
+
+                payload_value = payload[key]
+
+                # Check if value is operator-based filter (dict with $operators)
+                if isinstance(value, dict):
+                    if not self._match_operators(payload_value, value):
+                        matches = False
+                        break
+                else:
+                    # Simple equality check
+                    if payload_value != value:
+                        matches = False
+                        break
 
             if matches:
                 matching_ids.append(id)
 
         return matching_ids
+
+    def _match_operators(self, payload_value: Any, operators: dict[str, Any]) -> bool:
+        """Check if payload value matches all operator conditions.
+
+        Supports:
+            $gte: Greater than or equal
+            $lte: Less than or equal
+            $gt: Greater than
+            $lt: Less than
+            $in: Value is in list
+        """
+        for op, op_value in operators.items():
+            if op == "$gte":
+                if not (payload_value >= op_value):
+                    return False
+            elif op == "$lte":
+                if not (payload_value <= op_value):
+                    return False
+            elif op == "$gt":
+                if not (payload_value > op_value):
+                    return False
+            elif op == "$lt":
+                if not (payload_value < op_value):
+                    return False
+            elif op == "$in":
+                if payload_value not in op_value:
+                    return False
+            else:
+                # Unknown operator - treat as equality with the dict
+                if payload_value != operators:
+                    return False
+                break
+        return True
 
     async def get_collection_info(self, name: str) -> CollectionInfo | None:
         """Get collection metadata from in-memory storage.
