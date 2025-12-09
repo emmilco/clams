@@ -537,12 +537,24 @@ def get_ghap_tools(
                 filters["captured_at"] = {"$gte": since_dt.timestamp()}
 
             # Query ghap_full collection
-            results = await vector_store.scroll(
-                collection="ghap_full",
-                limit=limit,
-                filters=filters if filters else None,
-                with_vectors=False,  # Don't need embeddings for listing
-            )
+            try:
+                results = await vector_store.scroll(
+                    collection="ghap_full",
+                    limit=limit,
+                    filters=filters if filters else None,
+                    with_vectors=False,  # Don't need embeddings for listing
+                )
+            except Exception as scroll_error:
+                # Handle missing collection gracefully - return empty results
+                error_msg = str(scroll_error).lower()
+                if "not found" in error_msg or "404" in str(scroll_error):
+                    logger.info(
+                        "ghap.collection_not_found",
+                        collection="ghap_full",
+                        message="No GHAP entries indexed yet",
+                    )
+                    return {"results": [], "count": 0}
+                raise
 
             # Format results
             entries = []

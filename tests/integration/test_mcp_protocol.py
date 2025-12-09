@@ -71,7 +71,7 @@ async def mcp_session() -> AsyncIterator[ClientSession]:
     """
 
     server_params = StdioServerParameters(
-        command=".venv/bin/learning-memory-server",
+        command=".venv/bin/clams-server",
         args=[],
     )
 
