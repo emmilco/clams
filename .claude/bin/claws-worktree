@@ -89,6 +89,16 @@ cmd_remove() {
         exit 1
     fi
 
+    # Check if caller is inside the worktree being removed
+    local current_dir
+    current_dir=$(pwd 2>/dev/null || echo "")
+    if [[ "$current_dir" == "$worktree_path"* ]]; then
+        echo "Error: Your shell is inside $worktree_path which will be deleted." >&2
+        echo "First run: cd $MAIN_REPO" >&2
+        echo "Then retry this command." >&2
+        exit 1
+    fi
+
     cd "$MAIN_REPO"
 
     # Remove worktree
@@ -134,6 +144,16 @@ cmd_merge() {
     if [[ "$merge_lock" -gt 0 ]]; then
         echo "Error: Merge lock is active (system DEGRADED)" >&2
         echo "E2E tests must pass before merging. Run claws-status health for details." >&2
+        exit 1
+    fi
+
+    # Check if caller is inside the worktree being merged/removed
+    local current_dir
+    current_dir=$(pwd 2>/dev/null || echo "")
+    if [[ "$current_dir" == "$worktree_path"* ]]; then
+        echo "Error: Your shell is inside $worktree_path which will be deleted after merge." >&2
+        echo "First run: cd $MAIN_REPO" >&2
+        echo "Then retry this command." >&2
         exit 1
     fi
 
