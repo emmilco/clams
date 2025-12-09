@@ -560,7 +560,7 @@ def get_ghap_tools(
             entries = []
             for r in results:
                 created_at = (
-                    datetime.fromtimestamp(r.payload["created_at"]).isoformat()
+                    datetime.fromisoformat(r.payload["created_at"]).isoformat()
                     if "created_at" in r.payload
                     else None
                 )
