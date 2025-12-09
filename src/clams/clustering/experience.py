@@ -50,12 +50,19 @@ class ExperienceClusterer:
             )
 
         collection = AXIS_COLLECTIONS[axis]
-        results = await self.vector_store.scroll(
-            collection=collection,
-            limit=10000,
-            with_vectors=False,
-        )
-        return len(results)
+        try:
+            results = await self.vector_store.scroll(
+                collection=collection,
+                limit=10000,
+                with_vectors=False,
+            )
+            return len(results)
+        except Exception as e:
+            # BUG-017: Collection doesn't exist - no experiences yet
+            if "not found" in str(e).lower() or "404" in str(e):
+                return 0
+            # Re-raise other errors (connectivity, etc.)
+            raise
 
     async def cluster_axis(self, axis: str) -> list[ClusterInfo]:
         """Cluster experiences along a single axis.
@@ -88,11 +95,20 @@ class ExperienceClusterer:
         # Retrieve all embeddings from VectorStore
         # Using scroll() to get all points (no search query)
         # Note: If >10k experiences exist, implement pagination in future
-        results = await self.vector_store.scroll(
-            collection=collection,
-            limit=10000,  # Hardcoded limit - warn if approaching
-            with_vectors=True,
-        )
+        try:
+            results = await self.vector_store.scroll(
+                collection=collection,
+                limit=10000,  # Hardcoded limit - warn if approaching
+                with_vectors=True,
+            )
+        except Exception as e:
+            # BUG-017: Collection doesn't exist yet
+            if "not found" in str(e).lower() or "404" in str(e):
+                raise ValueError(
+                    f"No embeddings found for axis '{axis}' (collection: {collection})"
+                )
+            # Re-raise other errors
+            raise
 
         # Warn if we hit the limit (may indicate truncated dataset)
         if len(results) == 10000:
