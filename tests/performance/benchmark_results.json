@@ -1,42 +1,6 @@
 [
   {
     "name": "code_search",
-    "value_ms": 3.97905659629032,
-    "target_ms": 200.0,
-    "passed": true,
-    "iterations": 100,
-    "timestamp": 1764938616.022309,
-    "percentage_of_target": 1.98952829814516
-  },
-  {
-    "name": "memory_retrieval",
-    "value_ms": 3.3488704561023037,
-    "target_ms": 200.0,
-    "passed": true,
-    "iterations": 100,
-    "timestamp": 1764938616.287019,
-    "percentage_of_target": 1.6744352280511516
-  },
-  {
-    "name": "context_assembly",
-    "value_ms": 6.366091879317536,
-    "target_ms": 500.0,
-    "passed": true,
-    "iterations": 10,
-    "timestamp": 1764938616.349684,
-    "percentage_of_target": 1.2732183758635072
-  },
-  {
-    "name": "clustering_4_axes",
-    "value_s": 0.12293587502790615,
-    "target_s": 5.0,
-    "passed": true,
-    "iterations": 1,
-    "timestamp": 1764938616.473973,
-    "percentage_of_target": 2.458717500558123
-  },
-  {
-    "name": "code_search",
     "value_ms": 3.6756271438207477,
     "target_ms": 200.0,
     "passed": true,
@@ -898,5 +862,41 @@
     "iterations": 1,
     "timestamp": 1765133856.218463,
     "percentage_of_target": 2.57266915999935
+  },
+  {
+    "name": "code_search",
+    "value_ms": 3.382991357648279,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1765239009.448614,
+    "percentage_of_target": 1.6914956788241393
+  },
+  {
+    "name": "memory_retrieval",
+    "value_ms": 3.7292184322723183,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1765239009.727523,
+    "percentage_of_target": 1.864609216136159
+  },
+  {
+    "name": "context_assembly",
+    "value_ms": 6.580535601824522,
+    "target_ms": 500.0,
+    "passed": true,
+    "iterations": 10,
+    "timestamp": 1765239009.793559,
+    "percentage_of_target": 1.3161071203649044
+  },
+  {
+    "name": "clustering_4_axes",
+    "value_s": 0.12665270900470205,
+    "target_s": 5.0,
+    "passed": true,
+    "iterations": 1,
+    "timestamp": 1765239009.921854,
+    "percentage_of_target": 2.533054180094041
   }
 ]
