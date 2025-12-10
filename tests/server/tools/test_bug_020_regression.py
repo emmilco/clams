@@ -4,13 +4,14 @@ Tests that store_value properly handles ValueError from ValueStore.store_value
 and returns a validation_error response instead of internal_error.
 """
 
+from unittest.mock import AsyncMock, MagicMock
+
 import numpy as np
 import pytest
 
 from clams.server.tools.learning import get_learning_tools
 from clams.values import ValueStore
 from clams.values.types import Value
-from unittest.mock import AsyncMock, MagicMock
 
 
 @pytest.mark.asyncio
