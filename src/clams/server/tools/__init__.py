@@ -798,8 +798,8 @@ async def register_all_tools(
 
     # Initialize and register learning tools - use semantic_embedder
     clusterer = Clusterer(
-        min_cluster_size=5,
-        min_samples=3,
+        min_cluster_size=3,
+        min_samples=2,
         metric="cosine",
         cluster_selection_method="eom",
     )
