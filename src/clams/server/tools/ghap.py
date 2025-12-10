@@ -130,16 +130,7 @@ def get_ghap_tools(
                 strategy=strategy,
             )
 
-            return {
-                "id": entry.id,
-                "domain": entry.domain.value,
-                "strategy": entry.strategy.value,
-                "goal": entry.goal,
-                "hypothesis": entry.hypothesis,
-                "action": entry.action,
-                "prediction": entry.prediction,
-                "created_at": entry.created_at.isoformat(),
-            }
+            return {"ok": True, "id": entry.id}
 
         except ValidationError as e:
             logger.warning("ghap.validation_error", error=str(e))
@@ -404,18 +395,7 @@ def get_ghap_tools(
                             f"but embedding/storage failed. Error: {e}"
                         )
 
-            confidence_tier_value = (
-                resolved.confidence_tier.value if resolved.confidence_tier else None
-            )
-            resolved_at_value = (
-                resolved.outcome.captured_at.isoformat() if resolved.outcome else None
-            )
-            return {
-                "id": resolved.id,
-                "status": resolved.outcome.status.value if resolved.outcome else status,
-                "confidence_tier": confidence_tier_value,
-                "resolved_at": resolved_at_value,
-            }
+            return {"ok": True, "id": resolved.id}
 
         except (ValidationError, NotFoundError) as e:
             logger.warning("ghap.error", error=str(e))
