@@ -67,11 +67,9 @@ class TestStartGhap:
         )
 
         assert "error" not in result
+        assert result["ok"] is True
         assert result["id"] is not None
-        assert result["domain"] == "debugging"
-        assert result["strategy"] == "systematic-elimination"
-        assert result["goal"] == "Fix auth timeout bug"
-        assert result["created_at"] is not None
+        assert result["id"].startswith("ghap_")
 
     @pytest.mark.asyncio
     async def test_start_ghap_invalid_domain(
@@ -252,11 +250,8 @@ class TestResolveGhap:
         )
 
         assert "error" not in result
+        assert result["ok"] is True
         assert result["id"] == start_result["id"]
-        assert result["status"] == "confirmed"
-        # Manual resolutions get "silver" tier; "gold" is for auto-captured resolutions
-        assert result["confidence_tier"] == "silver"
-        assert result["resolved_at"] is not None
 
     @pytest.mark.asyncio
     async def test_resolve_ghap_falsified(
@@ -290,8 +285,8 @@ class TestResolveGhap:
         )
 
         assert "error" not in result
-        assert result["status"] == "falsified"
-        assert result["confidence_tier"] == "silver"
+        assert result["ok"] is True
+        assert result["id"] is not None
 
     @pytest.mark.asyncio
     async def test_resolve_ghap_falsified_missing_surprise(
