@@ -101,16 +101,17 @@ def get_ghap_tools(
                         f"({len(value)} chars)"
                     )
 
-            # Check for active GHAP (warn but allow)
+            # Check for active GHAP - error if one exists
             current = await collector.get_current()
             if current is not None:
                 logger.warning(
-                    "ghap.orphaned_entry",
+                    "ghap.active_exists",
                     current_id=current.id,
-                    message=(
-                        "Starting new GHAP with active entry - "
-                        "previous entry orphaned"
-                    ),
+                )
+                return _error_response(
+                    "active_ghap_exists",
+                    f"Active GHAP exists (id: {current.id}). "
+                    f"Resolve it first with resolve_ghap or abandon it.",
                 )
 
             # Create GHAP entry (convert strings to enums)
