@@ -4,12 +4,13 @@ Tests that validate_value correctly omits similarity field when it's None,
 rather than including it and causing JSON serialization issues.
 """
 
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
 
 from clams.server.tools.learning import get_learning_tools
 from clams.values import ValueStore
 from clams.values.types import ValidationResult
-from unittest.mock import AsyncMock, MagicMock
 
 
 @pytest.mark.asyncio

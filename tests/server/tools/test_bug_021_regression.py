@@ -5,14 +5,13 @@ to JSON-serializable dicts rather than returning raw dataclass objects.
 """
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from clams.server.tools.search import get_search_tools
 from clams.search import Searcher
-from unittest.mock import AsyncMock, MagicMock
+from clams.server.tools.search import get_search_tools
 
 
 @dataclass
@@ -42,9 +41,9 @@ class MockExperienceResult:
     prediction: str
     outcome_status: str
     outcome_result: str
-    surprise: Optional[str]
-    root_cause: Optional[MockRootCause]
-    lesson: Optional[MockLesson]
+    surprise: str | None
+    root_cause: MockRootCause | None
+    lesson: MockLesson | None
     confidence_tier: str
     iteration_count: int
     score: float
@@ -81,7 +80,7 @@ async def test_bug_021_regression_search_experiences_serialization() -> None:
         confidence_tier="high",
         iteration_count=2,
         score=0.95,
-        created_at=datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
+        created_at=datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
     )
 
     mock_searcher.search_experiences = AsyncMock(return_value=[mock_result])
