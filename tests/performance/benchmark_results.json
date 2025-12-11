@@ -1,42 +1,6 @@
 [
   {
     "name": "code_search",
-    "value_ms": 3.6756271438207477,
-    "target_ms": 200.0,
-    "passed": true,
-    "iterations": 100,
-    "timestamp": 1764939981.536389,
-    "percentage_of_target": 1.8378135719103739
-  },
-  {
-    "name": "memory_retrieval",
-    "value_ms": 3.7828559259651215,
-    "target_ms": 200.0,
-    "passed": true,
-    "iterations": 100,
-    "timestamp": 1764939981.808308,
-    "percentage_of_target": 1.8914279629825608
-  },
-  {
-    "name": "context_assembly",
-    "value_ms": 5.693377589341252,
-    "target_ms": 500.0,
-    "passed": true,
-    "iterations": 10,
-    "timestamp": 1764939981.86742,
-    "percentage_of_target": 1.1386755178682504
-  },
-  {
-    "name": "clustering_4_axes",
-    "value_s": 0.12226229096995667,
-    "target_s": 5.0,
-    "passed": true,
-    "iterations": 1,
-    "timestamp": 1764939981.9912739,
-    "percentage_of_target": 2.4452458193991333
-  },
-  {
-    "name": "code_search",
     "value_ms": 3.661959813325666,
     "target_ms": 200.0,
     "passed": true,
@@ -898,5 +862,41 @@
     "iterations": 1,
     "timestamp": 1765239009.921854,
     "percentage_of_target": 2.533054180094041
+  },
+  {
+    "name": "code_search",
+    "value_ms": 4.129598234430886,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1765439490.435895,
+    "percentage_of_target": 2.064799117215443
+  },
+  {
+    "name": "memory_retrieval",
+    "value_ms": 4.046412810566835,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1765439490.731499,
+    "percentage_of_target": 2.0232064052834176
+  },
+  {
+    "name": "context_assembly",
+    "value_ms": 7.598664556280709,
+    "target_ms": 500.0,
+    "passed": true,
+    "iterations": 10,
+    "timestamp": 1765439490.8093061,
+    "percentage_of_target": 1.5197329112561417
+  },
+  {
+    "name": "clustering_4_axes",
+    "value_s": 0.1391396249528043,
+    "target_s": 5.0,
+    "passed": true,
+    "iterations": 1,
+    "timestamp": 1765439490.950565,
+    "percentage_of_target": 2.782792499056086
   }
 ]

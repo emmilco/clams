@@ -7,6 +7,7 @@ It handles connection failures gracefully and returns empty results on errors.
 
 import asyncio
 import json
+import os
 import sys
 from typing import Any
 
@@ -16,6 +17,19 @@ from mcp.client.stdio import stdio_client
 from mcp.types import TextContent
 
 logger = structlog.get_logger()
+
+
+def get_clams_server_path() -> str:
+    """Get the absolute path to the clams-server binary.
+
+    Returns:
+        Absolute path to .venv/bin/clams-server from the repository root.
+    """
+    # This file is at .claude/hooks/mcp_client.py
+    # Navigate up to repo root: .claude/hooks -> .claude -> repo_root
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_root = os.path.dirname(os.path.dirname(script_dir))
+    return os.path.join(repo_root, ".venv", "bin", "clams-server")
 
 
 class MCPClient:
@@ -127,10 +141,9 @@ async def main() -> None:
         print(json.dumps({"error": "Invalid JSON arguments"}))
         sys.exit(2)
 
-    # Create client
-    client = MCPClient(
-        server_command=["python", "-m", "clams"], timeout=10.0
-    )
+    # Create client with correct venv binary path
+    clams_server = get_clams_server_path()
+    client = MCPClient(server_command=[clams_server], timeout=10.0)
 
     # Connect
     if not await client.connect():
