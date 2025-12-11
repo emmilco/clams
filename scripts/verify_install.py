@@ -16,20 +16,21 @@ def verify_mcp_server(venv_path: Path) -> bool:
     Returns:
         True if binary exists and is executable
     """
-    clams_bin = venv_path / "bin" / "clams"
+    clams_bin = venv_path / "bin" / "clams-server"
 
     if not clams_bin.exists():
-        print(f"Error: clams not found at {clams_bin}")
+        print(f"Error: clams-server not found at {clams_bin}")
         return False
 
     if not os.access(clams_bin, os.X_OK):
-        print(f"Error: clams is not executable: {clams_bin}")
+        print(f"Error: clams-server is not executable: {clams_bin}")
         return False
 
-    # Verify basic import works
+    # Verify basic import works using the venv's Python
+    venv_python = venv_path / "bin" / "python"
     try:
         result = subprocess.run(
-            ["python3", "-c", "from clams.server.main import main"],
+            [str(venv_python), "-c", "from clams.server.main import main"],
             capture_output=True,
             text=True,
             timeout=5,

@@ -229,10 +229,10 @@ configure_mcp_server() {
     step "Configuring MCP server"
 
     local config_file="$HOME/.claude.json"
-    local clams_bin="$REPO_ROOT/.venv/bin/clams"
+    local clams_bin="$REPO_ROOT/.venv/bin/clams-server"
 
     if [ "$DRY_RUN" = false ] && [ ! -x "$clams_bin" ]; then
-        error "clams not found at $clams_bin"
+        error "clams-server not found at $clams_bin"
         echo "Did dependency installation fail?"
         exit 1
     fi
