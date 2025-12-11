@@ -865,38 +865,38 @@
   },
   {
     "name": "code_search",
-    "value_ms": 4.129598234430886,
+    "value_ms": 9.119152065250088,
     "target_ms": 200.0,
     "passed": true,
     "iterations": 100,
-    "timestamp": 1765439490.435895,
-    "percentage_of_target": 2.064799117215443
+    "timestamp": 1765438906.944584,
+    "percentage_of_target": 4.559576032625044
   },
   {
     "name": "memory_retrieval",
-    "value_ms": 4.046412810566835,
+    "value_ms": 11.032077393610962,
     "target_ms": 200.0,
     "passed": true,
     "iterations": 100,
-    "timestamp": 1765439490.731499,
-    "percentage_of_target": 2.0232064052834176
+    "timestamp": 1765438907.642655,
+    "percentage_of_target": 5.516038696805481
   },
   {
     "name": "context_assembly",
-    "value_ms": 7.598664556280709,
+    "value_ms": 14.087764563737435,
     "target_ms": 500.0,
     "passed": true,
     "iterations": 10,
-    "timestamp": 1765439490.8093061,
-    "percentage_of_target": 1.5197329112561417
+    "timestamp": 1765438907.777313,
+    "percentage_of_target": 2.8175529127474874
   },
   {
     "name": "clustering_4_axes",
-    "value_s": 0.1391396249528043,
+    "value_s": 0.2448854999965988,
     "target_s": 5.0,
     "passed": true,
     "iterations": 1,
-    "timestamp": 1765439490.950565,
-    "percentage_of_target": 2.782792499056086
+    "timestamp": 1765438908.0251808,
+    "percentage_of_target": 4.897709999931976
   }
 ]
