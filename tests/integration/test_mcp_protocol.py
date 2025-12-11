@@ -299,9 +299,11 @@ class TestMCPToolDiscoveryRegression:
         assert result is not None
         assert len(result.content) > 0
 
-        # Response should contain results and count, NOT error
+        # Response should contain results and count, NOT internal server error
         content = result.content[0]
         assert content.type == "text"
         assert "results" in content.text
         assert "count" in content.text
-        assert "error" not in content.text
+        # Check for MCP internal_error, not just the word "error" (which may appear in data)
+        assert "internal_error" not in content.text.lower()
+        assert result.isError is not True
