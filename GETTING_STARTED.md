@@ -6,18 +6,71 @@ The CLAMS is an MCP server providing semantic memory, code indexing, git analysi
 
 ## Quick Start
 
-### Starting the Server
+After installation (see README.md), CLAMS runs automatically as an MCP server in all Claude Code sessions.
+
+## Configuration
+
+CLAMS is configured via environment variables with the `CLAMS_` prefix.
+
+### Storage Paths
 
 ```bash
-# Start Qdrant (required)
-docker run -p 6333:6333 qdrant/qdrant
+# Change storage location (default: ~/.clams)
+export CLAMS_STORAGE_PATH=/custom/path
 
-# Install and run
-pip install -e .
-clams-server
+# SQLite database (default: ~/.clams/metadata.db)
+export CLAMS_SQLITE_PATH=/custom/metadata.db
+
+# Journal location (default: .claude/journal - relative to CWD)
+export CLAMS_JOURNAL_PATH=/custom/journal
 ```
 
-Configuration via environment variables (prefix `CLAMS_`). See `ServerSettings` class.
+### Qdrant Connection
+
+```bash
+# Qdrant URL (default: http://localhost:6333)
+export CLAMS_QDRANT_URL=http://localhost:6334
+```
+
+### Embedding Models
+
+```bash
+# Code embedding model (default: sentence-transformers/all-MiniLM-L6-v2)
+export CLAMS_CODE_MODEL=sentence-transformers/all-mpnet-base-v2
+
+# Semantic embedding model (default: nomic-ai/nomic-embed-text-v1.5)
+export CLAMS_SEMANTIC_MODEL=sentence-transformers/all-MiniLM-L6-v2
+```
+
+### Logging
+
+```bash
+# Log level (default: INFO)
+export CLAMS_LOG_LEVEL=DEBUG
+
+# Log format (default: json)
+export CLAMS_LOG_FORMAT=console  # Human-readable
+```
+
+### Setting Environment Variables
+
+To make configuration persistent, add exports to `~/.claude.json` using the `env` field:
+
+```json
+{
+  "mcpServers": {
+    "clams": {
+      "type": "stdio",
+      "command": "/path/to/clams/.venv/bin/clams",
+      "args": [],
+      "env": {
+        "CLAMS_LOG_LEVEL": "DEBUG",
+        "CLAMS_QDRANT_URL": "http://localhost:6334"
+      }
+    }
+  }
+}
+```
 
 ## Exploring the Codebase
 
