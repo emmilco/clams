@@ -10,46 +10,122 @@ A Model Context Protocol (MCP) server for semantic memory, code indexing, and ex
 - **GHAP Learning**: Goal-Hypothesis-Action-Prediction cycle with experience clustering
 - **Context Assembly**: Generate rich context from memories, code, and experiences
 
-## System Requirements
-
-- Python 3.11+
-- Qdrant vector database (Docker: `docker run -p 6333:6333 qdrant/qdrant`)
-- 4GB RAM minimum (8GB recommended for embedding model)
-
 ## Installation
 
+### Prerequisites
+
+- **Python 3.12+** - [Download](https://www.python.org/downloads/)
+- **uv** - Fast Python package installer
+  ```bash
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  ```
+- **Docker** - For running Qdrant vector database
+  - [Docker Desktop](https://docs.docker.com/get-docker/) (macOS/Windows)
+  - Or Docker Engine (Linux)
+- **jq** - Command-line JSON processor
+  ```bash
+  brew install jq  # macOS
+  sudo apt-get install jq  # Ubuntu/Debian
+  ```
+
+### Quick Start
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/yourusername/clams.git
+   cd clams
+   ```
+
+2. **Run the installer**:
+   ```bash
+   ./scripts/install.sh
+   ```
+
+   This will:
+   - Install Python dependencies
+   - Start Qdrant in Docker
+   - Register CLAMS as a global MCP server
+   - Configure hooks for automatic context injection
+   - Initialize storage at `~/.clams/`
+
+3. **Verify installation**:
+   Open a new Claude Code session and run:
+   ```
+   Use the mcp__clams__ping tool
+   ```
+
+### Installation Options
+
 ```bash
-# Clone repository
-git clone <repo-url>
-cd clams
+# Preview what will be configured
+./scripts/install.sh --dry-run
 
-# Install with uv
-uv pip install -e .
+# Skip Qdrant setup (use existing instance)
+./scripts/install.sh --skip-qdrant
 
-# Or with pip
-pip install -e .
+# Show help
+./scripts/install.sh --help
 ```
 
-## Usage
+### What Gets Configured
 
-### Start Server
+CLAMS installs globally, working across all Claude Code sessions:
 
+- **MCP Server**: Added to `~/.claude.json`
+  - Binary: `<repo>/.venv/bin/clams`
+- **Hooks**: Registered in `~/.claude/settings.json`
+  - SessionStart: Inject context at session start
+  - UserPromptSubmit: Retrieve relevant memories before each prompt
+  - PreToolUse: Check GHAP status during tool execution
+  - PostToolUse: Auto-capture test results as experiences
+- **Storage**: `~/.clams/` stores all data
+  - `metadata.db` - SQLite metadata store
+  - `journal/` - Session journal and GHAP tracking
+- **Qdrant**: Docker container on `localhost:6333`
+
+### Troubleshooting
+
+**Port 6333 already in use**:
 ```bash
-# Start Qdrant first
-docker run -p 6333:6333 qdrant/qdrant
+# Option 1: Stop existing Qdrant
+docker stop $(docker ps -q --filter ancestor=qdrant/qdrant)
 
-# Start CLAMS server
-clams-server
+# Option 2: Use existing Qdrant
+./scripts/install.sh --skip-qdrant
 ```
 
-### Configuration
+**Python version too old**:
+```bash
+python3 --version  # Must be 3.12+
+# Upgrade from https://www.python.org/downloads/
+```
 
-Environment variables:
-- `CLAMS_QDRANT_URL` - Qdrant URL (default: http://localhost:6333)
-- `CLAMS_EMBEDDING_MODEL` - Embedding model (default: nomic-ai/nomic-embed-text-v1.5)
-- `CLAMS_LOG_LEVEL` - Logging level (default: INFO)
+**Docker not running**:
+```bash
+# macOS: Open Docker Desktop
+# Linux: sudo systemctl start docker
+```
 
-### Available Tools
+### Uninstallation
+
+```bash
+# Remove CLAMS but keep data
+./scripts/uninstall.sh
+
+# Full removal including ~/.clams/
+./scripts/uninstall.sh --remove-data
+
+# Skip confirmation prompts
+./scripts/uninstall.sh --remove-data --force
+```
+
+This removes CLAMS from Claude Code configuration but does NOT delete the repository. To fully remove:
+```bash
+./scripts/uninstall.sh --remove-data --force
+rm -rf ~/path/to/clams  # Delete repository
+```
+
+## Available Tools
 
 See `src/clams/server/tools/` for all MCP tools:
 - `memory.py` - store_memory, retrieve_memories, list_memories, delete_memory
