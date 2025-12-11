@@ -1,14 +1,17 @@
 """Unit tests for scripts/json_merge.py."""
 
-import json
 import sys
-import tempfile
 from pathlib import Path
 
 # Add scripts directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
-from json_merge import merge_mcp_server, merge_hooks, remove_mcp_server, remove_hooks
+from json_merge import (  # noqa: E402
+    merge_hooks,
+    merge_mcp_server,
+    remove_hooks,
+    remove_mcp_server,
+)
 
 
 def test_merge_mcp_server_new() -> None:

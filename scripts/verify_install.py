@@ -37,7 +37,7 @@ def verify_mcp_server(venv_path: Path) -> bool:
         )
 
         if result.returncode != 0:
-            print(f"Error: Failed to import clams.server.main")
+            print("Error: Failed to import clams.server.main")
             print(f"stderr: {result.stderr}")
             return False
 

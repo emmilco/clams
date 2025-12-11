@@ -139,11 +139,22 @@ def remove_hooks(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Merge JSON configurations safely")
-    parser.add_argument("command", choices=["add-server", "add-hooks", "remove-server", "remove-hooks"])
-    parser.add_argument("--config-file", required=True, help="Path to config file")
-    parser.add_argument("--data", required=True, help="JSON data to merge/remove")
-    parser.add_argument("--dry-run", action="store_true", help="Show changes without writing")
+    parser = argparse.ArgumentParser(
+        description="Merge JSON configurations safely"
+    )
+    parser.add_argument(
+        "command",
+        choices=["add-server", "add-hooks", "remove-server", "remove-hooks"],
+    )
+    parser.add_argument(
+        "--config-file", required=True, help="Path to config file"
+    )
+    parser.add_argument(
+        "--data", required=True, help="JSON data to merge/remove"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Show changes without writing"
+    )
 
     args = parser.parse_args()
 
@@ -162,7 +173,10 @@ def main() -> None:
             with open(config_path) as f:
                 config = json.load(f)
         except json.JSONDecodeError as e:
-            print(f"Error: Invalid JSON in config file {config_path}: {e}", file=sys.stderr)
+            print(
+                f"Error: Invalid JSON in config file {config_path}: {e}",
+                file=sys.stderr,
+            )
             sys.exit(1)
     else:
         config = {}
