@@ -42,7 +42,7 @@ hooks:
 
 # MCP server settings
 mcp:
-  server_command: ["python", "-m", "learning_memory_server"]
+  server_command: [".venv/bin/clams-server"]
   connection_timeout: 10
   tool_timeout: 10
 

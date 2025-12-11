@@ -29,7 +29,7 @@ def test_check_types_completes_standalone() -> None:
         [str(gate_script), str(worktree)],
         capture_output=True,
         text=True,
-        timeout=60,  # 60 seconds should be more than enough
+        timeout=180,  # 180 seconds - mypy can be slow on large codebases
         env=env,
     )
 
