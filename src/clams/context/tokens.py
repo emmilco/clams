@@ -78,6 +78,9 @@ def distribute_budget(
     Returns:
         Dict mapping source type to token budget
 
+    Raises:
+        ValueError: If any context_type is not in SOURCE_WEIGHTS
+
     Example:
         >>> distribute_budget(["memories", "code", "experiences"], 1000)
         {
@@ -86,6 +89,11 @@ def distribute_budget(
             "experiences": 500  # 3/6 of budget
         }
     """
+    invalid = [t for t in context_types if t not in SOURCE_WEIGHTS]
+    if invalid:
+        raise ValueError(
+            f"Invalid context types: {invalid}. Valid: {list(SOURCE_WEIGHTS.keys())}"
+        )
     total_weight = sum(SOURCE_WEIGHTS[t] for t in context_types)
     return {
         source: int((SOURCE_WEIGHTS[source] / total_weight) * max_tokens)
