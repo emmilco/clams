@@ -56,13 +56,13 @@ class QdrantVectorStore(VectorStore):
         if self._url == ":memory:":
             self._client = AsyncQdrantClient(
                 location=":memory:",
-                timeout=int(self._timeout),
+                timeout=self._timeout,  # type: ignore[arg-type]
             )
         else:
             self._client = AsyncQdrantClient(
                 url=self._url,
                 api_key=self._api_key,
-                timeout=int(self._timeout),
+                timeout=self._timeout,  # type: ignore[arg-type]
             )
 
     async def create_collection(
