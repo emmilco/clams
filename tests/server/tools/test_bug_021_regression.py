@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from clams.search import Searcher
+from clams.search.searcher import Searcher
 from clams.server.tools.search import get_search_tools
 
 

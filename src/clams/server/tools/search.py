@@ -5,7 +5,7 @@ from typing import Any
 import structlog
 from mcp.server import Server
 
-from clams.search import Searcher
+from clams.search.searcher import Searcher
 from clams.server.tools.enums import (
     validate_axis,
     validate_domain,

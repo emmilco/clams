@@ -3,6 +3,7 @@
 from datetime import datetime
 from typing import Any
 
+from clams.context.searcher_types import Searcher as SearcherABC
 from clams.embedding.base import EmbeddingService
 from clams.storage.base import VectorStore
 
@@ -67,8 +68,18 @@ def _build_filters(**kwargs: Any) -> dict[str, Any] | None:
     return filters if filters else None
 
 
-class Searcher:
-    """Unified query interface across all vector collections."""
+class Searcher(SearcherABC):
+    """Unified query interface across all vector collections.
+
+    This is the concrete implementation of the abstract Searcher interface
+    defined in `clams.context.searcher_types`. It provides semantic search
+    across memories, code, experiences, values, and commits collections.
+
+    Note: The return types use the result classes from `clams.search.results`,
+    which are the canonical definitions. The ABC in `searcher_types` defines
+    its own result classes for the interface contract, but this implementation
+    returns the more detailed result types.
+    """
 
     def __init__(
         self,

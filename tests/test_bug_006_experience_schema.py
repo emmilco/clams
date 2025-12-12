@@ -31,7 +31,7 @@ from clams.observation import (
     RootCause as GHAPRootCause,
 )
 from clams.observation.persister import ObservationPersister
-from clams.search import Searcher
+from clams.search.searcher import Searcher
 from clams.storage import QdrantVectorStore
 
 # Test collection names (using production names for integration test)
