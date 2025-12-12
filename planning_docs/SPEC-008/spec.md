@@ -63,7 +63,7 @@ Switch from stdio to HTTP transport:
 - If not running, start daemon in background (don't wait for model load)
 - Initialize session state (write `.session_id`)
 - Check for orphaned GHAP (file read only)
-- Exit immediately (< 50ms)
+- Exit immediately (< 100ms)
 - **No context injection** at this stage
 
 ### UserPromptSubmit Hook
@@ -300,7 +300,7 @@ fi
 - [ ] Server runs as daemon, writes PID file
 - [ ] Health endpoint responds at `/health`
 - [ ] Models load once at startup, stay in memory
-- [ ] Server auto-restarts if crashed (optional, nice-to-have)
+- [ ] Graceful shutdown on SIGTERM (clean up PID file)
 
 ### Performance
 - [ ] `session_start.sh` completes in < 100ms (non-blocking, file I/O only)
