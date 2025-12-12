@@ -10,15 +10,17 @@ from clams.embedding.base import EmbeddingService
 from clams.search import (
     CodeResult,
     CollectionName,
-    CollectionNotFoundError,
     CommitResult,
-    EmbeddingError,
     ExperienceResult,
     InvalidAxisError,
-    InvalidSearchModeError,
     MemoryResult,
-    Searcher,
     ValueResult,
+)
+from clams.search.searcher import (
+    CollectionNotFoundError,
+    EmbeddingError,
+    InvalidSearchModeError,
+    Searcher,
 )
 from clams.storage.base import SearchResult, VectorStore
 

@@ -26,7 +26,7 @@ from clams.observation import (
     OutcomeStatus,
     Strategy,
 )
-from clams.search import Searcher
+from clams.search.searcher import Searcher
 from clams.storage import QdrantVectorStore
 from clams.values import ValueStore
 

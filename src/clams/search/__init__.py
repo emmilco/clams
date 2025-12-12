@@ -10,21 +10,13 @@ from .results import (
     RootCause,
     ValueResult,
 )
-from .searcher import (
-    CollectionNotFoundError,
-    EmbeddingError,
-    InvalidSearchModeError,
-    Searcher,
-    SearchError,
-)
+
+# Note: Searcher and SearchError are not imported here to avoid circular import.
+# Import them from clams.search.searcher directly:
+#   from clams.search.searcher import Searcher, SearchError
 
 __all__ = [
-    "Searcher",
-    "SearchError",
     "InvalidAxisError",
-    "InvalidSearchModeError",
-    "CollectionNotFoundError",
-    "EmbeddingError",
     "MemoryResult",
     "CodeResult",
     "ExperienceResult",

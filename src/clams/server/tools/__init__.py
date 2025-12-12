@@ -14,7 +14,7 @@ from clams.observation import (
     ObservationCollector,
     ObservationPersister,
 )
-from clams.search import Searcher
+from clams.search.searcher import Searcher
 from clams.server.config import ServerSettings
 from clams.server.tools.enums import (
     DOMAINS,
