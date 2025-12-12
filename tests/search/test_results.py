@@ -25,6 +25,7 @@ class TestMemoryResult:
             payload={
                 "category": "preference",
                 "content": "Use async/await",
+                "importance": 0.8,
                 "tags": ["python", "async"],
                 "created_at": "2024-01-01T12:00:00Z",
                 "verified_at": "2024-01-02T12:00:00Z",
@@ -36,6 +37,7 @@ class TestMemoryResult:
         assert result.score == 0.95
         assert result.category == "preference"
         assert result.content == "Use async/await"
+        assert result.importance == 0.8
         assert result.tags == ["python", "async"]
         assert result.created_at == datetime(
             2024, 1, 1, 12, 0, 0, tzinfo=UTC
@@ -57,6 +59,7 @@ class TestMemoryResult:
             },
         )
         result = MemoryResult.from_search_result(search_result)
+        assert result.importance == 0.0  # Default value
         assert result.tags == []
         assert result.verified_at is None
         assert result.verification_status is None

@@ -30,6 +30,7 @@ class MemoryResult:
     category: str
     content: str
     score: float
+    importance: float
     tags: list[str]
     created_at: datetime
     verified_at: datetime | None
@@ -58,6 +59,7 @@ class MemoryResult:
             score=result.score,
             category=payload["category"],
             content=payload["content"],
+            importance=payload.get("importance", 0.0),
             tags=payload.get("tags", []),
             created_at=datetime.fromisoformat(payload["created_at"]),
             verified_at=(

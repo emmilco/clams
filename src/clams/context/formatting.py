@@ -28,7 +28,7 @@ def format_code(metadata: dict[str, Any]) -> str:
     Format code item as markdown.
 
     Format:
-        **{unit_type}** `{name}` in `{file_path}:{start_line}`
+        **{unit_type}** `{name}` in `{file_path}:{line_start}`
         ```python
         {signature}
         {docstring if present}
@@ -37,12 +37,13 @@ def format_code(metadata: dict[str, Any]) -> str:
     unit_type = metadata["unit_type"].capitalize()
     name = metadata["qualified_name"]
     file_path = metadata["file_path"]
-    start_line = metadata["start_line"]
+    # Support both line_start (canonical) and start_line (legacy) field names
+    line_start = metadata.get("line_start") or metadata.get("start_line", 0)
     language = metadata.get("language", "python")
     code = metadata.get("code", "")
     docstring = metadata.get("docstring")
 
-    result = f"**{unit_type}** `{name}` in `{file_path}:{start_line}`\n"
+    result = f"**{unit_type}** `{name}` in `{file_path}:{line_start}`\n"
     result += f"```{language}\n{code}\n"
     if docstring:
         result += f'"""{docstring}"""\n'
@@ -87,7 +88,13 @@ def format_experience(metadata: dict[str, Any]) -> str:
         result += f"- **Surprise**: {surprise}\n"
 
     if lesson:
-        what_worked = lesson.get("what_worked", "")
+        # Handle both Lesson dataclass (canonical) and dict (legacy) formats
+        if hasattr(lesson, "what_worked"):
+            what_worked = lesson.what_worked
+        elif isinstance(lesson, dict):
+            what_worked = lesson.get("what_worked", "")
+        else:
+            what_worked = str(lesson)
         result += f"- **Lesson**: {what_worked}\n"
 
     return result
@@ -98,14 +105,15 @@ def format_value(metadata: dict[str, Any]) -> str:
     Format value item as markdown.
 
     Format:
-        **Value** ({axis}, cluster size: {cluster_size}):
+        **Value** ({axis}, cluster size: {member_count}):
         {text}
     """
     axis = metadata["axis"]
-    cluster_size = metadata.get("cluster_size", 0)
+    # Support both member_count (canonical) and cluster_size (legacy) field names
+    member_count = metadata.get("member_count") or metadata.get("cluster_size", 0)
     text = metadata["text"]
 
-    return f"**Value** ({axis}, cluster size: {cluster_size}):\n{text}"
+    return f"**Value** ({axis}, cluster size: {member_count}):\n{text}"
 
 
 def format_commit(metadata: dict[str, Any]) -> str:

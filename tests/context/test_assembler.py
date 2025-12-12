@@ -145,15 +145,16 @@ async def test_assemble_multiple_sources(
     mock_searcher.code = [
         CodeResult(
             id="code_1",
+            project="test_project",
+            file_path="test.py",
+            language="python",
             unit_type="function",
             qualified_name="test.example",
-            file_path="test.py",
-            start_line=1,
-            end_line=5,
-            language="python",
             code="def example():\n    pass",
             docstring="Test function",
             score=0.85,
+            line_start=1,
+            line_end=5,
         )
     ]
 
@@ -279,10 +280,11 @@ async def test_deduplication(
             id="val_1",
             axis="strategy",
             cluster_id="cluster_1",
-            cluster_size=5,
+            member_count=5,
             text="Always verify",
-            similarity_to_centroid=0.9,
+            avg_confidence=0.9,
             score=0.9,  # Higher score
+            created_at=datetime.now(UTC),
         )
     ]
 
