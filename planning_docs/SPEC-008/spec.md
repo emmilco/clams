@@ -33,6 +33,8 @@ Users experience:
 
 - Direct file access bypass (we're fixing the architecture instead)
 - Domain-specific premortem (deferred in SPEC-002-19)
+- Multi-project support (server is per-project, tied to the repo where it's installed)
+- Auto-restart on crash (v1 uses manual restart)
 
 ## Solution Overview
 
@@ -86,16 +88,24 @@ Switch from stdio to HTTP transport:
 
 ### 1. MCP Server Changes (`src/clams/server/main.py`)
 
-Add HTTP+SSE transport support:
+Add HTTP+SSE transport support using the MCP SDK's built-in `streamable-http` transport:
 
 ```python
-# New entry point for HTTP mode
+from mcp.server.fastmcp import FastMCP
+
+# Create server with HTTP transport
+mcp = FastMCP("clams")
+
+# Entry point for HTTP mode
 def run_http(host: str = "127.0.0.1", port: int = 6334):
     """Run MCP server with HTTP transport."""
-    # MCP SDK supports this via mcp.server.http
-    app = create_http_app(server)
-    uvicorn.run(app, host=host, port=port)
+    mcp.run(transport="streamable-http", host=host, port=port)
 ```
+
+**Note**: The MCP SDK (v1.0+) supports `streamable-http` transport natively. This provides:
+- `/sse` endpoint for Claude Code's SSE connection
+- `/messages` endpoint for posting tool calls
+- Standard HTTP semantics for hooks to call directly
 
 Server startup:
 1. Load embedding models (one-time cost)
@@ -103,10 +113,17 @@ Server startup:
 3. Start HTTP server on port 6334
 4. Write PID file for lifecycle management
 
+**Graceful shutdown**: Server handles SIGTERM to:
+1. Stop accepting new connections
+2. Complete in-flight requests (5s timeout)
+3. Clean up PID file
+
 ### 2. Daemon Management
 
 **PID file**: `~/.clams/server.pid`
 **Log file**: `~/.clams/server.log`
+
+**Log rotation**: Server log is truncated on daemon restart (simple approach for v1). Future versions may implement proper rotation.
 
 ```bash
 # Start daemon (in install.sh or session_start.sh)
@@ -135,7 +152,7 @@ wait_for_ready() {
 
 ### 3. Claude Code Configuration
 
-Update `~/.claude.json`:
+Update `~/.claude.json` to use SSE transport:
 
 ```json
 {
@@ -147,6 +164,17 @@ Update `~/.claude.json`:
   }
 }
 ```
+
+**Hooks use the `/messages` endpoint** directly via HTTP POST (not SSE):
+```bash
+curl -X POST http://localhost:6334/messages \
+  -H "Content-Type: application/json" \
+  -d '{"method": "tools/call", "params": {"name": "ping", "arguments": {}}}'
+```
+
+This means:
+- Claude Code connects via SSE for bidirectional communication
+- Hooks make simple HTTP POST requests for tool calls
 
 ### 4. Hook Scripts
 
@@ -179,14 +207,22 @@ exit 0
 #!/bin/bash
 # Wait for server to be ready (blocking)
 if ! wait_for_ready 30; then
-    echo '{"type": "degraded", "content": "Server not available"}'
+    # Server not available after 30s - graceful degrade
+    echo '{"type": "degraded", "reason": "server_timeout"}'
     exit 0
 fi
 
-# Now call MCP tools via HTTP
-CONTEXT=$(curl -s -X POST http://localhost:6334/tools/assemble_context \
+# Call MCP tool via HTTP POST to /messages endpoint
+CONTEXT=$(curl -s -X POST http://localhost:6334/messages \
     -H "Content-Type: application/json" \
-    -d '{"query": "'"$USER_PROMPT"'", "context_types": ["values"], "limit": 10}')
+    -d '{"method": "tools/call", "params": {"name": "assemble_context", "arguments": {"query": "'"$USER_PROMPT"'", "context_types": ["values"], "limit": 10}}}' \
+    2>/dev/null)
+
+# Handle curl failure
+if [ $? -ne 0 ] || [ -z "$CONTEXT" ]; then
+    echo '{"type": "degraded", "reason": "request_failed"}'
+    exit 0
+fi
 
 echo '{"type": "rich", "content": '"$CONTEXT"'}'
 exit 0
@@ -196,28 +232,41 @@ exit 0
 ```bash
 #!/bin/bash
 # Quick check - server should be running by now
-SHOULD_CHECKIN=$(curl -s http://localhost:6334/tools/should_check_in \
-    -d '{"frequency": 10}' 2>/dev/null || echo '{"should_check_in": false}')
+# If server not ready, silently skip (don't block tool execution)
+SHOULD_CHECKIN=$(curl -s --max-time 1 -X POST http://localhost:6334/messages \
+    -H "Content-Type: application/json" \
+    -d '{"method": "tools/call", "params": {"name": "should_check_in", "arguments": {"frequency": 10}}}' \
+    2>/dev/null || echo '{"should_check_in": false}')
 
 if [ "$(echo $SHOULD_CHECKIN | jq -r '.should_check_in')" = "true" ]; then
-    GHAP=$(curl -s http://localhost:6334/tools/get_active_ghap)
+    GHAP=$(curl -s --max-time 1 -X POST http://localhost:6334/messages \
+        -H "Content-Type: application/json" \
+        -d '{"method": "tools/call", "params": {"name": "get_active_ghap", "arguments": {}}}')
     echo '{"type": "reminder", "content": "..."}'
+
+    # Reset tool count after showing reminder
+    curl -s --max-time 1 -X POST http://localhost:6334/messages \
+        -H "Content-Type: application/json" \
+        -d '{"method": "tools/call", "params": {"name": "reset_tool_count", "arguments": {}}}' \
+        >/dev/null 2>&1
 fi
 exit 0
 ```
 
 ### 5. Missing MCP Tools
 
-These tools need to be implemented in `src/clams/server/tools/`:
+These tools need to be implemented in `src/clams/server/tools/session.py`:
 
-| Tool | Purpose | Implementation |
-|------|---------|----------------|
-| `start_session` | Initialize session, return ID | Write to journal file |
-| `get_orphaned_ghap` | Check for GHAP from previous session | Read `current_ghap.json`, compare session ID |
-| `should_check_in` | Check if GHAP reminder due | Read `.tool_count`, compare to frequency |
-| `reset_tool_count` | Reset counter after reminder | Write "0" to `.tool_count` |
-| `end_session` | Clean up session state | Archive current GHAP if any |
-| `assemble_context` | Get relevant context for prompt | Query Qdrant for values/experiences |
+| Tool | Purpose | Implementation | Called By |
+|------|---------|----------------|-----------|
+| `start_session` | Initialize session, return ID | Write to journal file | SessionStart hook (local) |
+| `get_orphaned_ghap` | Check for GHAP from previous session | Read `current_ghap.json`, compare session ID | SessionStart hook (local) |
+| `should_check_in` | Check if GHAP reminder due | Read `.tool_count`, compare to frequency | PreToolUse hook |
+| `reset_tool_count` | Reset counter after reminder | Write "0" to `.tool_count` | PreToolUse hook |
+| `increment_tool_count` | Increment tool counter | Read/write `.tool_count` | PreToolUse hook |
+| `assemble_context` | Get relevant context for prompt | Query Qdrant for values/experiences | UserPromptSubmit hook |
+
+**Note**: `end_session` is deferred - Claude Code doesn't have a SessionEnd hook yet. When the session ends, any active GHAP becomes "orphaned" and is detected on the next session start.
 
 ### 6. Install/Uninstall Scripts
 
@@ -254,7 +303,7 @@ fi
 - [ ] Server auto-restarts if crashed (optional, nice-to-have)
 
 ### Performance
-- [ ] `session_start.sh` completes in < 50ms (non-blocking)
+- [ ] `session_start.sh` completes in < 100ms (non-blocking, file I/O only)
 - [ ] `user_prompt_submit.sh` completes in < 200ms (after server warm)
 - [ ] `ghap_checkin.sh` completes in < 200ms
 - [ ] `outcome_capture.sh` completes in < 200ms
