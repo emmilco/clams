@@ -747,6 +747,88 @@ def _get_all_tool_definitions() -> list[Tool]:
                 "required": [],
             },
         ),
+        # === Session Tools (SPEC-008) ===
+        Tool(
+            name="start_session",
+            description="Initialize a new session.",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        ),
+        Tool(
+            name="get_orphaned_ghap",
+            description="Check for orphaned GHAP from previous session.",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        ),
+        Tool(
+            name="should_check_in",
+            description="Check if GHAP reminder is due.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "frequency": {
+                        "type": "integer",
+                        "description": "Tool calls between reminders (default 10)",
+                        "default": 10,
+                    },
+                },
+                "required": [],
+            },
+        ),
+        Tool(
+            name="increment_tool_count",
+            description="Increment the tool counter.",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        ),
+        Tool(
+            name="reset_tool_count",
+            description="Reset tool counter after reminder.",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        ),
+        # === Context Tools (SPEC-008) ===
+        Tool(
+            name="assemble_context",
+            description="Assemble relevant context for a user prompt.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "User's prompt text",
+                    },
+                    "context_types": {
+                        "type": "array",
+                        "items": {"type": "string", "enum": ["values", "experiences"]},
+                        "description": "Types to include (default: both)",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum items per type (default 10)",
+                        "default": 10,
+                    },
+                    "max_tokens": {
+                        "type": "integer",
+                        "description": "Approximate token budget (default 1500)",
+                        "default": 1500,
+                    },
+                },
+                "required": ["query"],
+            },
+        ),
     ]
 
 
@@ -846,6 +928,15 @@ async def register_all_tools(
 
     tool_registry["ping"] = ping_impl
 
+    # Initialize and register session tools (SPEC-008)
+    from .session import SessionManager, get_session_tools
+    session_manager = SessionManager()
+    tool_registry.update(get_session_tools(session_manager))
+
+    # Initialize and register context tools (SPEC-008)
+    from .context import get_context_tools
+    tool_registry.update(get_context_tools(searcher, value_store))
+
     # Register the tool dispatcher - handles ALL tool calls
     @server.call_tool()  # type: ignore[untyped-decorator]
     async def handle_call_tool(
@@ -888,7 +979,7 @@ async def register_all_tools(
             return [TextContent(type="text", text=f"Error: {str(e)}")]
 
     # Register list_tools handler - REQUIRED for Claude Code to discover tools
-    @server.list_tools()  # type: ignore[no-untyped-call, untyped-decorator]
+    @server.list_tools()  # type: ignore[untyped-decorator, no-untyped-call]
     async def handle_list_tools() -> list[Tool]:
         """Return all available tools with their schemas.
 

@@ -1,6 +1,8 @@
 """Main entry point for the CLAMS server."""
 
+import argparse
 import asyncio
+import errno
 import sys
 from pathlib import Path
 
@@ -14,6 +16,53 @@ from clams.server.logging import configure_logging
 from clams.server.tools import ServiceContainer, register_all_tools
 
 logger = structlog.get_logger()
+
+
+def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments.
+
+    Returns:
+        Parsed arguments with transport mode and options
+    """
+    parser = argparse.ArgumentParser(
+        description="CLAMS MCP Server - semantic code search and memory",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  clams-server                          # Run with stdio transport (default)
+  clams-server --http                   # Run with HTTP transport on port 6334
+  clams-server --http --port 8080       # Run with HTTP transport on port 8080
+  clams-server --daemon                 # Run as background daemon (HTTP mode)
+  clams-server --stop                   # Stop running daemon
+""",
+    )
+    parser.add_argument(
+        "--http",
+        action="store_true",
+        help="Run with HTTP+SSE transport (default: stdio)",
+    )
+    parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="HTTP server host (default: 127.0.0.1)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=6334,
+        help="HTTP server port (default: 6334)",
+    )
+    parser.add_argument(
+        "--daemon",
+        action="store_true",
+        help="Run as background daemon (implies --http)",
+    )
+    parser.add_argument(
+        "--stop",
+        action="store_true",
+        help="Stop running daemon and exit",
+    )
+    return parser.parse_args()
 
 
 def validate_configuration(settings: ServerSettings) -> None:
@@ -113,7 +162,7 @@ async def create_server(
 
 
 async def run_server(settings: ServerSettings) -> None:
-    """Run the MCP server.
+    """Run the MCP server with stdio transport.
 
     Args:
         settings: Server configuration
@@ -138,15 +187,77 @@ async def run_server(settings: ServerSettings) -> None:
         logger.info("server.services_closed")
 
 
+async def run_http_server(
+    settings: ServerSettings,
+    host: str,
+    port: int,
+) -> None:
+    """Run the MCP server with HTTP+SSE transport.
+
+    Args:
+        settings: Server configuration
+        host: HTTP server host
+        port: HTTP server port
+    """
+    from clams.server.http import HttpServer
+
+    logger.info("server.starting", transport="http", host=host, port=port)
+
+    # Create the server
+    server, services = await create_server(settings)
+
+    # Wrap in HTTP server
+    http_server = HttpServer(server, services, host=host, port=port)
+
+    try:
+        await http_server.run()
+    except OSError as e:
+        if e.errno == errno.EADDRINUSE:
+            logger.error(
+                "server.port_in_use",
+                port=port,
+                error=f"Port {port} is already in use. "
+                f"Use --port to specify a different port.",
+            )
+            sys.exit(1)
+        raise
+
+
 def main() -> None:
     """Entry point for the MCP server."""
+    args = parse_args()
+
+    # Handle --stop command
+    if args.stop:
+        from clams.server.http import stop_server
+        if stop_server():
+            print("Server stopped")
+        else:
+            print("Server was not running")
+        return
+
     # Load configuration
     settings = ServerSettings()
 
     # Configure logging
     configure_logging(log_level=settings.log_level, log_format=settings.log_format)
 
-    logger.info("clams.starting", version="0.1.0")
+    # Determine transport mode
+    use_http = args.http or args.daemon
+    transport_mode = "http" if use_http else "stdio"
+
+    logger.info("clams.starting", version="0.1.0", transport=transport_mode)
+
+    # Daemonize if requested (before validation to return quickly)
+    if args.daemon:
+        from clams.server.http import daemonize, is_server_running
+
+        if is_server_running():
+            logger.info("server.already_running")
+            print("Server is already running")
+            return
+
+        daemonize()
 
     # Validate configuration before starting (Qdrant, paths, git repo)
     try:
@@ -161,8 +272,10 @@ def main() -> None:
     logger.info("embedding_registry.initialized")
 
     try:
-        # Run the async server
-        asyncio.run(run_server(settings))
+        if use_http:
+            asyncio.run(run_http_server(settings, args.host, args.port))
+        else:
+            asyncio.run(run_server(settings))
     except KeyboardInterrupt:
         logger.info("server.shutdown", reason="keyboard_interrupt")
     except Exception as e:
