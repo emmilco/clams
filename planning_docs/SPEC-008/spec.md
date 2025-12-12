@@ -1,4 +1,4 @@
-# SPEC-008: Fast Hook Implementation with Direct File Access
+# SPEC-008: HTTP Transport for Singleton MCP Server
 
 ## Background
 
@@ -8,7 +8,7 @@ SPEC-002-19 designed a hook system for automatic context injection and GHAP stat
 2. **The architecture is fundamentally slow**: Each MCP call spawns a new server process that loads embedding models (10+ seconds per call)
 3. **The hooks silently fail**: They gracefully degrade to empty responses, so users don't know they're broken
 
-This spec replaces the MCP-based hook implementation with direct file access, achieving < 200ms performance while delivering the functionality originally designed in SPEC-002-19.
+The root cause is that hooks spawn their own MCP server instances via stdio, while Claude Code has a separate server instance running. The hooks can't connect to Claude's server because stdio pipes are 1:1.
 
 ## Problem Statement
 
@@ -24,174 +24,270 @@ Users experience:
 
 ## Goals
 
-1. **Performance**: All hooks complete in < 200ms
-2. **Functionality**: Hooks work as originally designed in SPEC-002-19
-3. **Simplicity**: No MCP server dependency for hook operations
-4. **Reliability**: Clear error messages when things fail (no silent degradation)
+1. **Singleton server**: All callers (Claude Code + hooks) connect to one running instance
+2. **Performance**: Hooks complete in < 200ms (after server is warm)
+3. **Non-blocking startup**: SessionStart hook doesn't wait for server to load models
+4. **Functionality**: Hooks work as originally designed in SPEC-002-19
 
 ## Non-Goals
 
-- Implementing the full `assemble_context` with semantic search (requires embeddings)
-- HTTP-based MCP transport (future optimization)
+- Direct file access bypass (we're fixing the architecture instead)
 - Domain-specific premortem (deferred in SPEC-002-19)
 
 ## Solution Overview
 
-Replace `mcp_client.py` calls with a lightweight `direct_access.py` module that:
-1. Reads/writes journal files directly (`.session_id`, `current_ghap.json`, `.tool_count`)
-2. Queries Qdrant via HTTP for pre-stored values (no embedding generation needed)
-3. Avoids importing heavy dependencies (torch, sentence_transformers)
+Switch from stdio to HTTP transport:
+
+1. **MCP server runs as HTTP daemon** on `localhost:6334`
+2. **Models load once** at daemon startup, stay in memory
+3. **Claude Code connects via HTTP** (change `~/.claude.json` config)
+4. **Hooks connect via HTTP** (simple curl/httpx calls to same server)
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                                                         │
+│   Claude Code ──HTTP──┐                                 │
+│                       ├──> clams-server :6334           │
+│   Hook scripts ──HTTP─┘    (singleton, models loaded)   │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+## Hook Behavior
+
+### SessionStart Hook
+- **Non-blocking**: Don't wait for server to finish loading
+- Check if daemon is running (quick health check)
+- If not running, start daemon in background (don't wait for model load)
+- Initialize session state (write `.session_id`)
+- Check for orphaned GHAP (file read only)
+- Exit immediately (< 50ms)
+- **No context injection** at this stage
+
+### UserPromptSubmit Hook
+- **Blocking**: Wait for server if still starting
+- Server should be ready by now (user took time to type)
+- Query server for values/context
+- Inject context into prompt
+- If server ready: < 200ms
+- If server still loading: wait up to 30s, then graceful degrade
+
+### PreToolUse Hook (ghap_checkin.sh)
+- Check tool count, remind about GHAP if needed
+- Quick HTTP call to running server
+- < 200ms
+
+### PostToolUse Hook (outcome_capture.sh)
+- Detect test/build outcomes
+- Prompt for GHAP resolution
+- < 200ms
 
 ## Detailed Design
 
-### 1. New File: `.claude/hooks/direct_access.py`
+### 1. MCP Server Changes (`src/clams/server/main.py`)
 
-A lightweight Python module (~100 lines) that provides:
+Add HTTP+SSE transport support:
 
 ```python
-# Session management
-start_session() -> {"session_id": str}
-end_session() -> {"success": bool}
-
-# GHAP lifecycle
-get_orphaned_ghap() -> {"has_orphan": bool, "goal"?: str, "hypothesis"?: str}
-get_active_ghap() -> {"has_active": bool, "goal"?: str, "hypothesis"?: str, "prediction"?: str}
-
-# Tool counting for GHAP check-ins
-should_check_in(frequency: int) -> {"should_check_in": bool}
-increment_tool_count() -> {"count": int}
-reset_tool_count() -> {"success": bool}
-
-# Context retrieval (direct Qdrant HTTP, no embeddings)
-get_values(limit: int) -> [{"text": str, "cluster_id": str, ...}, ...]
+# New entry point for HTTP mode
+def run_http(host: str = "127.0.0.1", port: int = 6334):
+    """Run MCP server with HTTP transport."""
+    # MCP SDK supports this via mcp.server.http
+    app = create_http_app(server)
+    uvicorn.run(app, host=host, port=port)
 ```
 
-**Key constraint**: No imports from `clams.*` - this must be a standalone script that starts in < 50ms.
+Server startup:
+1. Load embedding models (one-time cost)
+2. Initialize Qdrant connections
+3. Start HTTP server on port 6334
+4. Write PID file for lifecycle management
 
-### 2. Updated Hook Scripts
+### 2. Daemon Management
 
-#### `session_start.sh`
+**PID file**: `~/.clams/server.pid`
+**Log file**: `~/.clams/server.log`
+
 ```bash
-# Current (broken):
-SESSION_RESULT=$(call_mcp "start_session" '{}')
-ORPHAN_RESULT=$(call_mcp "get_orphaned_ghap" '{}')
-CONTEXT_RESULT=$(call_mcp "assemble_context" '{"context_types": ["values"]}')
+# Start daemon (in install.sh or session_start.sh)
+start_daemon() {
+    if is_running; then
+        return 0  # Already running
+    fi
+    nohup clams-server --http --port 6334 > ~/.clams/server.log 2>&1 &
+    echo $! > ~/.clams/server.pid
+}
 
-# New (working):
-SESSION_RESULT=$(python3 "$SCRIPT_DIR/direct_access.py" start_session)
-ORPHAN_RESULT=$(python3 "$SCRIPT_DIR/direct_access.py" get_orphaned_ghap)
-VALUES=$(python3 "$SCRIPT_DIR/direct_access.py" get_values '{"limit": 5}')
+# Check if running
+is_running() {
+    [ -f ~/.clams/server.pid ] && kill -0 $(cat ~/.clams/server.pid) 2>/dev/null
+}
+
+# Health check (with timeout)
+wait_for_ready() {
+    for i in {1..30}; do
+        curl -s http://localhost:6334/health && return 0
+        sleep 1
+    done
+    return 1
+}
+```
+
+### 3. Claude Code Configuration
+
+Update `~/.claude.json`:
+
+```json
+{
+  "mcpServers": {
+    "clams": {
+      "type": "sse",
+      "url": "http://localhost:6334/sse"
+    }
+  }
+}
+```
+
+### 4. Hook Scripts
+
+#### `session_start.sh` (Non-blocking)
+```bash
+#!/bin/bash
+# Ensure daemon is starting (don't wait for ready)
+start_daemon_if_needed  # Returns immediately
+
+# These operations are local file I/O only (no server needed)
+SESSION_ID=$(generate_session_id)
+echo "$SESSION_ID" > ~/.clams/journal/.session_id
+
+# Check for orphaned GHAP (local file read)
+if [ -f ~/.clams/journal/current_ghap.json ]; then
+    ORPHAN=$(check_orphan_ghap)
+    if [ -n "$ORPHAN" ]; then
+        echo '{"type": "orphan_detected", "content": "..."}'
+        exit 0
+    fi
+fi
+
+# No context injection at session start - defer to first prompt
+echo '{"type": "session_started", "session_id": "'$SESSION_ID'"}'
+exit 0
+```
+
+#### `user_prompt_submit.sh` (Blocking)
+```bash
+#!/bin/bash
+# Wait for server to be ready (blocking)
+if ! wait_for_ready 30; then
+    echo '{"type": "degraded", "content": "Server not available"}'
+    exit 0
+fi
+
+# Now call MCP tools via HTTP
+CONTEXT=$(curl -s -X POST http://localhost:6334/tools/assemble_context \
+    -H "Content-Type: application/json" \
+    -d '{"query": "'"$USER_PROMPT"'", "context_types": ["values"], "limit": 10}')
+
+echo '{"type": "rich", "content": '"$CONTEXT"'}'
+exit 0
 ```
 
 #### `ghap_checkin.sh`
 ```bash
-# Current (broken):
-CHECKIN_RESULT=$(call_mcp "should_check_in" "{\"frequency\": $FREQUENCY}")
-GHAP_RESULT=$(call_mcp "get_active_ghap" '{}')
+#!/bin/bash
+# Quick check - server should be running by now
+SHOULD_CHECKIN=$(curl -s http://localhost:6334/tools/should_check_in \
+    -d '{"frequency": 10}' 2>/dev/null || echo '{"should_check_in": false}')
 
-# New (working):
-CHECKIN_RESULT=$(python3 "$SCRIPT_DIR/direct_access.py" should_check_in "{\"frequency\": $FREQUENCY}")
-GHAP_RESULT=$(python3 "$SCRIPT_DIR/direct_access.py" get_active_ghap)
+if [ "$(echo $SHOULD_CHECKIN | jq -r '.should_check_in')" = "true" ]; then
+    GHAP=$(curl -s http://localhost:6334/tools/get_active_ghap)
+    echo '{"type": "reminder", "content": "..."}'
+fi
+exit 0
 ```
 
-#### `user_prompt_submit.sh`
-For v1, this hook will inject values only (no semantic search). Rich context with experiences requires the MCP server and is out of scope.
+### 5. Missing MCP Tools
 
+These tools need to be implemented in `src/clams/server/tools/`:
+
+| Tool | Purpose | Implementation |
+|------|---------|----------------|
+| `start_session` | Initialize session, return ID | Write to journal file |
+| `get_orphaned_ghap` | Check for GHAP from previous session | Read `current_ghap.json`, compare session ID |
+| `should_check_in` | Check if GHAP reminder due | Read `.tool_count`, compare to frequency |
+| `reset_tool_count` | Reset counter after reminder | Write "0" to `.tool_count` |
+| `end_session` | Clean up session state | Archive current GHAP if any |
+| `assemble_context` | Get relevant context for prompt | Query Qdrant for values/experiences |
+
+### 6. Install/Uninstall Scripts
+
+**install.sh additions**:
 ```bash
-# Simplified: just get top values relevant to any prompt
-VALUES=$(python3 "$SCRIPT_DIR/direct_access.py" get_values '{"limit": 10}')
+# Start daemon
+echo "Starting CLAMS server daemon..."
+clams-server --http --port 6334 --daemon
+
+# Wait for ready
+echo "Waiting for server to initialize..."
+wait_for_ready 60 || echo "Warning: Server slow to start"
+
+# Configure Claude Code for HTTP
+update_claude_json_for_http
 ```
 
-#### `outcome_capture.sh`
-No changes needed - this hook only reads tool output and checks GHAP state.
-
-### 3. Journal File Schema
-
-Files in `.claude/journal/`:
-
-| File | Format | Purpose |
-|------|--------|---------|
-| `.session_id` | Plain text | Current session ID |
-| `current_ghap.json` | JSON | Active GHAP entry (if any) |
-| `.tool_count` | Plain text (integer) | Tools since last GHAP check-in |
-| `session_entries.jsonl` | JSONL | Historical session data |
-
-### 4. Qdrant Direct Access
-
-For `get_values()`, we query Qdrant's HTTP API directly:
-
-```python
-import httpx
-
-def get_values(limit: int = 5) -> list[dict]:
-    """Get top values from Qdrant without embeddings."""
-    try:
-        resp = httpx.post(
-            "http://localhost:6333/collections/values/points/scroll",
-            json={"limit": limit, "with_vectors": False, "with_payload": True},
-            timeout=1.0,
-        )
-        if resp.status_code == 200:
-            points = resp.json().get("result", {}).get("points", [])
-            return [p.get("payload", {}) for p in points]
-    except Exception:
-        pass
-    return []
+**uninstall.sh additions**:
+```bash
+# Stop daemon
+if [ -f ~/.clams/server.pid ]; then
+    kill $(cat ~/.clams/server.pid) 2>/dev/null
+    rm ~/.clams/server.pid
+fi
 ```
-
-This returns pre-stored values without generating embeddings, achieving < 100ms response time.
 
 ## Acceptance Criteria
 
-### Performance (CRITICAL)
-- [ ] `session_start.sh` completes in < 200ms
+### Server
+- [ ] MCP server supports HTTP+SSE transport
+- [ ] Server runs as daemon, writes PID file
+- [ ] Health endpoint responds at `/health`
+- [ ] Models load once at startup, stay in memory
+- [ ] Server auto-restarts if crashed (optional, nice-to-have)
+
+### Performance
+- [ ] `session_start.sh` completes in < 50ms (non-blocking)
+- [ ] `user_prompt_submit.sh` completes in < 200ms (after server warm)
 - [ ] `ghap_checkin.sh` completes in < 200ms
-- [ ] `user_prompt_submit.sh` completes in < 200ms
 - [ ] `outcome_capture.sh` completes in < 200ms
-- [ ] Regression tests verify timing with assertions
+- [ ] Server startup (cold) < 15s (model loading)
+- [ ] Regression tests verify timing
 
 ### Functionality
-- [ ] `session_start.sh` creates session ID and stores in `.session_id`
-- [ ] `session_start.sh` detects orphaned GHAP from previous session
-- [ ] `session_start.sh` injects top values as light context
-- [ ] `ghap_checkin.sh` triggers reminder every N tool calls (configurable)
-- [ ] `ghap_checkin.sh` shows current GHAP state in reminder
-- [ ] `user_prompt_submit.sh` injects values as context
-- [ ] `outcome_capture.sh` detects test pass/fail and prompts for GHAP resolution
-- [ ] All hooks output valid JSON
-- [ ] All hooks exit 0 (graceful degradation on errors)
+- [ ] Claude Code can call MCP tools via HTTP
+- [ ] All hooks can call MCP tools via HTTP
+- [ ] Missing tools implemented: `start_session`, `get_orphaned_ghap`, `should_check_in`, `reset_tool_count`, `assemble_context`
+- [ ] Session lifecycle works (start → prompts → GHAP tracking → end)
+- [ ] Orphaned GHAP detection works across sessions
 
-### Code Quality
-- [ ] `direct_access.py` has no imports from `clams.*`
-- [ ] `direct_access.py` starts in < 50ms (measure with `time python3 -c "import direct_access"`)
-- [ ] Type hints for all functions (mypy --strict)
-- [ ] Error handling with clear messages (not silent failures)
-
-### Testing
-- [ ] Unit tests for `direct_access.py` functions
-- [ ] Performance tests that assert < 200ms for each hook
-- [ ] Integration test that runs full session lifecycle
+### Installation
+- [ ] `install.sh` starts daemon and configures HTTP transport
+- [ ] `uninstall.sh` stops daemon and cleans up
+- [ ] Daemon survives terminal close (proper daemonization)
 
 ## Migration
 
-1. Keep `mcp_client.py` for tools that genuinely need MCP (future use)
-2. Update all hook scripts to use `direct_access.py`
-3. No changes to MCP server needed
-4. No database migrations
-
-## Future Work
-
-- **SPEC-009**: Add `assemble_context` MCP tool with semantic search (for rich context when performance isn't critical)
-- **SPEC-010**: HTTP-based MCP transport for lower-latency MCP calls
-- **SPEC-011**: Domain-specific premortem (keyword detection + targeted context)
+1. Update MCP server to support HTTP transport
+2. Implement missing MCP tools
+3. Update hook scripts to use HTTP calls
+4. Update install/uninstall scripts for daemon management
+5. Change `~/.claude.json` config from stdio to HTTP
 
 ## Open Questions
 
-1. Should `user_prompt_submit.sh` do any semantic search, or just return top values?
-   - **Recommendation**: Top values only for v1. Semantic search requires embeddings which breaks the 200ms target.
+1. **Daemon management**: Use systemd/launchd, or simple PID file approach?
+   - **Recommendation**: PID file for simplicity. Systemd/launchd adds platform-specific complexity.
 
-2. Should we log timing metrics for hooks?
-   - **Recommendation**: Yes, add optional timing to stderr for debugging.
+2. **Port conflict**: What if 6334 is in use?
+   - **Recommendation**: Make port configurable, fail with clear error message.
 
-3. What happens if Qdrant is unavailable?
-   - **Recommendation**: Return empty values, log warning. Don't fail the hook.
+3. **Server crash recovery**: Auto-restart daemon?
+   - **Recommendation**: For v1, manual restart. Auto-restart adds complexity.
