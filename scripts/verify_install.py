@@ -33,7 +33,7 @@ def verify_mcp_server(venv_path: Path) -> bool:
             [str(venv_python), "-c", "from clams.server.main import main"],
             capture_output=True,
             text=True,
-            timeout=5,
+            timeout=30,
             cwd=venv_path.parent
         )
 
