@@ -33,6 +33,7 @@ def test_bug_014_embedding_model_uses_cpu_on_mps():
 
 
 @pytest.mark.asyncio
+@pytest.mark.slow
 async def test_bug_014_large_indexing_completes():
     """Verify that indexing many files completes without memory issues.
 
