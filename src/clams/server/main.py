@@ -5,6 +5,7 @@ import asyncio
 import errno
 import sys
 from pathlib import Path
+from typing import Any
 
 import structlog
 from mcp.server import Server
@@ -132,16 +133,16 @@ def validate_configuration(settings: ServerSettings) -> None:
 
 async def create_server(
     settings: ServerSettings,
-) -> tuple[Server, ServiceContainer]:
+) -> tuple[Server, ServiceContainer, dict[str, Any]]:
     """Create and configure the MCP server.
 
     Args:
         settings: Server configuration
 
     Returns:
-        Tuple of (Server, ServiceContainer). Caller should call
+        Tuple of (Server, ServiceContainer, tool_registry). Caller should call
         services.close() when done to release resources and prevent
-        shutdown hangs.
+        shutdown hangs. tool_registry maps tool names to async functions.
     """
     from clams.embedding import (
         get_code_embedder,
@@ -153,12 +154,12 @@ async def create_server(
     # Pass accessor functions to tools - embedders load lazily on first use
     # Do NOT call get_code_embedder() here - that would load models at startup
     # Tools call the accessor functions when they actually need embeddings
-    services = await register_all_tools(
+    services, tool_registry = await register_all_tools(
         server, settings, get_code_embedder, get_semantic_embedder
     )
 
     logger.info("server.created", server_name=server.name)
-    return server, services
+    return server, services, tool_registry
 
 
 async def run_server(settings: ServerSettings) -> None:
@@ -169,8 +170,8 @@ async def run_server(settings: ServerSettings) -> None:
     """
     logger.info("server.starting")
 
-    # Create the server
-    server, services = await create_server(settings)
+    # Create the server (tool_registry not needed for stdio transport)
+    server, services, _tool_registry = await create_server(settings)
 
     try:
         # Run using stdio transport
@@ -204,10 +205,10 @@ async def run_http_server(
     logger.info("server.starting", transport="http", host=host, port=port)
 
     # Create the server
-    server, services = await create_server(settings)
+    server, services, tool_registry = await create_server(settings)
 
-    # Wrap in HTTP server
-    http_server = HttpServer(server, services, host=host, port=port)
+    # Wrap in HTTP server with tool registry for direct API calls
+    http_server = HttpServer(server, services, tool_registry, host=host, port=port)
 
     try:
         await http_server.run()

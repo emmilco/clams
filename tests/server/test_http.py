@@ -15,42 +15,47 @@ class TestHttpServerCreation:
 
         mock_server = MagicMock()
         mock_services = MagicMock()
+        mock_tool_registry: dict = {}
 
         http_server = HttpServer(
             server=mock_server,
             services=mock_services,
+            tool_registry=mock_tool_registry,
             host="127.0.0.1",
             port=6334,
         )
 
         assert http_server.server == mock_server
         assert http_server.services == mock_services
+        assert http_server.tool_registry == mock_tool_registry
         assert http_server.host == "127.0.0.1"
         assert http_server.port == 6334
 
     def test_http_server_creates_sse_transport(self) -> None:
-        """HttpServer should create SSE transport with /mcp endpoint."""
+        """HttpServer should create SSE transport with /sse endpoint."""
         from clams.server.http import HttpServer
 
         http_server = HttpServer(
             server=MagicMock(),
             services=MagicMock(),
+            tool_registry={},
         )
 
-        # SSE transport should be configured for /mcp endpoint
-        assert http_server.sse_transport._endpoint == "/mcp"
+        # SSE transport should be configured for /sse endpoint
+        assert http_server.sse_transport._endpoint == "/sse"
 
 
 class TestHttpServerApp:
     """Test Starlette app creation."""
 
     def test_create_app_has_routes(self) -> None:
-        """Created app should have health, sse, and mcp routes."""
+        """Created app should have health, sse, and api/call routes."""
         from clams.server.http import HttpServer
 
         http_server = HttpServer(
             server=MagicMock(),
             services=MagicMock(),
+            tool_registry={},
         )
         app = http_server.create_app()
 
@@ -59,7 +64,7 @@ class TestHttpServerApp:
 
         assert "/health" in route_paths
         assert "/sse" in route_paths
-        assert "/mcp" in route_paths
+        assert "/api/call" in route_paths
 
 
 class TestHealthEndpoint:
@@ -75,6 +80,7 @@ class TestHealthEndpoint:
         http_server = HttpServer(
             server=MagicMock(),
             services=MagicMock(),
+            tool_registry={},
         )
         app = http_server.create_app()
         client = TestClient(app)
@@ -86,6 +92,109 @@ class TestHealthEndpoint:
         assert data["status"] == "healthy"
         assert data["server"] == "clams"
         assert "version" in data
+
+
+class TestApiCallEndpoint:
+    """Test API call endpoint for hooks."""
+
+    @pytest.mark.asyncio
+    async def test_api_call_invokes_tool(self) -> None:
+        """API call endpoint should invoke tool from registry."""
+        from starlette.testclient import TestClient
+
+        from clams.server.http import HttpServer
+
+        # Create a mock tool
+        async def mock_ping() -> str:
+            return "pong"
+
+        http_server = HttpServer(
+            server=MagicMock(),
+            services=MagicMock(),
+            tool_registry={"ping": mock_ping},
+        )
+        app = http_server.create_app()
+        client = TestClient(app)
+
+        response = client.post(
+            "/api/call",
+            json={"method": "tools/call", "params": {"name": "ping", "arguments": {}}},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["result"] == "pong"
+
+    @pytest.mark.asyncio
+    async def test_api_call_unknown_tool(self) -> None:
+        """API call endpoint should return 404 for unknown tool."""
+        from starlette.testclient import TestClient
+
+        from clams.server.http import HttpServer
+
+        http_server = HttpServer(
+            server=MagicMock(),
+            services=MagicMock(),
+            tool_registry={},
+        )
+        app = http_server.create_app()
+        client = TestClient(app)
+
+        response = client.post(
+            "/api/call",
+            json={"method": "tools/call", "params": {"name": "unknown", "arguments": {}}},
+        )
+
+        assert response.status_code == 404
+        assert "Unknown tool" in response.json()["error"]
+
+    @pytest.mark.asyncio
+    async def test_api_call_missing_tool_name(self) -> None:
+        """API call endpoint should return 400 if tool name missing."""
+        from starlette.testclient import TestClient
+
+        from clams.server.http import HttpServer
+
+        http_server = HttpServer(
+            server=MagicMock(),
+            services=MagicMock(),
+            tool_registry={},
+        )
+        app = http_server.create_app()
+        client = TestClient(app)
+
+        response = client.post(
+            "/api/call",
+            json={"method": "tools/call", "params": {}},
+        )
+
+        assert response.status_code == 400
+        assert "Missing tool name" in response.json()["error"]
+
+    @pytest.mark.asyncio
+    async def test_api_call_returns_dict(self) -> None:
+        """API call endpoint should return dict results directly."""
+        from starlette.testclient import TestClient
+
+        from clams.server.http import HttpServer
+
+        async def mock_tool() -> dict:
+            return {"key": "value", "count": 42}
+
+        http_server = HttpServer(
+            server=MagicMock(),
+            services=MagicMock(),
+            tool_registry={"test_tool": mock_tool},
+        )
+        app = http_server.create_app()
+        client = TestClient(app)
+
+        response = client.post(
+            "/api/call",
+            json={"method": "tools/call", "params": {"name": "test_tool", "arguments": {}}},
+        )
+
+        assert response.status_code == 200
+        assert response.json() == {"key": "value", "count": 42}
 
 
 class TestDaemonManagement:

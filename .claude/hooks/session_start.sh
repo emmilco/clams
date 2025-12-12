@@ -68,7 +68,7 @@ call_mcp_http() {
     request=$(jq -n --arg name "$tool_name" --argjson args "$args" \
         '{method: "tools/call", params: {name: $name, arguments: $args}}')
 
-    curl -s --max-time "$timeout" -X POST "${SERVER_URL}/mcp" \
+    curl -s --max-time "$timeout" -X POST "${SERVER_URL}/api/call" \
         -H "Content-Type: application/json" \
         -d "$request" 2>/dev/null || echo '{}'
 }

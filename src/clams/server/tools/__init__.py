@@ -837,7 +837,7 @@ async def register_all_tools(
     settings: ServerSettings,
     get_code_embedder_func: Any,
     get_semantic_embedder_func: Any,
-) -> ServiceContainer:
+) -> tuple[ServiceContainer, dict[str, Any]]:
     """Register all MCP tools with the server.
 
     Args:
@@ -847,8 +847,10 @@ async def register_all_tools(
         get_semantic_embedder_func: Function that returns semantic embedder (called on first use)
 
     Returns:
-        ServiceContainer with initialized services (caller should call close()
-        when done to release resources and prevent shutdown hangs)
+        Tuple of (ServiceContainer, tool_registry). ServiceContainer has
+        initialized services (caller should call close() when done to release
+        resources and prevent shutdown hangs). tool_registry maps tool names
+        to their async implementation functions.
     """
     # Initialize shared services
     services = await initialize_services(settings, get_code_embedder_func, get_semantic_embedder_func)
@@ -996,4 +998,4 @@ async def register_all_tools(
         tool_count=len(_get_all_tool_definitions()),
     )
 
-    return services
+    return services, tool_registry

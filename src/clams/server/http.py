@@ -2,7 +2,7 @@
 
 This module provides HTTP+SSE transport for the MCP server, enabling:
 - Claude Code to connect via SSE at /sse endpoint
-- Hook scripts to make HTTP POST requests to /mcp endpoint
+- Hook scripts to make HTTP POST requests to /api/call endpoint
 - Health checks at /health endpoint
 
 This replaces the stdio transport for production use, allowing multiple
@@ -10,11 +10,14 @@ clients (Claude Code + hooks) to share a single server instance.
 """
 
 import asyncio
+import json
 import os
 import signal
 import sys
+from collections.abc import Callable, Coroutine
 from pathlib import Path
 from types import FrameType
+from typing import Any
 
 import structlog
 from mcp.server import Server
@@ -57,13 +60,14 @@ class HttpServer:
     Provides:
     - /health: GET endpoint for health checks
     - /sse: GET endpoint for SSE connections (Claude Code)
-    - /mcp: POST endpoint for tool calls (hook scripts)
+    - /api/call: POST endpoint for direct tool calls (hook scripts)
     """
 
     def __init__(
         self,
         server: Server,
         services: ServiceContainer,
+        tool_registry: dict[str, Callable[..., Coroutine[Any, Any, Any]]],
         host: str = "127.0.0.1",
         port: int = 6334,
     ) -> None:
@@ -72,14 +76,16 @@ class HttpServer:
         Args:
             server: MCP Server instance with tools registered
             services: Service container for cleanup on shutdown
+            tool_registry: Dictionary mapping tool names to async functions
             host: Host to bind to (default: 127.0.0.1 for security)
             port: Port to bind to (default: 6334)
         """
         self.server = server
         self.services = services
+        self.tool_registry = tool_registry
         self.host = host
         self.port = port
-        self.sse_transport = SseServerTransport("/mcp")
+        self.sse_transport = SseServerTransport("/sse")
         self._shutdown_event: asyncio.Event | None = None
 
     async def health_handler(self, request: Request) -> JSONResponse:
@@ -111,23 +117,89 @@ class HttpServer:
         logger.info("http.sse_connection_closed")
         return Response()
 
-    async def message_handler(self, request: Request) -> Response:
-        """Message handler for hook scripts (POST /mcp).
+    async def api_call_handler(self, request: Request) -> JSONResponse:
+        """Direct tool call endpoint for hook scripts (POST /api/call).
 
-        Receives JSON-RPC messages from hook scripts and routes
-        them to the appropriate SSE session.
+        This endpoint bypasses the SSE transport and directly invokes
+        tools from the registry. It's designed for hook scripts that
+        make standalone HTTP requests without establishing an SSE session.
+
+        Request format:
+        {
+            "method": "tools/call",
+            "params": {
+                "name": "tool_name",
+                "arguments": {...}
+            }
+        }
+
+        Response format:
+        {
+            "result": {...}  # Tool result
+        }
+        or
+        {
+            "error": "error message"
+        }
         """
-        await self.sse_transport.handle_post_message(
-            request.scope, request.receive, request._send
-        )
-        return Response()
+        try:
+            body = await request.json()
+        except json.JSONDecodeError as e:
+            logger.warning("api.invalid_json", error=str(e))
+            return JSONResponse({"error": f"Invalid JSON: {e}"}, status_code=400)
+
+        # Extract tool name and arguments
+        params = body.get("params", {})
+        tool_name = params.get("name")
+        arguments = params.get("arguments", {})
+
+        if not tool_name:
+            return JSONResponse(
+                {"error": "Missing tool name in params.name"},
+                status_code=400,
+            )
+
+        if tool_name not in self.tool_registry:
+            logger.warning("api.unknown_tool", tool=tool_name)
+            return JSONResponse(
+                {"error": f"Unknown tool: {tool_name}"},
+                status_code=404,
+            )
+
+        logger.debug("api.tool_call", tool=tool_name, arguments=arguments)
+
+        try:
+            tool_func = self.tool_registry[tool_name]
+            result = await tool_func(**arguments)
+
+            # Format result as JSON
+            if isinstance(result, (dict, list)):
+                return JSONResponse(result)
+            elif isinstance(result, str):
+                return JSONResponse({"result": result})
+            else:
+                return JSONResponse({"result": str(result)})
+
+        except TypeError as e:
+            # Invalid arguments
+            logger.warning("api.invalid_arguments", tool=tool_name, error=str(e))
+            return JSONResponse(
+                {"error": f"Invalid arguments for {tool_name}: {e}"},
+                status_code=400,
+            )
+        except Exception as e:
+            logger.error("api.tool_error", tool=tool_name, error=str(e), exc_info=True)
+            return JSONResponse(
+                {"error": f"Tool error: {e}"},
+                status_code=500,
+            )
 
     def create_app(self) -> Starlette:
         """Create the Starlette application with routes and middleware."""
         routes = [
             Route("/health", self.health_handler, methods=["GET"]),
             Route("/sse", self.sse_handler, methods=["GET"]),
-            Route("/mcp", self.message_handler, methods=["POST"]),
+            Route("/api/call", self.api_call_handler, methods=["POST"]),
         ]
 
         middleware = [
