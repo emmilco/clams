@@ -1,0 +1,7 @@
+# This directory is for vendored fallback copies of GSAP and Three.js
+# If CDN fails, the application will attempt to load from here.
+#
+# To add fallback libraries:
+# 1. Download gsap.min.js from https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js
+# 2. Download three.min.js from https://cdnjs.cloudflare.com/ajax/libs/three.js/0.170.0/three.min.js
+# 3. Place them in this directory
