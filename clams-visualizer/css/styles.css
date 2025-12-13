@@ -335,3 +335,253 @@ body {
   min-width: 80px;
   text-align: center;
 }
+
+/* ========================================
+   Act 3: Context Injection Styles
+   ======================================== */
+
+/* Act 3 Container */
+#act3-content {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Scene 1: Session Start */
+.session-container {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  background: rgba(74, 158, 255, 0.08);
+  border: 1px solid #4A9EFF;
+  border-radius: 10px;
+  padding: 25px;
+  font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+}
+
+.session-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(74, 158, 255, 0.3);
+}
+
+.session-icon {
+  color: #4AFF9E;
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+.session-title {
+  color: #4A9EFF;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.user-prompt {
+  margin: 15px 0;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 5px;
+}
+
+.prompt-label {
+  color: #CCCCCC;
+  margin-right: 10px;
+}
+
+.prompt-text {
+  color: #FFFFFF;
+}
+
+.hook-trigger {
+  margin-top: 20px;
+  padding: 10px 15px;
+  background: rgba(74, 255, 158, 0.1);
+  border: 1px solid #4AFF9E;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hook-icon {
+  color: #4AFF9E;
+  font-weight: bold;
+}
+
+.hook-text {
+  color: #4AFF9E;
+}
+
+/* Scene 2: Semantic Retrieval */
+.retrieval-container {
+  position: absolute;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 700px;
+  text-align: center;
+}
+
+.prompt-vector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 30px;
+  font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+}
+
+.vector-label {
+  color: #FFFFFF;
+  font-size: 1.1rem;
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+}
+
+.vector-arrow {
+  color: #4A9EFF;
+  font-size: 1.5rem;
+}
+
+.vector-box {
+  color: #4A9EFF;
+  font-size: 1rem;
+  padding: 10px 20px;
+  background: rgba(74, 158, 255, 0.15);
+  border: 1px solid #4A9EFF;
+  border-radius: 5px;
+}
+
+.retrieval-animation {
+  margin: 25px 0;
+}
+
+.search-label {
+  color: #9E4AFF;
+  font-size: 1.2rem;
+  font-style: italic;
+}
+
+.retrieved-items {
+  margin-top: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
+}
+
+.retrieved-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 25px;
+  background: rgba(158, 74, 255, 0.1);
+  border: 1px solid #9E4AFF;
+  border-radius: 8px;
+  max-width: 500px;
+}
+
+.item-icon {
+  color: #9E4AFF;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.item-text {
+  color: #9E4AFF;
+  font-size: 1rem;
+  font-style: italic;
+}
+
+/* Scene 3: Context Injection */
+.injection-container {
+  position: absolute;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 700px;
+}
+
+.claude-view {
+  background: rgba(74, 158, 255, 0.08);
+  border: 1px solid #4A9EFF;
+  border-radius: 10px;
+  padding: 25px;
+}
+
+.claude-header {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #4A9EFF;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(74, 158, 255, 0.3);
+}
+
+.injected-context {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.context-item {
+  padding: 15px;
+  background: rgba(74, 255, 158, 0.08);
+  border-left: 3px solid #4AFF9E;
+  border-radius: 0 5px 5px 0;
+}
+
+.context-label {
+  display: block;
+  color: #4AFF9E;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.context-value {
+  display: block;
+  color: #FFFFFF;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.agent-working {
+  margin-top: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  padding: 20px;
+  background: rgba(74, 255, 158, 0.1);
+  border: 1px solid #4AFF9E;
+  border-radius: 8px;
+}
+
+.working-icon {
+  color: #4AFF9E;
+  font-size: 1.5rem;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.working-text {
+  color: #4AFF9E;
+  font-size: 1.1rem;
+}
+
+/* Pulse animation for working indicator */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
