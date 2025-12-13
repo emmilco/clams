@@ -38,7 +38,7 @@ async def test_create_server(
     settings: ServerSettings, embedding_service: EmbeddingService
 ) -> None:
     """Test that create_server creates a properly configured server."""
-    server, services = await create_server(settings)
+    server, services, _tool_registry = await create_server(settings)
 
     try:
         assert server is not None
@@ -51,7 +51,7 @@ async def test_server_has_ping_tool(
     settings: ServerSettings, embedding_service: EmbeddingService
 ) -> None:
     """Test that the server has the ping tool registered."""
-    server, services = await create_server(settings)
+    server, services, _tool_registry = await create_server(settings)
 
     try:
         # Check that tools were registered

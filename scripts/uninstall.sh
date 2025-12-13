@@ -77,7 +77,28 @@ if [ "$FORCE" = false ]; then
     fi
 fi
 
-# 1. Remove MCP server from ~/.claude.json
+# 1. Stop CLAMS daemon
+info "Stopping CLAMS daemon..."
+clams_bin="$REPO_ROOT/.venv/bin/clams-server"
+if [ -x "$clams_bin" ]; then
+    if "$clams_bin" --stop 2>/dev/null; then
+        success "CLAMS daemon stopped"
+    else
+        info "CLAMS daemon was not running"
+    fi
+else
+    # Try stopping manually via PID file
+    daemon_pid_file="$HOME/.clams/server.pid"
+    if [ -f "$daemon_pid_file" ]; then
+        daemon_pid=$(cat "$daemon_pid_file")
+        if kill "$daemon_pid" 2>/dev/null; then
+            success "CLAMS daemon stopped (PID: $daemon_pid)"
+            rm -f "$daemon_pid_file"
+        fi
+    fi
+fi
+
+# 2. Remove MCP server from ~/.claude.json
 info "Removing MCP server configuration..."
 if [ -f "$HOME/.claude.json" ]; then
     server_data='{"name": "clams"}'
@@ -167,6 +188,7 @@ success "CLAMS uninstalled"
 echo "=========================================="
 echo ""
 echo "What was removed:"
+echo "  - CLAMS daemon process"
 echo "  - MCP server from ~/.claude.json"
 echo "  - Hooks from ~/.claude/settings.json"
 echo "  - clams-qdrant Docker container"

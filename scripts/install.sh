@@ -13,7 +13,7 @@ warning() { echo -e "\033[1;33m[WARNING]\033[0m $*"; }
 
 # Progress tracking
 step_counter=0
-total_steps=7
+total_steps=8
 
 step() {
     step_counter=$((step_counter + 1))
@@ -225,6 +225,37 @@ setup_python_env() {
     success "Dependencies installed"
 }
 
+start_daemon() {
+    step "Starting CLAMS daemon"
+
+    local clams_bin="$REPO_ROOT/.venv/bin/clams-server"
+    local pid_file="$HOME/.clams/server.pid"
+
+    if [ "$DRY_RUN" = true ]; then
+        info "[DRY RUN] Would start daemon: $clams_bin --daemon"
+        return
+    fi
+
+    # Check if already running
+    if [ -f "$pid_file" ] && kill -0 "$(cat "$pid_file")" 2>/dev/null; then
+        info "CLAMS daemon is already running"
+        return
+    fi
+
+    # Start daemon
+    "$clams_bin" --daemon --http --port 6334
+
+    # Wait a moment for daemon to start
+    sleep 2
+
+    # Verify daemon started
+    if [ -f "$pid_file" ] && kill -0 "$(cat "$pid_file")" 2>/dev/null; then
+        success "CLAMS daemon started (PID: $(cat "$pid_file"))"
+    else
+        warning "CLAMS daemon may have failed to start - check ~/.clams/server.log"
+    fi
+}
+
 configure_mcp_server() {
     step "Configuring MCP server"
 
@@ -237,15 +268,13 @@ configure_mcp_server() {
         exit 1
     fi
 
-    # Build server config JSON
+    # Build server config JSON for HTTP+SSE transport
     local server_config=$(jq -n \
-        --arg cmd "$clams_bin" \
         '{
             name: "clams",
             config: {
-                type: "stdio",
-                command: $cmd,
-                args: []
+                type: "sse",
+                url: "http://127.0.0.1:6334/sse"
             }
         }')
 
@@ -405,6 +434,7 @@ setup_python_env
 configure_mcp_server
 register_hooks
 initialize_storage
+start_daemon
 verify_installation
 
 # Success summary
@@ -414,12 +444,18 @@ success "CLAMS installed successfully!"
 echo "=========================================="
 echo ""
 echo "Configuration:"
-echo "  - MCP server: ~/.claude.json"
+echo "  - MCP server: ~/.claude.json (HTTP+SSE transport)"
 echo "  - Hooks: ~/.claude/settings.json"
 echo "  - Storage: ~/.clams/"
+echo "  - Daemon: http://127.0.0.1:6334 (PID file: ~/.clams/server.pid)"
 if [ "$SKIP_QDRANT" = false ]; then
     echo "  - Qdrant: http://localhost:6333"
 fi
+echo ""
+echo "Daemon management:"
+echo "  - Start: clams-server --daemon"
+echo "  - Stop:  clams-server --stop"
+echo "  - Logs:  ~/.clams/server.log"
 echo ""
 echo "Next steps:"
 echo "  1. Start a new Claude Code session"
