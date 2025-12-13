@@ -4,7 +4,9 @@ IMPORTANT: This module avoids importing concrete embedding implementations
 (MiniLM, Nomic) at module level to prevent loading PyTorch before daemonization.
 
 To get embedders, use the registry functions:
-    from clams.embedding import initialize_registry, get_code_embedder, get_semantic_embedder
+    from clams.embedding import (
+        initialize_registry, get_code_embedder, get_semantic_embedder
+    )
 
     initialize_registry(code_model, semantic_model)
     embedder = get_code_embedder()  # Loads model lazily

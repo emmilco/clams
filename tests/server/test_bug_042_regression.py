@@ -107,7 +107,7 @@ def test_bug_042_daemon_start_does_not_crash():
     )
 
     # Try to start daemon
-    result = subprocess.run(
+    subprocess.run(
         [sys.executable, "-m", "clams.server.main", "--daemon"],
         capture_output=True,
         text=True,

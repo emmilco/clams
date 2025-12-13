@@ -5,9 +5,17 @@ argument parsing. Heavy imports (PyTorch, embedding models) are deferred
 to _run_server() which is only called after daemon spawning completes.
 """
 
+from __future__ import annotations
+
 import argparse
 import sys
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from mcp.server import Server
+
+    from clams.server.config import ServerSettings
+    from clams.server.tools import ServiceContainer
 
 
 def parse_args() -> argparse.Namespace:
@@ -75,7 +83,7 @@ def main() -> None:
             print("Server was not running")
         return
 
-    # Handle --daemon: fork BEFORE importing PyTorch
+    # Handle --daemon: spawn daemon process BEFORE importing PyTorch
     if args.daemon:
         from clams.server.http import daemonize, is_server_running
 
@@ -83,11 +91,12 @@ def main() -> None:
             print("Server is already running")
             return
 
-        # Fork into background - this MUST happen before PyTorch import
+        # Spawn daemon process - this exits the parent immediately
+        # The child process will import heavy modules safely
         daemonize()
 
     # NOW it's safe to import heavy modules (PyTorch, embeddings, etc.)
-    # In daemon mode, we're in the child process after fork
+    # In daemon mode, we're in a fresh subprocess
     _run_server(args)
 
 
@@ -98,18 +107,12 @@ def _run_server(args: argparse.Namespace) -> None:
     It's separated from main() to ensure imports happen after fork().
     """
     import asyncio
-    import errno
-    from pathlib import Path
-    from typing import Any
 
     import structlog
-    from mcp.server import Server
-    from mcp.server.stdio import stdio_server
 
     from clams.embedding import initialize_registry
     from clams.server.config import ServerSettings
     from clams.server.logging import configure_logging
-    from clams.server.tools import ServiceContainer, register_all_tools
 
     logger = structlog.get_logger()
 
@@ -149,7 +152,7 @@ def _run_server(args: argparse.Namespace) -> None:
         raise
 
 
-def _validate_configuration(settings: "ServerSettings", logger: Any) -> None:
+def _validate_configuration(settings: ServerSettings, logger: Any) -> None:
     """Validate configuration before server start.
 
     Fails fast with clear error messages.
@@ -218,7 +221,7 @@ def _validate_configuration(settings: "ServerSettings", logger: Any) -> None:
             )
 
 
-async def _run_stdio_server(settings: "ServerSettings", logger: Any) -> None:
+async def _run_stdio_server(settings: ServerSettings, logger: Any) -> None:
     """Run the MCP server with stdio transport.
 
     Args:
@@ -248,7 +251,7 @@ async def _run_stdio_server(settings: "ServerSettings", logger: Any) -> None:
 
 
 async def _run_http_server(
-    settings: "ServerSettings",
+    settings: ServerSettings,
     host: str,
     port: int,
     logger: Any,
@@ -288,8 +291,8 @@ async def _run_http_server(
 
 
 async def create_server(
-    settings: "ServerSettings",
-) -> tuple["Server", "ServiceContainer", dict[str, Any]]:
+    settings: ServerSettings,
+) -> tuple[Server, ServiceContainer, dict[str, Any]]:
     """Create and configure the MCP server.
 
     Args:
@@ -300,8 +303,6 @@ async def create_server(
         services.close() when done to release resources and prevent
         shutdown hangs. tool_registry maps tool names to async functions.
     """
-    from typing import Any
-
     import structlog
     from mcp.server import Server
 

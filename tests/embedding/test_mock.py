@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from clams.embedding import MockEmbedding
+from clams.embedding.mock import MockEmbedding
 
 
 class TestMockEmbedding:
