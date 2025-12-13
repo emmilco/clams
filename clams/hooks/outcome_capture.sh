@@ -1,5 +1,5 @@
 #!/bin/bash
-# .claude/hooks/outcome_capture.sh
+# clams/hooks/outcome_capture.sh
 # Hook: PostToolCall
 # Purpose: Capture test/build outcomes
 #

@@ -302,10 +302,10 @@ register_hooks() {
 
     # Verify hook scripts exist before registering
     local hook_scripts=(
-        "$REPO_ROOT/.claude/hooks/session_start.sh"
-        "$REPO_ROOT/.claude/hooks/user_prompt_submit.sh"
-        "$REPO_ROOT/.claude/hooks/ghap_checkin.sh"
-        "$REPO_ROOT/.claude/hooks/outcome_capture.sh"
+        "$REPO_ROOT/clams/hooks/session_start.sh"
+        "$REPO_ROOT/clams/hooks/user_prompt_submit.sh"
+        "$REPO_ROOT/clams/hooks/ghap_checkin.sh"
+        "$REPO_ROOT/clams/hooks/outcome_capture.sh"
     )
 
     if [ "$DRY_RUN" = false ]; then
@@ -320,10 +320,10 @@ register_hooks() {
 
     # Build hooks config JSON with absolute paths
     local hooks_config=$(jq -n \
-        --arg session_start "$REPO_ROOT/.claude/hooks/session_start.sh" \
-        --arg user_prompt "$REPO_ROOT/.claude/hooks/user_prompt_submit.sh" \
-        --arg ghap_checkin "$REPO_ROOT/.claude/hooks/ghap_checkin.sh" \
-        --arg outcome "$REPO_ROOT/.claude/hooks/outcome_capture.sh" \
+        --arg session_start "$REPO_ROOT/clams/hooks/session_start.sh" \
+        --arg user_prompt "$REPO_ROOT/clams/hooks/user_prompt_submit.sh" \
+        --arg ghap_checkin "$REPO_ROOT/clams/hooks/ghap_checkin.sh" \
+        --arg outcome "$REPO_ROOT/clams/hooks/outcome_capture.sh" \
         '{
             SessionStart: [
                 {

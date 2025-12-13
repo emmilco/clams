@@ -25,10 +25,10 @@ def get_clams_server_path() -> str:
     Returns:
         Absolute path to .venv/bin/clams-server from the repository root.
     """
-    # This file is at .claude/hooks/mcp_client.py
-    # Navigate up to repo root: .claude/hooks -> .claude -> repo_root
+    # This file is at clams/mcp_client.py
+    # Navigate up to repo root: clams -> repo_root
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    repo_root = os.path.dirname(os.path.dirname(script_dir))
+    repo_root = os.path.dirname(script_dir)
     return os.path.join(repo_root, ".venv", "bin", "clams-server")
 
 

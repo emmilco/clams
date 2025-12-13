@@ -3,14 +3,14 @@ hooks:
   # Session lifecycle
   session_start:
     enabled: true
-    script: .claude/hooks/session_start.sh
+    script: clams/hooks/session_start.sh
     timeout_ms: 5000
     inject_light_context: true
 
   # User prompts
   user_prompt_submit:
     enabled: true
-    script: .claude/hooks/user_prompt_submit.sh
+    script: clams/hooks/user_prompt_submit.sh
     timeout_ms: 500
     context_depth: rich  # light | rich
     token_budget: 2000
@@ -19,13 +19,13 @@ hooks:
   # Tool lifecycle
   ghap_checkin:
     enabled: true
-    script: .claude/hooks/ghap_checkin.sh
+    script: clams/hooks/ghap_checkin.sh
     frequency: 10  # Every N tool calls
     timeout_ms: 100
 
   outcome_capture:
     enabled: true
-    script: .claude/hooks/outcome_capture.sh
+    script: clams/hooks/outcome_capture.sh
     timeout_ms: 200
     matchers:
       - "pytest"
@@ -37,7 +37,7 @@ hooks:
 
   session_end:
     enabled: false  # Not yet supported by Claude Code
-    script: .claude/hooks/session_end.sh
+    script: clams/hooks/session_end.sh
     timeout_ms: 1000
 
 # MCP server settings

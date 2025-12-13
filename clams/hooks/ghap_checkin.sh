@@ -1,5 +1,5 @@
 #!/bin/bash
-# .claude/hooks/ghap_checkin.sh
+# clams/hooks/ghap_checkin.sh
 # Hook: PreToolCall
 # Purpose: GHAP check-in reminder
 #
