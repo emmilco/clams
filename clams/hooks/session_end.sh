@@ -1,13 +1,15 @@
 #!/bin/bash
-# .claude/hooks/session_end.sh
+# clams/hooks/session_end.sh
 # Hook: SessionEnd (NOT YET SUPPORTED BY CLAUDE CODE)
 # Purpose: Session cleanup
 
 set -uo pipefail  # No -e: we handle errors explicitly
 
 # Get script directory
+# This file is at clams/hooks/session_end.sh
+# mcp_client.py is at clams/mcp_client.py (one level up)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MCP_CLIENT="$SCRIPT_DIR/mcp_client.py"
+MCP_CLIENT="$SCRIPT_DIR/../mcp_client.py"
 
 # Helper: Call MCP with error handling
 call_mcp() {

@@ -13,9 +13,9 @@ import pytest
 from mcp import ClientSession
 from mcp.types import CallToolResult, TextContent
 
-# Add .claude/hooks to path for importing
-hooks_dir = Path(__file__).parent.parent.parent / ".claude" / "hooks"
-sys.path.insert(0, str(hooks_dir))
+# Add clams/ to path for importing
+clams_dir = Path(__file__).parent.parent.parent / "clams"
+sys.path.insert(0, str(clams_dir))
 
 from mcp_client import MCPClient  # noqa: E402
 

@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### SPEC-010: Move CLAMS Files Out of .claude Directory
+**Type**: Refactor
+
+Relocated CLAMS installation files from `.claude/hooks/` to a dedicated `clams/` directory to separate CLAMS (learning system) from CLAWS (orchestration system) concerns.
+
+**Changes**:
+- Moved hook scripts from `.claude/hooks/` to `clams/hooks/`
+- Moved `mcp_client.py` from `.claude/hooks/` to `clams/`
+- Updated `scripts/install.sh` and `scripts/uninstall.sh` with new paths
+- Updated internal path calculations in hook scripts and mcp_client.py
+- Updated test imports in `tests/hooks/test_mcp_client.py`
+
+**Migration**: Users must re-run `./scripts/install.sh` to update hook registrations in `~/.claude/settings.json`.
+
 ### SPEC-006: Dual Embedding Model Support for Faster Code Indexing
 **Type**: Feature
 

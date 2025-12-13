@@ -118,10 +118,10 @@ fi
 info "Removing hook registrations..."
 if [ -f "$HOME/.claude/settings.json" ]; then
     hooks_data=$(jq -n \
-        --arg session_start "$REPO_ROOT/.claude/hooks/session_start.sh" \
-        --arg user_prompt "$REPO_ROOT/.claude/hooks/user_prompt_submit.sh" \
-        --arg ghap_checkin "$REPO_ROOT/.claude/hooks/ghap_checkin.sh" \
-        --arg outcome "$REPO_ROOT/.claude/hooks/outcome_capture.sh" \
+        --arg session_start "$REPO_ROOT/clams/hooks/session_start.sh" \
+        --arg user_prompt "$REPO_ROOT/clams/hooks/user_prompt_submit.sh" \
+        --arg ghap_checkin "$REPO_ROOT/clams/hooks/ghap_checkin.sh" \
+        --arg outcome "$REPO_ROOT/clams/hooks/outcome_capture.sh" \
         '{
             commands: [$session_start, $user_prompt, $ghap_checkin, $outcome]
         }') || {

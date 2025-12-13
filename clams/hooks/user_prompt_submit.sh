@@ -1,5 +1,5 @@
 #!/bin/bash
-# .claude/hooks/user_prompt_submit.sh
+# clams/hooks/user_prompt_submit.sh
 # Hook: UserPromptSubmit
 # Purpose: Analyze prompt and inject rich context
 #

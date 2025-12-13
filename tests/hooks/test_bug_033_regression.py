@@ -9,8 +9,8 @@ class TestBug033Regression:
     def test_server_command_uses_venv_binary(self) -> None:
         """Verify mcp_client uses .venv/bin/clams-server, not python -m clams."""
         # Read the source file and check for correct pattern
-        hooks_dir = Path(__file__).parent.parent.parent / ".claude" / "hooks"
-        mcp_client_path = hooks_dir / "mcp_client.py"
+        clams_dir = Path(__file__).parent.parent.parent / "clams"
+        mcp_client_path = clams_dir / "mcp_client.py"
         source = mcp_client_path.read_text()
 
         # Should NOT contain the buggy pattern
@@ -25,8 +25,8 @@ class TestBug033Regression:
 
     def test_server_command_path_is_absolute(self) -> None:
         """Verify the server command constructs an absolute path."""
-        hooks_dir = Path(__file__).parent.parent.parent / ".claude" / "hooks"
-        mcp_client_path = hooks_dir / "mcp_client.py"
+        clams_dir = Path(__file__).parent.parent.parent / "clams"
+        mcp_client_path = clams_dir / "mcp_client.py"
         source = mcp_client_path.read_text()
 
         # Should construct path relative to repo root
@@ -36,7 +36,7 @@ class TestBug033Regression:
 
     def test_config_yaml_uses_correct_command(self) -> None:
         """Verify config.yaml uses correct server command."""
-        hooks_dir = Path(__file__).parent.parent.parent / ".claude" / "hooks"
+        hooks_dir = Path(__file__).parent.parent.parent / "clams" / "hooks"
         config_path = hooks_dir / "config.yaml"
         config_content = config_path.read_text()
 

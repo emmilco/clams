@@ -1,5 +1,5 @@
 #!/bin/bash
-# .claude/hooks/session_start.sh
+# clams/hooks/session_start.sh
 # Hook: SessionStart
 # Purpose: Initialize session and inject light context
 #
@@ -19,6 +19,8 @@ SERVER_HOST="${CLAMS_HOST:-127.0.0.1}"
 SERVER_URL="http://${SERVER_HOST}:${SERVER_PORT}"
 
 # Get script directory for finding the server binary
+# This file is at clams/hooks/session_start.sh
+# Navigate: clams/hooks -> clams -> repo_root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
