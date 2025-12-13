@@ -52,6 +52,32 @@ class GitAnalyzer:
         self.embedding_service = embedding_service
         self.vector_store = vector_store
         self.metadata_store = metadata_store
+        self._collection_ensured = False
+
+    async def _ensure_commits_collection(self) -> None:
+        """Ensure commits collection exists (lazy initialization).
+
+        Creates the collection on first use. Uses instance-level caching to avoid
+        repeated creation attempts within an instance.
+        """
+        if self._collection_ensured:
+            return
+
+        try:
+            await self.vector_store.create_collection(
+                name="commits",
+                dimension=self.embedding_service.dimension,
+                distance="cosine",
+            )
+            logger.info("collection_created", name="commits")
+        except Exception as e:
+            error_msg = str(e).lower()
+            if "already exists" in error_msg or "409" in str(e):
+                logger.debug("collection_exists", name="commits")
+            else:
+                raise
+
+        self._collection_ensured = True
 
     async def index_commits(
         self,
@@ -82,6 +108,9 @@ class GitAnalyzer:
         Returns:
             IndexingStats with counts and errors
         """
+        # Ensure collection exists (lazy initialization)
+        await self._ensure_commits_collection()
+
         stats = IndexingStats(commits_indexed=0, commits_skipped=0)
         start_time = time.time()
 
@@ -328,6 +357,9 @@ class GitAnalyzer:
         Returns:
             List of matching commits with scores ordered by similarity
         """
+        # Ensure collection exists (lazy initialization)
+        await self._ensure_commits_collection()
+
         # Generate query embedding
         query_vector = await self.embedding_service.embed(query)
 
