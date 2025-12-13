@@ -13,6 +13,7 @@ import asyncio
 import json
 import os
 import signal
+import subprocess
 import sys
 from collections.abc import Callable, Coroutine
 from pathlib import Path
@@ -291,43 +292,51 @@ class HttpServer:
 
 
 def daemonize() -> None:
-    """Fork into a background daemon process.
+    """Spawn a daemon process using subprocess instead of fork.
 
-    Uses double-fork technique to properly daemonize:
-    1. First fork separates from parent
-    2. setsid() creates new session
-    3. Second fork prevents reacquiring terminal
-    4. Redirect stdio to log file
+    This avoids macOS MPS fork safety issues by using subprocess.Popen
+    which creates a completely fresh Python process. The parent process
+    exits immediately, leaving the child running as a daemon.
+
+    The child process runs with:
+    - stdin connected to /dev/null
+    - stdout/stderr redirected to log file
+    - New session (detached from terminal)
+    - Working directory unchanged
     """
-    # First fork
-    pid = os.fork()
-    if pid > 0:
-        sys.exit(0)  # Parent exits
-
-    # Create new session
-    os.setsid()
-
-    # Second fork (prevent acquiring controlling terminal)
-    pid = os.fork()
-    if pid > 0:
-        sys.exit(0)
-
-    # Redirect standard file descriptors
     log_file = get_log_file()
     log_file.parent.mkdir(parents=True, exist_ok=True)
 
-    sys.stdout.flush()
-    sys.stderr.flush()
+    # Build command to run the server in HTTP mode (not daemon mode to avoid recursion)
+    # We use --http since we're already daemonizing via subprocess
+    cmd = [
+        sys.executable,
+        "-m", "clams.server.main",
+        "--http",
+    ]
 
-    with open("/dev/null") as devnull:
-        os.dup2(devnull.fileno(), sys.stdin.fileno())
+    # Open log file for output
+    with open(log_file, "w") as log_out:
+        with open("/dev/null") as devnull:
+            # Start subprocess detached from this process
+            proc = subprocess.Popen(
+                cmd,
+                stdin=devnull,
+                stdout=log_out,
+                stderr=subprocess.STDOUT,
+                start_new_session=True,  # Creates new session (like setsid)
+                # Don't close file descriptors - let child inherit log file
+            )
 
-    # Truncate log file on restart (simple log rotation for v1)
-    with open(log_file, "w") as log:
-        os.dup2(log.fileno(), sys.stdout.fileno())
-        os.dup2(log.fileno(), sys.stderr.fileno())
+    # Write child PID to file so it can be tracked
+    pid_file = get_pid_file()
+    pid_file.write_text(str(proc.pid))
 
-    logger.info("http.daemonized", pid=os.getpid())
+    # Log daemonization (to stderr since log_file now belongs to child)
+    print(f"Daemon started with PID {proc.pid}", file=sys.stderr)
+
+    # Parent exits, child continues running
+    sys.exit(0)
 
 
 def is_server_running() -> bool:

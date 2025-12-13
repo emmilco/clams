@@ -1,10 +1,19 @@
-"""Embedding service registry for dual embedding models."""
+"""Embedding service registry for dual embedding models.
+
+IMPORTANT: This module defers importing embedding implementations (MiniLM, Nomic)
+until actually needed to avoid loading PyTorch before daemonization.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import structlog
 
 from .base import EmbeddingService, EmbeddingSettings
-from .minilm import MiniLMEmbedding
-from .nomic import NomicEmbedding
+
+if TYPE_CHECKING:
+    pass  # Type hints only, no runtime imports
 
 logger = structlog.get_logger()
 
@@ -40,6 +49,9 @@ class EmbeddingRegistry:
             EmbeddingService: Code embedder instance (MiniLM by default)
         """
         if self._code_embedder is None:
+            # Lazy import to avoid loading PyTorch before fork
+            from .minilm import MiniLMEmbedding
+
             embedding_settings = EmbeddingSettings(model_name=self._code_model)
             self._code_embedder = MiniLMEmbedding(settings=embedding_settings)
             logger.info(
@@ -56,6 +68,9 @@ class EmbeddingRegistry:
             EmbeddingService: Semantic embedder instance (Nomic by default)
         """
         if self._semantic_embedder is None:
+            # Lazy import to avoid loading PyTorch before fork
+            from .nomic import NomicEmbedding
+
             embedding_settings = EmbeddingSettings(
                 model_name=self._semantic_model
             )
@@ -76,6 +91,7 @@ def initialize_registry(code_model: str, semantic_model: str) -> None:
     """Initialize the global registry with model names.
 
     Must be called from main.py before any tool uses embedders.
+    This does NOT load any models - they are loaded lazily on first use.
 
     Args:
         code_model: Model name for code embeddings
