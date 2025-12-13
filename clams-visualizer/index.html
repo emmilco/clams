@@ -27,19 +27,53 @@
   <div id="content-layer">
     <!-- Act 1: Problem & Solution -->
     <div id="act1-content">
+      <!-- Scene 1: Problem Statement -->
       <h1 id="problem-text" class="title hidden">AI Agents Lose Context</h1>
+      <div id="problem-subtitles" class="subtitle-container hidden">
+        <p id="subtitle-1" class="subtitle hidden">They repeat the same mistakes</p>
+        <p id="subtitle-2" class="subtitle hidden">They cannot learn from experience</p>
+        <p id="subtitle-3" class="subtitle hidden">They lose context between sessions</p>
+      </div>
+
+      <!-- Scene 2: CLAMS Solution Pillars -->
+      <div id="pillars-intro" class="pillars-intro hidden">
+        <h2>CLAMS: Three Pillars of Persistent Memory</h2>
+      </div>
       <div id="pillars" class="pillars-container hidden">
         <div id="pillar-1" class="pillar hidden">
+          <div class="pillar-icon">
+            <svg viewBox="0 0 64 64" class="icon-svg">
+              <circle cx="32" cy="32" r="28" fill="none" stroke="currentColor" stroke-width="2"/>
+              <path d="M20 28 L28 20 L44 36 L36 44 Z" fill="currentColor" opacity="0.6"/>
+              <circle cx="24" cy="40" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+              <line x1="28" y1="36" x2="38" y2="26" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
           <div class="pillar-title">Semantic Code Search</div>
-          <div class="pillar-desc">Token-efficient retrieval of relevant code</div>
+          <div class="pillar-desc">Token-efficient retrieval of relevant code through vector embeddings</div>
         </div>
         <div id="pillar-2" class="pillar hidden">
+          <div class="pillar-icon">
+            <svg viewBox="0 0 64 64" class="icon-svg">
+              <rect x="12" y="38" width="40" height="8" rx="2" fill="currentColor" opacity="0.3"/>
+              <rect x="12" y="28" width="40" height="8" rx="2" fill="currentColor" opacity="0.5"/>
+              <rect x="12" y="18" width="40" height="8" rx="2" fill="currentColor" opacity="0.7"/>
+            </svg>
+          </div>
           <div class="pillar-title">Layered Working Memory</div>
-          <div class="pillar-desc">Self-observation captures experiences</div>
+          <div class="pillar-desc">Self-observation captures experiences into structured GHAP entries</div>
         </div>
         <div id="pillar-3" class="pillar hidden">
+          <div class="pillar-icon">
+            <svg viewBox="0 0 64 64" class="icon-svg">
+              <circle cx="16" cy="32" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
+              <circle cx="48" cy="32" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
+              <path d="M24 32 L40 32" stroke="currentColor" stroke-width="2" stroke-dasharray="4 2"/>
+              <polygon points="38,28 44,32 38,36" fill="currentColor"/>
+            </svg>
+          </div>
           <div class="pillar-title">Hook-Based Injection</div>
-          <div class="pillar-desc">Context flows into new sessions</div>
+          <div class="pillar-desc">Context automatically flows into new sessions at the right moment</div>
         </div>
       </div>
     </div>
