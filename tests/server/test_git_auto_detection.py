@@ -9,11 +9,9 @@ import os
 import pytest
 from git import Repo
 
-from clams.embedding import (
-    EmbeddingSettings,
-    MiniLMEmbedding,
-    NomicEmbedding,
-)
+from clams.embedding import EmbeddingSettings
+from clams.embedding.minilm import MiniLMEmbedding
+from clams.embedding.nomic import NomicEmbedding
 from clams.server.config import ServerSettings
 from clams.server.tools import initialize_services
 

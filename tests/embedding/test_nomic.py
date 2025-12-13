@@ -3,11 +3,8 @@
 import numpy as np
 import pytest
 
-from clams.embedding import (
-    EmbeddingModelError,
-    EmbeddingSettings,
-    NomicEmbedding,
-)
+from clams.embedding import EmbeddingModelError, EmbeddingSettings
+from clams.embedding.nomic import NomicEmbedding
 
 
 @pytest.mark.slow
