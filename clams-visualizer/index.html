@@ -111,9 +111,70 @@
       "When auth tests fail, check token expiration first"
     </div>
 
-    <!-- Act 3: Context injection (placeholder) -->
+    <!-- Act 3: Context Injection -->
     <div id="act3-content" class="hidden">
-      <!-- Content will be added in SPEC-009-05 -->
+      <!-- Scene 1: Session Start -->
+      <div id="session-container" class="session-container hidden">
+        <div id="session-header" class="session-header">
+          <span class="session-icon">></span>
+          <span class="session-title">Claude Code Session</span>
+        </div>
+        <div id="user-prompt" class="user-prompt hidden">
+          <span class="prompt-label">User:</span>
+          <span class="prompt-text">Fix the failing auth test</span>
+        </div>
+        <div id="hook-trigger" class="hook-trigger hidden">
+          <span class="hook-icon">[hook]</span>
+          <span class="hook-text">assemble_context()</span>
+        </div>
+      </div>
+
+      <!-- Scene 2: Semantic Retrieval -->
+      <div id="retrieval-container" class="retrieval-container hidden">
+        <div id="prompt-vector" class="prompt-vector hidden">
+          <div class="vector-label">User prompt</div>
+          <div class="vector-arrow">-></div>
+          <div class="vector-box">[0.42, -0.18, 0.73, ...]</div>
+        </div>
+        <div id="retrieval-animation" class="retrieval-animation hidden">
+          <div class="search-label">Searching similar experiences...</div>
+        </div>
+        <div id="retrieved-items" class="retrieved-items hidden">
+          <div class="retrieved-item" id="retrieved-1">
+            <span class="item-icon">*</span>
+            <span class="item-text">"Check token expiration first"</span>
+          </div>
+          <div class="retrieved-item" id="retrieved-2">
+            <span class="item-icon">*</span>
+            <span class="item-text">"Auth failures often mask config issues"</span>
+          </div>
+          <div class="retrieved-item" id="retrieved-3">
+            <span class="item-icon">*</span>
+            <span class="item-text">"Verify test fixtures match schema"</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scene 3: Context Injection -->
+      <div id="injection-container" class="injection-container hidden">
+        <div id="claude-view" class="claude-view hidden">
+          <div class="claude-header">Claude's Context</div>
+          <div id="injected-context" class="injected-context">
+            <div class="context-item hidden" id="context-1">
+              <span class="context-label">Learned Value:</span>
+              <span class="context-value">"When auth tests fail, check token expiration first"</span>
+            </div>
+            <div class="context-item hidden" id="context-2">
+              <span class="context-label">Related Experience:</span>
+              <span class="context-value">Previous session fixed similar issue in session_handler.py</span>
+            </div>
+          </div>
+        </div>
+        <div id="agent-working" class="agent-working hidden">
+          <span class="working-icon">...</span>
+          <span class="working-text">Agent begins work with context</span>
+        </div>
+      </div>
     </div>
 
     <!-- Tagline -->
