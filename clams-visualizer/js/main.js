@@ -3,12 +3,14 @@
  *
  * This is the main JavaScript file that:
  * 1. Checks for WebGL support
- * 2. Creates the master GSAP timeline
- * 3. Sets up timeline controls
- * 4. Initializes all act scenes
+ * 2. Initializes Three.js 3D scene
+ * 3. Creates the master GSAP timeline
+ * 4. Sets up timeline controls
+ * 5. Initializes all act scenes
  */
 import { CONFIG, TOTAL_DURATION, ACT_TIMES } from './config.js';
 import { initTimelineControls } from './timeline-controller.js';
+import { initThreeScene, createOrbitAnimatable } from './three-setup.js';
 import { setupAct1 } from './scenes/act1.js';
 import { setupAct2 } from './scenes/act2.js';
 import { setupAct3 } from './scenes/act3.js';
@@ -48,6 +50,17 @@ function waitForGSAP() {
   });
 }
 
+// Global reference to Three.js scene for access by other modules
+let threeScene = null;
+
+/**
+ * Get the Three.js scene API
+ * @returns {Object|null} The Three.js scene API or null if not initialized
+ */
+export function getThreeScene() {
+  return threeScene;
+}
+
 // Main initialization
 async function init() {
   console.log('CLAMS Visualizer: Initializing...');
@@ -67,12 +80,29 @@ async function init() {
     return;
   }
 
+  // Initialize Three.js scene
+  try {
+    threeScene = await initThreeScene();
+    console.log('Three.js scene initialized');
+
+    // Start render loop
+    threeScene.startRenderLoop();
+  } catch (e) {
+    console.error('Failed to initialize Three.js scene:', e);
+    // Continue without 3D - 2D animations will still work
+    console.warn('Continuing without 3D visualization');
+  }
+
   // Create master timeline (paused initially)
   const master = gsap.timeline({
     paused: true,
     onUpdate: () => {
       // Update timeline UI on each frame
       timelineUI.update(master.time(), master.duration());
+
+      // Update depth cues for 3D points if scene is available
+      // (This is handled by the render loop, but we could add
+      // additional per-frame updates here if needed)
     },
     onComplete: () => {
       console.log('Animation complete!');
@@ -84,6 +114,22 @@ async function init() {
   const timelineUI = initTimelineControls(master);
   console.log('Timeline controls initialized');
 
+  // Setup camera orbit animation (slow orbit throughout the animation)
+  // Camera orbits ~15-30 degrees per minute, so over 3 minutes = 45-90 degrees
+  if (threeScene) {
+    const orbitAnimatable = createOrbitAnimatable();
+
+    // Add camera orbit to master timeline
+    // Orbit from 0 to 60 degrees over the full 180 seconds
+    master.to(orbitAnimatable, {
+      angle: 60,
+      duration: TOTAL_DURATION,
+      ease: 'none'
+    }, 0);
+
+    console.log('Camera orbit animation added to timeline');
+  }
+
   // Setup each act
   // Each act function adds its animations to the master timeline
   // and returns the end time for verification
@@ -93,7 +139,7 @@ async function init() {
   console.log(`Act 1 setup complete (ends at ${act1End}s)`);
 
   console.log('Setting up Act 2...');
-  const act2End = setupAct2(master, ACT_TIMES.act2);
+  const act2End = setupAct2(master, ACT_TIMES.act2, threeScene);
   console.log(`Act 2 setup complete (ends at ${act2End}s)`);
 
   console.log('Setting up Act 3...');
@@ -113,6 +159,9 @@ async function init() {
 
   console.log('CLAMS Visualizer: Ready!');
   console.log('Click "Play" to start the animation, or use the scrubber to navigate.');
+  if (threeScene) {
+    console.log('3D scene is active. The canvas should show a black background.');
+  }
 }
 
 // Run initialization when DOM is ready
