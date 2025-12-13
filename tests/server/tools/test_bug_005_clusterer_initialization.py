@@ -7,7 +7,8 @@ clustering operations are attempted.
 
 
 from clams.clustering import Clusterer, ExperienceClusterer
-from clams.embedding import EmbeddingSettings, NomicEmbedding
+from clams.embedding import EmbeddingSettings
+from clams.embedding.nomic import NomicEmbedding
 from clams.storage.qdrant import QdrantVectorStore
 from clams.values import ValueStore
 

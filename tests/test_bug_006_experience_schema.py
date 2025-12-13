@@ -17,7 +17,7 @@ import pytest
 # Mark all tests in this module as integration tests (require Qdrant)
 pytestmark = pytest.mark.integration
 
-from clams.embedding import MockEmbedding
+from clams.embedding.mock import MockEmbedding
 from clams.observation import (
     Domain,
     ObservationCollector,

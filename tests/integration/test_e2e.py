@@ -19,7 +19,7 @@ pytestmark = pytest.mark.integration
 
 from clams.clustering import ExperienceClusterer
 from clams.clustering.clusterer import Clusterer
-from clams.embedding import MockEmbedding
+from clams.embedding.mock import MockEmbedding
 from clams.observation import (
     Domain,
     ObservationCollector,

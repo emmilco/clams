@@ -22,7 +22,7 @@ import pytest
 
 from clams.clustering import ExperienceClusterer
 from clams.clustering.clusterer import Clusterer
-from clams.embedding import MockEmbedding
+from clams.embedding.mock import MockEmbedding
 from clams.storage import QdrantVectorStore
 
 pytest_plugins = ("pytest_asyncio",)
