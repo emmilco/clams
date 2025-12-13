@@ -54,6 +54,31 @@ class ValueStore:
         self.embedding_service = embedding_service
         self.vector_store = vector_store
         self.clusterer = clusterer
+        self._collection_ensured = False
+
+    async def _ensure_values_collection(self) -> None:
+        """Ensure values collection exists (lazy initialization).
+
+        Creates the collection on first use. Uses instance-level caching to avoid
+        repeated creation attempts within an instance.
+        """
+        if self._collection_ensured:
+            return
+
+        try:
+            await self.vector_store.create_collection(
+                name=VALUES_COLLECTION,
+                dimension=self.embedding_service.dimension,
+                distance="cosine",
+            )
+        except Exception as e:
+            error_msg = str(e).lower()
+            if "already exists" in error_msg or "409" in str(e):
+                pass  # Collection exists, no action needed
+            else:
+                raise
+
+        self._collection_ensured = True
 
     async def get_clusters(self, axis: str) -> list[ClusterInfo]:
         """Get all clusters for a given axis.
@@ -243,6 +268,9 @@ class ValueStore:
         Raises:
             ValueError: If cluster_id is invalid or value fails validation
         """
+        # Ensure collection exists (lazy initialization)
+        await self._ensure_values_collection()
+
         # Validate first (safety check)
         validation = await self.validate_value_candidate(text, cluster_id)
         if not validation.valid:
@@ -304,6 +332,9 @@ class ValueStore:
         Returns:
             List of Value objects sorted by created_at (descending)
         """
+        # Ensure collection exists (lazy initialization)
+        await self._ensure_values_collection()
+
         # Build filters
         filters = {}
         if axis is not None:

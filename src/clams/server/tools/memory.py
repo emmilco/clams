@@ -27,6 +27,36 @@ VALID_CATEGORIES = {
 # Type alias for tool functions
 ToolFunc = Callable[..., Coroutine[Any, Any, dict[str, Any]]]
 
+# Track whether collection has been ensured (lazy initialization)
+_memories_collection_ensured = False
+
+
+async def _ensure_memories_collection(services: ServiceContainer) -> None:
+    """Ensure memories collection exists (lazy initialization).
+
+    Creates the collection on first use. Uses module-level caching to avoid
+    repeated creation attempts within a process.
+    """
+    global _memories_collection_ensured
+    if _memories_collection_ensured:
+        return
+
+    try:
+        await services.vector_store.create_collection(
+            name="memories",
+            dimension=services.semantic_embedder.dimension,
+            distance="cosine",
+        )
+        logger.info("collection_created", name="memories")
+    except Exception as e:
+        error_msg = str(e).lower()
+        if "already exists" in error_msg or "409" in str(e):
+            logger.debug("collection_exists", name="memories")
+        else:
+            raise
+
+    _memories_collection_ensured = True
+
 
 def get_memory_tools(services: ServiceContainer) -> dict[str, ToolFunc]:
     """Get memory tool implementations for the dispatcher.
@@ -46,6 +76,9 @@ def get_memory_tools(services: ServiceContainer) -> dict[str, ToolFunc]:
     ) -> dict[str, Any]:
         """Store a new memory with semantic embedding."""
         logger.info("memory.store", category=category, importance=importance)
+
+        # Ensure collection exists (lazy initialization)
+        await _ensure_memories_collection(services)
 
         # Validate category
         if category not in VALID_CATEGORIES:
@@ -113,6 +146,9 @@ def get_memory_tools(services: ServiceContainer) -> dict[str, ToolFunc]:
         """Search memories semantically."""
         logger.info("memory.retrieve", query=query[:50], limit=limit)
 
+        # Ensure collection exists (lazy initialization)
+        await _ensure_memories_collection(services)
+
         # Validate category
         if category and category not in VALID_CATEGORIES:
             raise ValidationError(
@@ -174,6 +210,9 @@ def get_memory_tools(services: ServiceContainer) -> dict[str, ToolFunc]:
     ) -> dict[str, Any]:
         """List memories with filters (non-semantic)."""
         logger.info("memory.list", category=category, limit=limit, offset=offset)
+
+        # Ensure collection exists (lazy initialization)
+        await _ensure_memories_collection(services)
 
         # Validate category
         if category and category not in VALID_CATEGORIES:
