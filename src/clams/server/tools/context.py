@@ -12,7 +12,7 @@ from typing import Any
 
 import structlog
 
-from clams.search import Searcher
+from clams.search.searcher import Searcher
 from clams.values import ValueStore
 
 logger = structlog.get_logger()
