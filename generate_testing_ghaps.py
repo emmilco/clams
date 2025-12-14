@@ -3,16 +3,16 @@
 
 import asyncio
 
+from clams.embedding import NomicEmbedding
 from clams.observation import (
     Domain,
+    Lesson,
     ObservationCollector,
     ObservationPersister,
     OutcomeStatus,
     RootCause,
-    Lesson,
     Strategy,
 )
-from clams.embedding import NomicEmbedding
 from clams.storage.qdrant import QdrantVectorStore
 
 
