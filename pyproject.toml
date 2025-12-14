@@ -75,10 +75,14 @@ select = ["E", "F", "I", "N", "W", "UP"]
 # Test files with long assertions and test data - hard to wrap meaningfully
 "tests/**/*.py" = ["E501"]
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Data generation scripts with long string literals
 =======
 # Generated files have long string literals
 >>>>>>> BUG-058
+=======
+# Generated test files have long lines
+>>>>>>> BUG-059
 "generate_*.py" = ["E501"]
 
 [tool.mypy]
