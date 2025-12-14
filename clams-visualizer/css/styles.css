@@ -101,6 +101,7 @@ body {
   font-size: 1.4rem;
   color: #CCCCCC;
   line-height: 1.6;
+  transform: translateY(15px);
 }
 
 /* Pillars Intro */
@@ -533,6 +534,7 @@ body {
   border: 1px solid #9E4AFF;
   border-radius: 8px;
   max-width: 500px;
+  transform: translateY(20px);
 }
 
 .item-icon {
