@@ -6,6 +6,66 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### SPEC-009: CLAMS Animated Explainer
+**Type**: Feature
+
+Built a 90-second animated explainer video for CLAMS using HTML5/CSS/JavaScript with GSAP animations and Three.js 3D visualizations. The explainer covers the GHAP learning loop, embedding/clustering pipeline, and context injection workflow.
+
+**Changes**:
+- Added `clams-visualizer/` directory with complete web-based animation
+- **Act 1 - Value Proposition** (SPEC-009-02):
+  - Problem statement scene: "AI Agents Lose Context"
+  - CLAMS pillars: Semantic Code Search, Layered Working Memory, Hook-Based Injection
+  - Smooth GSAP timeline animations with SVG icons
+- **Act 2 - Pipeline Visualization** (SPEC-009-03, SPEC-009-04):
+  - Three.js 3D foundation with scene, camera, renderer setup
+  - Point cloud component with sprite-based rendering and dual depth cues
+  - Cluster sphere component with translucent boundaries and wireframe
+  - Centroid markers for cluster centers
+  - Full GHAP -> Embedding -> Clustering -> Value Formation pipeline animation
+- **Act 3 - Context Injection** (SPEC-009-05):
+  - Claude Code session UI with user prompt
+  - Semantic retrieval animation showing prompt-to-vector transformation
+  - Context window visualization with injected values
+  - Tagline and closing animation
+- **Polish** (SPEC-009-06):
+  - WebGL memory leak prevention with proper cleanup
+  - CSS transforms for smooth entrance animations
+
+### SPEC-008: HTTP Transport for Singleton MCP Server
+**Type**: Feature
+
+Implemented HTTP transport for the MCP server, enabling hooks to connect to a shared daemon instead of spawning new processes. This eliminates the 10+ second startup time per hook invocation.
+
+**Changes**:
+- Added HTTP+SSE transport support using Starlette (`src/clams/server/http.py`)
+- Added `/api/call` endpoint for direct tool invocation by hook scripts
+- Added `/health` endpoint for daemon health checks
+- Implemented daemon mode with PID file management (`~/.clams/server.pid`)
+- Implemented session management tools: `start_session`, `get_orphaned_ghap`, `should_check_in`, `increment_tool_count`, `reset_tool_count`
+- Implemented `assemble_context` tool for context injection
+- Updated all 4 hook scripts to use HTTP transport via `/api/call`
+- Updated install/uninstall scripts for daemon lifecycle management
+
+**Performance**:
+- Session start hook: < 100ms (non-blocking, daemon starts in background)
+- User prompt submit: < 200ms (after server warm)
+- Models load once at daemon startup, stay in memory
+
+### SPEC-005: Portable Installation
+**Type**: Feature
+
+Added one-command installation scripts for setting up CLAMS with Qdrant vector database and Claude Code integration.
+
+**Changes**:
+- Added `docker-compose.yml` for Qdrant vector database service
+- Added `scripts/install.sh` for automated setup (Docker, Python deps, Claude config)
+- Added `scripts/uninstall.sh` for clean removal
+- Added `scripts/json_merge.py` for safe JSON configuration merging
+- Added `scripts/verify_install.py` for installation verification
+- Updated README.md with installation instructions
+- Updated GETTING_STARTED.md with configuration guide
+
 ### SPEC-010: Move CLAMS Files Out of .claude Directory
 **Type**: Refactor
 
@@ -295,6 +355,150 @@ Created the foundational project structure for the CLAMS server with Python pack
 ---
 
 ## Bug Fixes
+
+### BUG-051: Fix UserPromptSubmit hook output not injected into context
+**Type**: Bug Fix
+
+Fixed the `user_prompt_submit.sh` hook to use Claude Code's expected JSON schema so that relevant experiences are properly injected into Claude's context based on user prompts.
+
+**Root Cause**: The hook was outputting `{"type": ..., "content": ..., "token_count": ...}` instead of the required `{"hookSpecificOutput": {"additionalContext": "..."}}` schema.
+
+**Changes**:
+- Updated `clams/hooks/user_prompt_submit.sh` to output correct JSON schema
+- Updated all three output locations (success case and two degraded cases)
+- Added regression test to prevent schema regression
+
+### BUG-050: Fix SessionStart hook output not injected into context
+**Type**: Bug Fix
+
+Fixed the `session_start.sh` hook to use Claude Code's expected JSON schema so that GHAP instructions are properly injected into Claude's context at session start.
+
+**Root Cause**: The hook was outputting `{"type": ..., "content": ...}` instead of the required `{"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": "..."}}` schema.
+
+**Changes**:
+- Updated `clams/hooks/session_start.sh` to output correct JSON schema with `hookEventName` field
+- Added regression test to prevent schema regression
+
+### BUG-043: Qdrant collections not auto-created on first use
+**Type**: Bug Fix
+
+Fixed 404 errors when using memory, git commit, and value tools on fresh installations where Qdrant collections don't exist.
+
+**Root Cause**: Tools assumed collections existed and failed with 404 errors instead of auto-creating them.
+
+**Changes**:
+- Added lazy collection creation (`_ensure_*_collection()` pattern) to memory tools, GitAnalyzer, and ValueStore
+- Collections are now automatically created on first use
+- Pattern follows existing `CodeIndexer._ensure_collection()` implementation
+
+### BUG-042: Fix daemon crash on macOS due to MPS fork safety
+**Type**: Bug Fix
+
+Fixed a critical bug where the CLAMS daemon crashed immediately after starting on macOS with Apple Silicon.
+
+**Root Cause**: The daemon used `os.fork()` for daemonization, but PyTorch MPS crashes when `fork()` is called after MPS initialization (which happens automatically when torch is imported on Apple Silicon Macs).
+
+**Changes**:
+- Changed `daemonize()` to use `subprocess.Popen(start_new_session=True)` instead of `os.fork()`
+- Restructured `main.py` to defer all heavy imports until after daemonization
+- Made embedding module imports lazy - concrete classes imported only when accessed
+- Updated test imports to use specific module paths
+
+### BUG-041: Searcher class conflict - abstract vs concrete incompatible interfaces
+**Type**: Bug Fix
+
+Fixed Searcher class inheritance so the concrete implementation properly inherits from the abstract Searcher ABC.
+
+**Root Cause**: The concrete `Searcher` in `search/searcher.py` and abstract `SearcherABC` in `context/searcher_types.py` had incompatible method signatures, causing type errors.
+
+**Changes**:
+- Made concrete `Searcher` class inherit from `SearcherABC`
+- Updated ABC method signatures to include all optional parameters
+- Removed `Searcher` from `search/__init__.py` exports to avoid circular import
+- Updated import statements across codebase
+
+### BUG-040: Duplicate result type definitions with incompatible fields
+**Type**: Bug Fix
+
+Fixed type inconsistency between `context/searcher_types.py` and `search/results.py` that caused KeyError and AttributeError when using `ContextAssembler` with the concrete `Searcher` implementation.
+
+**Root Cause**: Two independent type definitions had different field names (`start_line` vs `line_start`, `cluster_size` vs `member_count`, dict vs dataclass for `Lesson`).
+
+**Changes**:
+- Consolidated result types to use `search/results.py` as canonical source
+- Updated `context/searcher_types.py` to re-export from `search/results`
+- Fixed field name mismatches in formatters
+
+### BUG-037: Install script verification timeout due to model loading
+**Type**: Bug Fix
+
+Fixed install script verification timeout caused by insufficient timeout value when loading heavy ML dependencies.
+
+**Changes**:
+- Increased subprocess timeout from 5 to 30 seconds in `scripts/verify_install.py`
+
+### BUG-036: KeyError in distribute_budget on invalid source type
+**Type**: Bug Fix
+
+Fixed unhelpful KeyError when `distribute_budget()` is called with invalid context types.
+
+**Root Cause**: The function accessed `SOURCE_WEIGHTS[t]` without first validating that `t` was a valid key.
+
+**Changes**:
+- Added input validation at the start of `distribute_budget()` in `src/clams/context/tokens.py`
+- Invalid context types now raise a descriptive `ValueError` listing both invalid types and valid options
+
+### BUG-034: Float timeout truncation in QdrantVectorStore may cause zero timeout
+**Type**: Bug Fix
+
+Fixed float timeout values being truncated to integers, which could cause 0.5s timeouts to become 0 (infinite wait).
+
+**Root Cause**: The `int()` truncation converted `int(0.5) = 0`, which in httpx means "no timeout" (infinite wait).
+
+**Changes**:
+- Removed `int()` cast on timeout values in `QdrantVectorStore.__init__`
+- Float timeouts are now passed directly to `AsyncQdrantClient`
+
+### BUG-033: MCP client spawns new server instead of using existing one
+**Type**: Bug Fix
+
+Fixed the MCP hook client to use the correct server binary path, resolving slow hook startup times and connection failures.
+
+**Root Cause**: The MCP client was using an incorrect server command that referenced a non-existent module entry point, causing connection failures and 10+ second delays.
+
+**Changes**:
+- Updated `mcp_client.py` to compute the correct absolute path to `.venv/bin/clams-server`
+- Fixed `config.yaml` to reference the correct server command
+
+### BUG-031: Clustering not forming with 63 GHAP entries
+**Type**: Bug Fix
+
+Fixed HDBSCAN parameters that were too conservative for typical GHAP data distributions, causing all points to be classified as noise.
+
+**Root Cause**: Default `min_cluster_size=5` and `min_samples=3` were too conservative for datasets with 20-100 thematically similar entries.
+
+**Changes**:
+- Changed `min_cluster_size` from 5 to 3
+- Changed `min_samples` from 3 to 2
+
+### BUG-030: GHAP tools should return minimal responses to reduce token usage
+**Type**: Bug Fix
+
+Optimized `start_ghap` and `resolve_ghap` to return minimal responses instead of echoing back full records.
+
+**Changes**:
+- Modified `start_ghap` to return `{"ok": true, "id": ghap_id}` instead of 8 fields
+- Modified `resolve_ghap` to return `{"ok": true, "id": ghap_id}` instead of 4 fields
+- Reduces token waste by ~500+ tokens per GHAP operation
+
+### BUG-029: GHAP start should error when active entry exists
+**Type**: Bug Fix
+
+Fixed `start_ghap` to return a helpful error when an active GHAP entry already exists instead of silently orphaning it.
+
+**Changes**:
+- Modified `start_ghap` handler to check for active entry and return `active_ghap_exists` error type
+- Error message now includes the active GHAP ID and suggests using `resolve_ghap`
 
 ### BUG-028: Hash/Eq contract violation in ContextItem
 **Type**: Bug Fix

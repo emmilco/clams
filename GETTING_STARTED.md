@@ -81,10 +81,12 @@ Location: `src/clams/server/tools/`
 |------|---------|
 | `memory.py` | Memory storage and retrieval (4 tools) |
 | `code.py` | Code indexing and search (3 tools) |
-| `git.py` | Git commit analysis (4 tools) |
+| `git.py` | Git commit analysis (5 tools) |
 | `ghap.py` | GHAP learning loop (5 tools) |
 | `learning.py` | Clustering and values (5 tools) |
 | `search.py` | Cross-collection search (1 tool) |
+| `session.py` | Session management (5 tools) |
+| `context.py` | Context assembly (1 tool) |
 | `__init__.py` | ping health check (1 tool) |
 
 ### Configuration
@@ -97,7 +99,9 @@ Location: `src/clams/server/tools/`
 `src/clams/storage/` - VectorStore interface with Qdrant implementation, MetadataStore for SQLite.
 
 ### Embedding
-`src/clams/embedding/` - EmbeddingService interface with NomicEmbedding implementation.
+`src/clams/embedding/` - EmbeddingService interface with dual implementations:
+- `NomicEmbedding` - 768-dim for semantic memory, GHAP, and git analysis
+- `MiniLMEmbedding` - 384-dim for fast code indexing
 
 ## Key Concepts
 

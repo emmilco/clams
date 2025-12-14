@@ -19,6 +19,7 @@ import { createCentroidManager } from '../components/centroid.js';
 let pointCloud = null;
 let clusterManager = null;
 let centroidManager = null;
+let centroidLines = null; // Lines connecting cluster points to centroid
 
 // Pre-defined cluster positions (5 clusters spread in 3D space)
 const CLUSTER_CENTERS = [
@@ -31,6 +32,69 @@ const CLUSTER_CENTERS = [
 
 // Cluster radii (varying sizes)
 const CLUSTER_RADII = [12, 10, 14, 11, 13];
+
+/**
+ * Create lines connecting cluster points to the centroid
+ * @param {Object} threeScene - The Three.js scene API
+ * @param {Array} pointData - Array of point data with clusterIndex
+ * @param {number} clusterIndex - Which cluster to create lines for
+ * @param {Object} centroidPosition - The centroid position {x, y, z}
+ * @returns {Object} Object with THREE.LineSegments mesh and control methods
+ */
+function createCentroidLines(threeScene, pointData, clusterIndex, centroidPosition) {
+  // Filter points belonging to this cluster
+  const clusterPoints = pointData.filter(p => p.clusterIndex === clusterIndex);
+
+  // Create geometry with line segments from each point to centroid
+  const positions = [];
+  clusterPoints.forEach(point => {
+    // Get the point's position from the sprite
+    const sprite = point.sprite;
+    if (sprite) {
+      // Line start: point position
+      positions.push(sprite.position.x, sprite.position.y, sprite.position.z);
+      // Line end: centroid position
+      positions.push(centroidPosition.x, centroidPosition.y, centroidPosition.z);
+    }
+  });
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+
+  // Purple material matching the cluster color scheme
+  const material = new THREE.LineBasicMaterial({
+    color: CONFIG.colorsHex.accent.purple,
+    transparent: true,
+    opacity: 0,
+    linewidth: 1 // Note: linewidth > 1 only works on some platforms
+  });
+
+  const lineSegments = new THREE.LineSegments(geometry, material);
+  lineSegments.visible = false;
+
+  threeScene.addObject(lineSegments);
+
+  return {
+    mesh: lineSegments,
+    material: material,
+    geometry: geometry,
+    pointCount: clusterPoints.length,
+
+    setVisible(visible) {
+      lineSegments.visible = visible;
+    },
+
+    setOpacity(opacity) {
+      material.opacity = opacity;
+    },
+
+    dispose() {
+      threeScene.removeObject(lineSegments);
+      geometry.dispose();
+      material.dispose();
+    }
+  };
+}
 
 /**
  * Generate points clustered around the predefined centers
@@ -397,11 +461,11 @@ export function setupAct2(timeline, startTime, threeScene = null) {
   // 3D: Zoom in on a specific cluster to show centroid computation
   if (has3D && threeScene) {
     const zoomState = {
-      distance: threeScene.getCameraDistance(),
+      distance: 100,
       lookAtX: 0,
       lookAtY: 0,
       lookAtZ: 0,
-      orbit: threeScene.getCameraOrbit()
+      orbit: 360 // Continue from clustering scene
     };
 
     // Zoom in and focus on the first cluster
@@ -410,7 +474,7 @@ export function setupAct2(timeline, startTime, threeScene = null) {
       lookAtX: focusCluster.x,
       lookAtY: focusCluster.y,
       lookAtZ: focusCluster.z,
-      orbit: zoomState.orbit + 30, // Continue orbiting slowly
+      orbit: 390, // Continue orbiting
       duration: 3,
       ease: 'power2.inOut',
       onUpdate: () => {
@@ -420,10 +484,10 @@ export function setupAct2(timeline, startTime, threeScene = null) {
       }
     }, valueStart + 1);
 
-    // Continue slow orbit while zoomed in
+    // Continue orbit while zoomed in (120 degrees total for this scene)
     timeline.to(zoomState, {
-      orbit: zoomState.orbit + 60,
-      duration: 10,
+      orbit: 480,
+      duration: 15,
       ease: 'none',
       onUpdate: () => threeScene.setCameraOrbit(zoomState.orbit)
     }, valueStart + 4);
@@ -441,6 +505,22 @@ export function setupAct2(timeline, startTime, threeScene = null) {
         threeScene.setCameraLookAt(zoomState.lookAtX, zoomState.lookAtY, zoomState.lookAtZ);
       }
     }, valueEnd - 5);
+  }
+
+  // Fade out cluster spheres when zooming in for centroid computation
+  if (has3D && clusterManager) {
+    CLUSTER_CENTERS.forEach((_, index) => {
+      const sphere = clusterManager.getSphere(index);
+      if (sphere) {
+        const sphereFadeState = { opacity: CONFIG.clusters.sphereOpacity };
+        timeline.to(sphereFadeState, {
+          opacity: 0,
+          duration: 2,
+          ease: 'power2.out',
+          onUpdate: () => sphere.setOpacity(sphereFadeState.opacity)
+        }, valueStart + 1);
+      }
+    });
   }
 
   // Show centroid computation process UI
@@ -494,6 +574,34 @@ export function setupAct2(timeline, startTime, threeScene = null) {
         ease: 'power2.out',
         onUpdate: () => focusCentroid.setScale(focusState.scale)
       }, valueStart + 4);
+
+      // Create and animate lines from cluster points to centroid
+      // Lines appear after centroid, showing the connection
+      centroidLines = createCentroidLines(threeScene, pointData, 0, focusCluster);
+
+      if (centroidLines) {
+        const linesState = { opacity: 0 };
+
+        // Make lines visible and fade in after centroid appears
+        timeline.call(() => {
+          centroidLines.setVisible(true);
+        }, [], valueStart + 3.5);
+
+        timeline.to(linesState, {
+          opacity: 0.6,
+          duration: 1.5,
+          ease: 'power2.out',
+          onUpdate: () => centroidLines.setOpacity(linesState.opacity)
+        }, valueStart + 3.5);
+
+        // Fade out lines before zoom out
+        timeline.to(linesState, {
+          opacity: 0,
+          duration: 2,
+          ease: 'power2.in',
+          onUpdate: () => centroidLines.setOpacity(linesState.opacity)
+        }, valueEnd - 5);
+      }
     }
 
     // Step 2: Agent proposes value (after centroid appears)
@@ -573,20 +681,6 @@ export function setupAct2(timeline, startTime, threeScene = null) {
           ease: 'power2.out',
           onUpdate: () => centroid.setScale(state.scale)
         }, valueStart + 10.6 + centroidDelay);
-      }
-    });
-
-    // Fade cluster spheres to emphasize centroids
-    CLUSTER_CENTERS.forEach((_, index) => {
-      const sphere = clusterManager.getSphere(index);
-      if (sphere) {
-        const fadeState = { opacity: CONFIG.clusters.sphereOpacity };
-        timeline.to(fadeState, {
-          opacity: CONFIG.clusters.sphereOpacity * 0.3,
-          duration: 2,
-          ease: 'power2.out',
-          onUpdate: () => sphere.setOpacity(fadeState.opacity)
-        }, valueStart + 10);
       }
     });
 
@@ -710,6 +804,10 @@ export function cleanupAct2() {
   if (centroidManager) {
     centroidManager.dispose();
     centroidManager = null;
+  }
+  if (centroidLines) {
+    centroidLines.dispose();
+    centroidLines = null;
   }
   console.log('[Act 2] Cleaned up 3D components');
 }

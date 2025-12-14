@@ -130,10 +130,12 @@ rm -rf ~/path/to/clams  # Delete repository
 See `src/clams/server/tools/` for all MCP tools:
 - `memory.py` - store_memory, retrieve_memories, list_memories, delete_memory
 - `code.py` - index_codebase, search_code, find_similar_code
-- `git.py` - index_commits, search_commits, get_churn_hotspots, get_code_authors
+- `git.py` - index_commits, search_commits, get_file_history, get_churn_hotspots, get_code_authors
 - `ghap.py` - start_ghap, update_ghap, resolve_ghap, get_active_ghap, list_ghap_entries
 - `learning.py` - get_clusters, get_cluster_members, validate_value, store_value, list_values
-- `search.py` - search_experiences, search_all
+- `search.py` - search_experiences
+- `session.py` - start_session, get_orphaned_ghap, should_check_in, increment_tool_count, reset_tool_count
+- `context.py` - assemble_context
 
 ## Development
 
@@ -154,10 +156,18 @@ mypy src
 ## Architecture
 
 Core components:
-- **Embedding**: sentence-transformers with Nomic Embed
+- **Embedding**: sentence-transformers with Nomic Embed (semantic) and MiniLM (code)
 - **Vector Store**: Qdrant for semantic search
 - **Metadata Store**: SQLite for structured data
 - **Parsing**: TreeSitter for code analysis
 - **Clustering**: HDBSCAN for experience grouping
+- **HTTP Daemon**: Starlette-based server for hook integration
 
 See source code for detailed implementation.
+
+## Animated Explainer
+
+An interactive visualization of how CLAMS works is available in `clams-visualizer/`. Open `index.html` in a browser to view a 90-second animated explainer covering:
+- The GHAP (Goal-Hypothesis-Action-Prediction) learning loop
+- Embedding and clustering pipeline
+- Context injection into Claude Code sessions

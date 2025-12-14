@@ -55,9 +55,9 @@ export class ClusterSphere {
     this.mesh.position.set(this.x, this.y, this.z);
     this.mesh.scale.set(this.radius, this.radius, this.radius);
 
-    // Add wireframe for better visibility
+    // Add wireframe for better visibility - white for contrast on black background
     this.wireframeMaterial = new THREE.MeshBasicMaterial({
-      color: this.color,
+      color: 0xFFFFFF,
       transparent: true,
       opacity: this.opacity * 2, // Slightly more visible
       wireframe: true
@@ -121,13 +121,13 @@ export class ClusterSphere {
   }
 
   /**
-   * Set sphere color
+   * Set sphere color (wireframe stays white for visibility)
    * @param {number|string} color - Color as hex number or string
    */
   setColor(color) {
     this.color.set(color);
     this.material.color.copy(this.color);
-    this.wireframeMaterial.color.copy(this.color);
+    // Wireframe stays white for visibility on black background
   }
 
   /**

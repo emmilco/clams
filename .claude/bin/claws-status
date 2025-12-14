@@ -47,15 +47,6 @@ cleanup_stale_workers() {
         echo ""
     fi
 
-    # Also check for session_ended workers and note them
-    local session_ended_count
-    session_ended_count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM workers WHERE status = 'session_ended';")
-    if [[ "$session_ended_count" -gt 0 ]]; then
-        echo "=== Session Continuity ==="
-        echo "Previous session ended with $session_ended_count worker(s) in progress."
-        echo ""
-    fi
-
     # Check for pending handoff in database (needs_continuation = true, resumed_at is null)
     local pending_handoff
     pending_handoff=$(sqlite3 "$DB_PATH" "SELECT id FROM sessions WHERE needs_continuation = 1 AND resumed_at IS NULL ORDER BY created_at DESC LIMIT 1;" 2>/dev/null || echo "")
@@ -111,9 +102,17 @@ cmd_health() {
 }
 
 cmd_tasks() {
+    # Option to include completed tasks
+    local include_done="${1:-false}"
+
     echo "=== Feature Tasks by Phase ==="
 
-    for phase in SPEC DESIGN IMPLEMENT CODE_REVIEW TEST INTEGRATE VERIFY DONE; do
+    local feature_phases="SPEC DESIGN IMPLEMENT CODE_REVIEW TEST INTEGRATE VERIFY"
+    if [[ "$include_done" == "true" ]]; then
+        feature_phases="$feature_phases DONE"
+    fi
+
+    for phase in $feature_phases; do
         local count
         count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM tasks WHERE phase = '$phase' AND task_type = 'feature';")
 
@@ -132,7 +131,12 @@ EOF
     echo ""
     echo "=== Bug Tasks by Phase ==="
 
-    for phase in REPORTED INVESTIGATED FIXED REVIEWED TESTED MERGED DONE; do
+    local bug_phases="REPORTED INVESTIGATED FIXED REVIEWED TESTED MERGED"
+    if [[ "$include_done" == "true" ]]; then
+        bug_phases="$bug_phases DONE"
+    fi
+
+    for phase in $bug_phases; do
         local count
         count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM tasks WHERE phase = '$phase' AND task_type = 'bug';")
 
@@ -148,11 +152,14 @@ EOF
         fi
     done
 
-    local feature_count bug_count
-    feature_count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM tasks WHERE task_type = 'feature';")
-    bug_count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM tasks WHERE task_type = 'bug';")
+    local feature_count bug_count done_feature_count done_bug_count
+    feature_count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM tasks WHERE task_type = 'feature' AND phase != 'DONE';")
+    bug_count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM tasks WHERE task_type = 'bug' AND phase != 'DONE';")
+    done_feature_count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM tasks WHERE task_type = 'feature' AND phase = 'DONE';")
+    done_bug_count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM tasks WHERE task_type = 'bug' AND phase = 'DONE';")
     echo ""
-    echo "Total: $feature_count feature(s), $bug_count bug(s)"
+    echo "Active: $feature_count feature(s), $bug_count bug(s)"
+    echo "Completed: $done_feature_count feature(s), $done_bug_count bug(s)"
 }
 
 cmd_workers() {
@@ -230,7 +237,10 @@ case "$command" in
         cmd_health
         ;;
     tasks)
-        cmd_tasks
+        cmd_tasks false
+        ;;
+    tasks-all)
+        cmd_tasks true
         ;;
     workers)
         cmd_workers
@@ -249,9 +259,10 @@ case "$command" in
         ;;
     *)
         echo "Usage:"
-        echo "  claws-status              Full status overview"
+        echo "  claws-status              Full status overview (excludes completed)"
         echo "  claws-status health       System health check"
-        echo "  claws-status tasks        Tasks grouped by phase"
+        echo "  claws-status tasks        Active tasks grouped by phase"
+        echo "  claws-status tasks-all    All tasks including completed"
         echo "  claws-status worktrees    Active worktrees"
         echo "  claws-status workers      Active workers"
         echo "  claws-status merges       Recent merge log"
