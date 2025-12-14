@@ -7,7 +7,10 @@ import os
 import subprocess
 from pathlib import Path
 
+import pytest
 
+
+@pytest.mark.slow
 def test_check_types_completes_standalone() -> None:
     """Verify that check_types.sh completes without hanging when run standalone.
 

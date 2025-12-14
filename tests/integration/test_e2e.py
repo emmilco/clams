@@ -14,8 +14,8 @@ from uuid import uuid4
 import httpx
 import pytest
 
-# Mark all tests in this module as integration tests (require external services)
-pytestmark = pytest.mark.integration
+# Mark all tests in this module as integration and slow tests
+pytestmark = [pytest.mark.integration, pytest.mark.slow]
 
 from clams.clustering import ExperienceClusterer
 from clams.clustering.clusterer import Clusterer
