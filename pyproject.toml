@@ -77,6 +77,7 @@ select = ["E", "F", "I", "N", "W", "UP"]
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Data generation scripts with long string literals
 =======
 # Generated files have long string literals
@@ -87,6 +88,9 @@ select = ["E", "F", "I", "N", "W", "UP"]
 =======
 # Generated test data scripts have long string literals
 >>>>>>> BUG-063
+=======
+# Generated test data scripts
+>>>>>>> BUG-064
 "generate_*.py" = ["E501"]
 
 [tool.mypy]
