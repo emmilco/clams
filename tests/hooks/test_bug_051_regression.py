@@ -62,6 +62,10 @@ class TestBug051Regression:
         )
 
         hook_output = output["hookSpecificOutput"]
+        assert hook_output.get("hookEventName") == "UserPromptSubmit", (
+            f"hookEventName should be 'UserPromptSubmit', got: {hook_output.get('hookEventName')}"
+        )
+
         assert "additionalContext" in hook_output, (
             "Missing 'additionalContext' in hookSpecificOutput"
         )
@@ -95,6 +99,9 @@ class TestBug051Regression:
         # Should contain the correct schema structure
         assert "hookSpecificOutput" in source, (
             "Hook source should contain 'hookSpecificOutput'"
+        )
+        assert '"hookEventName": "UserPromptSubmit"' in source, (
+            "Hook source should contain hookEventName: UserPromptSubmit"
         )
         assert "additionalContext" in source, (
             "Hook source should contain 'additionalContext'"

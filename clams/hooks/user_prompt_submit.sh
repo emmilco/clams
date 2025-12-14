@@ -72,6 +72,7 @@ main() {
         cat <<EOF
 {
   "hookSpecificOutput": {
+    "hookEventName": "UserPromptSubmit",
     "additionalContext": ""
   }
 }
@@ -93,6 +94,7 @@ EOF
         cat <<EOF
 {
   "hookSpecificOutput": {
+    "hookEventName": "UserPromptSubmit",
     "additionalContext": ""
   }
 }
@@ -108,6 +110,7 @@ EOF
     cat <<EOF
 {
   "hookSpecificOutput": {
+    "hookEventName": "UserPromptSubmit",
     "additionalContext": $(echo "$context_md" | jq -Rs .)
   }
 }
