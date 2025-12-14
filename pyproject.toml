@@ -51,7 +51,12 @@ line-length = 88
 target-version = "py312"
 exclude = [
     "tests/fixtures/code_samples/malformed.py",
+<<<<<<< HEAD
     "generate_*.py",  # One-off scripts with long strings
+=======
+    # Data generation scripts with long string literals
+    "generate_*.py",
+>>>>>>> BUG-056
 ]
 
 [tool.ruff.lint]

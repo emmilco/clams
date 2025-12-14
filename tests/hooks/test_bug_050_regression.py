@@ -33,6 +33,7 @@ def test_bug_050_session_start_hook_output_schema():
         capture_output=True,
         text=True,
         timeout=10,
+        stdin=subprocess.DEVNULL,
     )
 
     # Hook should exit successfully
@@ -73,6 +74,7 @@ def test_bug_050_no_legacy_schema_fields():
         capture_output=True,
         text=True,
         timeout=10,
+        stdin=subprocess.DEVNULL,
     )
 
     output = json.loads(result.stdout)
@@ -96,6 +98,7 @@ def test_bug_050_ghap_instructions_present():
         capture_output=True,
         text=True,
         timeout=10,
+        stdin=subprocess.DEVNULL,
     )
 
     output = json.loads(result.stdout)

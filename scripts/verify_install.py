@@ -34,7 +34,8 @@ def verify_mcp_server(venv_path: Path) -> bool:
             capture_output=True,
             text=True,
             timeout=30,
-            cwd=venv_path.parent
+            cwd=venv_path.parent,
+            stdin=subprocess.DEVNULL,
         )
 
         if result.returncode != 0:

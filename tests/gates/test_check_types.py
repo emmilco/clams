@@ -34,6 +34,7 @@ def test_check_types_completes_standalone() -> None:
         text=True,
         timeout=180,  # 180 seconds - mypy can be slow on large codebases
         env=env,
+        stdin=subprocess.DEVNULL,
     )
 
     # We don't care if mypy finds type errors (it will), we just care that it completes
