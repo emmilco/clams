@@ -1,0 +1,17 @@
+# Pre-commit configuration for CLAMS
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  - repo: local
+    hooks:
+      - id: subprocess-stdin-check
+        name: Check subprocess.run has stdin handling
+        description: >
+          Ensures all subprocess.run, Popen, call, check_call, and check_output
+          calls specify stdin handling (stdin=subprocess.DEVNULL, subprocess.PIPE,
+          or input=). This prevents test hangs and security issues.
+        entry: python .claude/hooks/check_subprocess.py
+        language: python
+        types: [python]
+        pass_filenames: true

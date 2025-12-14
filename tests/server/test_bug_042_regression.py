@@ -41,6 +41,7 @@ else:
         capture_output=True,
         text=True,
         cwd=Path(__file__).parent.parent.parent,
+        stdin=subprocess.DEVNULL,
     )
 
     assert result.returncode == 0, (
@@ -80,6 +81,7 @@ sys.exit(0)
         capture_output=True,
         text=True,
         cwd=Path(__file__).parent.parent.parent,
+        stdin=subprocess.DEVNULL,
     )
 
     assert result.returncode == 0, (
@@ -104,6 +106,7 @@ def test_bug_042_daemon_start_does_not_crash():
         [sys.executable, "-m", "clams.server.main", "--stop"],
         capture_output=True,
         cwd=Path(__file__).parent.parent.parent,
+        stdin=subprocess.DEVNULL,
     )
 
     # Try to start daemon
@@ -113,6 +116,7 @@ def test_bug_042_daemon_start_does_not_crash():
         text=True,
         timeout=10,
         cwd=Path(__file__).parent.parent.parent,
+        stdin=subprocess.DEVNULL,
     )
 
     # Give daemon time to either crash or start
@@ -131,4 +135,5 @@ def test_bug_042_daemon_start_does_not_crash():
         [sys.executable, "-m", "clams.server.main", "--stop"],
         capture_output=True,
         cwd=Path(__file__).parent.parent.parent,
+        stdin=subprocess.DEVNULL,
     )
