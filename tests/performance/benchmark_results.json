@@ -1,78 +1,6 @@
 [
   {
     "name": "code_search",
-    "value_ms": 3.269310764153488,
-    "target_ms": 200.0,
-    "passed": true,
-    "iterations": 100,
-    "timestamp": 1764942072.1408262,
-    "percentage_of_target": 1.634655382076744
-  },
-  {
-    "name": "memory_retrieval",
-    "value_ms": 3.367900021839887,
-    "target_ms": 200.0,
-    "passed": true,
-    "iterations": 100,
-    "timestamp": 1764942072.393867,
-    "percentage_of_target": 1.6839500109199435
-  },
-  {
-    "name": "context_assembly",
-    "value_ms": 5.993771381326951,
-    "target_ms": 500.0,
-    "passed": true,
-    "iterations": 10,
-    "timestamp": 1764942072.45238,
-    "percentage_of_target": 1.1987542762653902
-  },
-  {
-    "name": "clustering_4_axes",
-    "value_s": 0.13047749997349456,
-    "target_s": 5.0,
-    "passed": true,
-    "iterations": 1,
-    "timestamp": 1764942072.584406,
-    "percentage_of_target": 2.609549999469891
-  },
-  {
-    "name": "code_search",
-    "value_ms": 3.974262502742931,
-    "target_ms": 200.0,
-    "passed": true,
-    "iterations": 100,
-    "timestamp": 1764944657.225247,
-    "percentage_of_target": 1.9871312513714652
-  },
-  {
-    "name": "memory_retrieval",
-    "value_ms": 4.0461326483637094,
-    "target_ms": 200.0,
-    "passed": true,
-    "iterations": 100,
-    "timestamp": 1764944657.521773,
-    "percentage_of_target": 2.0230663241818547
-  },
-  {
-    "name": "context_assembly",
-    "value_ms": 6.270381537615321,
-    "target_ms": 500.0,
-    "passed": true,
-    "iterations": 10,
-    "timestamp": 1764944657.58467,
-    "percentage_of_target": 1.254076307523064
-  },
-  {
-    "name": "clustering_4_axes",
-    "value_s": 0.119508792005945,
-    "target_s": 5.0,
-    "passed": true,
-    "iterations": 1,
-    "timestamp": 1764944657.7055109,
-    "percentage_of_target": 2.3901758401189
-  },
-  {
-    "name": "code_search",
     "value_ms": 3.3278645831160243,
     "target_ms": 200.0,
     "passed": true,
@@ -898,5 +826,77 @@
     "iterations": 1,
     "timestamp": 1765639118.478154,
     "percentage_of_target": 2.885065838927403
+  },
+  {
+    "name": "code_search",
+    "value_ms": 5.332696170080452,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1765689370.5728152,
+    "percentage_of_target": 2.666348085040226
+  },
+  {
+    "name": "memory_retrieval",
+    "value_ms": 3.7574434158159415,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1765689370.87798,
+    "percentage_of_target": 1.8787217079079706
+  },
+  {
+    "name": "context_assembly",
+    "value_ms": 7.483743768534621,
+    "target_ms": 500.0,
+    "passed": true,
+    "iterations": 10,
+    "timestamp": 1765689370.9525728,
+    "percentage_of_target": 1.4967487537069244
+  },
+  {
+    "name": "clustering_4_axes",
+    "value_s": 0.18350679200375453,
+    "target_s": 5.0,
+    "passed": true,
+    "iterations": 1,
+    "timestamp": 1765689371.1380868,
+    "percentage_of_target": 3.670135840075091
+  },
+  {
+    "name": "code_search",
+    "value_ms": 4.745470514171756,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1765689696.7683651,
+    "percentage_of_target": 2.372735257085878
+  },
+  {
+    "name": "memory_retrieval",
+    "value_ms": 3.5373597405850874,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1765689697.052004,
+    "percentage_of_target": 1.7686798702925437
+  },
+  {
+    "name": "context_assembly",
+    "value_ms": 5.61277121596504,
+    "target_ms": 500.0,
+    "passed": true,
+    "iterations": 10,
+    "timestamp": 1765689697.1133409,
+    "percentage_of_target": 1.122554243193008
+  },
+  {
+    "name": "clustering_4_axes",
+    "value_s": 0.17898683296516538,
+    "target_s": 5.0,
+    "passed": true,
+    "iterations": 1,
+    "timestamp": 1765689697.296248,
+    "percentage_of_target": 3.579736659303308
   }
 ]
