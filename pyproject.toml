@@ -54,6 +54,8 @@ exclude = ["tests/fixtures/code_samples/malformed.py"]
 select = ["E", "F", "I", "N", "W", "UP"]
 
 [tool.ruff.lint.per-file-ignores]
+# Data generation scripts have long string literals
+"generate_*.py" = ["E501"]
 # JSON schema definitions have long string literals that can't be easily wrapped
 "src/clams/server/tools/__init__.py" = ["E501"]
 # Docstrings with long parameter descriptions
