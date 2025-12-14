@@ -141,23 +141,64 @@ main() {
         context_md=$(echo "$context_result" | jq -r '.markdown // ""' 2>/dev/null || echo "")
     fi
 
-    # 5. Build output
+    # 5. Build GHAP instructions
+    local ghap_instructions="## GHAP Learning System
+
+When you encounter tasks involving **debugging**, **investigation**, or **complex problem-solving**, use GHAP to track your reasoning:
+
+1. **Start**: \`mcp__clams__start_ghap\` - State your goal, hypothesis, action, and prediction
+2. **Update**: \`mcp__clams__update_ghap\` - Revise if your hypothesis changes
+3. **Resolve**: \`mcp__clams__resolve_ghap\` - Record outcome (confirmed/falsified/abandoned)
+
+GHAP entries are embedded and clustered to surface relevant past experiences in future sessions.
+
+**When to use GHAP:**
+- Debugging a failing test or error
+- Investigating unexpected behavior
+- Exploring unfamiliar code
+- Any task where you form a hypothesis about root cause
+
+---
+"
+
+    # 6. Build output with Claude Code's expected SessionStart schema
+    # See: https://code.claude.com/docs/en/hooks (hookSpecificOutput.additionalContext)
     if [ "$has_orphan" = "true" ]; then
         local goal hypothesis
         goal=$(echo "$orphan_result" | jq -r '.goal // "Unknown"')
         hypothesis=$(echo "$orphan_result" | jq -r '.hypothesis // "Unknown"')
 
+        local orphan_content="## Orphaned GHAP Detected
+
+From previous session:
+
+**Goal**: $goal
+**Hypothesis**: $hypothesis
+
+**Options**:
+- Adopt and continue this work
+- Abandon with reason
+
+---
+
+${ghap_instructions}${context_md}"
+
         cat <<EOF
 {
-  "type": "orphan_detected",
-  "content": "## Orphaned GHAP Detected\n\nFrom previous session:\n\n**Goal**: $goal\n**Hypothesis**: $hypothesis\n\n**Options**:\n- Adopt and continue this work\n- Abandon with reason\n\n---\n\n$context_md"
+  "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
+    "additionalContext": $(echo "$orphan_content" | jq -Rs .)
+  }
 }
 EOF
     else
+        local full_content="${ghap_instructions}${context_md}"
         cat <<EOF
 {
-  "type": "light",
-  "content": $(echo "$context_md" | jq -Rs .)
+  "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
+    "additionalContext": $(echo "$full_content" | jq -Rs .)
+  }
 }
 EOF
     fi
