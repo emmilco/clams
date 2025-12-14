@@ -1,8 +1,8 @@
 """Generate 12 GHAP entries for async/concurrent debugging theme."""
 
 import asyncio
-from datetime import datetime
 
+from clams.embedding import NomicEmbedding
 from clams.observation import (
     Domain,
     Lesson,
@@ -13,8 +13,6 @@ from clams.observation import (
     Strategy,
 )
 from clams.storage.qdrant import QdrantVectorStore
-from clams.embedding import NomicEmbedding
-
 
 # GHAP entries data - focused on async/concurrent debugging
 GHAP_ENTRIES = [

@@ -1,9 +1,8 @@
 """Generate 12 GHAP entries for debugging API and network issues."""
 
 import asyncio
-import random
-from datetime import datetime
 
+from clams.embedding import NomicEmbedding
 from clams.observation import (
     Domain,
     Lesson,
@@ -14,8 +13,6 @@ from clams.observation import (
     Strategy,
 )
 from clams.storage.qdrant import QdrantVectorStore
-from clams.embedding import NomicEmbedding
-
 
 # GHAP entries data - all focused on API and network debugging
 GHAP_ENTRIES = [
