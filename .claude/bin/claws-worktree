@@ -8,6 +8,7 @@
 #   claws-worktree list                   List all worktrees
 #   claws-worktree merge <task_id>        Merge to main and cleanup
 #   claws-worktree path <task_id>         Print worktree path
+#   claws-worktree health [--fix]         Audit worktree health and report issues
 
 set -euo pipefail
 
@@ -26,6 +27,7 @@ usage() {
     echo "  claws-worktree list               List all worktrees"
     echo "  claws-worktree merge <task_id>    Merge to main and cleanup"
     echo "  claws-worktree path <task_id>     Print worktree path"
+    echo "  claws-worktree health [--fix]     Audit worktree health"
     exit 1
 }
 
@@ -223,6 +225,241 @@ cmd_path() {
     echo "$worktree_path"
 }
 
+cmd_health() {
+    local fix_mode=false
+    local dry_run=false
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --fix)
+                fix_mode=true
+                shift
+                ;;
+            --dry-run)
+                dry_run=true
+                shift
+                ;;
+            *)
+                echo "Unknown option: $1" >&2
+                usage
+                ;;
+        esac
+    done
+
+    cd "$MAIN_REPO"
+
+    echo "Worktree Health Report"
+    echo "======================"
+    echo ""
+
+    local has_issues=false
+    local ok_count=0
+    local warning_count=0
+    local error_count=0
+
+    # Get list of actual worktree directories
+    if [[ ! -d "$WORKTREE_DIR" ]]; then
+        echo "No worktrees directory found at $WORKTREE_DIR"
+        echo ""
+        echo "Summary: No worktrees to check"
+        return 0
+    fi
+
+    # Track worktrees we've checked
+    local checked_worktrees=()
+
+    for worktree_path in "$WORKTREE_DIR"/*; do
+        if [[ ! -d "$worktree_path" ]]; then
+            continue
+        fi
+
+        local task_id
+        task_id=$(basename "$worktree_path")
+        checked_worktrees+=("$task_id")
+
+        local issues=()
+        local status="OK"
+        local status_icon="OK"
+
+        # Check if task exists in database
+        local task_phase
+        task_phase=$(sqlite3 "$DB_PATH" "SELECT phase FROM tasks WHERE id = '$task_id';" 2>/dev/null)
+
+        if [[ -z "$task_phase" ]]; then
+            issues+=("Task not found in database")
+            issues+=("Orphaned worktree (recommend: claws-worktree remove $task_id)")
+            status="ERROR"
+            status_icon="ERROR"
+            ((error_count++))
+        else
+            # Check if task is done but worktree exists
+            if [[ "$task_phase" == "DONE" ]]; then
+                issues+=("Task in DONE phase but worktree exists")
+                issues+=("Should be cleaned up (recommend: claws-worktree remove $task_id)")
+                if [[ "$status" != "ERROR" ]]; then
+                    status="WARNING"
+                    status_icon="WARNING"
+                    ((warning_count++))
+                fi
+            fi
+        fi
+
+        # Check for uncommitted changes
+        if [[ -d "$worktree_path/.git" ]] || [[ -f "$worktree_path/.git" ]]; then
+            cd "$worktree_path"
+
+            # Check for staged or unstaged changes
+            local uncommitted_count=0
+            uncommitted_count=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+
+            if [[ "$uncommitted_count" -gt 0 ]]; then
+                issues+=("Uncommitted changes: $uncommitted_count files")
+                if [[ "$status" == "OK" ]]; then
+                    status="WARNING"
+                    status_icon="WARNING"
+                    ((warning_count++))
+                fi
+            fi
+
+            # Check for untracked files
+            local untracked_count=0
+            untracked_count=$(git status --porcelain 2>/dev/null | grep -c '^\?\?' || true)
+            if [[ "$untracked_count" -gt 0 ]]; then
+                issues+=("Untracked files: $untracked_count")
+            fi
+
+            # Check branch divergence from main
+            local main_branch="main"
+            local ahead=0
+            local behind=0
+            if git rev-parse --verify "$main_branch" &>/dev/null; then
+                ahead=$(git rev-list --count "$main_branch..HEAD" 2>/dev/null || echo "0")
+                behind=$(git rev-list --count "HEAD..$main_branch" 2>/dev/null || echo "0")
+                if [[ "$behind" -gt 0 ]]; then
+                    issues+=("Branch is $behind commits behind main")
+                fi
+                if [[ "$ahead" -gt 0 ]]; then
+                    issues+=("Branch is $ahead commits ahead of main")
+                fi
+            fi
+
+            # Check staleness (no commits in >7 days)
+            local last_commit_time
+            last_commit_time=$(git log -1 --format=%ct 2>/dev/null || echo "0")
+            local now
+            now=$(date +%s)
+            local days_stale=$(( (now - last_commit_time) / 86400 ))
+            if [[ "$days_stale" -gt 7 ]]; then
+                issues+=("No commits in $days_stale days (stale)")
+                if [[ "$status" == "OK" ]]; then
+                    status="WARNING"
+                    status_icon="WARNING"
+                    ((warning_count++))
+                fi
+            fi
+
+            cd "$MAIN_REPO"
+        fi
+
+        # Calculate disk usage
+        local disk_usage
+        disk_usage=$(du -sh "$worktree_path" 2>/dev/null | cut -f1 || echo "unknown")
+
+        # Print report for this worktree
+        echo "$task_id: $status_icon"
+
+        if [[ -n "$task_phase" ]]; then
+            echo "  - Task phase: $task_phase"
+        fi
+
+        echo "  - Disk usage: $disk_usage"
+
+        if [[ ${#issues[@]} -eq 0 ]]; then
+            echo "  - Clean working tree"
+            ((ok_count++))
+        else
+            for issue in "${issues[@]}"; do
+                echo "  - $issue"
+            done
+            has_issues=true
+        fi
+        echo ""
+
+        # Auto-fix if requested
+        if [[ "$fix_mode" == true && "$status" == "ERROR" ]]; then
+            # Only auto-fix orphaned worktrees (no task record)
+            if [[ -z "$task_phase" ]]; then
+                if [[ "$dry_run" == true ]]; then
+                    echo "  [DRY-RUN] Would remove orphaned worktree: $task_id"
+                else
+                    echo "  [FIX] Removing orphaned worktree: $task_id"
+                    cmd_remove "$task_id" 2>/dev/null || echo "  [FIX] Failed to remove $task_id"
+                fi
+            fi
+        fi
+
+        if [[ "$fix_mode" == true && "$task_phase" == "DONE" ]]; then
+            if [[ "$dry_run" == true ]]; then
+                echo "  [DRY-RUN] Would remove worktree for DONE task: $task_id"
+            else
+                echo "  [FIX] Removing worktree for DONE task: $task_id"
+                cmd_remove "$task_id" 2>/dev/null || echo "  [FIX] Failed to remove $task_id"
+            fi
+        fi
+    done
+
+    # Check for tasks with worktree_path set but no actual worktree
+    local orphaned_records
+    orphaned_records=$(sqlite3 "$DB_PATH" "SELECT id, worktree_path FROM tasks WHERE worktree_path IS NOT NULL AND worktree_path != '';" 2>/dev/null)
+
+    if [[ -n "$orphaned_records" ]]; then
+        while IFS='|' read -r task_id recorded_path; do
+            # Skip if we already checked this worktree
+            local found=false
+            for checked in "${checked_worktrees[@]}"; do
+                if [[ "$checked" == "$task_id" ]]; then
+                    found=true
+                    break
+                fi
+            done
+
+            if [[ "$found" == false ]] && [[ -n "$task_id" ]]; then
+                echo "$task_id: WARNING"
+                echo "  - Database has worktree_path but directory missing: $recorded_path"
+                echo "  - Consider updating task record"
+                echo ""
+                ((warning_count++))
+
+                if [[ "$fix_mode" == true ]]; then
+                    if [[ "$dry_run" == true ]]; then
+                        echo "  [DRY-RUN] Would clear orphaned worktree_path in database for: $task_id"
+                    else
+                        echo "  [FIX] Clearing orphaned worktree_path in database for: $task_id"
+                        sqlite3 "$DB_PATH" "UPDATE tasks SET worktree_path = NULL WHERE id = '$task_id';"
+                    fi
+                fi
+            fi
+        done <<< "$orphaned_records"
+    fi
+
+    # Print summary
+    echo "======================"
+    echo "Summary"
+    echo "  OK:       $ok_count"
+    echo "  Warnings: $warning_count"
+    echo "  Errors:   $error_count"
+
+    if [[ "$has_issues" == true ]]; then
+        echo ""
+        echo "Run 'claws-worktree health --fix' to auto-remediate (removes orphaned/DONE worktrees)"
+        echo "Run 'claws-worktree health --fix --dry-run' to preview changes"
+        return 1
+    fi
+
+    return 0
+}
+
 # Main
 if [[ $# -lt 1 ]]; then
     usage
@@ -250,6 +487,9 @@ case "$command" in
     path)
         [[ $# -lt 1 ]] && usage
         cmd_path "$@"
+        ;;
+    health)
+        cmd_health "$@"
         ;;
     *)
         echo "Unknown command: $command" >&2
