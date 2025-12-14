@@ -51,12 +51,7 @@ line-length = 88
 target-version = "py312"
 exclude = [
     "tests/fixtures/code_samples/malformed.py",
-<<<<<<< HEAD
-    "generate_*.py",  # One-off scripts with long strings
-=======
-    # Data generation scripts with long string literals
     "generate_*.py",
->>>>>>> BUG-056
 ]
 
 [tool.ruff.lint]
@@ -74,24 +69,6 @@ select = ["E", "F", "I", "N", "W", "UP"]
 "tests/test_bug_006_experience_schema.py" = ["E402"]
 # Test files with long assertions and test data - hard to wrap meaningfully
 "tests/**/*.py" = ["E501"]
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-# Data generation scripts with long string literals
-=======
-# Generated files have long string literals
->>>>>>> BUG-058
-=======
-# Generated test files have long lines
->>>>>>> BUG-059
-=======
-# Generated test data scripts have long string literals
->>>>>>> BUG-063
-=======
-# Generated test data scripts
->>>>>>> BUG-064
-"generate_*.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -107,18 +84,12 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
-<<<<<<< HEAD
 timeout = 60
-markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "integration: marks tests as integration tests requiring external services (deselect with '-m \"not integration\"')",
-    "cold_start: tests that verify behavior with no pre-existing data (run with '-m cold_start')",
-=======
 addopts = "-m 'not slow'"
 markers = [
     "slow: marks tests as slow (>15s, excluded by default)",
     "integration: marks tests as integration tests requiring external services",
->>>>>>> BUG-055
+    "cold_start: tests that verify behavior with no pre-existing data",
 ]
 
 [dependency-groups]
