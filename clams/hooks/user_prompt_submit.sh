@@ -68,11 +68,12 @@ main() {
 
     # Wait for server to be ready (blocking, up to 30s)
     if ! wait_for_ready 30; then
-        # Server not available - graceful degradation
+        # Server not available - graceful degradation (empty context)
         cat <<EOF
 {
-  "type": "degraded",
-  "reason": "server_timeout"
+  "hookSpecificOutput": {
+    "additionalContext": ""
+  }
 }
 EOF
         exit 0
@@ -87,27 +88,28 @@ EOF
         "{\"query\": $prompt_escaped, \"context_types\": [\"experiences\", \"values\"], \"limit\": 10, \"max_tokens\": 1500}" \
         10)
 
-    # Handle failure
+    # Handle failure - graceful degradation (empty context)
     if [ -z "$context_result" ] || [ "$context_result" = "{}" ]; then
         cat <<EOF
 {
-  "type": "degraded",
-  "reason": "request_failed"
+  "hookSpecificOutput": {
+    "additionalContext": ""
+  }
 }
 EOF
         exit 0
     fi
 
-    # Build output
-    local context_md token_count
+    # Build output using Claude Code's UserPromptSubmit schema
+    # See: https://docs.anthropic.com/en/docs/claude-code/hooks
+    local context_md
     context_md=$(echo "$context_result" | jq -r '.markdown // ""' 2>/dev/null || echo "")
-    token_count=$(echo "$context_result" | jq -r '.token_count // 0' 2>/dev/null || echo "0")
 
     cat <<EOF
 {
-  "type": "rich",
-  "content": $(echo "$context_md" | jq -Rs .),
-  "token_count": $token_count
+  "hookSpecificOutput": {
+    "additionalContext": $(echo "$context_md" | jq -Rs .)
+  }
 }
 EOF
 }
