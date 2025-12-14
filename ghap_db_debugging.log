@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/Users/elliotmilco/Documents/GitHub/clams/generate_db_debugging_ghap.py", line 7, in <module>
+    from clams.observation import (
+    ...<7 lines>...
+    )
+ModuleNotFoundError: No module named 'clams'

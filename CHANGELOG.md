@@ -296,6 +296,150 @@ Created the foundational project structure for the CLAMS server with Python pack
 
 ## Bug Fixes
 
+### BUG-028: Hash/Eq contract violation in ContextItem
+**Type**: Bug Fix
+
+Fixed hash/eq contract violation in `ContextItem` class that caused incorrect behavior when using items in sets or as dict keys.
+
+**Root Cause**: The `__hash__()` method only used `source` and first 100 characters of content, but `__eq__()` also compared full content length. This violated Python's hash/eq contract: equal objects must have equal hashes.
+
+**Changes**:
+- Modified `__hash__()` to include `len(self.content)` in the hash tuple
+- Items with same source and prefix but different lengths now hash differently
+- Maintains performance by still only hashing first 100 characters
+
+### BUG-027: TypeError in list_ghap_entries datetime parsing
+**Type**: Bug Fix
+
+Fixed TypeError when parsing datetime in `list_ghap_entries` due to format mismatch between storage and retrieval.
+
+**Root Cause**: The persister stores datetimes as ISO format strings, but `list_ghap_entries` was using `datetime.fromtimestamp()` expecting Unix timestamps.
+
+**Changes**:
+- Changed `datetime.fromtimestamp()` to `datetime.fromisoformat()` in ghap.py line 563
+- Now correctly parses ISO format strings stored by the persister
+
+### BUG-026: Enum mismatch between JSON schema and validation code
+**Type**: Bug Fix
+
+Fixed enum mismatch between MCP tool JSON schemas and validation code that caused validation errors for schema-advertised values.
+
+**Root Cause**: Tool schemas had hardcoded enum arrays that drifted from the canonical enums in `enums.py`, causing clients using schema-compliant values to fail validation.
+
+**Changes**:
+- Imported all enum constants from `enums.py` into tool schemas
+- Replaced 17 hardcoded enum arrays with constant references (DOMAINS, STRATEGIES, ROOT_CAUSE_CATEGORIES, OUTCOME_STATUS_VALUES, VALID_AXES)
+- Ensures schema and validation code cannot drift apart
+
+### BUG-025: InMemoryVectorStore missing range filter support
+**Type**: Bug Fix
+
+Fixed missing range filter support in `InMemoryVectorStore._apply_filters()` that caused date-filtered searches to return empty results.
+
+**Root Cause**: `InMemoryVectorStore` only supported simple equality filters, while `QdrantVectorStore` supported operator-based filters ($gte, $lte, etc.). Code using date range filters worked in production but failed in tests.
+
+**Changes**:
+- Enhanced `_apply_filters()` to detect and handle operator-based filters
+- Added `_match_operators()` helper supporting `$gte`, `$lte`, `$gt`, `$lt`, `$in` operators
+- Maintains backward compatibility with simple equality filters
+- Now matches QdrantVectorStore filter behavior
+
+### BUG-024: Error message mismatch between InMemoryVectorStore and Searcher
+**Type**: Bug Fix
+
+Fixed error message inconsistency that prevented proper error conversion in the Searcher class when using InMemoryVectorStore.
+
+**Root Cause**: `InMemoryVectorStore` raised errors with "does not exist" message while `Searcher` expected "not found" pattern for `CollectionNotFoundError` conversion.
+
+**Changes**:
+- Changed all error messages in `InMemoryVectorStore` from "does not exist" to "not found"
+- Now matches the pattern expected by Searcher's `CollectionNotFoundError` conversion logic
+- Updated 7 methods: delete_collection, search, upsert, scroll, count, get, delete
+
+### BUG-023: Hardcoded dimension in NomicEmbedding
+**Type**: Bug Fix
+
+Fixed hardcoded embedding dimension in `NomicEmbedding` that caused vector store mismatches when using models with different dimensions.
+
+**Root Cause**: The `dimension` property returned a hardcoded `768` value instead of querying the actual model, causing failures when the model's actual dimension differed.
+
+**Changes**:
+- Removed hardcoded `_DIMENSION = 768` constant
+- Changed `dimension` property to query the model via `get_sentence_embedding_dimension()`
+- Added error handling for when model returns `None`
+
+### BUG-022: Pagination bug in _delete_file_units
+**Type**: Bug Fix
+
+Fixed a pagination bug in `CodeIndexer._delete_file_units()` that left orphaned entries in the vector store when a file had more than 1000 semantic units.
+
+**Root Cause**: The method called `scroll()` only once, fetching the first 1000 entries and deleting them, but never continuing to fetch subsequent pages.
+
+**Changes**:
+- Modified `_delete_file_units()` to use a `while True` loop instead of a single `scroll()` call
+- Now continues deleting until all entries are removed, regardless of count
+- Added `total_deleted` counter for accurate logging
+
+### BUG-021: search_experiences returns internal server error
+**Type**: Bug Fix
+
+Fixed internal server error in search_experiences tool by converting ExperienceResult dataclasses to JSON-serializable dictionaries.
+
+**Changes**:
+- Added dataclass-to-dict conversion in search_experiences tool return path
+- Handles nested objects (root_cause, lesson) and datetime conversion
+- Added regression test to verify JSON serializability
+
+### BUG-020: store_value returns internal server error (regression)
+**Type**: Bug Fix
+
+Fixed internal server error in store_value tool when ValueError is raised by ValueStore.
+
+**Changes**:
+- Added explicit ValueError handler in store_value tool to return validation_error instead of internal_error
+- Added regression test to verify ValueError is properly handled
+
+### BUG-019: validate_value returns internal server error (regression)
+**Type**: Bug Fix
+
+Fixed internal server error in validate_value tool when similarity is None.
+
+**Changes**:
+- Modified validate_value tool to conditionally include similarity field only when not None
+- Added regression test to verify similarity is omitted when None
+
+### BUG-017: Fix get_clusters internal server error
+**Type**: Bug Fix
+
+Fixed `get_clusters` MCP tool returning internal server error when GHAP collections don't exist.
+
+**Changes**:
+- Modified `count_experiences()` in `experience.py` to return 0 when GHAP collections are missing
+- Modified `cluster_axis()` to catch collection-not-found errors and raise a clear ValueError
+- Tool now correctly returns `insufficient_data` error instead of `internal_error`
+
+### BUG-016: Fix resolve_ghap internal server error
+**Type**: Bug Fix
+
+Fixed `resolve_ghap` MCP tool returning internal server error when attempting to persist resolved GHAP entries due to missing vector collections.
+
+**Changes**:
+- Added `ensure_collections()` call in `resolve_ghap` tool before persisting to create GHAP collections if they don't exist
+- Ensures GHAP entries can be properly persisted to vector store on resolution
+
+### BUG-015: Fix list_ghap_entries internal server error
+**Type**: Bug Fix
+
+Fixed a regression where `list_ghap_entries` MCP tool returned internal server error due to missing GHAP collections.
+
+**Changes**:
+- Added `ensure_collections()` call in `list_ghap_entries` tool to create GHAP collections if they don't exist
+- Collections are now lazily created on first access rather than requiring pre-initialization
+
+---
+
+## Bug Fixes (Historical)
+
 ### BUG-014: Fix extreme memory usage in index_codebase (15GB+)
 **Type**: Bug Fix
 

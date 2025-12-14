@@ -243,7 +243,7 @@ start_daemon() {
     fi
 
     # Start daemon
-    "$clams_bin" --daemon --http --port 6334
+    "$clams_bin" --daemon --http --port 6335
 
     # Wait a moment for daemon to start
     sleep 2
@@ -274,7 +274,7 @@ configure_mcp_server() {
             name: "clams",
             config: {
                 type: "sse",
-                url: "http://127.0.0.1:6334/sse"
+                url: "http://127.0.0.1:6335/sse"
             }
         }')
 
@@ -447,7 +447,7 @@ echo "Configuration:"
 echo "  - MCP server: ~/.claude.json (HTTP+SSE transport)"
 echo "  - Hooks: ~/.claude/settings.json"
 echo "  - Storage: ~/.clams/"
-echo "  - Daemon: http://127.0.0.1:6334 (PID file: ~/.clams/server.pid)"
+echo "  - Daemon: http://127.0.0.1:6335 (PID file: ~/.clams/server.pid)"
 if [ "$SKIP_QDRANT" = false ]; then
     echo "  - Qdrant: http://localhost:6333"
 fi

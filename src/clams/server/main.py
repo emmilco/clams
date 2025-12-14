@@ -30,7 +30,7 @@ def parse_args() -> argparse.Namespace:
         epilog="""
 Examples:
   clams-server                          # Run with stdio transport (default)
-  clams-server --http                   # Run with HTTP transport on port 6334
+  clams-server --http                   # Run with HTTP transport on port 6335
   clams-server --http --port 8080       # Run with HTTP transport on port 8080
   clams-server --daemon                 # Run as background daemon (HTTP mode)
   clams-server --stop                   # Stop running daemon
@@ -49,8 +49,8 @@ Examples:
     parser.add_argument(
         "--port",
         type=int,
-        default=6334,
-        help="HTTP server port (default: 6334)",
+        default=6335,
+        help="HTTP server port (default: 6335)",
     )
     parser.add_argument(
         "--daemon",

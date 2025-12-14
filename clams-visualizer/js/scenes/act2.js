@@ -148,6 +148,17 @@ export function setupAct2(timeline, startTime, threeScene = null) {
     console.log(`[Act 2] Scene 1 (GHAP Demo) started at ${timeline.time().toFixed(2)}s`);
   }, [], ghapStart);
 
+  // Camera orbit during GHAP demo (120 degrees over 25 seconds)
+  if (has3D && threeScene) {
+    const ghapCameraState = { orbit: 0 };
+    timeline.to(ghapCameraState, {
+      orbit: 120,
+      duration: 23,
+      ease: 'none',
+      onUpdate: () => threeScene.setCameraOrbit(ghapCameraState.orbit)
+    }, ghapStart + 1);
+  }
+
   // Fade in GHAP card
   timeline.to('#ghap-card', {
     opacity: 1,
@@ -209,34 +220,62 @@ export function setupAct2(timeline, startTime, threeScene = null) {
     console.log(`[Act 2] Scene 2 (Embedding) started at ${timeline.time().toFixed(2)}s`);
   }, [], embeddingStart);
 
+  // Camera orbit during embedding (120 degrees over 20 seconds)
+  if (has3D && threeScene) {
+    const embeddingCameraState = { orbit: 120 }; // Continue from GHAP scene
+    timeline.to(embeddingCameraState, {
+      orbit: 240,
+      duration: 18,
+      ease: 'none',
+      onUpdate: () => threeScene.setCameraOrbit(embeddingCameraState.orbit)
+    }, embeddingStart + 1);
+  }
+
   // 3D: Animate points appearing in space
   if (has3D && pointData.length > 0) {
     // Points appear in a staggered wave over 10 seconds
     const pointAppearDuration = 10;
     const staggerDelay = pointAppearDuration / pointData.length;
 
+    // Store animation states for each point
+    const pointStates = pointData.map(() => ({ opacity: 0, scale: 0.1 }));
+
     pointData.forEach((point, index) => {
-      const pointOpacity = pointCloud.getPointOpacityAnimatable(index);
-      const pointScale = pointCloud.getPointScaleAnimatable(index);
+      const state = pointStates[index];
+      const targetScale = 0.8 + Math.random() * 0.4;
 
-      if (pointOpacity && pointScale) {
-        // Fade in with slight scale pop
-        timeline.to(pointOpacity, {
-          opacity: 1,
-          duration: 0.8,
-          ease: 'power2.out'
-        }, embeddingStart + 2 + (index * staggerDelay));
+      // Fade in with slight scale pop
+      timeline.to(state, {
+        opacity: 1,
+        duration: 0.8,
+        ease: 'power2.out',
+        onUpdate: () => {
+          const sprite = pointCloud.points[index];
+          if (sprite) {
+            sprite.userData.baseOpacity = state.opacity;
+            sprite.material.opacity = state.opacity;
+          }
+        }
+      }, embeddingStart + 2 + (index * staggerDelay));
 
-        // Scale animation: start small, grow to full size
-        timeline.fromTo(pointScale, {
-          scale: 0.1
-        }, {
-          scale: 0.8 + Math.random() * 0.4,
-          duration: 0.6,
-          ease: 'back.out(1.7)'
-        }, embeddingStart + 2 + (index * staggerDelay));
-      }
+      // Scale animation: start small, grow to full size
+      timeline.to(state, {
+        scale: targetScale,
+        duration: 0.6,
+        ease: 'back.out(1.7)',
+        onUpdate: () => {
+          const sprite = pointCloud.points[index];
+          if (sprite) {
+            sprite.userData.originalScale = state.scale;
+            const size = pointCloud.baseSize * state.scale;
+            sprite.scale.set(size, size, 1);
+          }
+        }
+      }, embeddingStart + 2 + (index * staggerDelay));
     });
+
+    // Store states for later fade out
+    pointCloud.pointStates = pointStates;
 
     // Continuous render during point animation
     timeline.call(() => {
@@ -281,14 +320,23 @@ export function setupAct2(timeline, startTime, threeScene = null) {
     duration: 0.5
   }, clusterStart + 1);
 
+  // 3D: Enhanced camera movement during clustering - 120 degrees orbit
+  if (has3D && threeScene) {
+    const clusterCameraState = { orbit: 240 }; // Continue from embedding scene
+    timeline.to(clusterCameraState, {
+      orbit: 360,
+      duration: 23,
+      ease: 'none',
+      onUpdate: () => threeScene.setCameraOrbit(clusterCameraState.orbit)
+    }, clusterStart + 1);
+  }
+
   // 3D: Animate cluster spheres forming
   if (has3D && clusterManager) {
     // Make spheres visible and animate them forming
     CLUSTER_CENTERS.forEach((_, index) => {
       const sphere = clusterManager.getSphere(index);
       if (sphere) {
-        const radiusAnim = sphere.getRadiusAnimatable();
-        const opacityAnim = sphere.getOpacityAnimatable();
         const targetRadius = CLUSTER_RADII[index];
 
         // Stagger sphere appearances
@@ -299,18 +347,20 @@ export function setupAct2(timeline, startTime, threeScene = null) {
           sphere.setVisible(true);
         }, [], clusterStart + 3 + sphereDelay);
 
-        // Animate radius from 0 to target
-        timeline.to(radiusAnim, {
+        // Use plain object for GSAP to animate, then apply via onUpdate
+        const sphereState = { radius: 0, opacity: 0 };
+        timeline.to(sphereState, {
           radius: targetRadius,
           duration: 3,
-          ease: 'elastic.out(1, 0.5)'
+          ease: 'elastic.out(1, 0.5)',
+          onUpdate: () => sphere.setRadius(sphereState.radius)
         }, clusterStart + 3 + sphereDelay);
 
-        // Fade in opacity
-        timeline.to(opacityAnim, {
+        timeline.to(sphereState, {
           opacity: CONFIG.clusters.sphereOpacity,
           duration: 1.5,
-          ease: 'power2.out'
+          ease: 'power2.out',
+          onUpdate: () => sphere.setOpacity(sphereState.opacity)
         }, clusterStart + 3 + sphereDelay);
       }
     });
@@ -341,56 +391,201 @@ export function setupAct2(timeline, startTime, threeScene = null) {
     duration: 0.5
   }, valueStart);
 
+  // Focus cluster for zoom-in (use cluster 0: {x: -25, y: 15, z: -10})
+  const focusCluster = CLUSTER_CENTERS[0];
+
+  // 3D: Zoom in on a specific cluster to show centroid computation
+  if (has3D && threeScene) {
+    const zoomState = {
+      distance: threeScene.getCameraDistance(),
+      lookAtX: 0,
+      lookAtY: 0,
+      lookAtZ: 0,
+      orbit: threeScene.getCameraOrbit()
+    };
+
+    // Zoom in and focus on the first cluster
+    timeline.to(zoomState, {
+      distance: 40, // Zoom in closer
+      lookAtX: focusCluster.x,
+      lookAtY: focusCluster.y,
+      lookAtZ: focusCluster.z,
+      orbit: zoomState.orbit + 30, // Continue orbiting slowly
+      duration: 3,
+      ease: 'power2.inOut',
+      onUpdate: () => {
+        threeScene.setCameraDistance(zoomState.distance);
+        threeScene.setCameraLookAt(zoomState.lookAtX, zoomState.lookAtY, zoomState.lookAtZ);
+        threeScene.setCameraOrbit(zoomState.orbit);
+      }
+    }, valueStart + 1);
+
+    // Continue slow orbit while zoomed in
+    timeline.to(zoomState, {
+      orbit: zoomState.orbit + 60,
+      duration: 10,
+      ease: 'none',
+      onUpdate: () => threeScene.setCameraOrbit(zoomState.orbit)
+    }, valueStart + 4);
+
+    // Zoom back out before end
+    timeline.to(zoomState, {
+      distance: 100,
+      lookAtX: 0,
+      lookAtY: 0,
+      lookAtZ: 0,
+      duration: 3,
+      ease: 'power2.inOut',
+      onUpdate: () => {
+        threeScene.setCameraDistance(zoomState.distance);
+        threeScene.setCameraLookAt(zoomState.lookAtX, zoomState.lookAtY, zoomState.lookAtZ);
+      }
+    }, valueEnd - 5);
+  }
+
+  // Show centroid computation process UI
+  timeline.to('#centroid-process', {
+    opacity: 1,
+    visibility: 'visible',
+    duration: 0.5
+  }, valueStart + 1);
+
+  // Step 1: Find cluster center
+  timeline.to('#centroid-step1', {
+    opacity: 1,
+    visibility: 'visible',
+    x: 0,
+    duration: 0.6,
+    ease: 'power2.out'
+  }, valueStart + 2);
+
   // 3D: Animate centroids appearing at cluster centers
+  // Store centroid states for animations
+  const centroidStates = [];
+
   if (has3D && centroidManager) {
+    // Only animate the focus cluster centroid first (index 0)
+    const focusCentroid = centroidManager.getCentroid(0);
+    if (focusCentroid) {
+      const focusState = { scale: 0, opacity: 0 };
+      centroidStates[0] = focusState;
+
+      // Make the focus centroid visible when step 1 appears
+      timeline.call(() => {
+        focusCentroid.setVisible(true);
+      }, [], valueStart + 3);
+
+      // Animate focus centroid appearing with pulse
+      timeline.to(focusState, {
+        scale: 1.5,
+        opacity: 1,
+        duration: 1,
+        ease: 'back.out(2)',
+        onUpdate: () => {
+          focusCentroid.setScale(focusState.scale);
+          focusCentroid.setOpacity(focusState.opacity);
+        }
+      }, valueStart + 3);
+
+      // Settle to normal scale
+      timeline.to(focusState, {
+        scale: 1,
+        duration: 0.5,
+        ease: 'power2.out',
+        onUpdate: () => focusCentroid.setScale(focusState.scale)
+      }, valueStart + 4);
+    }
+
+    // Step 2: Agent proposes value (after centroid appears)
+    timeline.to('#centroid-step2', {
+      opacity: 1,
+      visibility: 'visible',
+      x: 0,
+      duration: 0.6,
+      ease: 'power2.out'
+    }, valueStart + 5);
+
+    // Step 3: Embed and compare
+    timeline.to('#centroid-step3', {
+      opacity: 1,
+      visibility: 'visible',
+      x: 0,
+      duration: 0.6,
+      ease: 'power2.out'
+    }, valueStart + 7);
+
+    // Pulse the centroid to show comparison
+    if (focusCentroid && centroidStates[0]) {
+      timeline.to(centroidStates[0], {
+        scale: 1.3,
+        duration: 0.3,
+        ease: 'power2.out',
+        onUpdate: () => focusCentroid.setScale(centroidStates[0].scale)
+      }, valueStart + 7.5);
+
+      timeline.to(centroidStates[0], {
+        scale: 1,
+        duration: 0.3,
+        ease: 'power2.in',
+        onUpdate: () => focusCentroid.setScale(centroidStates[0].scale)
+      }, valueStart + 7.8);
+    }
+
+    // Step 4: Value validated
+    timeline.to('#centroid-step4', {
+      opacity: 1,
+      visibility: 'visible',
+      x: 0,
+      duration: 0.6,
+      ease: 'power2.out'
+    }, valueStart + 9);
+
+    // Now show the other centroids appearing
     CLUSTER_CENTERS.forEach((_, index) => {
+      if (index === 0) return; // Skip focus cluster, already shown
+
       const centroid = centroidManager.getCentroid(index);
       if (centroid) {
-        const scaleAnim = centroid.getScaleAnimatable();
-        const opacityAnim = centroid.getOpacityAnimatable();
+        const state = { scale: 0, opacity: 0 };
+        centroidStates[index] = state;
 
-        // Stagger centroid appearances
-        const centroidDelay = index * 1.5;
+        // Stagger other centroid appearances
+        const centroidDelay = (index - 1) * 0.8;
 
-        // Make visible
         timeline.call(() => {
           centroid.setVisible(true);
-        }, [], valueStart + 2 + centroidDelay);
+        }, [], valueStart + 10 + centroidDelay);
 
-        // Animate scale with a pulse effect
-        timeline.fromTo(scaleAnim, {
-          scale: 0
-        }, {
+        timeline.to(state, {
           scale: 1.2,
-          duration: 0.8,
-          ease: 'back.out(2)'
-        }, valueStart + 2 + centroidDelay);
-
-        // Settle to normal scale
-        timeline.to(scaleAnim, {
-          scale: 1,
-          duration: 0.4,
-          ease: 'power2.out'
-        }, valueStart + 2.8 + centroidDelay);
-
-        // Fade in
-        timeline.to(opacityAnim, {
           opacity: 1,
           duration: 0.6,
-          ease: 'power2.out'
-        }, valueStart + 2 + centroidDelay);
+          ease: 'back.out(2)',
+          onUpdate: () => {
+            centroid.setScale(state.scale);
+            centroid.setOpacity(state.opacity);
+          }
+        }, valueStart + 10 + centroidDelay);
+
+        timeline.to(state, {
+          scale: 1,
+          duration: 0.3,
+          ease: 'power2.out',
+          onUpdate: () => centroid.setScale(state.scale)
+        }, valueStart + 10.6 + centroidDelay);
       }
     });
 
-    // After centroids appear, slightly fade cluster spheres to emphasize centroids
+    // Fade cluster spheres to emphasize centroids
     CLUSTER_CENTERS.forEach((_, index) => {
       const sphere = clusterManager.getSphere(index);
       if (sphere) {
-        const opacityAnim = sphere.getOpacityAnimatable();
-        timeline.to(opacityAnim, {
-          opacity: CONFIG.clusters.sphereOpacity * 0.5,
+        const fadeState = { opacity: CONFIG.clusters.sphereOpacity };
+        timeline.to(fadeState, {
+          opacity: CONFIG.clusters.sphereOpacity * 0.3,
           duration: 2,
-          ease: 'power2.out'
+          ease: 'power2.out',
+          onUpdate: () => sphere.setOpacity(fadeState.opacity)
         }, valueStart + 10);
       }
     });
@@ -401,45 +596,58 @@ export function setupAct2(timeline, startTime, threeScene = null) {
     }, [], valueStart + 2);
   }
 
-  // Show value statement
+  // Show value statement (moved later to follow UI steps)
   timeline.to('#value-statement', {
     opacity: 1,
     visibility: 'visible',
     duration: 1.5,
     ease: 'power2.out'
-  }, valueStart + 5);
+  }, valueStart + 11);
+
+  // Fade out centroid process UI
+  timeline.to('#centroid-process, #centroid-step1, #centroid-step2, #centroid-step3, #centroid-step4', {
+    opacity: 0,
+    duration: 1,
+    ease: 'power2.in'
+  }, valueEnd - 6);
 
   // Fade out 3D elements before Act 3
   if (has3D) {
-    // Fade out all points
-    pointData.forEach((point, index) => {
-      const pointOpacity = pointCloud.getPointOpacityAnimatable(index);
-      if (pointOpacity) {
-        timeline.to(pointOpacity, {
+    // Fade out all points using stored states
+    if (pointCloud.pointStates) {
+      pointCloud.pointStates.forEach((state, index) => {
+        timeline.to(state, {
           opacity: 0,
           duration: 2,
-          ease: 'power2.in'
+          ease: 'power2.in',
+          onUpdate: () => {
+            const sprite = pointCloud.points[index];
+            if (sprite) {
+              sprite.userData.baseOpacity = state.opacity;
+              sprite.material.opacity = state.opacity;
+            }
+          }
         }, valueEnd - 3);
-      }
-    });
+      });
+    }
 
     // Fade out cluster spheres
     CLUSTER_CENTERS.forEach((_, index) => {
       const sphere = clusterManager.getSphere(index);
       if (sphere) {
-        const opacityAnim = sphere.getOpacityAnimatable();
-        const radiusAnim = sphere.getRadiusAnimatable();
-
-        timeline.to(opacityAnim, {
+        const fadeOutState = { opacity: sphere.opacity, radius: sphere.radius };
+        timeline.to(fadeOutState, {
           opacity: 0,
           duration: 2,
-          ease: 'power2.in'
+          ease: 'power2.in',
+          onUpdate: () => sphere.setOpacity(fadeOutState.opacity)
         }, valueEnd - 3);
 
-        timeline.to(radiusAnim, {
+        timeline.to(fadeOutState, {
           radius: 0,
           duration: 2,
-          ease: 'power2.in'
+          ease: 'power2.in',
+          onUpdate: () => sphere.setRadius(fadeOutState.radius)
         }, valueEnd - 3);
       }
     });
@@ -447,20 +655,20 @@ export function setupAct2(timeline, startTime, threeScene = null) {
     // Fade out centroids
     CLUSTER_CENTERS.forEach((_, index) => {
       const centroid = centroidManager.getCentroid(index);
-      if (centroid) {
-        const opacityAnim = centroid.getOpacityAnimatable();
-        const scaleAnim = centroid.getScaleAnimatable();
-
-        timeline.to(opacityAnim, {
+      const state = centroidStates[index];
+      if (centroid && state) {
+        timeline.to(state, {
           opacity: 0,
           duration: 2,
-          ease: 'power2.in'
+          ease: 'power2.in',
+          onUpdate: () => centroid.setOpacity(state.opacity)
         }, valueEnd - 3);
 
-        timeline.to(scaleAnim, {
+        timeline.to(state, {
           scale: 0,
           duration: 2,
-          ease: 'power2.in'
+          ease: 'power2.in',
+          onUpdate: () => centroid.setScale(state.scale)
         }, valueEnd - 3);
       }
     });

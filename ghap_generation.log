@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-029/generate_ghap_entries.py", line 17, in <module>
+    from clams.embedding import get_embedding_service
+ImportError: cannot import name 'get_embedding_service' from 'clams.embedding' (/Users/elliotmilco/Documents/GitHub/clams/src/clams/embedding/__init__.py). Did you mean: 'EmbeddingService'?

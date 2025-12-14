@@ -170,24 +170,33 @@ This ensures:
 - Clean, well-structured artifacts
 - Issues caught early (before human review or implementation)
 
+### Agent Model
+
+**IMPORTANT: Always use Opus agents for all worker tasks.** When dispatching workers via the Task tool, always specify `model: "opus"`. This applies to:
+- Implementers (backend, frontend, infra)
+- Reviewers (spec, proposal, code, bugfix)
+- Architects
+- Bug investigators
+- All other specialist roles
+
 ### Review Model
 
-Use **sonnet** for all reviews to ensure thorough, high-quality feedback.
+Use **opus** for all reviews to ensure thorough, high-quality feedback.
 
 | Review # | Model | Purpose |
 |----------|-------|---------|
-| 1st | sonnet | Catch issues, verify structure and completeness |
-| 2nd | sonnet | Independent verification, catch anything missed |
+| 1st | opus | Catch issues, verify structure and completeness |
+| 2nd | opus | Independent verification, catch anything missed |
 
 **IMPORTANT RULES**:
 1. **Reviews are SEQUENTIAL, not parallel** - Wait for reviewer #1 to complete before dispatching reviewer #2. This avoids wasting a second review if the first one requests changes.
 2. **Reviewers MUST record their outcome** - The reviewer must run `.claude/bin/claws-review record` before completing. The transition gate verifies reviews exist in the database.
 
 **Workflow**:
-1. Dispatch sonnet reviewer #1
+1. Dispatch opus reviewer #1
 2. Wait for reviewer #1 to complete and record their review
 3. If changes requested → author fixes → clear reviews → restart from step 1
-4. If approved → dispatch sonnet reviewer #2
+4. If approved → dispatch opus reviewer #2
 5. Wait for reviewer #2 to complete and record their review
 6. If changes requested → author fixes → clear reviews → restart from step 1
 7. If both approve → gate passes (transition command verifies 2 approved reviews exist)

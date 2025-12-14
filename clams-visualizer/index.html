@@ -107,6 +107,26 @@
       Points cluster by semantic similarity
     </div>
 
+    <!-- Act 2: Centroid computation explanation -->
+    <div id="centroid-process" class="centroid-process hidden">
+      <div id="centroid-step1" class="centroid-step hidden">
+        <span class="step-icon">1</span>
+        <span class="step-text">Find cluster center in embedding space</span>
+      </div>
+      <div id="centroid-step2" class="centroid-step hidden">
+        <span class="step-icon">2</span>
+        <span class="step-text">Agent proposes value that summarizes nearby memories</span>
+      </div>
+      <div id="centroid-step3" class="centroid-step hidden">
+        <span class="step-icon">3</span>
+        <span class="step-text">Embed proposed value, compare to centroid</span>
+      </div>
+      <div id="centroid-step4" class="centroid-step hidden">
+        <span class="step-icon">✓</span>
+        <span class="step-text">Value validated: close to cluster center</span>
+      </div>
+    </div>
+
     <div id="value-statement" class="value-text hidden">
       "When auth tests fail, check token expiration first"
     </div>
@@ -208,7 +228,7 @@
     onerror="handleCDNError('gsap')">
   </script>
   <script
-    src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.170.0/three.min.js"
+    src="https://unpkg.com/three@0.160.0/build/three.min.js"
     crossorigin="anonymous"
     referrerpolicy="no-referrer"
     onerror="handleCDNError('three')">

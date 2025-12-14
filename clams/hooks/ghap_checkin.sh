@@ -10,7 +10,7 @@
 set -uo pipefail  # No -e: we handle errors explicitly
 
 # Configuration
-SERVER_PORT="${CLAMS_PORT:-6334}"
+SERVER_PORT="${CLAMS_PORT:-6335}"
 SERVER_HOST="${CLAMS_HOST:-127.0.0.1}"
 SERVER_URL="http://${SERVER_HOST}:${SERVER_PORT}"
 

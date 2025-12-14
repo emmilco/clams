@@ -269,11 +269,12 @@ cmd_check() {
             # Check for actual implementation code
             echo "--- Gate: Implementation code exists ---"
             local code_changes
-            code_changes=$(cd "$worktree" && git diff main...HEAD --name-only -- 'src/' 'tests/' 2>/dev/null | grep -v '__pycache__' | head -10)
+            # Check src/, tests/, or clams-visualizer/ (for frontend-only projects)
+            code_changes=$(cd "$worktree" && git diff main...HEAD --name-only -- 'src/' 'tests/' 'clams-visualizer/' 2>/dev/null | grep -v '__pycache__' | head -10)
             if [[ -z "$code_changes" ]]; then
                 echo "✗ Implementation code exists: FAIL"
                 echo ""
-                echo "No changes found in src/ or tests/ directories."
+                echo "No changes found in src/, tests/, or clams-visualizer/ directories."
                 echo "The task appears to have only documentation changes."
                 failed=1
             else
@@ -281,21 +282,44 @@ cmd_check() {
                 echo "Changed files:"
                 echo "$code_changes" | sed 's/^/  /'
             fi
-            echo ""
-            if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
-                failed=1
+
+            # Check if this is a frontend-only project (clams-visualizer)
+            local is_frontend_only=0
+            if [[ -n "$(cd "$worktree" && git diff main...HEAD --name-only -- 'clams-visualizer/' 2>/dev/null)" ]]; then
+                local has_python_changes
+                has_python_changes=$(cd "$worktree" && git diff main...HEAD --name-only -- 'src/' 'tests/' 2>/dev/null | grep '\.py$' || true)
+                if [[ -z "$has_python_changes" ]]; then
+                    is_frontend_only=1
+                    echo ""
+                    echo "Note: This is a frontend-only project (clams-visualizer/). Python checks skipped."
+                fi
             fi
-            echo ""
-            if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
-                failed=1
-            fi
-            echo ""
-            if ! run_gate "Type check clean" "check_types.sh" "$worktree"; then
-                failed=1
-            fi
-            echo ""
-            if ! run_gate "No untracked TODOs" "check_todos.sh" "$worktree"; then
-                failed=1
+
+            # Skip Python checks for frontend-only projects
+            if [[ $is_frontend_only -eq 1 ]]; then
+                echo ""
+                echo "--- Skipping Python checks (frontend-only project) ---"
+                echo "✓ Tests pass: SKIPPED (no Python code)"
+                echo "✓ Linter clean: SKIPPED (no Python code)"
+                echo "✓ Type check clean: SKIPPED (no Python code)"
+                echo "✓ No untracked TODOs: SKIPPED (no Python code)"
+            else
+                echo ""
+                if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
+                    failed=1
+                fi
+                echo ""
+                if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
+                    failed=1
+                fi
+                echo ""
+                if ! run_gate "Type check clean" "check_types.sh" "$worktree"; then
+                    failed=1
+                fi
+                echo ""
+                if ! run_gate "No untracked TODOs" "check_todos.sh" "$worktree"; then
+                    failed=1
+                fi
             fi
             ;;
 

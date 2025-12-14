@@ -125,6 +125,10 @@ function handleResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+// Camera look-at target (can be animated)
+let cameraLookAt = { x: 0, y: 0, z: 0 };
+let cameraDistance = cameraOrbitRadius;
+
 /**
  * Set camera orbit angle (controlled by timeline)
  * @param {number} degrees - Orbit angle in degrees (0-360)
@@ -133,15 +137,44 @@ function setCameraOrbit(degrees) {
   if (!camera) return;
 
   cameraOrbitAngle = degrees;
-  const radians = (degrees * Math.PI) / 180;
+  updateCameraPosition();
+}
+
+/**
+ * Set camera distance from look-at point
+ * @param {number} distance - Distance from target
+ */
+function setCameraDistance(distance) {
+  cameraDistance = distance;
+  updateCameraPosition();
+}
+
+/**
+ * Set camera look-at target
+ * @param {number} x
+ * @param {number} y
+ * @param {number} z
+ */
+function setCameraLookAt(x, y, z) {
+  cameraLookAt = { x, y, z };
+  updateCameraPosition();
+}
+
+/**
+ * Update camera position based on orbit, distance, and look-at
+ */
+function updateCameraPosition() {
+  if (!camera) return;
+
+  const radians = (cameraOrbitAngle * Math.PI) / 180;
   const tiltRadians = (CONFIG.orbit.tiltAngle * Math.PI) / 180;
 
-  // Calculate camera position on orbit circle
-  camera.position.x = Math.sin(radians) * cameraOrbitRadius;
-  camera.position.z = Math.cos(radians) * cameraOrbitRadius;
-  camera.position.y = Math.sin(tiltRadians) * cameraOrbitRadius * 0.2;
+  // Calculate camera position relative to look-at point
+  camera.position.x = cameraLookAt.x + Math.sin(radians) * cameraDistance;
+  camera.position.z = cameraLookAt.z + Math.cos(radians) * cameraDistance;
+  camera.position.y = cameraLookAt.y + Math.sin(tiltRadians) * cameraDistance * 0.2;
 
-  camera.lookAt(0, 0, 0);
+  camera.lookAt(cameraLookAt.x, cameraLookAt.y, cameraLookAt.z);
 }
 
 /**
@@ -186,6 +219,12 @@ function getSceneAPI() {
     // Camera controls (for timeline)
     setCameraOrbit,
     getCameraOrbit,
+    setCameraDistance,
+    setCameraLookAt,
+
+    // Get current camera state
+    getCameraDistance: () => cameraDistance,
+    getCameraLookAt: () => ({ ...cameraLookAt }),
 
     // Rendering
     render,

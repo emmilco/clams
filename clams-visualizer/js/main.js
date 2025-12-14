@@ -119,14 +119,16 @@ async function init() {
   // Setup camera orbit animation (slow orbit throughout the animation)
   // Camera orbits ~15-30 degrees per minute, so over 3 minutes = 45-90 degrees
   if (threeScene) {
-    const orbitAnimatable = createOrbitAnimatable();
+    // Use plain object for GSAP, apply via onUpdate
+    const orbitState = { angle: 0 };
 
     // Add camera orbit to master timeline
     // Orbit from 0 to 60 degrees over the full 180 seconds
-    master.to(orbitAnimatable, {
+    master.to(orbitState, {
       angle: 60,
       duration: TOTAL_DURATION,
-      ease: 'none'
+      ease: 'none',
+      onUpdate: () => threeScene.setCameraOrbit(orbitState.angle)
     }, 0);
 
     console.log('Camera orbit animation added to timeline');

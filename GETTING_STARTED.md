@@ -29,7 +29,7 @@ export CLAMS_JOURNAL_PATH=/custom/journal
 
 ```bash
 # Qdrant URL (default: http://localhost:6333)
-export CLAMS_QDRANT_URL=http://localhost:6334
+export CLAMS_QDRANT_URL=http://localhost:6333
 ```
 
 ### Embedding Models
@@ -65,7 +65,7 @@ To make configuration persistent, add exports to `~/.claude.json` using the `env
       "args": [],
       "env": {
         "CLAMS_LOG_LEVEL": "DEBUG",
-        "CLAMS_QDRANT_URL": "http://localhost:6334"
+        "CLAMS_QDRANT_URL": "http://localhost:6333"
       }
     }
   }

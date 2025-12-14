@@ -28,7 +28,7 @@ from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
-from starlette.routing import Route
+from starlette.routing import Mount, Route
 
 from clams.server.tools import ServiceContainer
 
@@ -70,7 +70,7 @@ class HttpServer:
         services: ServiceContainer,
         tool_registry: dict[str, Callable[..., Coroutine[Any, Any, Any]]],
         host: str = "127.0.0.1",
-        port: int = 6334,
+        port: int = 6335,
     ) -> None:
         """Initialize HTTP server.
 
@@ -79,7 +79,7 @@ class HttpServer:
             services: Service container for cleanup on shutdown
             tool_registry: Dictionary mapping tool names to async functions
             host: Host to bind to (default: 127.0.0.1 for security)
-            port: Port to bind to (default: 6334)
+            port: Port to bind to (default: 6335)
         """
         self.server = server
         self.services = services
@@ -100,23 +100,35 @@ class HttpServer:
             "version": "0.1.0",
         })
 
-    async def sse_handler(self, request: Request) -> Response:
-        """SSE connection handler for Claude Code.
+    def sse_asgi_app(self) -> Any:
+        """Return ASGI app that handles both GET (SSE) and POST (messages).
 
-        Establishes a long-lived SSE connection for bidirectional
-        communication with the MCP client.
+        GET requests establish SSE connections for server-to-client events.
+        POST requests deliver client messages to an established session.
         """
-        logger.info("http.sse_connection_started")
-        async with self.sse_transport.connect_sse(
-            request.scope, request.receive, request._send
-        ) as (read_stream, write_stream):
-            await self.server.run(
-                read_stream,
-                write_stream,
-                self.server.create_initialization_options(),
-            )
-        logger.info("http.sse_connection_closed")
-        return Response()
+        async def app(scope: Any, receive: Any, send: Any) -> None:
+            method = scope.get("method", "GET")
+
+            if method == "GET":
+                logger.info("http.sse_connection_started")
+                request = Request(scope, receive, send)
+                async with self.sse_transport.connect_sse(
+                    scope, receive, request._send
+                ) as (read_stream, write_stream):
+                    await self.server.run(
+                        read_stream,
+                        write_stream,
+                        self.server.create_initialization_options(),
+                    )
+                logger.info("http.sse_connection_closed")
+            elif method == "POST":
+                logger.info("http.sse_post_received")
+                await self.sse_transport.handle_post_message(scope, receive, send)
+            else:
+                response = Response("Method not allowed", status_code=405)
+                await response(scope, receive, send)
+
+        return app
 
     async def api_call_handler(self, request: Request) -> JSONResponse:
         """Direct tool call endpoint for hook scripts (POST /api/call).
@@ -195,11 +207,15 @@ class HttpServer:
                 status_code=500,
             )
 
-    def create_app(self) -> Starlette:
-        """Create the Starlette application with routes and middleware."""
+    def create_app(self) -> Any:
+        """Create the ASGI application with routes and middleware.
+
+        Returns a wrapper ASGI app that handles /sse directly (to avoid
+        Starlette's trailing slash redirect) and delegates other routes
+        to Starlette.
+        """
         routes = [
             Route("/health", self.health_handler, methods=["GET"]),
-            Route("/sse", self.sse_handler, methods=["GET"]),
             Route("/api/call", self.api_call_handler, methods=["POST"]),
         ]
 
@@ -212,7 +228,18 @@ class HttpServer:
             )
         ]
 
-        return Starlette(routes=routes, middleware=middleware)
+        starlette_app = Starlette(routes=routes, middleware=middleware)
+        sse_app = self.sse_asgi_app()
+
+        # Wrap to intercept /sse requests before Starlette
+        async def app(scope: Any, receive: Any, send: Any) -> None:
+            path = scope.get("path", "")
+            if path == "/sse" or path.startswith("/sse?"):
+                await sse_app(scope, receive, send)
+            else:
+                await starlette_app(scope, receive, send)
+
+        return app
 
     async def run(self) -> None:
         """Run the HTTP server.
