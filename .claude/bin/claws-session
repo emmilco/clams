@@ -5,7 +5,8 @@
 # Usage:
 #   claws-session save [--continue] [--no-auto-commit]  Save handoff from stdin
 #   claws-session list                                  List recent sessions
-#   claws-session show <id>                             Show a specific session's handoff
+#   claws-session show <id>                             Show a session's handoff
+#   claws-session next-commands                         Generate next commands for active tasks
 #
 # The 'save' command:
 # - Reads the handoff content from stdin (raw markdown)
@@ -36,6 +37,177 @@ if [[ ! -f "$DB_PATH" ]]; then
     echo "Error: Database not found at $DB_PATH. Run claws-init first." >&2
     exit 1
 fi
+
+# Get the next action command for a task based on its phase
+# Usage: get_next_action <task_id>
+# Returns a bash command or comment describing the next action
+get_next_action() {
+    local task_id="$1"
+    local phase task_type
+    read -r phase task_type < <(sqlite3 "$DB_PATH" "SELECT phase, task_type FROM tasks WHERE id = '$task_id';" | tr '|' ' ')
+
+    if [[ -z "$phase" ]]; then
+        echo "# Task not found: $task_id"
+        return
+    fi
+
+    if [[ "$task_type" == "bug" ]]; then
+        case "$phase" in
+            REPORTED)
+                echo "# Dispatch bug investigator for $task_id"
+                ;;
+            INVESTIGATED)
+                echo ".claude/bin/claws-gate check $task_id INVESTIGATED-FIXED"
+                ;;
+            FIXED)
+                echo "# Dispatch reviewer #1 for $task_id"
+                ;;
+            REVIEWED)
+                echo ".claude/bin/claws-gate check $task_id REVIEWED-TESTED"
+                ;;
+            TESTED)
+                echo ".claude/bin/claws-gate check $task_id TESTED-MERGED"
+                ;;
+            MERGED)
+                echo ".claude/bin/claws-worktree merge $task_id"
+                ;;
+            DONE)
+                echo "# $task_id is complete"
+                ;;
+            *)
+                echo "# Check task status: .claude/bin/claws-task show $task_id"
+                ;;
+        esac
+    else
+        # Feature task
+        case "$phase" in
+            SPEC)
+                echo "# Dispatch spec reviewer #1 for $task_id"
+                ;;
+            DESIGN)
+                echo "# Dispatch architect or proposal reviewer for $task_id"
+                ;;
+            IMPLEMENT)
+                echo ".claude/bin/claws-gate check $task_id IMPLEMENT-CODE_REVIEW"
+                ;;
+            CODE_REVIEW)
+                echo "# Dispatch code reviewer for $task_id"
+                ;;
+            TEST)
+                echo ".claude/bin/claws-gate check $task_id TEST-INTEGRATE"
+                ;;
+            INTEGRATE)
+                echo ".claude/bin/claws-worktree merge $task_id"
+                ;;
+            VERIFY)
+                echo "# Verify acceptance criteria and transition to DONE: $task_id"
+                ;;
+            DONE)
+                echo "# $task_id is complete"
+                ;;
+            *)
+                echo "# Check task status: .claude/bin/claws-task show $task_id"
+                ;;
+        esac
+    fi
+}
+
+# Get description of next action for a task (human-readable)
+# Usage: describe_next_action <task_id>
+describe_next_action() {
+    local task_id="$1"
+    local phase task_type
+    read -r phase task_type < <(sqlite3 "$DB_PATH" "SELECT phase, task_type FROM tasks WHERE id = '$task_id';" | tr '|' ' ')
+
+    if [[ -z "$phase" ]]; then
+        echo "Task not found"
+        return
+    fi
+
+    if [[ "$task_type" == "bug" ]]; then
+        case "$phase" in
+            REPORTED) echo "Dispatch bug investigator" ;;
+            INVESTIGATED) echo "Run gate check and transition to FIXED" ;;
+            FIXED) echo "Dispatch reviewer #1" ;;
+            REVIEWED) echo "Run gate check and transition to TESTED" ;;
+            TESTED) echo "Run gate check and transition to MERGED" ;;
+            MERGED) echo "Merge to main and verify" ;;
+            DONE) echo "Complete" ;;
+            *) echo "Check task status" ;;
+        esac
+    else
+        case "$phase" in
+            SPEC) echo "Dispatch spec reviewer #1" ;;
+            DESIGN) echo "Dispatch architect or proposal reviewer" ;;
+            IMPLEMENT) echo "Run gate check and transition to CODE_REVIEW" ;;
+            CODE_REVIEW) echo "Dispatch code reviewer #1" ;;
+            TEST) echo "Run gate check and transition to INTEGRATE" ;;
+            INTEGRATE) echo "Merge to main" ;;
+            VERIFY) echo "Verify acceptance criteria" ;;
+            DONE) echo "Complete" ;;
+            *) echo "Check task status" ;;
+        esac
+    fi
+}
+
+# Generate next commands section for active tasks
+# Usage: generate_next_commands
+# Outputs markdown with copy-paste ready commands
+generate_next_commands() {
+    # Get active tasks (not DONE)
+    local active_tasks
+    active_tasks=$(sqlite3 "$DB_PATH" "SELECT id FROM tasks WHERE phase != 'DONE' ORDER BY updated_at DESC;")
+
+    if [[ -z "$active_tasks" ]]; then
+        echo "## Next Commands"
+        echo ""
+        echo "No active tasks."
+        return
+    fi
+
+    # Find highest priority task (most recently updated non-DONE task)
+    local priority_task
+    priority_task=$(echo "$active_tasks" | head -1)
+
+    echo "## Next Commands"
+    echo ""
+    echo "Execute these commands to continue work:"
+    echo ""
+    echo '```bash'
+    echo "# Resume task $priority_task"
+    echo ".claude/bin/claws-task show $priority_task"
+
+    # Get worktree path if exists
+    local worktree_path
+    worktree_path=$(sqlite3 "$DB_PATH" "SELECT worktree_path FROM tasks WHERE id = '$priority_task';")
+    if [[ -n "$worktree_path" && "$worktree_path" != "NULL" ]]; then
+        echo "cd $worktree_path"
+    fi
+
+    echo ""
+    echo "# Next action based on phase"
+    get_next_action "$priority_task"
+    echo '```'
+
+    echo ""
+    echo "## Pending Actions"
+    echo ""
+
+    # List all active tasks with their next actions
+    while IFS= read -r task_id; do
+        if [[ -n "$task_id" ]]; then
+            local phase
+            phase=$(sqlite3 "$DB_PATH" "SELECT phase FROM tasks WHERE id = '$task_id';")
+            local description
+            description=$(describe_next_action "$task_id")
+            echo "- **$task_id** ($phase): $description"
+        fi
+    done <<< "$active_tasks"
+}
+
+cmd_next_commands() {
+    generate_next_commands
+}
 
 cmd_save() {
     local needs_continuation=0
@@ -213,11 +385,15 @@ case "$command" in
         shift
         cmd_show "${1:-}"
         ;;
+    next-commands)
+        cmd_next_commands
+        ;;
     *)
         echo "Usage:"
         echo "  claws-session save [--continue] [--no-auto-commit]  Save handoff from stdin"
         echo "  claws-session list                                  List recent sessions"
         echo "  claws-session show <id>                             Show a session's handoff"
+        echo "  claws-session next-commands                         Generate next commands for active tasks"
         echo ""
         echo "Examples:"
         echo "  # Save handoff (pipe markdown content to stdin)"
@@ -231,6 +407,9 @@ case "$command" in
         echo "  cat <<'EOF' | .claude/bin/claws-session save --continue"
         echo "  ..."
         echo "  EOF"
+        echo ""
+        echo "  # Generate next commands for current tasks"
+        echo "  .claude/bin/claws-session next-commands"
         exit 1
         ;;
 esac
