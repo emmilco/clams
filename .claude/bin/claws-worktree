@@ -3,12 +3,23 @@
 # claws-worktree: Git worktree lifecycle management
 #
 # Usage:
+<<<<<<< HEAD
 #   claws-worktree create <task_id>       Create worktree for task
 #   claws-worktree remove <task_id>       Remove worktree (no merge)
 #   claws-worktree list                   List all worktrees
 #   claws-worktree merge <task_id> [--skip-sync]  Merge to main and cleanup
 #   claws-worktree path <task_id>         Print worktree path
 #   claws-worktree health [--fix]         Audit worktree health and report issues
+=======
+#   claws-worktree create <task_id>                   Create worktree for task
+#   claws-worktree remove <task_id>                   Remove worktree (no merge)
+#   claws-worktree list                               List all worktrees
+#   claws-worktree merge <task_id> [--check-only] [--force]
+#                                                     Merge to main and cleanup
+#     --check-only: Only check for conflicts, don't merge
+#     --force: Attempt merge even if conflicts detected
+#   claws-worktree path <task_id>                     Print worktree path
+>>>>>>> BUG-063
 
 set -euo pipefail
 
@@ -25,7 +36,14 @@ usage() {
     echo "  claws-worktree create <task_id>   Create worktree for task"
     echo "  claws-worktree remove <task_id>   Remove worktree (no merge)"
     echo "  claws-worktree list               List all worktrees"
+<<<<<<< HEAD
     echo "  claws-worktree merge <task_id> [--skip-sync]  Merge to main and cleanup"
+=======
+    echo "  claws-worktree merge <task_id> [--check-only] [--force]"
+    echo "                                    Merge to main and cleanup"
+    echo "    --check-only: Only check for conflicts, don't merge"
+    echo "    --force: Attempt merge even if conflicts detected"
+>>>>>>> BUG-063
     echo "  claws-worktree path <task_id>     Print worktree path"
     echo "  claws-worktree health [--fix]     Audit worktree health"
     exit 1
@@ -131,8 +149,51 @@ WHERE worktree_path IS NOT NULL AND worktree_path != '';
 EOF
 }
 
+# Check for merge conflicts without actually merging
+# Returns: 0 if no conflicts, 1 if conflicts exist
+# Outputs: List of conflicting files to stdout if conflicts exist
+check_merge_conflicts() {
+    local task_id="$1"
+    local has_conflicts=0
+    local conflicting_files=""
+
+    # Save current state
+    local original_branch
+    original_branch=$(git rev-parse --abbrev-ref HEAD)
+    local original_head
+    original_head=$(git rev-parse HEAD)
+
+    # Ensure we're on main
+    if [[ "$original_branch" != "main" ]]; then
+        git checkout main --quiet 2>/dev/null
+    fi
+
+    # Try merge with --no-commit to detect conflicts
+    if ! git merge --no-commit --no-ff "$task_id" 2>/dev/null; then
+        has_conflicts=1
+        # Get list of conflicting files
+        conflicting_files=$(git diff --name-only --diff-filter=U 2>/dev/null || echo "")
+    fi
+
+    # Abort the test merge to restore clean state
+    git merge --abort 2>/dev/null || true
+
+    # Restore original state if we changed branches
+    if [[ "$original_branch" != "main" ]]; then
+        git checkout "$original_branch" --quiet 2>/dev/null || true
+    fi
+
+    # Output conflicting files if any
+    if [[ -n "$conflicting_files" ]]; then
+        echo "$conflicting_files"
+    fi
+
+    return $has_conflicts
+}
+
 cmd_merge() {
     local task_id="$1"
+<<<<<<< HEAD
     shift || true
     local skip_sync=false
 
@@ -141,6 +202,21 @@ cmd_merge() {
         case "$1" in
             --skip-sync)
                 skip_sync=true
+=======
+    shift  # Remove task_id from arguments
+
+    # Parse options
+    local check_only=false
+    local force=false
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --check-only)
+                check_only=true
+                shift
+                ;;
+            --force)
+                force=true
+>>>>>>> BUG-063
                 shift
                 ;;
             *)
@@ -157,23 +233,27 @@ cmd_merge() {
         exit 1
     fi
 
-    # Check for merge lock (system DEGRADED)
-    local merge_lock
-    merge_lock=$(sqlite3 "$DB_PATH" "SELECT value FROM system_counters WHERE name = 'merge_lock';" 2>/dev/null || echo "0")
-    if [[ "$merge_lock" -gt 0 ]]; then
-        echo "Error: Merge lock is active (system DEGRADED)" >&2
-        echo "E2E tests must pass before merging. Run claws-status health for details." >&2
-        exit 1
+    # Check for merge lock (system DEGRADED) - skip for check-only
+    if [[ "$check_only" != "true" ]]; then
+        local merge_lock
+        merge_lock=$(sqlite3 "$DB_PATH" "SELECT value FROM system_counters WHERE name = 'merge_lock';" 2>/dev/null || echo "0")
+        if [[ "$merge_lock" -gt 0 ]]; then
+            echo "Error: Merge lock is active (system DEGRADED)" >&2
+            echo "E2E tests must pass before merging. Run claws-status health for details." >&2
+            exit 1
+        fi
     fi
 
-    # Check if caller is inside the worktree being merged/removed
-    local current_dir
-    current_dir=$(pwd 2>/dev/null || echo "")
-    if [[ "$current_dir" == "$worktree_path"* ]]; then
-        echo "Error: Your shell is inside $worktree_path which will be deleted after merge." >&2
-        echo "First run: cd $MAIN_REPO" >&2
-        echo "Then retry this command." >&2
-        exit 1
+    # Check if caller is inside the worktree being merged/removed - skip for check-only
+    if [[ "$check_only" != "true" ]]; then
+        local current_dir
+        current_dir=$(pwd 2>/dev/null || echo "")
+        if [[ "$current_dir" == "$worktree_path"* ]]; then
+            echo "Error: Your shell is inside $worktree_path which will be deleted after merge." >&2
+            echo "First run: cd $MAIN_REPO" >&2
+            echo "Then retry this command." >&2
+            exit 1
+        fi
     fi
 
     cd "$MAIN_REPO"
@@ -181,6 +261,49 @@ cmd_merge() {
     # Ensure we're on main and up to date
     git checkout main
     git pull origin main 2>/dev/null || true  # May fail if no remote
+
+    # Pre-merge conflict check
+    echo "Checking for merge conflicts..."
+    local conflicting_files
+    if ! conflicting_files=$(check_merge_conflicts "$task_id"); then
+        echo ""
+        echo "WARNING: Merge would result in conflicts!"
+        echo ""
+        echo "Conflicting files:"
+        echo "$conflicting_files" | while read -r file; do
+            echo "  - $file"
+        done
+        echo ""
+
+        if [[ "$check_only" == "true" ]]; then
+            echo "Merge check: CONFLICTS"
+            echo ""
+            echo "Options:"
+            echo "  1. Rebase worktree on main first"
+            echo "  2. Resolve conflicts in worktree before merge"
+            echo "  3. Use --force to attempt merge anyway"
+            exit 1
+        fi
+
+        if [[ "$force" != "true" ]]; then
+            echo "Options:"
+            echo "  1. Rebase worktree on main first"
+            echo "  2. Resolve conflicts in worktree before merge"
+            echo "  3. Use --force to attempt merge anyway"
+            echo ""
+            echo "Merge aborted. Use --force to proceed anyway."
+            exit 1
+        fi
+
+        echo "Proceeding with merge despite conflicts (--force specified)..."
+        echo ""
+    else
+        if [[ "$check_only" == "true" ]]; then
+            echo "Merge check: OK (no conflicts detected)"
+            exit 0
+        fi
+        echo "No conflicts detected."
+    fi
 
     # Merge the task branch
     echo "Merging $task_id into main..."
