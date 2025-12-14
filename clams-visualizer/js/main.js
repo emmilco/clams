@@ -12,7 +12,7 @@ import { CONFIG, TOTAL_DURATION, ACT_TIMES } from './config.js';
 import { initTimelineControls } from './timeline-controller.js';
 import { initThreeScene, createOrbitAnimatable } from './three-setup.js';
 import { setupAct1 } from './scenes/act1.js';
-import { setupAct2 } from './scenes/act2.js';
+import { setupAct2, cleanupAct2 } from './scenes/act2.js';
 import { setupAct3 } from './scenes/act3.js';
 
 // Check WebGL support (additional check in case module loads before inline script)
@@ -107,6 +107,8 @@ async function init() {
     onComplete: () => {
       console.log('Animation complete!');
       timelineUI.setPlaying(false);
+      // Clean up 3D resources from Act 2
+      cleanupAct2();
     }
   });
 
