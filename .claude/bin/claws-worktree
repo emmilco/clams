@@ -3,23 +3,13 @@
 # claws-worktree: Git worktree lifecycle management
 #
 # Usage:
-<<<<<<< HEAD
 #   claws-worktree create <task_id>       Create worktree for task
 #   claws-worktree remove <task_id>       Remove worktree (no merge)
 #   claws-worktree list                   List all worktrees
-#   claws-worktree merge <task_id> [--skip-sync]  Merge to main and cleanup
+#   claws-worktree merge <task_id> [--skip-sync] [--check-only] [--force]
+#                                         Merge to main and cleanup
 #   claws-worktree path <task_id>         Print worktree path
-#   claws-worktree health [--fix]         Audit worktree health and report issues
-=======
-#   claws-worktree create <task_id>                   Create worktree for task
-#   claws-worktree remove <task_id>                   Remove worktree (no merge)
-#   claws-worktree list                               List all worktrees
-#   claws-worktree merge <task_id> [--check-only] [--force]
-#                                                     Merge to main and cleanup
-#     --check-only: Only check for conflicts, don't merge
-#     --force: Attempt merge even if conflicts detected
-#   claws-worktree path <task_id>                     Print worktree path
->>>>>>> BUG-063
+#   claws-worktree health [--fix]         Audit worktree health
 
 set -euo pipefail
 
@@ -36,14 +26,11 @@ usage() {
     echo "  claws-worktree create <task_id>   Create worktree for task"
     echo "  claws-worktree remove <task_id>   Remove worktree (no merge)"
     echo "  claws-worktree list               List all worktrees"
-<<<<<<< HEAD
-    echo "  claws-worktree merge <task_id> [--skip-sync]  Merge to main and cleanup"
-=======
-    echo "  claws-worktree merge <task_id> [--check-only] [--force]"
+    echo "  claws-worktree merge <task_id> [--skip-sync] [--check-only] [--force]"
     echo "                                    Merge to main and cleanup"
+    echo "    --skip-sync: Skip dependency sync after merge"
     echo "    --check-only: Only check for conflicts, don't merge"
     echo "    --force: Attempt merge even if conflicts detected"
->>>>>>> BUG-063
     echo "  claws-worktree path <task_id>     Print worktree path"
     echo "  claws-worktree health [--fix]     Audit worktree health"
     exit 1
@@ -193,30 +180,24 @@ check_merge_conflicts() {
 
 cmd_merge() {
     local task_id="$1"
-<<<<<<< HEAD
     shift || true
-    local skip_sync=false
 
     # Parse optional flags
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            --skip-sync)
-                skip_sync=true
-=======
-    shift  # Remove task_id from arguments
-
-    # Parse options
+    local skip_sync=false
     local check_only=false
     local force=false
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            --skip-sync)
+                skip_sync=true
+                shift
+                ;;
             --check-only)
                 check_only=true
                 shift
                 ;;
             --force)
                 force=true
->>>>>>> BUG-063
                 shift
                 ;;
             *)
