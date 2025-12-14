@@ -369,6 +369,7 @@ class TestGitAnalyzer:
 
 
 @pytest.mark.asyncio
+@pytest.mark.slow
 async def test_integration_with_real_repo():
     """Integration test using the actual clams repository."""
     import os

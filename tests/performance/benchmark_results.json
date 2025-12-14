@@ -1,6 +1,81 @@
 [
   {
     "name": "code_search",
+<<<<<<< HEAD
+=======
+    "value_ms": 3.3278645831160243,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1764948547.712116,
+    "percentage_of_target": 1.663932291558012
+  },
+  {
+    "name": "memory_retrieval",
+    "value_ms": 4.036037490004674,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1764948548.009213,
+    "percentage_of_target": 2.018018745002337
+  },
+  {
+    "name": "context_assembly",
+    "value_ms": 6.668229651404545,
+    "target_ms": 500.0,
+    "passed": true,
+    "iterations": 10,
+    "timestamp": 1764948548.078573,
+    "percentage_of_target": 1.333645930280909
+  },
+  {
+    "name": "clustering_4_axes",
+    "value_s": 0.12542779196519405,
+    "target_s": 5.0,
+    "passed": true,
+    "iterations": 1,
+    "timestamp": 1764948548.205455,
+    "percentage_of_target": 2.508555839303881
+  },
+  {
+    "name": "code_search",
+    "value_ms": 4.1159437445458025,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1764976014.210488,
+    "percentage_of_target": 2.0579718722729012
+  },
+  {
+    "name": "memory_retrieval",
+    "value_ms": 4.663397910189815,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1764976014.533885,
+    "percentage_of_target": 2.3316989550949074
+  },
+  {
+    "name": "context_assembly",
+    "value_ms": 6.7924001545179635,
+    "target_ms": 500.0,
+    "passed": true,
+    "iterations": 10,
+    "timestamp": 1764976014.60422,
+    "percentage_of_target": 1.3584800309035927
+  },
+  {
+    "name": "clustering_4_axes",
+    "value_s": 0.13324670802103356,
+    "target_s": 5.0,
+    "passed": true,
+    "iterations": 1,
+    "timestamp": 1764976014.739265,
+    "percentage_of_target": 2.664934160420671
+  },
+  {
+    "name": "code_search",
+>>>>>>> BUG-055
     "value_ms": 3.498505894094705,
     "target_ms": 200.0,
     "passed": true,
@@ -757,6 +832,7 @@
   },
   {
     "name": "code_search",
+<<<<<<< HEAD
     "value_ms": 4.2656705365516245,
     "target_ms": 200.0,
     "passed": true,
@@ -898,5 +974,76 @@
     "iterations": 1,
     "timestamp": 1765697576.5338292,
     "percentage_of_target": 2.768560000695288
+=======
+    "value_ms": 5.332696170080452,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1765689370.5728152,
+    "percentage_of_target": 2.666348085040226
+  },
+  {
+    "name": "memory_retrieval",
+    "value_ms": 3.7574434158159415,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1765689370.87798,
+    "percentage_of_target": 1.8787217079079706
+  },
+  {
+    "name": "context_assembly",
+    "value_ms": 7.483743768534621,
+    "target_ms": 500.0,
+    "passed": true,
+    "iterations": 10,
+    "timestamp": 1765689370.9525728,
+    "percentage_of_target": 1.4967487537069244
+  },
+  {
+    "name": "clustering_4_axes",
+    "value_s": 0.18350679200375453,
+    "target_s": 5.0,
+    "passed": true,
+    "iterations": 1,
+    "timestamp": 1765689371.1380868,
+    "percentage_of_target": 3.670135840075091
+  },
+  {
+    "name": "code_search",
+    "value_ms": 4.745470514171756,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1765689696.7683651,
+    "percentage_of_target": 2.372735257085878
+  },
+  {
+    "name": "memory_retrieval",
+    "value_ms": 3.5373597405850874,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1765689697.052004,
+    "percentage_of_target": 1.7686798702925437
+  },
+  {
+    "name": "context_assembly",
+    "value_ms": 5.61277121596504,
+    "target_ms": 500.0,
+    "passed": true,
+    "iterations": 10,
+    "timestamp": 1765689697.1133409,
+    "percentage_of_target": 1.122554243193008
+  },
+  {
+    "name": "clustering_4_axes",
+    "value_s": 0.17898683296516538,
+    "target_s": 5.0,
+    "passed": true,
+    "iterations": 1,
+    "timestamp": 1765689697.296248,
+    "percentage_of_target": 3.579736659303308
+>>>>>>> BUG-055
   }
 ]

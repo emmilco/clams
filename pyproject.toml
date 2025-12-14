@@ -86,11 +86,18 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+<<<<<<< HEAD
 timeout = 60
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests requiring external services (deselect with '-m \"not integration\"')",
     "cold_start: tests that verify behavior with no pre-existing data (run with '-m cold_start')",
+=======
+addopts = "-m 'not slow'"
+markers = [
+    "slow: marks tests as slow (>15s, excluded by default)",
+    "integration: marks tests as integration tests requiring external services",
+>>>>>>> BUG-055
 ]
 
 [dependency-groups]
