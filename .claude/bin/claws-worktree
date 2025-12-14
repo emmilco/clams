@@ -6,7 +6,7 @@
 #   claws-worktree create <task_id>       Create worktree for task
 #   claws-worktree remove <task_id>       Remove worktree (no merge)
 #   claws-worktree list                   List all worktrees
-#   claws-worktree merge <task_id>        Merge to main and cleanup
+#   claws-worktree merge <task_id> [--skip-sync]  Merge to main and cleanup
 #   claws-worktree path <task_id>         Print worktree path
 
 set -euo pipefail
@@ -24,7 +24,7 @@ usage() {
     echo "  claws-worktree create <task_id>   Create worktree for task"
     echo "  claws-worktree remove <task_id>   Remove worktree (no merge)"
     echo "  claws-worktree list               List all worktrees"
-    echo "  claws-worktree merge <task_id>    Merge to main and cleanup"
+    echo "  claws-worktree merge <task_id> [--skip-sync]  Merge to main and cleanup"
     echo "  claws-worktree path <task_id>     Print worktree path"
     exit 1
 }
@@ -131,6 +131,23 @@ EOF
 
 cmd_merge() {
     local task_id="$1"
+    shift || true
+    local skip_sync=false
+
+    # Parse optional flags
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --skip-sync)
+                skip_sync=true
+                shift
+                ;;
+            *)
+                echo "Unknown option: $1" >&2
+                usage
+                ;;
+        esac
+    done
+
     local worktree_path="$WORKTREE_DIR/$task_id"
 
     if [[ ! -d "$worktree_path" ]]; then
@@ -182,6 +199,29 @@ UPDATE system_counters SET value = value + 1 WHERE name = 'merges_since_docs';
 EOF
 
     echo "Merge complete: $merge_commit"
+
+    # Sync dependencies if not skipped
+    if [[ "$skip_sync" == "false" ]]; then
+        echo "Syncing dependencies..."
+        if [ -f "uv.lock" ]; then
+            if command -v uv &> /dev/null; then
+                uv sync
+                echo "Dependencies synced via uv"
+            else
+                echo "Warning: uv.lock exists but uv not found in PATH" >&2
+            fi
+        elif [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+            echo "Dependencies synced via pip (requirements.txt)"
+        elif [ -f "pyproject.toml" ]; then
+            pip install -e .
+            echo "Dependencies synced via pip (pyproject.toml)"
+        else
+            echo "No dependency file found (uv.lock, requirements.txt, pyproject.toml)"
+        fi
+    else
+        echo "Skipping dependency sync (--skip-sync)"
+    fi
 
     # Remove worktree
     git worktree remove "$worktree_path" --force
