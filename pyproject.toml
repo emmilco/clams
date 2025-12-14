@@ -37,6 +37,7 @@ dev = [
     "pytest",
     "pytest-asyncio",
     "pytest-mock",
+    "pytest-timeout",
     "hypothesis",
     "ruff",
     "mypy",
@@ -63,6 +64,8 @@ select = ["E", "F", "I", "N", "W", "UP"]
 "tests/test_bug_006_experience_schema.py" = ["E402"]
 # Test files with long assertions and test data - hard to wrap meaningfully
 "tests/**/*.py" = ["E501"]
+# Data generation scripts with long string literals
+"generate_*.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -78,6 +81,7 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+timeout = 60
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests requiring external services (deselect with '-m \"not integration\"')",
