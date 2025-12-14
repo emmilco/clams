@@ -6,8 +6,19 @@
 #
 # Runs the test suite, verifies all tests pass, and logs results to test_runs table.
 # Returns 0 if all pass, 1 otherwise.
+#
+# Environment variables:
+#   CLAWS_CLEANUP_TIMEOUT: Seconds to wait for pytest cleanup after tests complete
+#                          (default: 30). If the process doesn't exit within this
+#                          time, it's force-killed and the gate FAILS.
+#
+# The cleanup timeout prevents indefinite hangs when pytest hangs during shutdown
+# (e.g., due to async cleanup issues, dangling threads, or resource leaks).
 
 set -euo pipefail
+
+# Cleanup timeout in seconds (configurable via environment)
+CLEANUP_TIMEOUT="${CLAWS_CLEANUP_TIMEOUT:-30}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$(dirname "$SCRIPT_DIR")/bin"
@@ -177,6 +188,87 @@ parse_pytest_text() {
     echo "$total $passed $failed $errors $skipped $duration"
 }
 
+# Run a command with cleanup timeout
+# Usage: run_with_cleanup_timeout <log_file> <command> [args...]
+#
+# Runs the command and monitors test_output.log for completion markers.
+# After tests complete (summary line appears), waits up to CLEANUP_TIMEOUT seconds
+# for the process to exit. If it doesn't, force-kills and returns failure.
+#
+# Returns:
+#   0 - Command completed normally
+#   1 - Cleanup timeout (force-killed)
+#   * - Command's exit code (if it failed before timeout)
+run_with_cleanup_timeout() {
+    local log_file="$1"
+    shift
+    local cmd=("$@")
+
+    # Start the command in background, capturing both stdout and stderr
+    "${cmd[@]}" > "$log_file" 2>&1 &
+    local pid=$!
+
+    # Also tail the log to show progress
+    tail -f "$log_file" 2>/dev/null &
+    local tail_pid=$!
+
+    # Monitor for test completion (pytest summary line)
+    local tests_completed=false
+    local completion_time=0
+    local check_interval=1
+
+    while kill -0 "$pid" 2>/dev/null; do
+        # Check if tests have completed (summary line with timing)
+        # Pattern: "====== X passed in Y.YYs ======" or similar
+        if [[ -f "$log_file" ]] && grep -qE "^=+ .* in [0-9.]+(s|ms) =+$" "$log_file" 2>/dev/null; then
+            if [[ "$tests_completed" == "false" ]]; then
+                tests_completed=true
+                completion_time=$(date +%s)
+                echo "" >&2
+                echo "=== Tests completed, waiting for cleanup (timeout: ${CLEANUP_TIMEOUT}s) ===" >&2
+            fi
+
+            # Check if cleanup timeout exceeded
+            local current_time
+            current_time=$(date +%s)
+            local elapsed=$((current_time - completion_time))
+
+            if [[ $elapsed -ge $CLEANUP_TIMEOUT ]]; then
+                echo "" >&2
+                echo "=== CLEANUP TIMEOUT ===" >&2
+                echo "ERROR: pytest process hung for ${CLEANUP_TIMEOUT}s after tests completed" >&2
+                echo "This indicates a resource leak (unclosed async tasks, threads, connections, etc.)" >&2
+                echo "" >&2
+                echo "Force-killing pytest process (PID $pid)..." >&2
+
+                # Kill the process group to ensure all children are terminated
+                kill -TERM "$pid" 2>/dev/null || true
+                sleep 2
+                kill -KILL "$pid" 2>/dev/null || true
+
+                # Stop the tail process
+                kill "$tail_pid" 2>/dev/null || true
+                wait "$tail_pid" 2>/dev/null || true
+
+                echo "" >&2
+                echo "Gate FAILED: Cleanup hang indicates resource leak - this is a bug." >&2
+
+                return 1
+            fi
+        fi
+
+        sleep "$check_interval"
+    done
+
+    # Process completed naturally - stop the tail
+    kill "$tail_pid" 2>/dev/null || true
+    wait "$tail_pid" 2>/dev/null || true
+
+    # Get the actual exit code
+    wait "$pid"
+    return $?
+}
+
 # Run pytest
 run_pytest() {
     local json_report=".pytest_results.json"
@@ -190,6 +282,9 @@ run_pytest() {
     echo "Detected: Python (pytest)"
     echo ""
 
+    # Track if cleanup timeout occurred (separate from test failure)
+    local cleanup_timeout=false
+
     # Sync dependencies and install package with uv
     if [[ -f "pyproject.toml" ]] && command -v uv &> /dev/null; then
         echo "Syncing dependencies with uv..."
@@ -199,8 +294,16 @@ run_pytest() {
         # Run pytest via venv python to ensure correct environment
         # Skip slow tests (embedding model loading) and integration tests (require external services)
         # Set PYTHONPATH to ensure worktree code is used (not installed package from main repo)
-        echo "Running tests..."
-        PYTHONPATH="${WORKTREE}/src:${PYTHONPATH:-}" .venv/bin/python -m pytest -vvsx --ignore=tests/e2e -m "not slow and not integration" 2>&1 | tee test_output.log || exit_code=$?
+        echo "Running tests (cleanup timeout: ${CLEANUP_TIMEOUT}s)..."
+        export PYTHONPATH="${WORKTREE}/src:${PYTHONPATH:-}"
+        if ! run_with_cleanup_timeout "test_output.log" .venv/bin/python -m pytest -vvsx --ignore=tests/e2e -m "not slow and not integration"; then
+            # Check if this was a cleanup timeout vs test failure
+            if [[ -f "test_output.log" ]] && grep -qE "^=+ .* in [0-9.]+(s|ms) =+$" test_output.log 2>/dev/null; then
+                # Tests completed but cleanup hung - this is a cleanup timeout
+                cleanup_timeout=true
+            fi
+            exit_code=1
+        fi
         read -r total passed failed errors skipped duration <<< "$(parse_pytest_text test_output.log)"
     elif [[ -f "pyproject.toml" ]]; then
         # Fallback without uv
@@ -208,11 +311,23 @@ run_pytest() {
         pip install -e ".[dev]" --quiet 2>/dev/null || pip install -e . --quiet 2>/dev/null || true
         echo ""
 
-        pytest -vvsx --ignore=tests/e2e -m "not slow and not integration" 2>&1 | tee test_output.log || exit_code=$?
+        echo "Running tests (cleanup timeout: ${CLEANUP_TIMEOUT}s)..."
+        if ! run_with_cleanup_timeout "test_output.log" pytest -vvsx --ignore=tests/e2e -m "not slow and not integration"; then
+            if [[ -f "test_output.log" ]] && grep -qE "^=+ .* in [0-9.]+(s|ms) =+$" test_output.log 2>/dev/null; then
+                cleanup_timeout=true
+            fi
+            exit_code=1
+        fi
         read -r total passed failed errors skipped duration <<< "$(parse_pytest_text test_output.log)"
     else
         # No pyproject.toml, just run pytest
-        pytest -vvsx --ignore=tests/e2e -m "not slow and not integration" 2>&1 | tee test_output.log || exit_code=$?
+        echo "Running tests (cleanup timeout: ${CLEANUP_TIMEOUT}s)..."
+        if ! run_with_cleanup_timeout "test_output.log" pytest -vvsx --ignore=tests/e2e -m "not slow and not integration"; then
+            if [[ -f "test_output.log" ]] && grep -qE "^=+ .* in [0-9.]+(s|ms) =+$" test_output.log 2>/dev/null; then
+                cleanup_timeout=true
+            fi
+            exit_code=1
+        fi
         read -r total passed failed errors skipped duration <<< "$(parse_pytest_text test_output.log)"
     fi
 
@@ -264,6 +379,31 @@ run_pytest() {
 
     # Log to database
     log_test_results "$total" "$passed" "$failed" "$errors" "$skipped" "$duration" "$failed_tests_json"
+
+    # Handle cleanup timeout - this is a special failure mode
+    if [[ "$cleanup_timeout" == "true" ]]; then
+        echo ""
+        echo "=== CLEANUP TIMEOUT FAILURE ==="
+        echo "FAIL: pytest process hung during cleanup for ${CLEANUP_TIMEOUT}s"
+        echo ""
+        echo "All tests passed, but the process didn't exit cleanly."
+        echo "This indicates a resource leak that must be fixed:"
+        echo "  - Unclosed async event loops or tasks"
+        echo "  - Background threads not properly terminated"
+        echo "  - Database connections not closed"
+        echo "  - File handles left open"
+        echo ""
+        echo "To debug:"
+        echo "  1. Run tests locally and check for hanging"
+        echo "  2. Add proper cleanup/teardown in test fixtures"
+        echo "  3. Ensure all async operations are properly awaited"
+        echo ""
+        echo "Set CLAWS_CLEANUP_TIMEOUT=<seconds> to adjust timeout (default: 30)"
+
+        # Log cleanup timeout specifically in database
+        log_test_results "$total" "$passed" "0" "1" "$skipped" "$duration" '[{"test":"cleanup","error":"Process hung during cleanup for '"$CLEANUP_TIMEOUT"'s after tests completed"}]'
+        return 1
+    fi
 
     # Fail if any tests were skipped - skipped tests hide bugs
     if [[ "$skipped" -gt 0 ]]; then
