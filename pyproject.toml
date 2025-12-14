@@ -48,7 +48,11 @@ clams-server = "clams.server.main:main"
 [tool.ruff]
 line-length = 88
 target-version = "py312"
-exclude = ["tests/fixtures/code_samples/malformed.py"]
+exclude = [
+    "tests/fixtures/code_samples/malformed.py",
+    # Data generation scripts with long string literals
+    "generate_*.py",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
