@@ -144,19 +144,26 @@ main() {
     # 5. Build GHAP instructions
     local ghap_instructions="## GHAP Learning System
 
-When you encounter tasks involving **debugging**, **investigation**, or **complex problem-solving**, use GHAP to track your reasoning:
+**Start a GHAP before your first investigative action** - not after something breaks.
 
-1. **Start**: \`mcp__clams__start_ghap\` - State your goal, hypothesis, action, and prediction
-2. **Update**: \`mcp__clams__update_ghap\` - Revise if your hypothesis changes
-3. **Resolve**: \`mcp__clams__resolve_ghap\` - Record outcome (confirmed/falsified/abandoned)
+If you're about to grep/search/read code to understand *why* something happens, you have a hypothesis. Capture it.
 
-GHAP entries are embedded and clustered to surface relevant past experiences in future sessions.
+### When to Start a GHAP
+- \"I think this test fails because X\" → start before investigating
+- \"The error is probably in module Y\" → start before reading that module
+- \"Let me check if Z is the cause\" → that's a hypothesis, capture it
 
-**When to use GHAP:**
-- Debugging a failing test or error
-- Investigating unexpected behavior
-- Exploring unfamiliar code
-- Any task where you form a hypothesis about root cause
+### When to Skip
+- Reading a file the user explicitly pointed you to
+- Running a command the user explicitly asked for
+- Simple tasks with no uncertainty (fix typo, add import)
+
+### The Tools
+1. \`mcp__clams__start_ghap\` - Goal, hypothesis, action, prediction (30 sec)
+2. \`mcp__clams__update_ghap\` - Revise if hypothesis changes
+3. \`mcp__clams__resolve_ghap\` - Record outcome (confirmed/falsified/abandoned)
+
+Past GHAPs surface as relevant context in future sessions.
 
 ---
 "
