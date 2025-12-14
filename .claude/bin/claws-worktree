@@ -23,7 +23,10 @@ fi
 
 usage() {
     echo "Usage:"
-    echo "  claws-worktree create <task_id>   Create worktree for task"
+    echo "  claws-worktree create <task_id> [--check-overlaps] [--force]"
+    echo "                                    Create worktree for task"
+    echo "                                    --check-overlaps: Warn about file conflicts with other worktrees"
+    echo "                                    --force: Bypass overlap warnings"
     echo "  claws-worktree remove <task_id>   Remove worktree (no merge)"
     echo "  claws-worktree list               List all worktrees"
     echo "  claws-worktree merge <task_id> [--skip-sync] [--check-only] [--force]"
@@ -36,8 +39,127 @@ usage() {
     exit 1
 }
 
+# Check for potential file overlaps with other worktrees
+# Returns: 0 if overlaps found (printed to stdout), 1 if no overlaps
+# This function lists files being modified in other worktrees so the
+# orchestrator can assess potential conflicts before starting new work.
+check_overlaps() {
+    local overlaps_found=1
+
+    # Check each existing worktree for uncommitted changes and planned modifications
+    local worktrees
+    worktrees=$(git worktree list --porcelain | grep "^worktree " | sed 's/^worktree //')
+
+    for wt in $worktrees; do
+        # Skip main repo
+        [[ "$wt" == "$MAIN_REPO" ]] && continue
+
+        # Get task ID from worktree path
+        local wt_task_id
+        wt_task_id=$(basename "$wt")
+
+        # Skip if it's not in our .worktrees directory
+        [[ ! "$wt" == "$WORKTREE_DIR/"* ]] && continue
+
+        # Get uncommitted changes in this worktree
+        local changed_files=""
+        if [[ -d "$wt" ]]; then
+            # Get both staged and unstaged changes (excluding planning docs and changelog)
+            changed_files=$(cd "$wt" && git diff --name-only 2>/dev/null; cd "$wt" && git diff --cached --name-only 2>/dev/null)
+            changed_files=$(echo "$changed_files" | grep -v "^planning_docs/" | grep -v "^bug_reports/" | grep -v "^changelog.d/" | sort -u || true)
+        fi
+
+        # Also check what files are mentioned in this worktree's planning docs
+        local wt_mentioned_files=""
+        if [[ -d "$wt/planning_docs/$wt_task_id" ]]; then
+            wt_mentioned_files=$(grep -hEo '(src|tests|\.claude/bin)/[a-zA-Z0-9_./-]+\.(py|ts|js|sh)' \
+                "$wt/planning_docs/$wt_task_id"/*.md 2>/dev/null | sort -u || true)
+        fi
+        if [[ -d "$wt/bug_reports" ]]; then
+            local bug_files
+            bug_files=$(grep -hEo '(src|tests|\.claude/bin)/[a-zA-Z0-9_./-]+\.(py|ts|js|sh)' \
+                "$wt/bug_reports"/*.md 2>/dev/null | sort -u || true)
+            if [[ -n "$bug_files" ]]; then
+                wt_mentioned_files="$wt_mentioned_files"$'\n'"$bug_files"
+            fi
+        fi
+        wt_mentioned_files=$(echo "$wt_mentioned_files" | sort -u | grep -v "^$" || true)
+
+        # Report if this worktree has any active changes
+        if [[ -n "$changed_files" ]]; then
+            if [[ $overlaps_found -eq 1 ]]; then
+                echo "Active worktrees with uncommitted changes:"
+                overlaps_found=0
+            fi
+            echo ""
+            echo "  $wt_task_id:"
+            echo "$changed_files" | while read -r file; do
+                [[ -n "$file" ]] && echo "    - $file (uncommitted)"
+            done
+        fi
+
+        # Report files mentioned in planning docs (planned modifications)
+        if [[ -n "$wt_mentioned_files" ]]; then
+            if [[ $overlaps_found -eq 1 ]]; then
+                echo "Active worktrees with planned modifications:"
+                overlaps_found=0
+            elif [[ -z "$changed_files" ]]; then
+                echo ""
+                echo "  $wt_task_id:"
+            fi
+            echo "$wt_mentioned_files" | while read -r file; do
+                [[ -n "$file" ]] && echo "    - $file (mentioned in docs)"
+            done
+        fi
+    done
+
+    if [[ $overlaps_found -eq 0 ]]; then
+        echo ""
+        echo "Recommendation: Review the above files before proceeding."
+        echo "If your new task will modify any of these files, consider"
+        echo "completing or merging the existing worktree first."
+    fi
+
+    return $overlaps_found
+}
+
 cmd_create() {
-    local task_id="$1"
+    local task_id=""
+    local check_overlaps=false
+    local force=false
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --check-overlaps)
+                check_overlaps=true
+                shift
+                ;;
+            --force)
+                force=true
+                shift
+                ;;
+            -*)
+                echo "Error: Unknown option: $1" >&2
+                usage
+                ;;
+            *)
+                if [[ -z "$task_id" ]]; then
+                    task_id="$1"
+                else
+                    echo "Error: Unexpected argument: $1" >&2
+                    usage
+                fi
+                shift
+                ;;
+        esac
+    done
+
+    if [[ -z "$task_id" ]]; then
+        echo "Error: task_id is required" >&2
+        usage
+    fi
+
     local worktree_path="$WORKTREE_DIR/$task_id"
 
     # Verify task exists and get task type
@@ -53,6 +175,28 @@ cmd_create() {
     if [[ -d "$worktree_path" ]]; then
         echo "Error: Worktree already exists at $worktree_path" >&2
         exit 1
+    fi
+
+    # Check for overlaps with other worktrees if requested
+    if [[ "$check_overlaps" == "true" ]]; then
+        cd "$MAIN_REPO"
+        if check_overlaps; then
+            echo "No active overlaps detected with other worktrees."
+        else
+            # Overlaps were found and printed
+            if [[ "$force" != "true" ]]; then
+                echo ""
+                echo -n "Continue anyway? [y/N] "
+                read -r response
+                if [[ ! "$response" =~ ^[Yy]$ ]]; then
+                    echo "Aborted."
+                    exit 1
+                fi
+            else
+                echo ""
+                echo "(--force specified, continuing anyway)"
+            fi
+        fi
     fi
 
     # Create worktree with new branch
