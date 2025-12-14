@@ -22,6 +22,59 @@ if [[ ! -f "$DB_PATH" ]]; then
     exit 1
 fi
 
+# Read directory configuration from project.json
+# Falls back to defaults if config is missing or invalid
+PROJECT_CONFIG="$SCRIPT_DIR/../project.json"
+
+get_impl_dirs() {
+    if [[ -f "$PROJECT_CONFIG" ]] && command -v jq &>/dev/null; then
+        local dirs
+        dirs=$(jq -r '.implementation_dirs[]? // empty' "$PROJECT_CONFIG" 2>/dev/null | tr '\n' ' ')
+        if [[ -n "$dirs" ]]; then
+            echo "$dirs"
+            return
+        fi
+    fi
+    # Default fallback
+    echo "src/ tests/"
+}
+
+get_test_dirs() {
+    if [[ -f "$PROJECT_CONFIG" ]] && command -v jq &>/dev/null; then
+        local dirs
+        dirs=$(jq -r '.test_dirs[]? // empty' "$PROJECT_CONFIG" 2>/dev/null | tr '\n' ' ')
+        if [[ -n "$dirs" ]]; then
+            echo "$dirs"
+            return
+        fi
+    fi
+    # Default fallback
+    echo "tests/"
+}
+
+get_frontend_dirs() {
+    if [[ -f "$PROJECT_CONFIG" ]] && command -v jq &>/dev/null; then
+        local dirs
+        dirs=$(jq -r '.frontend_dirs[]? // empty' "$PROJECT_CONFIG" 2>/dev/null | tr '\n' ' ')
+        if [[ -n "$dirs" ]]; then
+            echo "$dirs"
+            return
+        fi
+    fi
+    # Default fallback
+    echo "clams-visualizer/"
+}
+
+# Build git diff path arguments from directory list
+build_git_paths() {
+    local dirs="$1"
+    local paths=""
+    for dir in $dirs; do
+        paths="$paths '$dir'"
+    done
+    echo "$paths"
+}
+
 # Record a successful gate pass in the database.
 # The UNIQUE constraint on (task_id, transition, commit_sha) means:
 # - Same commit can only have one record per gate (INSERT OR REPLACE updates timestamp)
@@ -84,7 +137,7 @@ cmd_list() {
     echo "  - [auto] Linter clean (check_linter.sh)"
     echo "  - [auto] Type check clean (check_types.sh)"
     echo "  - [auto] No untracked TODOs (check_todos.sh)"
-    echo "  - [auto] Implementation code exists in src/ or tests/"
+    echo "  - [auto] Implementation code exists in configured dirs ($(get_impl_dirs))"
     echo ""
     echo "CODE_REVIEW → TEST (automated)"
     echo "  - [auto] 2 code reviews with APPROVED status"
@@ -113,7 +166,7 @@ cmd_list() {
     echo "  - [auto] Tests pass (check_tests.sh)"
     echo "  - [auto] Linter clean (check_linter.sh)"
     echo "  - [auto] Type check clean (check_types.sh)"
-    echo "  - [auto] Implementation code exists in src/ or tests/"
+    echo "  - [auto] Implementation code exists in configured dirs ($(get_impl_dirs))"
     echo "  - [auto] Regression test added (new test file or test function)"
     echo ""
     echo "FIXED → REVIEWED (automated)"
@@ -269,12 +322,18 @@ cmd_check() {
             # Check for actual implementation code
             echo "--- Gate: Implementation code exists ---"
             local code_changes
-            # Check src/, tests/, or clams-visualizer/ (for frontend-only projects)
-            code_changes=$(cd "$worktree" && git diff main...HEAD --name-only -- 'src/' 'tests/' 'clams-visualizer/' 2>/dev/null | grep -v '__pycache__' | head -10)
+            # Check implementation dirs from config (includes src/, clams-visualizer/, etc.)
+            local impl_dirs test_dirs frontend_dirs
+            impl_dirs=$(get_impl_dirs)
+            test_dirs=$(get_test_dirs)
+            frontend_dirs=$(get_frontend_dirs)
+            # Build path arguments for git diff
+            local all_impl_dirs="$impl_dirs $test_dirs"
+            code_changes=$(cd "$worktree" && eval "git diff main...HEAD --name-only -- $all_impl_dirs" 2>/dev/null | grep -v '__pycache__' | head -10)
             if [[ -z "$code_changes" ]]; then
                 echo "✗ Implementation code exists: FAIL"
                 echo ""
-                echo "No changes found in src/, tests/, or clams-visualizer/ directories."
+                echo "No changes found in configured implementation directories: $all_impl_dirs"
                 echo "The task appears to have only documentation changes."
                 failed=1
             else
@@ -283,11 +342,12 @@ cmd_check() {
                 echo "$code_changes" | sed 's/^/  /'
             fi
 
-            # Check if this is a frontend-only project (clams-visualizer)
+            # Check if this is a frontend-only project (uses frontend_dirs from config)
             local is_frontend_only=0
-            if [[ -n "$(cd "$worktree" && git diff main...HEAD --name-only -- 'clams-visualizer/' 2>/dev/null)" ]]; then
+            if [[ -n "$(cd "$worktree" && eval "git diff main...HEAD --name-only -- $frontend_dirs" 2>/dev/null)" ]]; then
                 local has_python_changes
-                has_python_changes=$(cd "$worktree" && git diff main...HEAD --name-only -- 'src/' 'tests/' 2>/dev/null | grep '\.py$' || true)
+                # Check if there are Python changes in impl_dirs or test_dirs
+                has_python_changes=$(cd "$worktree" && eval "git diff main...HEAD --name-only -- $impl_dirs $test_dirs" 2>/dev/null | grep '\.py$' || true)
                 if [[ -z "$has_python_changes" ]]; then
                     is_frontend_only=1
                     echo ""
@@ -404,11 +464,16 @@ cmd_check() {
             # Check for actual implementation code
             echo "--- Gate: Implementation code exists ---"
             local code_changes
-            code_changes=$(cd "$worktree" && git diff main...HEAD --name-only -- 'src/' 'tests/' 2>/dev/null | grep -v '__pycache__' | head -10)
+            # Read directories from config
+            local impl_dirs test_dirs
+            impl_dirs=$(get_impl_dirs)
+            test_dirs=$(get_test_dirs)
+            local all_impl_dirs="$impl_dirs $test_dirs"
+            code_changes=$(cd "$worktree" && eval "git diff main...HEAD --name-only -- $all_impl_dirs" 2>/dev/null | grep -v '__pycache__' | head -10)
             if [[ -z "$code_changes" ]]; then
                 echo "✗ Implementation code exists: FAIL"
                 echo ""
-                echo "No changes found in src/ or tests/ directories."
+                echo "No changes found in configured directories: $all_impl_dirs"
                 failed=1
             else
                 echo "✓ Implementation code exists: PASS"
@@ -420,12 +485,12 @@ cmd_check() {
             # Check regression test was added
             echo "--- Gate: Regression test added ---"
             local test_changes
-            test_changes=$(cd "$worktree" && git diff main...HEAD --name-only -- 'tests/' 2>/dev/null | grep -v '__pycache__' | grep '\.py$')
+            test_changes=$(cd "$worktree" && eval "git diff main...HEAD --name-only -- $test_dirs" 2>/dev/null | grep -v '__pycache__' | grep '\.py$')
             if [[ -z "$test_changes" ]]; then
                 echo "✗ Regression test added: FAIL"
                 echo ""
                 echo "Bug fixes must include regression tests."
-                echo "No test file changes found in tests/ directory."
+                echo "No test file changes found in configured test directories: $test_dirs"
                 failed=1
             else
                 echo "✓ Regression test added: PASS"

@@ -122,6 +122,15 @@ def _run_server(args: argparse.Namespace) -> None:
     # Configure logging
     configure_logging(log_level=settings.log_level, log_format=settings.log_format)
 
+    # Export configuration for shell scripts (hooks can source this)
+    try:
+        config_path = settings.get_config_env_path()
+        settings.export_for_shell(config_path)
+        logger.info("config.exported", path=str(config_path))
+    except Exception as e:
+        # Non-fatal: hooks have fallback defaults
+        logger.warning("config.export_failed", error=str(e))
+
     # Determine transport mode
     use_http = args.http or args.daemon
     transport_mode = "http" if use_http else "stdio"

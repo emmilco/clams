@@ -8,24 +8,30 @@ import numpy as np
 import pytest
 
 from clams.clustering import Clusterer, ExperienceClusterer
-from clams.embedding.base import EmbeddingService
+from clams.embedding.base import EmbeddingService, Vector
 from clams.server.tools.learning import get_learning_tools
 from clams.storage.qdrant import QdrantVectorStore
 from clams.values import ValueStore
 
 
 class MockEmbedder(EmbeddingService):
-    """Mock embedding service for testing."""
+    """Mock embedding service for testing.
+
+    IMPORTANT: This mock must match the interface of EmbeddingService.
+    Interface parity is verified by tests/infrastructure/test_mock_parity.py.
+    If you modify this class, run those tests to ensure interface compatibility.
+    See BUG-040, BUG-041 for examples of bugs caused by mock/production drift.
+    """
 
     @property
     def dimension(self) -> int:
         return 768
 
-    async def embed(self, text: str) -> np.ndarray:
+    async def embed(self, text: str) -> Vector:
         return np.array([0.1] * 768, dtype=np.float32)
 
-    async def embed_batch(self, texts: list[str]) -> np.ndarray:
-        return np.array([[0.1] * 768 for _ in texts], dtype=np.float32)
+    async def embed_batch(self, texts: list[str]) -> list[Vector]:
+        return [np.array([0.1] * 768, dtype=np.float32) for _ in texts]
 
 
 @pytest.mark.asyncio

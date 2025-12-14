@@ -366,14 +366,14 @@ cmd_transition() {
         fi
 
         # Check for actual code changes (not just docs)
-        # Include clams-visualizer/ for frontend-only projects
+        # Include src/, tests/, clams/, clams-visualizer/
         local code_changes
-        code_changes=$(cd "$worktree_path" && git diff main...HEAD --name-only -- 'src/' 'tests/' 'clams-visualizer/' 2>/dev/null | grep -v '__pycache__' | head -5)
+        code_changes=$(cd "$worktree_path" && git diff main...HEAD --name-only -- 'src/' 'tests/' 'clams/' 'clams-visualizer/' 2>/dev/null | grep -v '__pycache__' | head -5)
 
         if [[ -z "$code_changes" ]]; then
             echo "Error: IMPLEMENT → CODE_REVIEW requires implementation code" >&2
             echo "" >&2
-            echo "No changes found in src/, tests/, or clams-visualizer/ directories." >&2
+            echo "No changes found in src/, tests/, clams/, or clams-visualizer/ directories." >&2
             echo "The task appears to have only documentation changes." >&2
             echo "" >&2
             echo "Run 'git diff main...HEAD --stat' in the worktree to see what changed." >&2

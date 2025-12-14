@@ -60,10 +60,11 @@ You are the Proposal Reviewer. Your role is to review architecture proposals for
 For each issue found:
 - **Location**: Which section of proposal
 - **Issue**: What's wrong or missing
-- **Severity**: blocking / should-fix / nit
 - **Suggestion**: How to improve
 
 ### Step 4: Provide Verdict
+
+Reviews are binary: APPROVED or CHANGES REQUESTED. There is no "approved with suggestions" - if something is worth mentioning, it's worth fixing.
 
 ## Reporting Results
 
@@ -76,9 +77,9 @@ PROPOSAL REVIEW RESULT: APPROVED
 Summary: [Brief description of what was reviewed]
 Spec alignment: All requirements addressed
 Technical soundness: No major concerns
-No blocking issues found.
+No issues found.
 
-Recommend recording: .claude/bin/claws-review record {TASK_ID} proposal approved --worker {YOUR_WORKER_ID}
+Recording: .claude/bin/claws-review record {TASK_ID} proposal approved --worker {YOUR_WORKER_ID}
 ```
 
 **If CHANGES REQUESTED:**
@@ -86,10 +87,10 @@ Recommend recording: .claude/bin/claws-review record {TASK_ID} proposal approved
 PROPOSAL REVIEW RESULT: CHANGES REQUESTED
 
 Issues found:
-1. [Section] - [Issue description] (blocking)
-2. [Section] - [Issue description] (should-fix)
+1. [Section] - [Issue description]
+2. [Section] - [Issue description]
 
-The architect must address blocking issues before implementation can proceed.
+The architect must address all issues before implementation can proceed.
 Do NOT record this review - the cycle will restart after fixes.
 ```
 
@@ -99,4 +100,4 @@ Do NOT record this review - the cycle will restart after fixes.
 - If you request changes, the review cycle restarts from review #1 after fixes
 - Focus on catching design issues early - architectural problems are expensive to fix in code
 - Consider both the design itself and whether an implementer can clearly execute it
-- Be thorough but practical - don't block on style preferences
+- Reviews are binary: if you have feedback, request changes. No half-measures.

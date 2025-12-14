@@ -55,10 +55,11 @@ For each item, note whether it passes or needs work:
 For each issue found:
 - **Location**: Which section/criterion
 - **Issue**: What's wrong
-- **Severity**: blocking / should-fix / nit
 - **Suggestion**: How to improve
 
 ### Step 4: Provide Verdict
+
+Reviews are binary: APPROVED or CHANGES REQUESTED. There is no "approved with suggestions" - if something is worth mentioning, it's worth fixing.
 
 ## Reporting Results
 
@@ -70,9 +71,9 @@ SPEC REVIEW RESULT: APPROVED
 
 Summary: [Brief description of what was reviewed]
 Checklist: All items pass
-No blocking issues found.
+No issues found.
 
-Recommend recording: .claude/bin/claws-review record {TASK_ID} spec approved --worker {YOUR_WORKER_ID}
+Recording: .claude/bin/claws-review record {TASK_ID} spec approved --worker {YOUR_WORKER_ID}
 ```
 
 **If CHANGES REQUESTED:**
@@ -80,10 +81,10 @@ Recommend recording: .claude/bin/claws-review record {TASK_ID} spec approved --w
 SPEC REVIEW RESULT: CHANGES REQUESTED
 
 Issues found:
-1. [Section] - [Issue description] (blocking)
-2. [Section] - [Issue description] (should-fix)
+1. [Section] - [Issue description]
+2. [Section] - [Issue description]
 
-The spec author must address blocking issues before this can proceed.
+The spec author must address all issues before this can proceed.
 Do NOT record this review - the cycle will restart after fixes.
 ```
 
@@ -92,4 +93,4 @@ Do NOT record this review - the cycle will restart after fixes.
 - This is review #{REVIEW_NUM} of 2 required reviews
 - If you request changes, the review cycle restarts from review #1 after fixes
 - Focus on catching issues early - problems in specs become expensive bugs later
-- Be thorough but practical - don't block on nitpicks
+- Reviews are binary: if you have feedback, request changes. No half-measures.

@@ -85,6 +85,7 @@ timeout = 60
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests requiring external services (deselect with '-m \"not integration\"')",
+    "cold_start: tests that verify behavior with no pre-existing data (run with '-m cold_start')",
 ]
 
 [dependency-groups]

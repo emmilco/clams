@@ -1,0 +1,7 @@
+{
+  "implementation_dirs": ["src/", "clams-visualizer/"],
+  "test_dirs": ["tests/"],
+  "script_dirs": [".claude/bin/", "scripts/"],
+  "doc_dirs": ["docs/", "planning_docs/", "bug_reports/"],
+  "frontend_dirs": ["clams-visualizer/"]
+}

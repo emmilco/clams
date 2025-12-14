@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "claude_code_session_end_schema",
+  "title": "Claude Code SessionEnd Hook Output Schema",
+  "description": "Expected JSON schema for Claude Code SessionEnd hook output. NOTE: SessionEnd is not yet supported by Claude Code as of 2025-01. See: https://docs.anthropic.com/en/docs/claude-code/hooks",
+  "type": "object",
+  "required": ["hookSpecificOutput"],
+  "properties": {
+    "hookSpecificOutput": {
+      "type": "object",
+      "required": ["hookEventName"],
+      "properties": {
+        "hookEventName": {
+          "type": "string",
+          "const": "SessionEnd",
+          "description": "Must be 'SessionEnd' to match the hook event type"
+        },
+        "additionalContext": {
+          "type": "string",
+          "description": "Optional context (may not be used since SessionEnd is not yet supported)"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "_documentation": {
+    "source": "https://docs.anthropic.com/en/docs/claude-code/hooks",
+    "bug_references": [],
+    "notes": [
+      "SessionEnd hook type is NOT YET SUPPORTED by Claude Code",
+      "The current implementation uses mcp_client.py directly instead of HTTP",
+      "Schema included for future-proofing when SessionEnd becomes available"
+    ]
+  }
+}

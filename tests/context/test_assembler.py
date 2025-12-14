@@ -17,7 +17,16 @@ from clams.context.searcher_types import (
 
 
 class MockSearcher(Searcher):
-    """Mock searcher for testing."""
+    """Mock searcher for testing.
+
+    IMPORTANT: This mock must match the interface of:
+    - clams.context.searcher_types.Searcher (ABC)
+    - clams.search.searcher.Searcher (concrete implementation)
+
+    Interface parity is verified by tests/infrastructure/test_mock_parity.py.
+    If you modify this class, run those tests to ensure interface compatibility.
+    See BUG-040, BUG-041 for examples of bugs caused by mock/production drift.
+    """
 
     def __init__(self) -> None:
         """Initialize mock with empty results."""
@@ -28,16 +37,53 @@ class MockSearcher(Searcher):
         self.commits: list[CommitResult] = []
 
     async def search_memories(
-        self, query: str, limit: int = 20
+        self,
+        query: str,
+        category: str | None = None,
+        limit: int = 20,
+        search_mode: str = "semantic",
     ) -> list[MemoryResult]:
-        """Mock memory search."""
-        return self.memories[:limit]
+        """Mock memory search.
+
+        Args:
+            query: Search query text
+            category: Optional filter by memory category (ignored in mock)
+            limit: Maximum results to return
+            search_mode: Search mode (ignored in mock, only semantic supported)
+        """
+        # Filter by category if provided
+        result = self.memories
+        if category:
+            result = [m for m in result if m.category == category]
+        return result[:limit]
 
     async def search_code(
-        self, query: str, limit: int = 20
+        self,
+        query: str,
+        project: str | None = None,
+        language: str | None = None,
+        unit_type: str | None = None,
+        limit: int = 20,
+        search_mode: str = "semantic",
     ) -> list[CodeResult]:
-        """Mock code search."""
-        return self.code[:limit]
+        """Mock code search.
+
+        Args:
+            query: Search query text
+            project: Optional filter by project name (ignored in mock)
+            language: Optional filter by programming language (ignored in mock)
+            unit_type: Optional filter by unit type (ignored in mock)
+            limit: Maximum results to return
+            search_mode: Search mode (ignored in mock)
+        """
+        result = self.code
+        if project:
+            result = [c for c in result if c.project == project]
+        if language:
+            result = [c for c in result if c.language == language]
+        if unit_type:
+            result = [c for c in result if c.unit_type == unit_type]
+        return result[:limit]
 
     async def search_experiences(
         self,
@@ -47,8 +93,19 @@ class MockSearcher(Searcher):
         strategy: str | None = None,
         outcome: str | None = None,
         limit: int = 20,
+        search_mode: str = "semantic",
     ) -> list[ExperienceResult]:
-        """Mock experience search."""
+        """Mock experience search.
+
+        Args:
+            query: Search query text
+            axis: Clustering axis (full, strategy, surprise, root_cause)
+            domain: Optional domain filter
+            strategy: Optional strategy filter
+            outcome: Optional outcome status filter
+            limit: Maximum results to return
+            search_mode: Search mode (ignored in mock)
+        """
         # Filter by axis if needed
         filtered = [exp for exp in self.experiences if exp.axis == axis]
 
@@ -67,15 +124,43 @@ class MockSearcher(Searcher):
         return filtered[:limit]
 
     async def search_values(
-        self, query: str, limit: int = 5
+        self,
+        query: str,
+        axis: str | None = None,
+        limit: int = 5,
+        search_mode: str = "semantic",
     ) -> list[ValueResult]:
-        """Mock value search."""
-        return self.values[:limit]
+        """Mock value search.
+
+        Args:
+            query: Search query text
+            axis: Optional filter by axis (strategy, surprise, root_cause)
+            limit: Maximum results to return
+            search_mode: Search mode (ignored in mock)
+        """
+        result = self.values
+        if axis:
+            result = [v for v in result if v.axis == axis]
+        return result[:limit]
 
     async def search_commits(
-        self, query: str, limit: int = 20
+        self,
+        query: str,
+        author: str | None = None,
+        since: "datetime | None" = None,
+        limit: int = 20,
+        search_mode: str = "semantic",
     ) -> list[CommitResult]:
-        """Mock commit search."""
+        """Mock commit search.
+
+        Args:
+            query: Search query text
+            author: Optional filter by commit author (ignored in mock)
+            since: Optional filter by minimum commit date (ignored in mock)
+            limit: Maximum results to return
+            search_mode: Search mode (ignored in mock)
+        """
+        # Filters are ignored in mock - just return stored commits
         return self.commits[:limit]
 
 

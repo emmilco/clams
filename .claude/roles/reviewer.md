@@ -71,15 +71,14 @@ pytest -xvs 2>&1 | tee test_output.log
 For each issue found, provide:
 - **File:Line** - exact location
 - **Issue** - what's wrong
-- **Severity** - blocking / should-fix / nit
 - **Suggestion** - how to fix (if not obvious)
 
 ## Review Checklist
 
-- [ ] **Implementation code exists** (changes to src/ and tests/ directories)
+- [ ] **Implementation code exists** (changes to src/, tests/, or clams/ directories)
 - [ ] Code does what the spec asks
 - [ ] No obvious bugs
-- [ ] Tests exist and pass
+- [ ] Tests exist and pass (if applicable - hooks-only changes may skip)
 - [ ] Error handling appropriate
 - [ ] No security issues
 - [ ] Code is clear and well-structured
@@ -139,6 +138,6 @@ Review recorded: .claude/bin/claws-review record {TASK_ID} code changes_requeste
 - Reviews are SEQUENTIAL - reviewer #2 only runs after reviewer #1 approves
 - If you request changes, the review cycle restarts from review #1 after fixes
 - Focus on correctness and security first, style second
-- Be thorough but practical - don't block on nitpicks
+- Reviews are binary: if you have feedback, request changes. No half-measures.
 - **ALWAYS record your review before completing**
 

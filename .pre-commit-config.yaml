@@ -1,0 +1,28 @@
+# Pre-commit configuration for CLAMS
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  - repo: local
+    hooks:
+      - id: check-heavy-imports
+        name: Check for top-level heavy imports
+        description: >
+          Detects top-level imports of heavy packages (torch, sentence_transformers,
+          transformers, nomic) that cause startup delays and fork failures.
+          See BUG-037, BUG-042.
+        entry: python .claude/hooks/check_heavy_imports.py
+        language: python
+        types: [python]
+        pass_filenames: true
+
+      - id: subprocess-stdin-check
+        name: Check subprocess.run has stdin handling
+        description: >
+          Ensures all subprocess.run, Popen, call, check_call, and check_output
+          calls specify stdin handling (stdin=subprocess.DEVNULL, subprocess.PIPE,
+          or input=). This prevents test hangs and security issues.
+        entry: python .claude/hooks/check_subprocess.py
+        language: python
+        types: [python]
+        pass_filenames: true

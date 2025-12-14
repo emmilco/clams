@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "claude_code_user_prompt_submit_schema",
+  "title": "Claude Code UserPromptSubmit Hook Output Schema",
+  "description": "Expected JSON schema for Claude Code UserPromptSubmit hook output. See: https://docs.anthropic.com/en/docs/claude-code/hooks",
+  "type": "object",
+  "required": ["hookSpecificOutput"],
+  "properties": {
+    "hookSpecificOutput": {
+      "type": "object",
+      "required": ["hookEventName", "additionalContext"],
+      "properties": {
+        "hookEventName": {
+          "type": "string",
+          "const": "UserPromptSubmit",
+          "description": "Must be 'UserPromptSubmit' to match the hook event type"
+        },
+        "additionalContext": {
+          "type": "string",
+          "description": "Context to inject with the user's prompt. Will be shown to Claude."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "_documentation": {
+    "source": "https://docs.anthropic.com/en/docs/claude-code/hooks",
+    "bug_references": ["BUG-051"],
+    "notes": [
+      "The hookSpecificOutput.additionalContext field is the only way to inject context",
+      "Previous incorrect schema used {type: ..., content: ...} which was not recognized",
+      "This hook receives user prompt on stdin and can provide relevant context"
+    ]
+  }
+}
