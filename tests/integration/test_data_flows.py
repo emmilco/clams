@@ -15,7 +15,7 @@ BUG-027 (datetime round-trip) - data flows across modules without validation.
 
 import tempfile
 from collections.abc import AsyncIterator
-from datetime import datetime, timezone, UTC
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
@@ -36,7 +36,6 @@ from clams.observation import (
     Strategy,
 )
 from clams.search.searcher import Searcher
-from clams.storage.metadata import MetadataStore
 from clams.storage.qdrant import QdrantVectorStore
 
 pytest_plugins = ("pytest_asyncio",)
@@ -253,7 +252,6 @@ class TestGHAPDataFlow:
         test_collections: dict[str, str],
     ) -> None:
         """Test falsified GHAP flow with root cause captures all data."""
-        from unittest.mock import patch
 
         with tempfile.TemporaryDirectory() as tmpdir:
             journal_dir = Path(tmpdir) / "journal"
@@ -266,7 +264,7 @@ class TestGHAPDataFlow:
 
             await collector.start_session()
 
-            entry = await collector.create_ghap(
+            await collector.create_ghap(
                 domain=Domain.DEBUGGING,
                 strategy=Strategy.SYSTEMATIC_ELIMINATION,
                 goal="Test falsified flow",
@@ -274,7 +272,6 @@ class TestGHAPDataFlow:
                 action="Investigate the issue",
                 prediction="Will find the root cause",
             )
-            ghap_id = entry.id
 
             # Resolve as falsified with root cause
             resolved = await collector.resolve_ghap(

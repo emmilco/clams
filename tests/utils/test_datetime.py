@@ -4,10 +4,11 @@ Reference: R11-A - Centralized Datetime Utilities
 Reference: BUG-027 - datetime stored as ISO string but read expecting numeric timestamp
 """
 
-from datetime import datetime, timezone, timedelta, UTC
+from datetime import UTC, datetime, timedelta, timezone
+
 import pytest
 
-from clams.utils.datetime import serialize_datetime, deserialize_datetime
+from clams.utils.datetime import deserialize_datetime, serialize_datetime
 
 
 class TestSerializeDatetime:

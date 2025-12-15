@@ -15,8 +15,6 @@ import inspect
 from dataclasses import fields, is_dataclass
 from typing import get_type_hints
 
-import pytest
-
 
 class TestSearchResultTypeConsistency:
     """Verify result types are consistent between search and context modules."""
@@ -304,7 +302,6 @@ class TestVectorStoreTypes:
 
     def test_result_converters_use_correct_fields(self) -> None:
         """Verify all from_search_result methods access valid SearchResult fields."""
-        from clams.storage.base import SearchResult
         from clams.search.results import (
             CodeResult,
             CommitResult,
@@ -312,8 +309,9 @@ class TestVectorStoreTypes:
             MemoryResult,
             ValueResult,
         )
+        from clams.storage.base import SearchResult
 
-        search_result_fields = {f.name for f in fields(SearchResult)}
+        {f.name for f in fields(SearchResult)}
 
         # All result types with from_search_result methods
         result_types = [
