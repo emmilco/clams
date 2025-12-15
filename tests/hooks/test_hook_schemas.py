@@ -31,6 +31,7 @@ except ImportError:
 from tests.fixtures.claude_code_schemas import (
     CLAUDE_CODE_HOOKS_DOCS,
     HOOK_EVENT_NAMES,
+    HOOK_SCRIPT_TO_SCHEMA,
     load_schema,
 )
 
@@ -363,8 +364,9 @@ class TestSchemaConsistency:
 
     def test_all_hook_scripts_exist(self) -> None:
         """Verify all hook scripts exist."""
-        for hook_name in HOOK_EVENT_NAMES:
-            hook_path = HOOKS_DIR / f"{hook_name}.sh"
+        # Use script names (which may differ from schema names)
+        for script_name in HOOK_SCRIPT_TO_SCHEMA:
+            hook_path = HOOKS_DIR / f"{script_name}.sh"
             assert hook_path.exists(), (
                 f"Hook script not found: {hook_path}"
             )
@@ -436,3 +438,314 @@ class TestHookSourceCodePatterns:
                             f"Hook {hook_name} may contain legacy pattern '{pattern}' "
                             f"in JSON output near line {i + 1}"
                         )
+
+
+class TestPreToolCallSchema:
+    """Tests for ghap_checkin.sh hook schema conformance (PreToolCall).
+
+    This hook is invoked before tool calls to provide GHAP check-in reminders.
+    It must output JSON conforming to the PreToolCall schema.
+    """
+
+    @pytest.fixture
+    def hook_path(self) -> Path:
+        """Get the path to ghap_checkin.sh hook."""
+        hook = HOOKS_DIR / "ghap_checkin.sh"
+        assert hook.exists(), f"Hook not found at {hook}"
+        return hook
+
+    @pytest.fixture
+    def schema(self) -> dict[str, Any]:
+        """Load the PreToolCall schema."""
+        return load_schema("pre_tool_call")
+
+    def run_hook(
+        self, hook_path: Path, tool_input: dict[str, Any] | None = None
+    ) -> str:
+        """Run the hook and return stdout (may be empty or JSON).
+
+        Args:
+            hook_path: Path to the hook script
+            tool_input: Tool call details to pass on stdin
+
+        Returns:
+            Hook stdout (empty string if no output)
+        """
+        input_json = json.dumps(
+            tool_input or {"tool": "Bash", "command": "echo test"}
+        )
+        result = subprocess.run(
+            [str(hook_path)],
+            input=input_json,
+            capture_output=True,
+            text=True,
+            timeout=15,
+            env={
+                "PATH": "/usr/bin:/bin:/usr/local/bin",
+                "HOME": str(Path.home()),
+            },
+        )
+        assert result.returncode == 0, f"Hook failed: {result.stderr}"
+        return result.stdout
+
+    def test_output_is_empty_or_valid_json(self, hook_path: Path) -> None:
+        """Verify hook outputs nothing (silent skip) or valid JSON."""
+        output = self.run_hook(hook_path)
+        if output.strip():  # If there's output, it must be valid JSON
+            try:
+                json.loads(output)
+            except json.JSONDecodeError as e:
+                pytest.fail(f"Hook output is not valid JSON: {e}\nOutput: {output}")
+
+    def test_when_output_exists_has_correct_schema(self, hook_path: Path) -> None:
+        """Verify output uses correct hookSpecificOutput schema structure.
+
+        Note: When server is unavailable, hook exits with no output (valid behavior).
+        Schema validation only applies when output is produced.
+        """
+        output = self.run_hook(hook_path)
+        if not output.strip():
+            # No output is valid when server is unavailable - test passes
+            return
+
+        data = json.loads(output)
+        assert "hookSpecificOutput" in data, (
+            f"Missing 'hookSpecificOutput'. Got: {list(data.keys())}. "
+            f"Hook uses legacy schema - needs fix! See: {CLAUDE_CODE_HOOKS_DOCS}"
+        )
+        assert data["hookSpecificOutput"].get("hookEventName") == "PreToolCall", (
+            f"hookEventName should be 'PreToolCall', "
+            f"got: {data['hookSpecificOutput'].get('hookEventName')}"
+        )
+        assert "additionalContext" in data["hookSpecificOutput"], (
+            "Missing 'additionalContext' in hookSpecificOutput"
+        )
+
+    def test_additional_context_is_string(self, hook_path: Path) -> None:
+        """Verify additionalContext is a string when present.
+
+        Note: When server is unavailable, hook exits with no output (valid behavior).
+        """
+        output = self.run_hook(hook_path)
+        if not output.strip():
+            # No output is valid when server is unavailable - test passes
+            return
+
+        data = json.loads(output)
+        if "hookSpecificOutput" in data:
+            context = data["hookSpecificOutput"].get("additionalContext")
+            if context is not None:
+                assert isinstance(context, str), (
+                    f"additionalContext should be string, got {type(context).__name__}"
+                )
+
+    def test_no_legacy_schema_fields(self, hook_path: Path) -> None:
+        """Verify no legacy schema fields exist at top level (BUG-050/051 regression).
+
+        Note: When server is unavailable, hook exits with no output (valid behavior).
+        """
+        output = self.run_hook(hook_path)
+        if not output.strip():
+            # No output is valid when server is unavailable - test passes
+            return
+
+        data = json.loads(output)
+        legacy_fields = ["type", "content", "prompt"]
+        for field in legacy_fields:
+            assert field not in data, (
+                f"Found legacy '{field}' field at top level - regression! "
+                f"Hook should use hookSpecificOutput schema."
+            )
+
+    @pytest.mark.skipif(not HAS_JSONSCHEMA, reason="jsonschema not installed")
+    def test_conforms_to_schema(
+        self, hook_path: Path, schema: dict[str, Any]
+    ) -> None:
+        """Verify output conforms to JSON schema (strict validation).
+
+        Note: When server is unavailable, hook exits with no output (valid behavior).
+        """
+        output = self.run_hook(hook_path)
+        if not output.strip():
+            # No output is valid when server is unavailable - test passes
+            return
+
+        data = json.loads(output)
+        jsonschema.validate(instance=data, schema=schema)
+
+    def test_source_contains_correct_schema_pattern(self, hook_path: Path) -> None:
+        """Verify hook source code uses correct schema structure."""
+        source = hook_path.read_text()
+
+        assert "hookSpecificOutput" in source, (
+            "Hook source should contain 'hookSpecificOutput'"
+        )
+        assert '"hookEventName": "PreToolCall"' in source, (
+            "Hook source should contain hookEventName: PreToolCall"
+        )
+        assert "additionalContext" in source, (
+            "Hook source should contain 'additionalContext'"
+        )
+
+
+class TestPostToolCallSchema:
+    """Tests for outcome_capture.sh hook schema conformance (PostToolCall).
+
+    This hook is invoked after tool calls to capture test/build outcomes.
+    It must output JSON conforming to the PostToolCall schema.
+    """
+
+    @pytest.fixture
+    def hook_path(self) -> Path:
+        """Get the path to outcome_capture.sh hook."""
+        hook = HOOKS_DIR / "outcome_capture.sh"
+        assert hook.exists(), f"Hook not found at {hook}"
+        return hook
+
+    @pytest.fixture
+    def schema(self) -> dict[str, Any]:
+        """Load the PostToolCall schema."""
+        return load_schema("post_tool_call")
+
+    @pytest.fixture
+    def test_failure_input(self) -> dict[str, Any]:
+        """Input that triggers hook output (test failure)."""
+        return {
+            "tool": "Bash",
+            "command": "pytest tests/",
+            "exit_code": 1,
+            "stdout": "FAILED tests/test_example.py::test_one",
+        }
+
+    @pytest.fixture
+    def non_triggering_input(self) -> dict[str, Any]:
+        """Input that should NOT trigger output (non-test/build tool)."""
+        return {
+            "tool": "Read",
+            "file_path": "/some/file.txt",
+            "exit_code": 0,
+            "stdout": "file contents",
+        }
+
+    def run_hook(self, hook_path: Path, tool_result: dict[str, Any]) -> str:
+        """Run the hook and return stdout (may be empty or JSON).
+
+        Args:
+            hook_path: Path to the hook script
+            tool_result: Tool result to pass on stdin
+
+        Returns:
+            Hook stdout (empty string if no output)
+        """
+        result = subprocess.run(
+            [str(hook_path)],
+            input=json.dumps(tool_result),
+            capture_output=True,
+            text=True,
+            timeout=15,
+            env={
+                "PATH": "/usr/bin:/bin:/usr/local/bin",
+                "HOME": str(Path.home()),
+            },
+        )
+        assert result.returncode == 0, f"Hook failed: {result.stderr}"
+        return result.stdout
+
+    def test_non_triggering_input_produces_no_output(
+        self, hook_path: Path, non_triggering_input: dict[str, Any]
+    ) -> None:
+        """Verify non-test/build tools produce no output."""
+        output = self.run_hook(hook_path, non_triggering_input)
+        assert output.strip() == "", (
+            f"Non-triggering input should produce no output, got: {output}"
+        )
+
+    def test_test_failure_output_is_valid_json(
+        self, hook_path: Path, test_failure_input: dict[str, Any]
+    ) -> None:
+        """Verify test failure produces valid JSON output."""
+        output = self.run_hook(hook_path, test_failure_input)
+        if output.strip():
+            try:
+                json.loads(output)
+            except json.JSONDecodeError as e:
+                pytest.fail(f"Hook output is not valid JSON: {e}\nOutput: {output}")
+
+    def test_when_output_exists_has_correct_schema(
+        self, hook_path: Path, test_failure_input: dict[str, Any]
+    ) -> None:
+        """Verify output uses correct hookSpecificOutput schema structure."""
+        output = self.run_hook(hook_path, test_failure_input)
+        if not output.strip():
+            pytest.skip("Hook produced no output (server unavailable)")
+
+        data = json.loads(output)
+        assert "hookSpecificOutput" in data, (
+            f"Missing 'hookSpecificOutput'. Got: {list(data.keys())}. "
+            f"Hook uses legacy schema - needs fix! See: {CLAUDE_CODE_HOOKS_DOCS}"
+        )
+        assert data["hookSpecificOutput"].get("hookEventName") == "PostToolCall", (
+            f"hookEventName should be 'PostToolCall', "
+            f"got: {data['hookSpecificOutput'].get('hookEventName')}"
+        )
+        assert "additionalContext" in data["hookSpecificOutput"], (
+            "Missing 'additionalContext' in hookSpecificOutput"
+        )
+
+    def test_additional_context_is_string(
+        self, hook_path: Path, test_failure_input: dict[str, Any]
+    ) -> None:
+        """Verify additionalContext is a string when present."""
+        output = self.run_hook(hook_path, test_failure_input)
+        if not output.strip():
+            pytest.skip("Hook produced no output")
+
+        data = json.loads(output)
+        if "hookSpecificOutput" in data:
+            context = data["hookSpecificOutput"].get("additionalContext")
+            if context is not None:
+                assert isinstance(context, str), (
+                    f"additionalContext should be string, got {type(context).__name__}"
+                )
+
+    def test_no_legacy_schema_fields(
+        self, hook_path: Path, test_failure_input: dict[str, Any]
+    ) -> None:
+        """Verify no legacy schema fields exist at top level (BUG-050/051 regression)."""
+        output = self.run_hook(hook_path, test_failure_input)
+        if not output.strip():
+            pytest.skip("Hook produced no output")
+
+        data = json.loads(output)
+        legacy_fields = ["type", "content", "prompt", "suggested_action", "auto_captured"]
+        for field in legacy_fields:
+            assert field not in data, (
+                f"Found legacy '{field}' field at top level - regression! "
+                f"Hook should use hookSpecificOutput schema."
+            )
+
+    @pytest.mark.skipif(not HAS_JSONSCHEMA, reason="jsonschema not installed")
+    def test_conforms_to_schema(
+        self, hook_path: Path, schema: dict[str, Any], test_failure_input: dict[str, Any]
+    ) -> None:
+        """Verify output conforms to JSON schema (strict validation)."""
+        output = self.run_hook(hook_path, test_failure_input)
+        if not output.strip():
+            pytest.skip("Hook produced no output")
+
+        data = json.loads(output)
+        jsonschema.validate(instance=data, schema=schema)
+
+    def test_source_contains_correct_schema_pattern(self, hook_path: Path) -> None:
+        """Verify hook source code uses correct schema structure."""
+        source = hook_path.read_text()
+
+        assert "hookSpecificOutput" in source, (
+            "Hook source should contain 'hookSpecificOutput'"
+        )
+        assert '"hookEventName": "PostToolCall"' in source, (
+            "Hook source should contain hookEventName: PostToolCall"
+        )
+        assert "additionalContext" in source, (
+            "Hook source should contain 'additionalContext'"
+        )

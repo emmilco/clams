@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "claude_code_post_tool_call_schema",
+  "title": "Claude Code PostToolCall Hook Output Schema",
+  "description": "Expected JSON schema for Claude Code PostToolCall hook output. See: https://docs.anthropic.com/en/docs/claude-code/hooks",
+  "type": "object",
+  "required": ["hookSpecificOutput"],
+  "properties": {
+    "hookSpecificOutput": {
+      "type": "object",
+      "required": ["hookEventName", "additionalContext"],
+      "properties": {
+        "hookEventName": {
+          "type": "string",
+          "const": "PostToolCall",
+          "description": "Must be 'PostToolCall' to match the hook event type"
+        },
+        "additionalContext": {
+          "type": "string",
+          "description": "Context to inject after tool execution."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "_documentation": {
+    "source": "https://docs.anthropic.com/en/docs/claude-code/hooks",
+    "bug_references": ["BUG-050", "BUG-051"],
+    "notes": [
+      "PostToolCall hooks can inject context after a tool runs",
+      "The hook receives tool result on stdin as JSON",
+      "Used by outcome_capture.sh to capture test/build outcomes"
+    ]
+  }
+}

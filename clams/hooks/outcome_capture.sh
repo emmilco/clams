@@ -83,12 +83,14 @@ main() {
     prediction=$(echo "$ghap_result" | jq -r '.prediction // ""' 2>/dev/null || echo "")
 
     # If failure and NO active GHAP, suggest starting GHAP
+    # Output uses Claude Code hook schema: https://docs.anthropic.com/en/docs/claude-code/hooks
     if [ "$outcome_status" = "failure" ] && [ "$has_active" = "false" ]; then
         cat <<EOF
 {
-  "type": "suggestion",
-  "content": "## Test FAILED\n\nConsider starting a GHAP to track your debugging approach and learn from the process.",
-  "prompt": "Start tracking with GHAP?"
+  "hookSpecificOutput": {
+    "hookEventName": "PostToolCall",
+    "additionalContext": "## Test FAILED\n\nConsider starting a GHAP to track your debugging approach and learn from the process.\n\nStart tracking with GHAP?"
+  }
 }
 EOF
         exit 0
@@ -106,19 +108,19 @@ EOF
         if [ "$outcome_status" = "success" ]; then
             cat <<EOF
 {
-  "type": "outcome",
-  "content": "## $outcome_type PASSED\n\nYour prediction was: \"$prediction\"\n\nDoes this confirm your hypothesis? If yes, resolve GHAP as CONFIRMED.",
-  "suggested_action": "resolve_confirmed",
-  "auto_captured": true
+  "hookSpecificOutput": {
+    "hookEventName": "PostToolCall",
+    "additionalContext": "## $outcome_type PASSED\n\nYour prediction was: \"$prediction\"\n\nDoes this confirm your hypothesis? If yes, resolve GHAP as CONFIRMED."
+  }
 }
 EOF
         else
             cat <<EOF
 {
-  "type": "outcome",
-  "content": "## $outcome_type FAILED\n\nYour prediction was: \"$prediction\"\n\nActual: Test still fails.\n\nThis falsifies your hypothesis. Please:\n1. What surprised you?\n2. What was the root cause?\n3. What did you learn?",
-  "suggested_action": "resolve_falsified",
-  "auto_captured": true
+  "hookSpecificOutput": {
+    "hookEventName": "PostToolCall",
+    "additionalContext": "## $outcome_type FAILED\n\nYour prediction was: \"$prediction\"\n\nActual: Test still fails.\n\nThis falsifies your hypothesis. Please:\n1. What surprised you?\n2. What was the root cause?\n3. What did you learn?"
+  }
 }
 EOF
         fi
