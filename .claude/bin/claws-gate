@@ -281,6 +281,11 @@ cmd_check() {
     echo "=== Gate Check: $transition ==="
     echo "Task: $task_id"
     echo "Worktree: $worktree"
+
+    # Detect project type for this worktree
+    local project_type
+    project_type=$(detect_project_type "$worktree")
+    echo "Project type: $project_type"
     echo ""
 
     local failed=0
@@ -342,45 +347,88 @@ cmd_check() {
                 echo "$code_changes" | sed 's/^/  /'
             fi
 
-            # Check if this is a frontend-only project (uses frontend_dirs from config)
-            local is_frontend_only=0
-            if [[ -n "$(cd "$worktree" && eval "git diff main...HEAD --name-only -- $frontend_dirs" 2>/dev/null)" ]]; then
-                local has_python_changes
-                # Check if there are Python changes in impl_dirs or test_dirs
-                has_python_changes=$(cd "$worktree" && eval "git diff main...HEAD --name-only -- $impl_dirs $test_dirs" 2>/dev/null | grep '\.py$' || true)
-                if [[ -z "$has_python_changes" ]]; then
-                    is_frontend_only=1
+            # Run appropriate checks based on project type
+            case "$project_type" in
+                python)
                     echo ""
-                    echo "Note: This is a frontend-only project (clams-visualizer/). Python checks skipped."
-                fi
-            fi
-
-            # Skip Python checks for frontend-only projects
-            if [[ $is_frontend_only -eq 1 ]]; then
-                echo ""
-                echo "--- Skipping Python checks (frontend-only project) ---"
-                echo "✓ Tests pass: SKIPPED (no Python code)"
-                echo "✓ Linter clean: SKIPPED (no Python code)"
-                echo "✓ Type check clean: SKIPPED (no Python code)"
-                echo "✓ No untracked TODOs: SKIPPED (no Python code)"
-            else
-                echo ""
-                if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
-                    failed=1
-                fi
-                echo ""
-                if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
-                    failed=1
-                fi
-                echo ""
-                if ! run_gate "Type check clean" "check_types.sh" "$worktree"; then
-                    failed=1
-                fi
-                echo ""
-                if ! run_gate "No untracked TODOs" "check_todos.sh" "$worktree"; then
-                    failed=1
-                fi
-            fi
+                    if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    echo ""
+                    if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    echo ""
+                    if ! run_gate "Type check clean" "check_types.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    echo ""
+                    if ! run_gate "No untracked TODOs" "check_todos.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    ;;
+                javascript)
+                    echo ""
+                    if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    echo ""
+                    if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    echo ""
+                    # TypeScript projects get type checking
+                    if [[ -f "$worktree/tsconfig.json" ]]; then
+                        if ! run_gate "Type check clean" "check_types.sh" "$worktree"; then
+                            failed=1
+                        fi
+                    fi
+                    echo ""
+                    if ! run_gate "No untracked TODOs" "check_todos.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    ;;
+                rust)
+                    echo ""
+                    if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    echo ""
+                    if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    # Rust has built-in type checking via cargo
+                    echo ""
+                    if ! run_gate "No untracked TODOs" "check_todos.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    ;;
+                go)
+                    echo ""
+                    if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    echo ""
+                    if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    # Go has built-in type checking
+                    echo ""
+                    if ! run_gate "No untracked TODOs" "check_todos.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    ;;
+                unknown)
+                    echo ""
+                    echo "--- Skipping language-specific checks (unknown project type) ---"
+                    echo "Note: Project type could not be detected."
+                    echo "Add a .claude/project.json with {\"project_type\": \"<type>\"} to enable checks."
+                    echo ""
+                    if ! run_gate "No untracked TODOs" "check_todos.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    ;;
+            esac
             ;;
 
         CODE_REVIEW-TEST)
@@ -482,10 +530,17 @@ cmd_check() {
             fi
             echo ""
 
-            # Check regression test was added
+            # Check regression test was added (language-appropriate pattern)
             echo "--- Gate: Regression test added ---"
-            local test_changes
-            test_changes=$(cd "$worktree" && eval "git diff main...HEAD --name-only -- $test_dirs" 2>/dev/null | grep -v '__pycache__' | grep '\.py$')
+            local test_changes test_pattern
+            case "$project_type" in
+                python) test_pattern='\.py$' ;;
+                javascript) test_pattern='\.(js|ts|jsx|tsx)$' ;;
+                rust) test_pattern='\.rs$' ;;
+                go) test_pattern='_test\.go$' ;;
+                *) test_pattern='\.*' ;;
+            esac
+            test_changes=$(cd "$worktree" && eval "git diff main...HEAD --name-only -- $test_dirs" 2>/dev/null | grep -v '__pycache__' | grep -E "$test_pattern" || true)
             if [[ -z "$test_changes" ]]; then
                 echo "✗ Regression test added: FAIL"
                 echo ""
@@ -499,17 +554,61 @@ cmd_check() {
             fi
             echo ""
 
-            if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
-                failed=1
-            fi
-            echo ""
-            if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
-                failed=1
-            fi
-            echo ""
-            if ! run_gate "Type check clean" "check_types.sh" "$worktree"; then
-                failed=1
-            fi
+            # Run appropriate checks based on project type
+            case "$project_type" in
+                python)
+                    if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    echo ""
+                    if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    echo ""
+                    if ! run_gate "Type check clean" "check_types.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    ;;
+                javascript)
+                    if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    echo ""
+                    if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    echo ""
+                    if [[ -f "$worktree/tsconfig.json" ]]; then
+                        if ! run_gate "Type check clean" "check_types.sh" "$worktree"; then
+                            failed=1
+                        fi
+                    fi
+                    ;;
+                rust)
+                    if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    echo ""
+                    if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    ;;
+                go)
+                    if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    echo ""
+                    if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    ;;
+                unknown)
+                    echo "WARNING: Unknown project type - running generic checks"
+                    if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
+                        failed=1
+                    fi
+                    ;;
+            esac
             ;;
 
         FIXED-REVIEWED)
