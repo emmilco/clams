@@ -71,8 +71,6 @@ select = ["E", "F", "I", "N", "W", "UP"]
 "tests/test_bug_006_experience_schema.py" = ["E402"]
 # Test files with long assertions and test data - hard to wrap meaningfully
 "tests/**/*.py" = ["E501"]
-# Generator scripts with long lines for data generation
-"generate_*.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"
