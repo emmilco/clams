@@ -144,7 +144,7 @@ For projects with multiple languages (e.g., Python backend + TypeScript frontend
 1. **Primary type**: Detected at worktree root via `detect_project_type()`
 2. **Secondary types**: Detected via `composite_detection.subdirs` in registry
 3. **Check execution**: Run checks for each detected type
-4. **Aggregation**: All checks must pass; first failure stops execution
+4. **Aggregation**: All checks must pass; run all checks regardless of individual failures, report aggregated results at the end
 
 Example flow for CLAMS (Python + TypeScript):
 ```
