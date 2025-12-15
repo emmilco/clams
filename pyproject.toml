@@ -64,8 +64,10 @@ select = ["E", "F", "I", "N", "W", "UP"]
 "src/clams/server/tools/__init__.py" = ["E501"]
 # Docstrings with long parameter descriptions
 "src/clams/search/searcher.py" = ["E501"]
-# Test files with module-level imports after sys.path manipulation
+# Test files with module-level imports after sys.path manipulation or pytest markers
 "tests/integration/test_e2e.py" = ["E402"]
+"tests/integration/test_data_flows.py" = ["E402"]
+"tests/integration/test_round_trip.py" = ["E402"]
 "tests/test_bug_006_experience_schema.py" = ["E402"]
 # Test files with long assertions and test data - hard to wrap meaningfully
 "tests/**/*.py" = ["E501"]

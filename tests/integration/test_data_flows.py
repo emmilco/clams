@@ -15,7 +15,7 @@ BUG-027 (datetime round-trip) - data flows across modules without validation.
 
 import tempfile
 from collections.abc import AsyncIterator
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
@@ -36,7 +36,6 @@ from clams.observation import (
     Strategy,
 )
 from clams.search.searcher import Searcher
-from clams.storage.metadata import MetadataStore
 from clams.storage.qdrant import QdrantVectorStore
 
 pytest_plugins = ("pytest_asyncio",)
@@ -163,7 +162,7 @@ class TestGHAPDataFlow:
             assert session_id.startswith("session_")
 
             # 2. Create GHAP entry
-            original_created_at = datetime.now(timezone.utc)
+            original_created_at = datetime.now(UTC)
             entry = await collector.create_ghap(
                 domain=Domain.DEBUGGING,
                 strategy=Strategy.ROOT_CAUSE_ANALYSIS,
@@ -253,7 +252,6 @@ class TestGHAPDataFlow:
         test_collections: dict[str, str],
     ) -> None:
         """Test falsified GHAP flow with root cause captures all data."""
-        from unittest.mock import patch
 
         with tempfile.TemporaryDirectory() as tmpdir:
             journal_dir = Path(tmpdir) / "journal"
@@ -266,7 +264,7 @@ class TestGHAPDataFlow:
 
             await collector.start_session()
 
-            entry = await collector.create_ghap(
+            await collector.create_ghap(
                 domain=Domain.DEBUGGING,
                 strategy=Strategy.SYSTEMATIC_ELIMINATION,
                 goal="Test falsified flow",
@@ -274,7 +272,6 @@ class TestGHAPDataFlow:
                 action="Investigate the issue",
                 prediction="Will find the root cause",
             )
-            ghap_id = entry.id
 
             # Resolve as falsified with root cause
             resolved = await collector.resolve_ghap(
@@ -331,7 +328,7 @@ class TestMemoryDataFlow:
         collection = test_collections["memories"]
         memory_id = str(uuid4())
         content = "Important fact about data flow testing"
-        original_created_at = datetime.now(timezone.utc)
+        original_created_at = datetime.now(UTC)
 
         # 1. Store memory
         embedding = await embedding_service.embed(content)
@@ -586,7 +583,7 @@ class TestGitDataFlow:
                 "message": "feat: Add fibonacci function for mathematical computations",
                 "author": "test_author",
                 "author_email": "test@example.com",
-                "timestamp": datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc).isoformat(),
+                "timestamp": datetime(2024, 1, 15, 10, 30, 0, tzinfo=UTC).isoformat(),
                 "files_changed": ["math_utils.py"],
                 "insertions": 15,
                 "deletions": 0,
@@ -597,7 +594,7 @@ class TestGitDataFlow:
                 "message": "fix: Correct edge case in factorial calculation",
                 "author": "test_author",
                 "author_email": "test@example.com",
-                "timestamp": datetime(2024, 1, 16, 14, 20, 0, tzinfo=timezone.utc).isoformat(),
+                "timestamp": datetime(2024, 1, 16, 14, 20, 0, tzinfo=UTC).isoformat(),
                 "files_changed": ["math_utils.py"],
                 "insertions": 3,
                 "deletions": 1,
@@ -608,7 +605,7 @@ class TestGitDataFlow:
                 "message": "refactor: Improve data processor performance",
                 "author": "another_author",
                 "author_email": "another@example.com",
-                "timestamp": datetime(2024, 1, 17, 9, 0, 0, tzinfo=timezone.utc).isoformat(),
+                "timestamp": datetime(2024, 1, 17, 9, 0, 0, tzinfo=UTC).isoformat(),
                 "files_changed": ["processor.py", "tests/test_processor.py"],
                 "insertions": 25,
                 "deletions": 10,
@@ -678,7 +675,7 @@ class TestGitDataFlow:
                 "message": f"Update {i} to math_utils.py",
                 "author": "test_author",
                 "author_email": "test@example.com",
-                "timestamp": datetime(2024, 1, i + 1, 10, 0, 0, tzinfo=timezone.utc).isoformat(),
+                "timestamp": datetime(2024, 1, i + 1, 10, 0, 0, tzinfo=UTC).isoformat(),
                 "files_changed": ["math_utils.py"],
                 "insertions": i * 5,
                 "deletions": i * 2,
@@ -835,7 +832,7 @@ class TestCrossComponentDataFlow:
         collection = test_collections["commits"]
 
         # Test with explicit UTC timezone
-        utc_time = datetime(2024, 6, 15, 12, 30, 45, tzinfo=timezone.utc)
+        utc_time = datetime(2024, 6, 15, 12, 30, 45, tzinfo=UTC)
 
         commit = {
             "id": "tz_test_commit",
