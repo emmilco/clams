@@ -114,7 +114,7 @@ class ServerSettings(BaseSettings):
     # Collection names
     # =========================================================================
     collection_memories: str = "memories"
-    collection_code: str = "code_units"
+    collection_code: str = "code"  # From CollectionName.CODE
     collection_commits: str = "commits"
     collection_values: str = "values"
     collection_ghap_prefix: str = "ghap"
@@ -261,6 +261,7 @@ Recommended: **Option B** - Keep `CollectionName` as the canonical source for co
 1. **Single Source of Truth**
    - [ ] All configuration values are defined in `src/clams/server/config.py`
    - [ ] `ServerSettings` includes all production defaults with docstrings
+   - [ ] `ServerSettings` includes `pid_file` and `log_file` path configuration
    - [ ] No duplicate `StorageSettings` class exists
 
 2. **Shell Script Support**
