@@ -26,6 +26,9 @@ For each item, note whether it passes or needs work:
 - [ ] Edge cases are identified
 - [ ] Error handling expectations are defined
 - [ ] Dependencies are noted
+- [ ] Data flow is described (inputs, transformations, outputs)
+- [ ] Error handling expectations define what happens when operations fail
+- [ ] Integration points are identified with their contracts
 
 **Clarity**
 - [ ] No ambiguous language ("should", "might", "could")

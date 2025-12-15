@@ -30,6 +30,9 @@ You are the Proposal Reviewer. Your role is to review architecture proposals for
 - [ ] No obvious flaws or gaps in logic
 - [ ] Error handling strategy is defined
 - [ ] Edge cases are considered
+- [ ] Data flow design is complete (entry to exit traced)
+- [ ] Error propagation paths are defined
+- [ ] Integration contracts are specified (inputs, outputs, timing)
 
 **Codebase Consistency**
 - [ ] Follows existing patterns in the codebase

@@ -53,6 +53,64 @@ For each file changed:
 - Are there obvious bugs?
 - Are there security concerns?
 
+### Step 3.5: End-to-End Trace
+
+Before approving code, you MUST trace execution paths through all changes. Tracing catches issues invisible in isolated code review.
+
+#### Find All Callers
+
+For EACH modified function/method, identify every caller:
+
+```bash
+# Find callers of a function (replace function_name with actual name)
+grep -rn "function_name(" src/ tests/
+
+# Find imports of a modified module
+grep -rn "from module_name import\|import module_name" src/ tests/
+
+# Find exception handlers (if you modified exceptions)
+grep -rn "except.*ExceptionType" src/
+```
+
+**Stop and investigate** if any caller:
+- Makes assumptions your change invalidates
+- Doesn't handle new return values or exceptions
+- Uses the function in an unexpected way
+
+#### Trace Data Flow
+
+Starting from each entry point (API endpoint, CLI command, tool handler):
+1. What data enters the modified code?
+2. How is it transformed?
+3. Where does output go?
+4. Who consumes that output?
+
+#### Trace Error Paths
+
+For each way the modified code can fail:
+1. What exception is raised?
+2. Where is it caught?
+3. What cleanup/rollback happens?
+4. What does the user see?
+
+#### Trace Integration Points
+
+Identify all components the modified code connects to:
+1. What contracts (input/output formats, timing, ordering) exist?
+2. Does your change maintain those contracts?
+3. Are there implicit assumptions you might break?
+
+#### Answer These Questions
+
+You CANNOT approve code without answering:
+
+1. **Data Flow**: "If I call this with X input, what is the complete path to the output?"
+2. **Failure Mode**: "If this operation fails at step Y, what happens?"
+3. **Caller Impact**: "Who calls this function, and do they all still work correctly?"
+4. **State Changes**: "What shared state does this read/modify, and who else depends on it?"
+
+If you cannot answer these questions from your trace, request changes.
+
 ### Step 4: Run Tests
 
 ```bash
@@ -84,6 +142,10 @@ For each issue found, provide:
 - [ ] Code is clear and well-structured
 - [ ] No unnecessary complexity
 - [ ] Changes are focused (no scope creep)
+- [ ] **All callers verified** (grep for function_name, verify each handles changes)
+- [ ] **Data flow traced** from entry point to output
+- [ ] **Error paths traced** to handlers with proper cleanup
+- [ ] **Integration contracts maintained** (no broken assumptions)
 
 ## Recording Your Review (REQUIRED)
 
@@ -114,6 +176,13 @@ REVIEW RESULT: APPROVED
 Summary: [Brief description of what was reviewed]
 Files reviewed: [count]
 Tests verified: [pass/fail status]
+
+## Trace Summary
+- Entry points traced: [list entry points analyzed]
+- Callers verified: [list modified functions and their callers]
+- Error paths: [list error conditions and their handlers]
+- Integration points: [list integration contracts verified]
+
 No blocking issues found.
 
 Review recorded: .claude/bin/claws-review record {TASK_ID} code approved --worker {WORKER_ID}
