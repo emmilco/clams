@@ -80,11 +80,14 @@ main() {
     # Reset tool counter (fire and forget, 1s timeout)
     call_mcp_http "reset_tool_count" '{}' 1 >/dev/null 2>&1 || true
 
-    # Output reminder
+    # Output reminder using Claude Code hook schema
+    # See: https://docs.anthropic.com/en/docs/claude-code/hooks
     cat <<EOF
 {
-  "type": "reminder",
-  "content": "## GHAP Check-in ($frequency tools since last update)\n\n**Current Goal**: $goal\n**Current Hypothesis**: $hypothesis\n**Current Prediction**: $prediction\n\nIs your hypothesis still valid? If it changed, update your GHAP entry."
+  "hookSpecificOutput": {
+    "hookEventName": "PreToolCall",
+    "additionalContext": "## GHAP Check-in ($frequency tools since last update)\n\n**Current Goal**: $goal\n**Current Hypothesis**: $hypothesis\n**Current Prediction**: $prediction\n\nIs your hypothesis still valid? If it changed, update your GHAP entry."
+  }
 }
 EOF
 }

@@ -49,6 +49,18 @@ HOOK_EVENT_NAMES = {
     "session_start": "SessionStart",
     "user_prompt_submit": "UserPromptSubmit",
     "session_end": "SessionEnd",
+    "pre_tool_call": "PreToolCall",
+    "post_tool_call": "PostToolCall",
+}
+
+# Mapping from hook script name to schema name
+# (some hooks have different script names than their event types)
+HOOK_SCRIPT_TO_SCHEMA = {
+    "session_start": "session_start",
+    "session_end": "session_end",
+    "user_prompt_submit": "user_prompt_submit",
+    "ghap_checkin": "pre_tool_call",
+    "outcome_capture": "post_tool_call",
 }
 
 # Documentation URL

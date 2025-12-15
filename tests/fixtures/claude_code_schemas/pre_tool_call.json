@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "claude_code_pre_tool_call_schema",
+  "title": "Claude Code PreToolCall Hook Output Schema",
+  "description": "Expected JSON schema for Claude Code PreToolCall hook output. See: https://docs.anthropic.com/en/docs/claude-code/hooks",
+  "type": "object",
+  "required": ["hookSpecificOutput"],
+  "properties": {
+    "hookSpecificOutput": {
+      "type": "object",
+      "required": ["hookEventName", "additionalContext"],
+      "properties": {
+        "hookEventName": {
+          "type": "string",
+          "const": "PreToolCall",
+          "description": "Must be 'PreToolCall' to match the hook event type"
+        },
+        "additionalContext": {
+          "type": "string",
+          "description": "Context to inject before tool execution."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "_documentation": {
+    "source": "https://docs.anthropic.com/en/docs/claude-code/hooks",
+    "bug_references": ["BUG-050", "BUG-051"],
+    "notes": [
+      "PreToolCall hooks can inject context before a tool runs",
+      "The hook receives tool details on stdin as JSON",
+      "Used by ghap_checkin.sh for GHAP reminder check-ins"
+    ]
+  }
+}
