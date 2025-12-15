@@ -80,7 +80,7 @@ Test fixtures must use production embedding dimensions:
 
 | Embedder Type | Production Dimension | Source |
 |--------------|---------------------|--------|
-| Code (MiniLM) | 384 | `ServerSettings.embedding_dimension` or MiniLM default |
+| Code (MiniLM) | 384 | Fixed constant (MiniLM model output dimension, not configurable) |
 | Semantic (Nomic) | 768 | `ServerSettings.embedding_dimension` |
 
 The `conftest.py` fixtures currently use hardcoded values (384, 768). These should reference `ServerSettings` or be validated against it.
@@ -90,8 +90,8 @@ The `conftest.py` fixtures currently use hardcoded values (384, 768). These shou
 Shell scripts must source configuration from a canonical location:
 
 1. `session_start.sh` constructs paths using `REPO_ROOT`
-2. Server port/host should come from exported `ServerSettings` (via `config.env`)
-3. Timeouts should match `ServerSettings` values
+2. Server port/host must come from exported `ServerSettings` (via `config.env`)
+3. Timeouts must match `ServerSettings` values
 
 #### F5: Intentional Differences Documentation
 
@@ -251,7 +251,9 @@ def get_fixture_expectations() -> dict[str, dict[str, Any]]:
     settings = ServerSettings()
     return {
         "mock_code_embedder": {
-            "dimension": 384,  # MiniLM code embedder
+            # 384 is a fixed constant - MiniLM model output dimension
+            # This is NOT from ServerSettings because it's model-intrinsic
+            "dimension": 384,
             "embed_return_length": 384,
         },
         "mock_semantic_embedder": {
