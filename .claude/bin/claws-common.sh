@@ -50,6 +50,40 @@ export TOKENIZERS_PARALLELISM=false
 # Export for subprocesses
 export MAIN_REPO CLAUDE_DIR DB_PATH GATES_DIR ROLES_DIR WORKTREE_DIR
 
+# Detect project type based on marker files or explicit config
+# Usage: PROJECT_TYPE=$(detect_project_type [directory])
+# Returns: python, javascript, rust, go, or unknown
+detect_project_type() {
+    local dir="${1:-.}"
+
+    # Check for explicit override in .claude/project.json
+    local project_json="$dir/.claude/project.json"
+    if [[ -f "$project_json" ]]; then
+        local explicit_type
+        explicit_type=$(grep -o '"project_type"[[:space:]]*:[[:space:]]*"[^"]*"' "$project_json" 2>/dev/null | sed 's/.*: *"\([^"]*\)".*/\1/' || true)
+        if [[ -n "$explicit_type" ]]; then
+            echo "$explicit_type"
+            return 0
+        fi
+    fi
+
+    # Auto-detect based on marker files (order matters - most specific first)
+    if [[ -f "$dir/pyproject.toml" ]] || [[ -f "$dir/setup.py" ]] || [[ -f "$dir/requirements.txt" ]]; then
+        echo "python"
+    elif [[ -f "$dir/package.json" ]]; then
+        echo "javascript"
+    elif [[ -f "$dir/Cargo.toml" ]]; then
+        echo "rust"
+    elif [[ -f "$dir/go.mod" ]]; then
+        echo "go"
+    else
+        echo "unknown"
+    fi
+}
+
+# Export function for subshells
+export -f detect_project_type
+
 # Debug: uncomment to verify paths
 # echo "[clams-common] MAIN_REPO=$MAIN_REPO" >&2
 # echo "[clams-common] DB_PATH=$DB_PATH" >&2

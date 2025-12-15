@@ -4,10 +4,11 @@ Reference: R11-A - Centralized Datetime Utilities
 Reference: BUG-027 - datetime stored as ISO string but read expecting numeric timestamp
 """
 
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta, timezone
+
 import pytest
 
-from clams.utils.datetime import serialize_datetime, deserialize_datetime
+from clams.utils.datetime import deserialize_datetime, serialize_datetime
 
 
 class TestSerializeDatetime:
@@ -15,7 +16,7 @@ class TestSerializeDatetime:
 
     def test_serialize_utc_datetime(self) -> None:
         """Serialize UTC-aware datetime to ISO 8601 string."""
-        dt = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+        dt = datetime(2024, 12, 14, 10, 30, 0, tzinfo=UTC)
         result = serialize_datetime(dt)
         assert result == "2024-12-14T10:30:00+00:00"
 
@@ -27,7 +28,7 @@ class TestSerializeDatetime:
 
     def test_serialize_datetime_with_microseconds(self) -> None:
         """Microseconds are preserved in serialization."""
-        dt = datetime(2024, 12, 14, 10, 30, 0, 123456, tzinfo=timezone.utc)
+        dt = datetime(2024, 12, 14, 10, 30, 0, 123456, tzinfo=UTC)
         result = serialize_datetime(dt)
         assert result == "2024-12-14T10:30:00.123456+00:00"
 
@@ -41,13 +42,13 @@ class TestSerializeDatetime:
 
     def test_serialize_datetime_midnight(self) -> None:
         """Midnight time serializes correctly."""
-        dt = datetime(2024, 12, 14, 0, 0, 0, tzinfo=timezone.utc)
+        dt = datetime(2024, 12, 14, 0, 0, 0, tzinfo=UTC)
         result = serialize_datetime(dt)
         assert result == "2024-12-14T00:00:00+00:00"
 
     def test_serialize_datetime_end_of_day(self) -> None:
         """End of day serializes correctly."""
-        dt = datetime(2024, 12, 14, 23, 59, 59, 999999, tzinfo=timezone.utc)
+        dt = datetime(2024, 12, 14, 23, 59, 59, 999999, tzinfo=UTC)
         result = serialize_datetime(dt)
         assert result == "2024-12-14T23:59:59.999999+00:00"
 
@@ -58,21 +59,21 @@ class TestDeserializeDatetime:
     def test_deserialize_iso_string_with_utc(self) -> None:
         """Deserialize ISO 8601 string with UTC timezone."""
         result = deserialize_datetime("2024-12-14T10:30:00+00:00")
-        expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+        expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=UTC)
         assert result == expected
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
 
     def test_deserialize_naive_iso_string_assumes_utc(self) -> None:
         """Naive ISO string is assumed to be UTC."""
         result = deserialize_datetime("2024-12-14T10:30:00")
-        expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+        expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=UTC)
         assert result == expected
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
 
     def test_deserialize_iso_string_with_microseconds(self) -> None:
         """Microseconds are preserved in deserialization."""
         result = deserialize_datetime("2024-12-14T10:30:00.123456+00:00")
-        expected = datetime(2024, 12, 14, 10, 30, 0, 123456, tzinfo=timezone.utc)
+        expected = datetime(2024, 12, 14, 10, 30, 0, 123456, tzinfo=UTC)
         assert result == expected
 
     def test_deserialize_iso_string_with_z_suffix(self) -> None:
@@ -81,7 +82,7 @@ class TestDeserializeDatetime:
         # For older versions, this test documents expected behavior
         try:
             result = deserialize_datetime("2024-12-14T10:30:00Z")
-            expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+            expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=UTC)
             assert result == expected
         except ValueError:
             # Python < 3.11 doesn't support Z suffix
@@ -92,15 +93,15 @@ class TestDeserializeDatetime:
         # 2024-12-14T10:30:00 UTC
         timestamp = 1734172200
         result = deserialize_datetime(timestamp)
-        expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+        expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=UTC)
         assert result == expected
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
 
     def test_deserialize_unix_timestamp_float(self) -> None:
         """Deserialize Unix timestamp as float with microseconds."""
         timestamp = 1734172200.123456
         result = deserialize_datetime(timestamp)
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
         # Float precision may vary slightly
         assert result.year == 2024
         assert result.month == 12
@@ -111,14 +112,14 @@ class TestDeserializeDatetime:
     def test_deserialize_zero_timestamp(self) -> None:
         """Deserialize Unix epoch (timestamp 0)."""
         result = deserialize_datetime(0)
-        expected = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        expected = datetime(1970, 1, 1, 0, 0, 0, tzinfo=UTC)
         assert result == expected
 
     def test_deserialize_negative_timestamp(self) -> None:
         """Deserialize negative timestamp (before Unix epoch)."""
         # 1969-12-31 23:00:00 UTC
         result = deserialize_datetime(-3600)
-        expected = datetime(1969, 12, 31, 23, 0, 0, tzinfo=timezone.utc)
+        expected = datetime(1969, 12, 31, 23, 0, 0, tzinfo=UTC)
         assert result == expected
 
     def test_deserialize_invalid_iso_string_raises_value_error(self) -> None:
@@ -129,9 +130,9 @@ class TestDeserializeDatetime:
     def test_deserialize_date_only_iso_string(self) -> None:
         """Date-only ISO string deserializes to midnight UTC (Python 3.11+)."""
         result = deserialize_datetime("2024-12-14")
-        expected = datetime(2024, 12, 14, 0, 0, 0, tzinfo=timezone.utc)
+        expected = datetime(2024, 12, 14, 0, 0, 0, tzinfo=UTC)
         assert result == expected
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
 
     def test_deserialize_malformed_iso_string_raises_value_error(self) -> None:
         """Malformed ISO string raises ValueError."""
@@ -159,7 +160,7 @@ class TestRoundTrip:
 
     def test_round_trip_utc_datetime(self) -> None:
         """UTC datetime survives round-trip serialization."""
-        original = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+        original = datetime(2024, 12, 14, 10, 30, 0, tzinfo=UTC)
         serialized = serialize_datetime(original)
         deserialized = deserialize_datetime(serialized)
         assert deserialized == original
@@ -170,12 +171,12 @@ class TestRoundTrip:
         serialized = serialize_datetime(original)
         deserialized = deserialize_datetime(serialized)
         # Original was naive, but deserialized is UTC-aware
-        expected = original.replace(tzinfo=timezone.utc)
+        expected = original.replace(tzinfo=UTC)
         assert deserialized == expected
 
     def test_round_trip_with_microseconds(self) -> None:
         """Microseconds are preserved through round-trip."""
-        original = datetime(2024, 12, 14, 10, 30, 0, 123456, tzinfo=timezone.utc)
+        original = datetime(2024, 12, 14, 10, 30, 0, 123456, tzinfo=UTC)
         serialized = serialize_datetime(original)
         deserialized = deserialize_datetime(serialized)
         assert deserialized == original
@@ -194,7 +195,7 @@ class TestRoundTrip:
     @pytest.mark.parametrize("year", [1970, 2000, 2024, 2050, 2100])
     def test_round_trip_various_years(self, year: int) -> None:
         """Various years round-trip correctly."""
-        original = datetime(year, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
+        original = datetime(year, 6, 15, 12, 0, 0, tzinfo=UTC)
         serialized = serialize_datetime(original)
         deserialized = deserialize_datetime(serialized)
         assert deserialized == original
@@ -212,7 +213,7 @@ class TestTimezoneHandling:
     def test_utc_is_default_for_naive_deserialize(self) -> None:
         """Naive ISO string deserializes with UTC timezone."""
         result = deserialize_datetime("2024-12-14T10:30:00")
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
 
     def test_positive_offset_timezone(self) -> None:
         """Positive timezone offset is preserved."""
@@ -251,7 +252,7 @@ class TestEdgeCases:
     def test_very_old_date(self) -> None:
         """Very old dates can be serialized/deserialized."""
         # Year 1000
-        dt = datetime(1000, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        dt = datetime(1000, 1, 1, 0, 0, 0, tzinfo=UTC)
         serialized = serialize_datetime(dt)
         deserialized = deserialize_datetime(serialized)
         assert deserialized == dt
@@ -259,7 +260,7 @@ class TestEdgeCases:
     def test_far_future_date(self) -> None:
         """Far future dates can be serialized/deserialized."""
         # Year 9999 (max for Python datetime)
-        dt = datetime(9999, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
+        dt = datetime(9999, 12, 31, 23, 59, 59, tzinfo=UTC)
         serialized = serialize_datetime(dt)
         deserialized = deserialize_datetime(serialized)
         assert deserialized == dt
@@ -267,14 +268,14 @@ class TestEdgeCases:
     def test_leap_second_boundary(self) -> None:
         """Dates near leap second boundaries work correctly."""
         # 2016-12-31 23:59:59 UTC (just before leap second)
-        dt = datetime(2016, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
+        dt = datetime(2016, 12, 31, 23, 59, 59, tzinfo=UTC)
         serialized = serialize_datetime(dt)
         deserialized = deserialize_datetime(serialized)
         assert deserialized == dt
 
     def test_leap_year_feb_29(self) -> None:
         """Leap year February 29 works correctly."""
-        dt = datetime(2024, 2, 29, 12, 0, 0, tzinfo=timezone.utc)
+        dt = datetime(2024, 2, 29, 12, 0, 0, tzinfo=UTC)
         serialized = serialize_datetime(dt)
         deserialized = deserialize_datetime(serialized)
         assert deserialized == dt

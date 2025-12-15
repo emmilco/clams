@@ -1,43 +1,65 @@
-=== Gate Check: IMPLEMENT-CODE_REVIEW ===
-Task: SPEC-006
-Worktree: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006
+=== Gate Check: INVESTIGATED-FIXED ===
+Task: BUG-062
+Worktree: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-062
+Project type: python
 
 
 --- Gate: Implementation code exists ---
 ✓ Implementation code exists: PASS
 Changed files:
-  src/learning_memory_server/embedding/__init__.py
-  src/learning_memory_server/embedding/minilm.py
-  src/learning_memory_server/embedding/registry.py
-  src/learning_memory_server/indexers/indexer.py
-  src/learning_memory_server/server/config.py
-  src/learning_memory_server/server/main.py
-  src/learning_memory_server/server/tools/__init__.py
-  src/learning_memory_server/server/tools/code.py
-  src/learning_memory_server/server/tools/memory.py
-  src/learning_memory_server/storage/__init__.py
+  tests/scripts/test_bug_062_regression.py
+
+--- Gate: Regression test added ---
+✓ Regression test added: PASS
+Test files changed:
+  tests/scripts/test_bug_062_regression.py
 
 --- Gate: Tests pass ---
 === Running Tests ===
-Directory: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006
-Task ID: SPEC-006
+Directory: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-062
+Task ID: BUG-062
 
 Detected: Python (pytest)
 
 Syncing dependencies with uv...
 
-Running tests...
+Running tests (cleanup timeout: 30s)...
 ============================= test session starts ==============================
-platform darwin -- Python 3.12.12, pytest-9.0.1, pluggy-1.6.0 -- /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/.venv/bin/python
+platform darwin -- Python 3.12.12, pytest-9.0.1, pluggy-1.6.0 -- /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-062/.venv/bin/python
 cachedir: .pytest_cache
 hypothesis profile 'default'
-rootdir: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006
+rootdir: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-062
 configfile: pyproject.toml
 testpaths: tests
-plugins: mock-3.15.1, hypothesis-6.148.6, anyio-4.12.0, asyncio-1.3.0
+plugins: mock-3.15.1, hypothesis-6.148.6, anyio-4.12.0, timeout-2.4.0, asyncio-1.3.0
+timeout: 60.0s
+timeout method: signal
+timeout func_only: False
 asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collecting ... collected 551 items / 55 deselected / 496 selected
+collecting ... collected 1159 items / 81 deselected / 1078 selected
 
+tests/bugs/test_bug_041_searcher_inheritance.py::test_searcher_is_subclass_of_abc PASSED
+tests/bugs/test_bug_041_searcher_inheritance.py::test_searcher_instance_is_abc_instance PASSED
+tests/bugs/test_bug_041_searcher_inheritance.py::test_searcher_implements_all_abstract_methods PASSED
+tests/bugs/test_bug_041_searcher_inheritance.py::test_context_assembler_accepts_concrete_searcher PASSED
+tests/bugs/test_bug_041_searcher_inheritance.py::test_concrete_searcher_methods_are_callable PASSED
+tests/bugs/test_bug_041_searcher_inheritance.py::test_abc_method_signatures_match_concrete PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestThreadLeakTracker::test_clean_test_passes PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestThreadLeakTracker::test_joined_thread_does_not_leak PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestLeakDetectionMechanism::test_thread_leak_tracker_exists PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestLeakDetectionMechanism::test_ignored_thread_prefixes_configured PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestLeakDetectionMechanism::test_daemon_threads_not_tracked PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestLeakDetectionMechanism::test_main_thread_not_tracked PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestLeakDetectionMechanism::test_custom_named_thread_is_tracked PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestLeakDetectionMechanism::test_generic_numbered_threads_not_tracked PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestLeakDetectionLogic::test_leaked_thread_detection_logic PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestLeakDetectionLogic::test_multiple_leaked_threads_detected PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestLeakDetectionLogic::test_cleaned_thread_not_reported PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestNoResourceTrackingMarker::test_marker_disables_tracking PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestRealWorldScenarios::test_background_worker_pattern_with_cleanup PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestRealWorldScenarios::test_thread_pool_pattern_with_cleanup PASSED
+tests/clustering/test_bug_031_regression.py::test_clustering_forms_with_similar_embeddings PASSED
+tests/clustering/test_bug_031_regression.py::test_old_parameters_would_fail PASSED
 tests/clustering/test_clusterer.py::test_cluster_basic PASSED
 tests/clustering/test_clusterer.py::test_cluster_with_weights PASSED
 tests/clustering/test_clusterer.py::test_cluster_empty PASSED
@@ -54,75 +76,90 @@ tests/clustering/test_clusterer.py::test_cluster_invariants PASSED
 tests/clustering/test_clusterer.py::test_centroid_invariants PASSED
 tests/clustering/test_clusterer.py::test_cluster_result_types PASSED
 tests/clustering/test_clusterer.py::test_cluster_info_types PASSED
-tests/clustering/test_experience.py::test_cluster_axis_success 2025-12-07 18:50:43 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
+tests/clustering/test_experience.py::test_cluster_axis_success 2025-12-14 14:20:00 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
 PASSED
 tests/clustering/test_experience.py::test_cluster_axis_invalid PASSED
 tests/clustering/test_experience.py::test_cluster_axis_no_data PASSED
-tests/clustering/test_experience.py::test_cluster_axis_with_weights 2025-12-07 18:50:43 [info     ] clustering.complete            axis=strategy n_clusters=2 noise_count=10 total_points=20
+tests/clustering/test_experience.py::test_cluster_axis_with_weights 2025-12-14 14:20:00 [info     ] clustering.complete            axis=strategy n_clusters=2 noise_count=10 total_points=20
 PASSED
-tests/clustering/test_experience.py::test_cluster_axis_missing_tier 2025-12-07 18:50:43 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
+tests/clustering/test_experience.py::test_cluster_axis_missing_tier 2025-12-14 14:20:00 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
 PASSED
-tests/clustering/test_experience.py::test_cluster_axis_all_noise 2025-12-07 18:50:43 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=5 total_points=5
+tests/clustering/test_experience.py::test_cluster_axis_all_noise 2025-12-14 14:20:00 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=5 total_points=5
 PASSED
-tests/clustering/test_experience.py::test_cluster_all_axes 2025-12-07 18:50:43 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=10 total_points=10
-2025-12-07 18:50:43 [warning  ] clustering.all_noise           axis=strategy message='HDBSCAN labeled all points as noise - no clusters found' noise_count=15 total_points=15
-2025-12-07 18:50:43 [warning  ] clustering.axis_skipped        axis=surprise error="No embeddings found for axis 'surprise' (collection: ghap_surprise)" message='Skipping axis due to error'
-2025-12-07 18:50:43 [warning  ] clustering.axis_skipped        axis=root_cause error="No embeddings found for axis 'root_cause' (collection: ghap_root_cause)" message='Skipping axis due to error'
+tests/clustering/test_experience.py::test_cluster_all_axes 2025-12-14 14:20:00 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=10 total_points=10
+2025-12-14 14:20:00 [warning  ] clustering.all_noise           axis=strategy message='HDBSCAN labeled all points as noise - no clusters found' noise_count=15 total_points=15
+2025-12-14 14:20:00 [warning  ] clustering.axis_skipped        axis=surprise error="No embeddings found for axis 'surprise' (collection: ghap_surprise)" message='Skipping axis due to error'
+2025-12-14 14:20:00 [warning  ] clustering.axis_skipped        axis=root_cause error="No embeddings found for axis 'root_cause' (collection: ghap_root_cause)" message='Skipping axis due to error'
 PASSED
-tests/clustering/test_experience.py::test_cluster_all_axes_all_empty 2025-12-07 18:50:43 [warning  ] clustering.axis_skipped        axis=full error="No embeddings found for axis 'full' (collection: ghap_full)" message='Skipping axis due to error'
-2025-12-07 18:50:43 [warning  ] clustering.axis_skipped        axis=strategy error="No embeddings found for axis 'strategy' (collection: ghap_strategy)" message='Skipping axis due to error'
-2025-12-07 18:50:43 [warning  ] clustering.axis_skipped        axis=surprise error="No embeddings found for axis 'surprise' (collection: ghap_surprise)" message='Skipping axis due to error'
-2025-12-07 18:50:43 [warning  ] clustering.axis_skipped        axis=root_cause error="No embeddings found for axis 'root_cause' (collection: ghap_root_cause)" message='Skipping axis due to error'
+tests/clustering/test_experience.py::test_cluster_all_axes_all_empty 2025-12-14 14:20:00 [warning  ] clustering.axis_skipped        axis=full error="No embeddings found for axis 'full' (collection: ghap_full)" message='Skipping axis due to error'
+2025-12-14 14:20:00 [warning  ] clustering.axis_skipped        axis=strategy error="No embeddings found for axis 'strategy' (collection: ghap_strategy)" message='Skipping axis due to error'
+2025-12-14 14:20:00 [warning  ] clustering.axis_skipped        axis=surprise error="No embeddings found for axis 'surprise' (collection: ghap_surprise)" message='Skipping axis due to error'
+2025-12-14 14:20:00 [warning  ] clustering.axis_skipped        axis=root_cause error="No embeddings found for axis 'root_cause' (collection: ghap_root_cause)" message='Skipping axis due to error'
 PASSED
-tests/clustering/test_experience.py::test_cluster_axis_calls_correct_collection 2025-12-07 18:50:43 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
-2025-12-07 18:50:43 [info     ] clustering.complete            axis=strategy n_clusters=2 noise_count=10 total_points=20
-2025-12-07 18:50:43 [info     ] clustering.complete            axis=surprise n_clusters=2 noise_count=10 total_points=20
-2025-12-07 18:50:43 [info     ] clustering.complete            axis=root_cause n_clusters=2 noise_count=10 total_points=20
+tests/clustering/test_experience.py::test_cluster_axis_calls_correct_collection 2025-12-14 14:20:00 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
+2025-12-14 14:20:00 [info     ] clustering.complete            axis=strategy n_clusters=2 noise_count=10 total_points=20
+2025-12-14 14:20:00 [info     ] clustering.complete            axis=surprise n_clusters=2 noise_count=10 total_points=20
+2025-12-14 14:20:00 [info     ] clustering.complete            axis=root_cause n_clusters=2 noise_count=10 total_points=20
 PASSED
-tests/clustering/test_experience.py::test_cluster_axis_scroll_limit_warning 2025-12-07 18:50:43 [warning  ] clustering.scroll_limit_reached axis=full collection=ghap_full count=10000 message='May have truncated results - consider pagination'
-2025-12-07 18:50:52 [info     ] clustering.complete            axis=full n_clusters=358 noise_count=8166 total_points=10000
+tests/clustering/test_experience.py::test_cluster_axis_scroll_limit_warning 2025-12-14 14:20:00 [warning  ] clustering.scroll_limit_reached axis=full collection=ghap_full count=10000 message='May have truncated results - consider pagination'
+2025-12-14 14:20:08 [info     ] clustering.complete            axis=full n_clusters=358 noise_count=8166 total_points=10000
 PASSED
 tests/clustering/test_types.py::test_confidence_weights_mapping PASSED
 tests/clustering/test_types.py::test_get_weight_valid_tiers PASSED
 tests/clustering/test_types.py::test_get_weight_case_insensitive PASSED
 tests/clustering/test_types.py::test_get_weight_none PASSED
 tests/clustering/test_types.py::test_get_weight_invalid PASSED
-tests/context/test_assembler.py::test_assemble_single_source_memories 2025-12-07 18:50:52 [info     ] assembling_context             component=context_assembler context_types=['memories'] limit=20 max_tokens=1000 query='coding preferences'
-2025-12-07 18:50:52 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=1
-2025-12-07 18:50:52 [debug    ] source_budget_used             budget=1000 component=context_assembler items_selected=1 source=memories unused=983 used=17
-2025-12-07 18:50:52 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=983
+tests/context/test_assembler.py::test_assemble_single_source_memories 2025-12-14 14:20:08 [info     ] assembling_context             component=context_assembler context_types=['memories'] limit=20 max_tokens=1000 query='coding preferences'
+2025-12-14 14:20:08 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=1
+2025-12-14 14:20:08 [debug    ] source_budget_used             budget=1000 component=context_assembler items_selected=1 source=memories unused=983 used=17
+2025-12-14 14:20:08 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=983
 PASSED
-tests/context/test_assembler.py::test_assemble_multiple_sources 2025-12-07 18:50:52 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=2000 query='python examples'
-2025-12-07 18:50:52 [info     ] deduplication_complete         component=context_assembler deduplicated_count=2 original_count=2
-2025-12-07 18:50:52 [debug    ] source_budget_used             budget=666 component=context_assembler items_selected=1 source=memories unused=649 used=17
-2025-12-07 18:50:52 [debug    ] source_budget_used             budget=1333 component=context_assembler items_selected=1 source=code unused=1308 used=25
-2025-12-07 18:50:52 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=1957
+tests/context/test_assembler.py::test_assemble_multiple_sources 2025-12-14 14:20:08 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=2000 query='python examples'
+2025-12-14 14:20:08 [info     ] deduplication_complete         component=context_assembler deduplicated_count=2 original_count=2
+2025-12-14 14:20:08 [debug    ] source_budget_used             budget=666 component=context_assembler items_selected=1 source=memories unused=649 used=17
+2025-12-14 14:20:08 [debug    ] source_budget_used             budget=1333 component=context_assembler items_selected=1 source=code unused=1308 used=25
+2025-12-14 14:20:08 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=1957
 PASSED
 tests/context/test_assembler.py::test_invalid_context_type PASSED
-tests/context/test_assembler.py::test_empty_results 2025-12-07 18:50:52 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=1000 query=nothing
-2025-12-07 18:50:52 [info     ] deduplication_complete         component=context_assembler deduplicated_count=0 original_count=0
+tests/context/test_assembler.py::test_empty_results 2025-12-14 14:20:08 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=1000 query=nothing
+2025-12-14 14:20:08 [info     ] deduplication_complete         component=context_assembler deduplicated_count=0 original_count=0
 PASSED
-tests/context/test_assembler.py::test_token_budget_distribution 2025-12-07 18:50:52 [info     ] assembling_context             component=context_assembler context_types=['memories'] limit=20 max_tokens=500 query=test
-2025-12-07 18:50:52 [info     ] deduplication_complete         component=context_assembler deduplicated_count=8 original_count=8
-2025-12-07 18:50:52 [debug    ] source_budget_used             budget=500 component=context_assembler items_selected=8 source=memories unused=354 used=146
-2025-12-07 18:50:52 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=354
+tests/context/test_assembler.py::test_token_budget_distribution 2025-12-14 14:20:08 [info     ] assembling_context             component=context_assembler context_types=['memories'] limit=20 max_tokens=500 query=test
+2025-12-14 14:20:08 [info     ] deduplication_complete         component=context_assembler deduplicated_count=8 original_count=8
+2025-12-14 14:20:08 [debug    ] source_budget_used             budget=500 component=context_assembler items_selected=8 source=memories unused=354 used=146
+2025-12-14 14:20:08 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=354
 PASSED
-tests/context/test_assembler.py::test_deduplication 2025-12-07 18:50:52 [info     ] assembling_context             component=context_assembler context_types=['experiences', 'values'] limit=20 max_tokens=2000 query=test
-2025-12-07 18:50:52 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=2
-2025-12-07 18:50:52 [debug    ] source_budget_used             budget=500 component=context_assembler items_selected=1 source=values unused=487 used=13
-2025-12-07 18:50:52 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=487
+tests/context/test_assembler.py::test_deduplication 2025-12-14 14:20:08 [info     ] assembling_context             component=context_assembler context_types=['experiences', 'values'] limit=20 max_tokens=2000 query=test
+2025-12-14 14:20:08 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=2
+2025-12-14 14:20:08 [debug    ] source_budget_used             budget=500 component=context_assembler items_selected=1 source=values unused=487 used=13
+2025-12-14 14:20:08 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=487
 PASSED
-tests/context/test_assembler.py::test_premortem_context 2025-12-07 18:50:52 [info     ] assembling_premortem           component=context_assembler domain=debugging limit=10 strategy=systematic
+tests/context/test_assembler.py::test_premortem_context 2025-12-14 14:20:08 [info     ] assembling_premortem           component=context_assembler domain=debugging limit=10 strategy=systematic
 PASSED
-tests/context/test_assembler.py::test_premortem_partial_failure 2025-12-07 18:50:52 [info     ] assembling_premortem           component=context_assembler domain=debugging limit=10 strategy=None
-2025-12-07 18:50:52 [warning  ] premortem_query_partial_failure component=context_assembler error='Surprise axis failed' query_index=1
+tests/context/test_assembler.py::test_premortem_partial_failure 2025-12-14 14:20:08 [info     ] assembling_premortem           component=context_assembler domain=debugging limit=10 strategy=None
+2025-12-14 14:20:08 [warning  ] premortem_query_partial_failure component=context_assembler error='Surprise axis failed' query_index=1
 PASSED
-tests/context/test_assembler.py::test_partial_source_failure 2025-12-07 18:50:52 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=2000 query=test
-2025-12-07 18:50:52 [warning  ] source_query_partial_failure   component=context_assembler error='Code search failed' source=code
-2025-12-07 18:50:52 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=1
-2025-12-07 18:50:52 [debug    ] source_budget_used             budget=666 component=context_assembler items_selected=1 source=memories unused=652 used=14
-2025-12-07 18:50:52 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=652
+tests/context/test_assembler.py::test_partial_source_failure 2025-12-14 14:20:08 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=2000 query=test
+2025-12-14 14:20:08 [warning  ] source_query_partial_failure   component=context_assembler error='Code search failed' source=code
+2025-12-14 14:20:08 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=1
+2025-12-14 14:20:08 [debug    ] source_budget_used             budget=666 component=context_assembler items_selected=1 source=memories unused=652 used=14
+2025-12-14 14:20:08 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=652
 PASSED
+tests/context/test_bug_036_regression.py::test_bug_036_invalid_context_type PASSED
+tests/context/test_bug_036_regression.py::test_bug_036_multiple_invalid_types PASSED
+tests/context/test_bug_036_regression.py::test_bug_036_mixed_valid_and_invalid PASSED
+tests/context/test_bug_036_regression.py::test_bug_036_error_shows_valid_types PASSED
+tests/context/test_bug_040_type_consistency.py::TestFormatCodeWithCanonicalType::test_format_code_uses_line_start PASSED
+tests/context/test_bug_040_type_consistency.py::TestFormatCodeWithCanonicalType::test_format_code_no_keyerror PASSED
+tests/context/test_bug_040_type_consistency.py::TestFormatExperienceWithCanonicalType::test_format_experience_with_lesson_dataclass PASSED
+tests/context/test_bug_040_type_consistency.py::TestFormatExperienceWithCanonicalType::test_format_experience_with_root_cause_dataclass PASSED
+tests/context/test_bug_040_type_consistency.py::TestFormatExperienceWithCanonicalType::test_format_experience_no_attributeerror PASSED
+tests/context/test_bug_040_type_consistency.py::TestFormatValueWithCanonicalType::test_format_value_uses_member_count PASSED
+tests/context/test_bug_040_type_consistency.py::TestFormatValueWithCanonicalType::test_format_value_no_keyerror PASSED
+tests/context/test_bug_040_type_consistency.py::TestFormatMemoryWithCanonicalType::test_format_memory_with_importance PASSED
+tests/context/test_bug_040_type_consistency.py::TestFormatMemoryWithCanonicalType::test_format_memory_no_keyerror PASSED
+tests/context/test_bug_040_type_consistency.py::TestTypeConsistency::test_searcher_types_reexports_canonical_types PASSED
+tests/context/test_bug_040_type_consistency.py::TestTypeConsistency::test_no_duplicate_definitions PASSED
 tests/context/test_deduplication.py::test_deduplicate_items_empty PASSED
 tests/context/test_deduplication.py::test_deduplicate_items_no_duplicates PASSED
 tests/context/test_deduplication.py::test_deduplicate_items_by_ghap_id PASSED
@@ -158,59 +195,18 @@ tests/context/test_tokens.py::test_cap_item_tokens_applies_cap PASSED
 tests/context/test_tokens.py::test_cap_item_tokens_code_note PASSED
 tests/context/test_tokens.py::test_cap_item_tokens_experience_note PASSED
 tests/embedding/test_bug_014_mps_workaround.py::test_bug_014_embedding_model_uses_cpu_on_mps PASSED
-tests/embedding/test_bug_014_mps_workaround.py::test_bug_014_large_indexing_completes 2025-12-07 18:51:01 [info     ] collection_created             dimension=768 name=code_units
-2025-12-07 18:51:01 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/__init__.py project=test_project
-2025-12-07 18:51:01 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/indexers/tree_sitter.py project=test_project
-2025-12-07 18:51:13 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/indexers/__init__.py project=test_project
-2025-12-07 18:51:13 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/indexers/utils.py project=test_project
-2025-12-07 18:51:14 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/indexers/indexer.py project=test_project
-2025-12-07 18:51:18 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/indexers/base.py project=test_project
-2025-12-07 18:51:19 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/context/models.py project=test_project
-2025-12-07 18:51:19 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/context/searcher_types.py project=test_project
-2025-12-07 18:51:19 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/context/deduplication.py project=test_project
-2025-12-07 18:51:20 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/context/__init__.py project=test_project
-2025-12-07 18:51:20 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/context/tokens.py project=test_project
-2025-12-07 18:51:20 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/context/assembler.py project=test_project
-2025-12-07 18:51:23 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/context/formatting.py project=test_project
-2025-12-07 18:51:25 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/embedding/nomic.py project=test_project
-2025-12-07 18:51:26 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/embedding/registry.py project=test_project
-2025-12-07 18:51:28 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/embedding/__init__.py project=test_project
-2025-12-07 18:51:28 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/embedding/minilm.py project=test_project
-2025-12-07 18:51:29 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/embedding/base.py project=test_project
-2025-12-07 18:51:29 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/embedding/mock.py project=test_project
-2025-12-07 18:51:30 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/clustering/experience.py project=test_project
-2025-12-07 18:51:31 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/clustering/__init__.py project=test_project
-2025-12-07 18:51:31 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/clustering/types.py project=test_project
-2025-12-07 18:51:32 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/clustering/clusterer.py project=test_project
-2025-12-07 18:51:33 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/values/store.py project=test_project
-2025-12-07 18:51:36 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/values/__init__.py project=test_project
-2025-12-07 18:51:36 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/values/types.py project=test_project
-2025-12-07 18:51:36 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/server/logging.py project=test_project
-2025-12-07 18:51:36 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/server/config.py project=test_project
-2025-12-07 18:51:36 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/server/__init__.py project=test_project
-2025-12-07 18:51:36 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/server/errors.py project=test_project
-2025-12-07 18:51:36 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/server/main.py project=test_project
-2025-12-07 18:51:37 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/storage/metadata.py project=test_project
-2025-12-07 18:51:43 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/storage/memory.py project=test_project
-2025-12-07 18:51:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/storage/qdrant.py project=test_project
-2025-12-07 18:51:50 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/storage/__init__.py project=test_project
-2025-12-07 18:51:50 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/storage/base.py project=test_project
-2025-12-07 18:51:51 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/storage/schema.py project=test_project
-2025-12-07 18:51:51 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/search/results.py project=test_project
-2025-12-07 18:51:51 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/search/searcher.py project=test_project
-2025-12-07 18:51:54 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/search/__init__.py project=test_project
-2025-12-07 18:51:54 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/search/collections.py project=test_project
-2025-12-07 18:51:54 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/verification/__init__.py project=test_project
-2025-12-07 18:51:54 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/git/analyzer.py project=test_project
-2025-12-07 18:51:58 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/git/__init__.py project=test_project
-2025-12-07 18:51:58 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/git/reader.py project=test_project
-2025-12-07 18:52:01 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/git/base.py project=test_project
-2025-12-07 18:52:02 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/observation/persister.py project=test_project
-2025-12-07 18:52:05 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/observation/models.py project=test_project
-2025-12-07 18:52:05 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/observation/collector.py project=test_project
-2025-12-07 18:52:12 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/src/learning_memory_server/observation/__init__.py project=test_project
-PASSED
 tests/embedding/test_bug_014_mps_workaround.py::test_bug_014_batch_encoding_performance PASSED
+tests/embedding/test_minilm.py::test_embed_single_text PASSED
+tests/embedding/test_minilm.py::test_embed_batch PASSED
+tests/embedding/test_minilm.py::test_embed_empty_batch PASSED
+tests/embedding/test_minilm.py::test_dimension_property PASSED
+tests/embedding/test_minilm.py::test_mps_fallback_to_cpu PASSED
+tests/embedding/test_minilm.py::test_semantic_similarity PASSED
+tests/embedding/test_minilm.py::test_invalid_model_name PASSED
+tests/embedding/test_minilm.py::test_embed_error_handling PASSED
+tests/embedding/test_minilm.py::test_batch_embed_error_handling PASSED
+tests/embedding/test_minilm.py::test_embedding_consistency PASSED
+tests/embedding/test_minilm.py::test_batch_vs_single_consistency PASSED
 tests/embedding/test_mock.py::TestMockEmbedding::test_dimension PASSED
 tests/embedding/test_mock.py::TestMockEmbedding::test_embed_returns_correct_shape PASSED
 tests/embedding/test_mock.py::TestMockEmbedding::test_embed_deterministic PASSED
@@ -222,28 +218,51 @@ tests/embedding/test_mock.py::TestMockEmbedding::test_embed_batch_multiple_items
 tests/embedding/test_mock.py::TestMockEmbedding::test_embed_batch_consistency_with_embed PASSED
 tests/embedding/test_mock.py::TestMockEmbedding::test_embed_handles_special_characters PASSED
 tests/embedding/test_mock.py::TestMockEmbedding::test_embed_long_text PASSED
-tests/gates/test_check_types.py::test_check_types_completes_standalone PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_initial 2025-12-07 18:52:20 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpgbqdeqyc
+tests/embedding/test_registry.py::test_registry_not_initialized PASSED
+tests/embedding/test_registry.py::test_registry_initialization PASSED
+tests/embedding/test_registry.py::test_lazy_loading_code_embedder 2025-12-14 14:20:26 [info     ] code_embedder.loaded           dimension=384 model=sentence-transformers/all-MiniLM-L6-v2
 PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_incremental 2025-12-07 18:52:20 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmp7o6i66u7
-2025-12-07 18:52:21 [info     ] incremental_index_starting     new_commits=1 repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmp7o6i66u7
+tests/embedding/test_registry.py::test_lazy_loading_semantic_embedder 2025-12-14 14:20:29 [info     ] semantic_embedder.loaded       dimension=768 model=nomic-ai/nomic-embed-text-v1.5
 PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_already_up_to_date 2025-12-07 18:52:21 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmp65cm0t7z
-2025-12-07 18:52:21 [info     ] index_already_up_to_date       repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmp65cm0t7z
+tests/embedding/test_registry.py::test_instance_caching 2025-12-14 14:20:30 [info     ] code_embedder.loaded           dimension=384 model=sentence-transformers/all-MiniLM-L6-v2
+2025-12-14 14:20:33 [info     ] semantic_embedder.loaded       dimension=768 model=nomic-ai/nomic-embed-text-v1.5
 PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_force_reindex 2025-12-07 18:52:21 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpabtdfd62
-2025-12-07 18:52:21 [info     ] full_index_starting            force=True has_state=True repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpabtdfd62
+tests/embedding/test_registry.py::test_env_var_override_code_model PASSED
+tests/embedding/test_registry.py::test_env_var_override_semantic_model PASSED
+tests/embedding/test_registry.py::test_registry_separate_instances 2025-12-14 14:20:34 [info     ] code_embedder.loaded           dimension=384 model=sentence-transformers/all-MiniLM-L6-v2
+2025-12-14 14:20:37 [info     ] semantic_embedder.loaded       dimension=768 model=nomic-ai/nomic-embed-text-v1.5
 PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_with_limit 2025-12-07 18:52:22 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmp98jrmy9j
-PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_five_year_limit 2025-12-07 18:52:22 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpske2f8c0
-PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_search_commits 2025-12-07 18:52:22 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpgxfa335m
-PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_search_commits_with_author_filter 2025-12-07 18:52:23 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmp23sh150t
-PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_search_commits_with_date_filter 2025-12-07 18:52:23 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpwg5w7166
-PASSED
+tests/embedding/test_registry.py::test_registry_model_logging PASSED
+tests/embedding/test_registry.py::test_direct_registry_usage PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestColdStartQdrant::test_cold_start_has_no_collections PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestColdStartQdrant::test_cold_start_is_isolated PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestColdStartQdrant::test_cold_start_cleanup_after_previous_test PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestPopulatedQdrant::test_populated_has_standard_collections PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestPopulatedQdrant::test_populated_collections_are_empty PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestQdrantState::test_qdrant_state_runs_both_scenarios[cold_start] PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestQdrantState::test_qdrant_state_runs_both_scenarios[populated] PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestColdStartDb::test_cold_start_db_is_empty PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestColdStartDb::test_cold_start_db_is_functional PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestPopulatedDb::test_populated_db_has_sample_data PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestDbState::test_db_state_runs_both_scenarios[cold_start] PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestDbState::test_db_state_runs_both_scenarios[populated] PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestCombinedEnvironments::test_cold_start_env_is_complete PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestCombinedEnvironments::test_populated_env_is_complete PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestCombinedEnvironments::test_storage_env_parameterized[cold_start] PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestCombinedEnvironments::test_storage_env_parameterized[populated] PASSED
+tests/gates/test_cleanup_timeout.py::test_check_tests_has_timeout_variable PASSED
+tests/gates/test_cleanup_timeout.py::test_check_tests_has_timeout_function PASSED
+tests/gates/test_cleanup_timeout.py::test_timeout_with_hanging_script PASSED
+tests/gates/test_cleanup_timeout.py::test_normal_operation_implicit PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_initial PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_incremental PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_already_up_to_date PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_force_reindex PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_with_limit PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_five_year_limit PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_search_commits PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_search_commits_with_author_filter PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_search_commits_with_date_filter PASSED
 tests/git/test_analyzer.py::TestGitAnalyzer::test_get_churn_hotspots PASSED
 tests/git/test_analyzer.py::TestGitAnalyzer::test_get_file_authors PASSED
 tests/git/test_analyzer.py::TestGitAnalyzer::test_get_change_frequency PASSED
@@ -252,12 +271,8 @@ tests/git/test_analyzer.py::TestGitAnalyzer::test_blame_search PASSED
 tests/git/test_analyzer.py::TestGitAnalyzer::test_blame_search_with_file_pattern PASSED
 tests/git/test_analyzer.py::TestGitAnalyzer::test_embedding_text_format PASSED
 tests/git/test_analyzer.py::TestGitAnalyzer::test_embedding_text_truncation PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_index_state_tracking 2025-12-07 18:52:25 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpufbywtyn
-PASSED
-tests/git/test_analyzer.py::TestGitAnalyzer::test_batch_embedding_performance 2025-12-07 18:52:25 [info     ] full_index_starting            force=False has_state=False repo_path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpa2i8s0uj
-PASSED
-tests/git/test_analyzer.py::test_integration_with_real_repo 2025-12-07 18:52:26 [info     ] full_index_starting            force=False has_state=False repo_path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006
-PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_index_state_tracking PASSED
+tests/git/test_analyzer.py::TestGitAnalyzer::test_batch_embedding_performance PASSED
 tests/git/test_reader.py::TestGitPythonReader::test_init_with_valid_repo PASSED
 tests/git/test_reader.py::TestGitPythonReader::test_init_with_invalid_repo PASSED
 tests/git/test_reader.py::TestGitPythonReader::test_init_with_nonexistent_path PASSED
@@ -277,111 +292,115 @@ tests/git/test_reader.py::TestGitPythonReader::test_commit_timezone_aware PASSED
 tests/git/test_reader.py::TestGitPythonReader::test_blame_timezone_aware PASSED
 tests/git/test_reader.py::TestGitPythonReader::test_files_changed_relative_paths PASSED
 tests/git/test_reader.py::test_integration_with_real_repo PASSED
+tests/hooks/test_bug_033_regression.py::TestBug033Regression::test_server_command_uses_venv_binary PASSED
+tests/hooks/test_bug_033_regression.py::TestBug033Regression::test_server_command_path_is_absolute PASSED
+tests/hooks/test_bug_033_regression.py::TestBug033Regression::test_config_yaml_uses_correct_command PASSED
+tests/hooks/test_bug_050_regression.py::test_bug_050_session_start_hook_output_schema PASSED
+tests/hooks/test_bug_050_regression.py::test_bug_050_no_legacy_schema_fields PASSED
+tests/hooks/test_bug_050_regression.py::test_bug_050_ghap_instructions_present PASSED
+tests/hooks/test_bug_051_regression.py::TestBug051Regression::test_bug_051_user_prompt_submit_hook_output_schema PASSED
+tests/hooks/test_bug_051_regression.py::TestBug051Regression::test_bug_051_no_legacy_schema_fields PASSED
+tests/hooks/test_bug_051_regression.py::TestBug051Regression::test_bug_051_source_contains_correct_schema PASSED
+tests/hooks/test_bug_056_regression.py::TestBug056Regression::test_bug_056_detects_missing_stdin PASSED
+tests/hooks/test_bug_056_regression.py::TestBug056Regression::test_bug_056_accepts_stdin_devnull PASSED
+tests/hooks/test_bug_056_regression.py::TestBug056Regression::test_bug_056_accepts_stdin_pipe PASSED
+tests/hooks/test_bug_056_regression.py::TestBug056Regression::test_bug_056_accepts_input_parameter PASSED
+tests/hooks/test_bug_056_regression.py::TestBug056Regression::test_bug_056_detects_popen_without_stdin PASSED
+tests/hooks/test_bug_056_regression.py::TestBug056Regression::test_bug_056_detects_call_without_stdin PASSED
+tests/hooks/test_bug_056_regression.py::TestBug056Regression::test_bug_056_multiple_issues_reported PASSED
+tests/hooks/test_bug_056_regression.py::TestBug056Regression::test_bug_056_pre_commit_config_exists PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyPackagesList::test_torch_is_heavy PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyPackagesList::test_sentence_transformers_is_heavy PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyPackagesList::test_transformers_is_heavy PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyPackagesList::test_nomic_is_heavy PASSED
+tests/hooks/test_heavy_imports.py::TestAllowedModules::test_minilm_is_allowed PASSED
+tests/hooks/test_heavy_imports.py::TestAllowedModules::test_nomic_is_allowed PASSED
+tests/hooks/test_heavy_imports.py::TestIsTestFile::test_test_directory_detected PASSED
+tests/hooks/test_heavy_imports.py::TestIsTestFile::test_test_prefix_detected PASSED
+tests/hooks/test_heavy_imports.py::TestIsTestFile::test_test_suffix_detected PASSED
+tests/hooks/test_heavy_imports.py::TestIsTestFile::test_conftest_detected PASSED
+tests/hooks/test_heavy_imports.py::TestIsTestFile::test_regular_file_not_test PASSED
+tests/hooks/test_heavy_imports.py::TestIsAllowedModule::test_minilm_is_allowed PASSED
+tests/hooks/test_heavy_imports.py::TestIsAllowedModule::test_nomic_is_allowed PASSED
+tests/hooks/test_heavy_imports.py::TestIsAllowedModule::test_registry_not_allowed PASSED
+tests/hooks/test_heavy_imports.py::TestIsAllowedModule::test_arbitrary_file_not_allowed PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_detects_import_torch PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_detects_from_torch_import PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_detects_from_torch_submodule PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_detects_sentence_transformers PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_detects_transformers PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_detects_nomic PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_allows_lazy_import_in_function PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_allows_lazy_import_in_async_function PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_allows_lazy_import_in_method PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_allows_other_imports PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_detects_multiple_violations PASSED
+tests/hooks/test_heavy_imports.py::TestCheckFileIntegration::test_skips_test_files PASSED
+tests/hooks/test_heavy_imports.py::TestCheckFileIntegration::test_skips_syntax_errors PASSED
+tests/hooks/test_heavy_imports.py::TestActualSourceFiles::test_embedding_registry_passes PASSED
+tests/hooks/test_heavy_imports.py::TestActualSourceFiles::test_embedding_init_passes PASSED
+tests/hooks/test_heavy_imports.py::TestActualSourceFiles::test_minilm_is_allowed PASSED
+tests/hooks/test_heavy_imports.py::TestActualSourceFiles::test_nomic_is_allowed PASSED
+tests/hooks/test_hook_schemas.py::TestSessionStartSchema::test_output_is_valid_json PASSED
+tests/hooks/test_hook_schemas.py::TestSessionStartSchema::test_has_hook_specific_output PASSED
+tests/hooks/test_hook_schemas.py::TestSessionStartSchema::test_hook_event_name_is_session_start PASSED
+tests/hooks/test_hook_schemas.py::TestSessionStartSchema::test_has_additional_context PASSED
+tests/hooks/test_hook_schemas.py::TestSessionStartSchema::test_additional_context_is_string PASSED
+tests/hooks/test_hook_schemas.py::TestSessionStartSchema::test_no_legacy_schema_fields PASSED
+tests/hooks/test_hook_schemas.py::TestSessionStartSchema::test_conforms_to_schema PASSED
+tests/hooks/test_hook_schemas.py::TestSessionStartSchema::test_contains_ghap_instructions PASSED
+tests/hooks/test_hook_schemas.py::TestUserPromptSubmitSchema::test_output_is_valid_json PASSED
+tests/hooks/test_hook_schemas.py::TestUserPromptSubmitSchema::test_has_hook_specific_output PASSED
+tests/hooks/test_hook_schemas.py::TestUserPromptSubmitSchema::test_hook_event_name_is_user_prompt_submit PASSED
+tests/hooks/test_hook_schemas.py::TestUserPromptSubmitSchema::test_has_additional_context PASSED
+tests/hooks/test_hook_schemas.py::TestUserPromptSubmitSchema::test_additional_context_is_string PASSED
+tests/hooks/test_hook_schemas.py::TestUserPromptSubmitSchema::test_no_legacy_schema_fields PASSED
+tests/hooks/test_hook_schemas.py::TestUserPromptSubmitSchema::test_conforms_to_schema PASSED
+tests/hooks/test_hook_schemas.py::TestUserPromptSubmitSchema::test_graceful_degradation_format PASSED
+tests/hooks/test_hook_schemas.py::TestSessionEndSchema::test_hook_exists PASSED
+tests/hooks/test_hook_schemas.py::TestSessionEndSchema::test_script_is_executable PASSED
+tests/hooks/test_hook_schemas.py::TestSessionEndSchema::test_script_has_shebang PASSED
+tests/hooks/test_hook_schemas.py::TestSessionEndSchema::test_script_notes_unsupported_status PASSED
+tests/hooks/test_hook_schemas.py::TestSchemaConsistency::test_all_schemas_have_required_structure PASSED
+tests/hooks/test_hook_schemas.py::TestSchemaConsistency::test_schema_hook_event_names_match_constants PASSED
+tests/hooks/test_hook_schemas.py::TestSchemaConsistency::test_all_schemas_have_documentation_reference PASSED
+tests/hooks/test_hook_schemas.py::TestSchemaConsistency::test_all_hook_scripts_exist PASSED
+tests/hooks/test_hook_schemas.py::TestHookSourceCodePatterns::test_source_contains_correct_schema_pattern[session_start-SessionStart] PASSED
+tests/hooks/test_hook_schemas.py::TestHookSourceCodePatterns::test_source_contains_correct_schema_pattern[user_prompt_submit-UserPromptSubmit] PASSED
+tests/hooks/test_hook_schemas.py::TestHookSourceCodePatterns::test_source_does_not_contain_legacy_patterns[session_start] PASSED
+tests/hooks/test_hook_schemas.py::TestHookSourceCodePatterns::test_source_does_not_contain_legacy_patterns[user_prompt_submit] PASSED
 tests/hooks/test_mcp_client.py::TestMCPClient::test_init PASSED
 tests/hooks/test_mcp_client.py::TestMCPClient::test_connect_success PASSED
-tests/hooks/test_mcp_client.py::TestMCPClient::test_connect_timeout 2025-12-07 18:52:46 [warning  ] mcp_client.connect_failed      error='TestMCPClient.test_connect_timeout.<locals>.slow_connect() takes 0 positional arguments but 1 was given'
-PASSED
-tests/hooks/test_mcp_client.py::TestMCPClient::test_connect_exception 2025-12-07 18:52:46 [warning  ] mcp_client.connect_failed      error='Connection failed'
-PASSED
-tests/hooks/test_mcp_client.py::TestMCPClient::test_call_tool_not_connected 2025-12-07 18:52:46 [warning  ] mcp_client.not_connected
-PASSED
+tests/hooks/test_mcp_client.py::TestMCPClient::test_connect_timeout PASSED
+tests/hooks/test_mcp_client.py::TestMCPClient::test_connect_exception PASSED
+tests/hooks/test_mcp_client.py::TestMCPClient::test_call_tool_not_connected PASSED
 tests/hooks/test_mcp_client.py::TestMCPClient::test_call_tool_success PASSED
 tests/hooks/test_mcp_client.py::TestMCPClient::test_call_tool_empty_content PASSED
-tests/hooks/test_mcp_client.py::TestMCPClient::test_call_tool_invalid_json 2025-12-07 18:52:46 [error    ] mcp_client.invalid_json        error='Expecting value: line 1 column 1 (char 0)' tool=test_tool
-PASSED
-tests/hooks/test_mcp_client.py::TestMCPClient::test_call_tool_timeout 2025-12-07 18:52:46 [warning  ] mcp_client.call_failed         error= tool=slow_tool
-PASSED
-tests/hooks/test_mcp_client.py::TestMCPClient::test_call_tool_exception 2025-12-07 18:52:46 [warning  ] mcp_client.call_failed         error='Tool call failed' tool=test_tool
-PASSED
+tests/hooks/test_mcp_client.py::TestMCPClient::test_call_tool_invalid_json PASSED
+tests/hooks/test_mcp_client.py::TestMCPClient::test_call_tool_timeout PASSED
+tests/hooks/test_mcp_client.py::TestMCPClient::test_call_tool_exception PASSED
 tests/hooks/test_mcp_client.py::TestMCPClient::test_close_with_session PASSED
 tests/hooks/test_mcp_client.py::TestMCPClient::test_close_without_session PASSED
 tests/hooks/test_mcp_client.py::TestMainCLI::test_main_invalid_args PASSED
 tests/hooks/test_mcp_client.py::TestMainCLI::test_main_invalid_json_args PASSED
 tests/hooks/test_mcp_client.py::TestMainCLI::test_main_connection_failed PASSED
 tests/hooks/test_mcp_client.py::TestMainCLI::test_main_success PASSED
-tests/indexers/test_bug_003_regression.py::test_bug_003_double_index_inmemory 2025-12-07 18:52:46 [info     ] collection_created             dimension=768 name=code_units
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-121/test_bug_003_double_index_inme0/test.py project=test_project
-2025-12-07 18:52:46 [info     ] file_skipped                   path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-121/test_bug_003_double_index_inme0/test.py reason=no_changes
-PASSED
-tests/indexers/test_bug_003_regression.py::test_bug_003_double_index_with_modification 2025-12-07 18:52:46 [info     ] collection_created             dimension=768 name=code_units
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-121/test_bug_003_double_index_with0/modified.py project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=1 path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-121/test_bug_003_double_index_with0/modified.py project=test_project
-PASSED
-tests/indexers/test_bug_003_regression.py::test_bug_003_multiple_projects_same_collection 2025-12-07 18:52:46 [info     ] collection_created             dimension=768 name=code_units
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-121/test_bug_003_multiple_projects0/project1/main.py project=project1
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-121/test_bug_003_multiple_projects0/project2/main.py project=project2
-2025-12-07 18:52:46 [info     ] file_skipped                   path=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-121/test_bug_003_multiple_projects0/project1/main.py reason=no_changes
-PASSED
-tests/indexers/test_bug_012_exclusions.py::test_bug_012_default_exclusions_prevent_venv_indexing 2025-12-07 18:52:46 [info     ] collection_created             dimension=768 name=code_units
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpm6z3n6pc/src/utils.py project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpm6z3n6pc/src/main.py project=test_project
-PASSED
-tests/indexers/test_bug_012_exclusions.py::test_bug_012_indexing_completes_in_reasonable_time 2025-12-07 18:52:46 [info     ] collection_created             dimension=768 name=code_units
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpau4w_klp/src/module_2.py project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpau4w_klp/src/module_6.py project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpau4w_klp/src/module_7.py project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpau4w_klp/src/module_3.py project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpau4w_klp/src/module_8.py project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpau4w_klp/src/module_9.py project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpau4w_klp/src/module_4.py project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpau4w_klp/src/module_0.py project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpau4w_klp/src/module_1.py project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpau4w_klp/src/module_5.py project=test_project
-PASSED
-tests/indexers/test_indexer.py::test_index_single_file 2025-12-07 18:52:46 [info     ] collection_created             dimension=768 name=code_units
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.py project=test_project
-PASSED
-tests/indexers/test_indexer.py::test_index_file_twice_skips_second 2025-12-07 18:52:46 [info     ] collection_created             dimension=768 name=code_units
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.py project=test_project
-2025-12-07 18:52:46 [info     ] file_skipped                   path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.py reason=no_changes
-PASSED
-tests/indexers/test_indexer.py::test_index_directory 2025-12-07 18:52:46 [info     ] collection_created             dimension=768 name=code_units
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/malformed.py project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.swift project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.ts project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.java project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.cpp project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.c project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.py project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.rs project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.js project=test_project
-PASSED
-tests/indexers/test_indexer.py::test_remove_file 2025-12-07 18:52:46 [info     ] collection_created             dimension=768 name=code_units
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.py project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=7 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.py project=test_project
-2025-12-07 18:52:46 [info     ] file_removed                   path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.py project=test_project units_removed=7
-PASSED
-tests/indexers/test_indexer.py::test_remove_project 2025-12-07 18:52:46 [info     ] collection_created             dimension=768 name=code_units
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.py project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.ts project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=7 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.py project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=5 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.ts project=test_project
-2025-12-07 18:52:46 [info     ] project_removed                files_count=2 project=test_project
-PASSED
-tests/indexers/test_indexer.py::test_reindex_prevents_orphans 2025-12-07 18:52:46 [info     ] collection_created             dimension=768 name=code_units
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpcllc21u_.py project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=3 path=/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/tmpcllc21u_.py project=test_project
-PASSED
-tests/indexers/test_indexer.py::test_empty_file_handling 2025-12-07 18:52:46 [info     ] collection_created             dimension=768 name=code_units
-PASSED
-tests/indexers/test_indexer.py::test_error_accumulation 2025-12-07 18:52:46 [info     ] collection_created             dimension=768 name=code_units
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/malformed.py project=test_project
-PASSED
-tests/indexers/test_indexer.py::test_exclude_patterns 2025-12-07 18:52:46 [info     ] collection_created             dimension=768 name=code_units
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.swift project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.ts project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.java project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.cpp project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.c project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.py project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.rs project=test_project
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.js project=test_project
-PASSED
-tests/indexers/test_indexer.py::test_get_indexing_stats 2025-12-07 18:52:46 [info     ] collection_created             dimension=768 name=code_units
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.py project=project1
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.ts project=project1
-2025-12-07 18:52:46 [debug    ] file_units_deleted             count=0 path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/tests/fixtures/code_samples/sample.js project=project2
-PASSED
+tests/indexers/test_bug_003_regression.py::test_bug_003_double_index_inmemory PASSED
+tests/indexers/test_bug_003_regression.py::test_bug_003_double_index_with_modification PASSED
+tests/indexers/test_bug_003_regression.py::test_bug_003_multiple_projects_same_collection PASSED
+tests/indexers/test_bug_012_exclusions.py::test_bug_012_default_exclusions_prevent_venv_indexing PASSED
+tests/indexers/test_bug_012_exclusions.py::test_bug_012_indexing_completes_in_reasonable_time PASSED
+tests/indexers/test_indexer.py::test_index_single_file PASSED
+tests/indexers/test_indexer.py::test_index_file_twice_skips_second PASSED
+tests/indexers/test_indexer.py::test_index_directory PASSED
+tests/indexers/test_indexer.py::test_remove_file PASSED
+tests/indexers/test_indexer.py::test_remove_project PASSED
+tests/indexers/test_indexer.py::test_reindex_prevents_orphans PASSED
+tests/indexers/test_indexer.py::test_empty_file_handling PASSED
+tests/indexers/test_indexer.py::test_error_accumulation PASSED
+tests/indexers/test_indexer.py::test_exclude_patterns PASSED
+tests/indexers/test_indexer.py::test_get_indexing_stats PASSED
+tests/indexers/test_indexer.py::test_dimension_migration PASSED
 tests/indexers/test_tree_sitter.py::test_language_detection PASSED
 tests/indexers/test_tree_sitter.py::test_supported_languages PASSED
 tests/indexers/test_tree_sitter.py::test_parse_python PASSED
@@ -394,153 +413,81 @@ tests/indexers/test_tree_sitter.py::test_parse_cpp PASSED
 tests/indexers/test_tree_sitter.py::test_parse_swift PASSED
 tests/indexers/test_tree_sitter.py::test_parse_empty_file PASSED
 tests/indexers/test_tree_sitter.py::test_parse_malformed_file PASSED
-tests/observation/test_collector.py::test_create_ghap 2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_2cf3ca
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_702cff
-2025-12-07 18:52:46 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235246_702cff strategy=systematic-elimination
-PASSED
-tests/observation/test_collector.py::test_create_ghap_auto_starts_session 2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_907bf7
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_138c40
-2025-12-07 18:52:46 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235246_138c40 strategy=systematic-elimination
-PASSED
-tests/observation/test_collector.py::test_create_ghap_when_active_raises 2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_6e89ab
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_a060a0
-2025-12-07 18:52:46 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235246_a060a0 strategy=systematic-elimination
-2025-12-07 18:52:46 [warning  ] ghap_already_active            current_id=ghap_20251207_235246_a060a0
-PASSED
-tests/observation/test_collector.py::test_update_ghap_changes_hypothesis 2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_2f68a2
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_a980d4
-2025-12-07 18:52:46 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235246_a980d4 strategy=systematic-elimination
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_a980d4
-2025-12-07 18:52:46 [info     ] ghap_updated                   ghap_id=ghap_20251207_235246_a980d4 hap_changed=True iteration=2
-PASSED
-tests/observation/test_collector.py::test_update_ghap_changes_all_hap 2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_cd31be
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_ed305f
-2025-12-07 18:52:46 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235246_ed305f strategy=systematic-elimination
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_ed305f
-2025-12-07 18:52:46 [info     ] ghap_updated                   ghap_id=ghap_20251207_235246_ed305f hap_changed=True iteration=2
-PASSED
-tests/observation/test_collector.py::test_update_ghap_note_only 2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_bc95f0
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_d338ae
-2025-12-07 18:52:46 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235246_d338ae strategy=systematic-elimination
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_d338ae
-2025-12-07 18:52:46 [info     ] ghap_updated                   ghap_id=ghap_20251207_235246_d338ae hap_changed=False iteration=1
-PASSED
-tests/observation/test_collector.py::test_update_ghap_strategy_only 2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_01211a
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_3e1779
-2025-12-07 18:52:46 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235246_3e1779 strategy=systematic-elimination
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_3e1779
-2025-12-07 18:52:46 [info     ] ghap_updated                   ghap_id=ghap_20251207_235246_3e1779 hap_changed=False iteration=1
-PASSED
-tests/observation/test_collector.py::test_update_ghap_no_active_raises 2025-12-07 18:52:46 [warning  ] no_active_ghap_for_update
-PASSED
-tests/observation/test_collector.py::test_resolve_ghap_confirmed 2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_f1f389
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_d8a058
-2025-12-07 18:52:46 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235246_d8a058 strategy=systematic-elimination
-2025-12-07 18:52:46 [info     ] ghap_resolved                  ghap_id=ghap_20251207_235246_d8a058 iterations=1 status=confirmed tier=silver
-PASSED
-tests/observation/test_collector.py::test_resolve_ghap_auto_captured_gold 2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_58ee8b
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_cc8d56
-2025-12-07 18:52:46 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235246_cc8d56 strategy=systematic-elimination
-2025-12-07 18:52:46 [info     ] ghap_resolved                  ghap_id=ghap_20251207_235246_cc8d56 iterations=1 status=confirmed tier=gold
-PASSED
-tests/observation/test_collector.py::test_abandon_ghap 2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_c834cf
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_3850d4
-2025-12-07 18:52:46 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235246_3850d4 strategy=systematic-elimination
-2025-12-07 18:52:46 [info     ] ghap_resolved                  ghap_id=ghap_20251207_235246_3850d4 iterations=1 status=abandoned tier=abandoned
-PASSED
-tests/observation/test_collector.py::test_start_session 2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_9274c1
-PASSED
-tests/observation/test_collector.py::test_start_session_archives_previous 2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_4a2ae1
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_c9ea2a
-2025-12-07 18:52:46 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235246_c9ea2a strategy=systematic-elimination
-2025-12-07 18:52:46 [info     ] ghap_resolved                  ghap_id=ghap_20251207_235246_c9ea2a iterations=1 status=confirmed tier=silver
-2025-12-07 18:52:46 [info     ] session_archived               archive_file=20251207_session_20251207_235246_4a2ae1.jsonl entry_count=1 session_id=session_20251207_235246_4a2ae1
-2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_88d265
-PASSED
-tests/observation/test_collector.py::test_end_session 2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_17d199
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_6a5a1d
-2025-12-07 18:52:46 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235246_6a5a1d strategy=systematic-elimination
-2025-12-07 18:52:46 [info     ] ghap_resolved                  ghap_id=ghap_20251207_235246_6a5a1d iterations=1 status=confirmed tier=silver
-2025-12-07 18:52:46 [info     ] session_archived               archive_file=20251207_session_20251207_235246_17d199.jsonl entry_count=1 session_id=session_20251207_235246_17d199
-2025-12-07 18:52:46 [info     ] session_ended                  entries_archived=1 session_id=session_20251207_235246_17d199
-PASSED
-tests/observation/test_collector.py::test_end_session_abandons_current 2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_3360d9
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_08ba3f
-2025-12-07 18:52:46 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235246_08ba3f strategy=systematic-elimination
-2025-12-07 18:52:46 [info     ] ghap_resolved                  ghap_id=ghap_20251207_235246_08ba3f iterations=1 status=abandoned tier=abandoned
-2025-12-07 18:52:46 [info     ] session_archived               archive_file=20251207_session_20251207_235246_3360d9.jsonl entry_count=1 session_id=session_20251207_235246_3360d9
-2025-12-07 18:52:46 [info     ] session_ended                  entries_archived=1 session_id=session_20251207_235246_3360d9
-PASSED
-tests/observation/test_collector.py::test_has_orphaned_entry 2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_de7fa8
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_9ae049
-2025-12-07 18:52:46 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235246_9ae049 strategy=systematic-elimination
-2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_ccc41d
-PASSED
-tests/observation/test_collector.py::test_adopt_orphan 2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_58b24b
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_fec130
-2025-12-07 18:52:46 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235246_fec130 strategy=systematic-elimination
-2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_a16f38
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_fec130
-2025-12-07 18:52:46 [info     ] orphan_adopted                 ghap_id=ghap_20251207_235246_fec130 new_session_id=session_20251207_235246_a16f38
-PASSED
-tests/observation/test_collector.py::test_abandon_orphan 2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_04f9af
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_d293cc
-2025-12-07 18:52:46 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235246_d293cc strategy=systematic-elimination
-2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_92cc77
-2025-12-07 18:52:46 [info     ] entry_archived_to_session      archive_file=20251207_session_20251207_235246_04f9af.jsonl ghap_id=ghap_20251207_235246_d293cc session_id=session_20251207_235246_04f9af
-2025-12-07 18:52:46 [info     ] orphan_abandoned               ghap_id=ghap_20251207_235246_d293cc original_session_id=session_20251207_235246_04f9af
-PASSED
+tests/infrastructure/test_config_parity.py::TestClusteringConfiguration::test_production_clustering_defaults PASSED
+tests/infrastructure/test_config_parity.py::TestClusteringConfiguration::test_integration_tests_use_production_defaults PASSED
+tests/infrastructure/test_config_parity.py::TestClusteringConfiguration::test_server_tools_tests_use_production_defaults PASSED
+tests/infrastructure/test_config_parity.py::TestClusteringConfiguration::test_performance_benchmarks_use_production_defaults PASSED
+tests/infrastructure/test_config_parity.py::TestServerCommandConfiguration::test_hooks_config_uses_correct_server_command PASSED
+tests/infrastructure/test_config_parity.py::TestServerCommandConfiguration::test_integration_tests_use_correct_server_command PASSED
+tests/infrastructure/test_config_parity.py::TestServerCommandConfiguration::test_mcp_client_uses_correct_server_path PASSED
+tests/infrastructure/test_config_parity.py::TestServerCommandConfiguration::test_hooks_and_tests_use_same_command_pattern PASSED
+tests/infrastructure/test_config_parity.py::TestSessionStartHookConfiguration::test_session_start_constructs_server_path_correctly PASSED
+tests/infrastructure/test_config_parity.py::TestSessionStartHookConfiguration::test_session_start_has_clams_server_fallback PASSED
+tests/infrastructure/test_config_parity.py::TestGHAPFrequencyConfiguration::test_ghap_frequency_matches_production PASSED
+tests/infrastructure/test_config_parity.py::TestDocumentedDifferences::test_intentional_differences_are_in_unit_tests_only PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithABC::test_mock_searcher_has_all_abc_methods PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithABC::test_mock_searcher_abc_signature_search_memories PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithABC::test_mock_searcher_abc_signature_search_code PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithABC::test_mock_searcher_abc_signature_search_experiences PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithABC::test_mock_searcher_abc_signature_search_values PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithABC::test_mock_searcher_abc_signature_search_commits PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithConcrete::test_mock_searcher_has_all_concrete_methods PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithConcrete::test_mock_searcher_concrete_signature_search_memories PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithConcrete::test_mock_searcher_concrete_signature_search_code PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithConcrete::test_mock_searcher_concrete_signature_search_experiences PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithConcrete::test_mock_searcher_concrete_signature_search_values PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithConcrete::test_mock_searcher_concrete_signature_search_commits PASSED
+tests/infrastructure/test_mock_parity.py::TestConcreteMatchesABC::test_concrete_searcher_matches_abc PASSED
+tests/infrastructure/test_mock_parity.py::TestMockEmbedderParity::test_mock_embedder_has_all_production_methods PASSED
+tests/infrastructure/test_mock_parity.py::TestMockEmbedderParity::test_mock_embedder_signature_embed PASSED
+tests/infrastructure/test_mock_parity.py::TestMockEmbedderParity::test_mock_embedder_signature_embed_batch PASSED
+tests/infrastructure/test_mock_parity.py::TestMockEmbedderParity::test_mock_embedder_has_dimension_property PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherReturnTypes::test_mock_searcher_return_types_match_abc PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherReturnTypes::test_mock_searcher_return_types_match_concrete PASSED
+tests/infrastructure/test_mock_parity.py::TestMockEmbedderReturnTypes::test_mock_embedder_return_types_match_production PASSED
+tests/infrastructure/test_mock_parity.py::TestGeneralizedMockVerification::test_verify_mock_interface_helper_with_abc PASSED
+tests/infrastructure/test_mock_parity.py::TestGeneralizedMockVerification::test_verify_mock_interface_helper_with_concrete PASSED
+tests/infrastructure/test_mock_parity.py::TestGeneralizedMockVerification::test_verify_embedder_mock PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_mock_has_all_production_methods[MockSearcher vs ABC] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_mock_has_all_production_methods[MockSearcher vs Concrete] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_mock_has_all_production_methods[MockEmbedder vs ABC] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_mock_signatures_match_production[MockSearcher vs ABC] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_mock_signatures_match_production[MockSearcher vs Concrete] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_mock_signatures_match_production[MockEmbedder vs ABC] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_mock_return_types_match_production[MockSearcher vs ABC] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_mock_return_types_match_production[MockSearcher vs Concrete] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_mock_return_types_match_production[MockEmbedder vs ABC] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_complete_mock_interface_verification[MockSearcher vs ABC] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_complete_mock_interface_verification[MockSearcher vs Concrete] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_complete_mock_interface_verification[MockEmbedder vs ABC] PASSED
+tests/observation/test_collector.py::test_create_ghap PASSED
+tests/observation/test_collector.py::test_create_ghap_auto_starts_session PASSED
+tests/observation/test_collector.py::test_create_ghap_when_active_raises PASSED
+tests/observation/test_collector.py::test_update_ghap_changes_hypothesis PASSED
+tests/observation/test_collector.py::test_update_ghap_changes_all_hap PASSED
+tests/observation/test_collector.py::test_update_ghap_note_only PASSED
+tests/observation/test_collector.py::test_update_ghap_strategy_only PASSED
+tests/observation/test_collector.py::test_update_ghap_no_active_raises PASSED
+tests/observation/test_collector.py::test_resolve_ghap_confirmed PASSED
+tests/observation/test_collector.py::test_resolve_ghap_auto_captured_gold PASSED
+tests/observation/test_collector.py::test_abandon_ghap PASSED
+tests/observation/test_collector.py::test_start_session PASSED
+tests/observation/test_collector.py::test_start_session_archives_previous PASSED
+tests/observation/test_collector.py::test_end_session PASSED
+tests/observation/test_collector.py::test_end_session_abandons_current PASSED
+tests/observation/test_collector.py::test_has_orphaned_entry PASSED
+tests/observation/test_collector.py::test_adopt_orphan PASSED
+tests/observation/test_collector.py::test_abandon_orphan PASSED
 tests/observation/test_collector.py::test_increment_tool_count PASSED
-tests/observation/test_collector.py::test_should_check_in 2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_833393
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_6e4635
-2025-12-07 18:52:46 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235246_6e4635 strategy=systematic-elimination
-PASSED
+tests/observation/test_collector.py::test_should_check_in PASSED
 tests/observation/test_collector.py::test_reset_tool_count PASSED
 tests/observation/test_collector.py::test_tool_count_persists PASSED
-tests/observation/test_collector.py::test_full_session_lifecycle 2025-12-07 18:52:46 [info     ] session_started                session_id=session_20251207_235246_bcc09e
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_a93f92
-2025-12-07 18:52:46 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235246_a93f92 strategy=systematic-elimination
-2025-12-07 18:52:46 [info     ] ghap_resolved                  ghap_id=ghap_20251207_235246_a93f92 iterations=1 status=confirmed tier=silver
-2025-12-07 18:52:46 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235246_dad83f
-2025-12-07 18:52:46 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235246_dad83f strategy=systematic-elimination
-2025-12-07 18:52:46 [info     ] ghap_resolved                  ghap_id=ghap_20251207_235246_dad83f iterations=1 status=confirmed tier=silver
-2025-12-07 18:52:47 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235247_c881e7
-2025-12-07 18:52:47 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235247_c881e7 strategy=systematic-elimination
-2025-12-07 18:52:47 [info     ] ghap_resolved                  ghap_id=ghap_20251207_235247_c881e7 iterations=1 status=confirmed tier=silver
-2025-12-07 18:52:47 [info     ] session_archived               archive_file=20251207_session_20251207_235246_bcc09e.jsonl entry_count=3 session_id=session_20251207_235246_bcc09e
-2025-12-07 18:52:47 [info     ] session_ended                  entries_archived=3 session_id=session_20251207_235246_bcc09e
-PASSED
-tests/observation/test_collector.py::test_state_survives_restart 2025-12-07 18:52:47 [info     ] session_started                session_id=session_20251207_235247_9878f0
-2025-12-07 18:52:47 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235247_7fba20
-2025-12-07 18:52:47 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235247_7fba20 strategy=systematic-elimination
-PASSED
-tests/observation/test_collector.py::test_multiple_iterations 2025-12-07 18:52:47 [info     ] session_started                session_id=session_20251207_235247_eedccb
-2025-12-07 18:52:47 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235247_8dbd52
-2025-12-07 18:52:47 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235247_8dbd52 strategy=systematic-elimination
-2025-12-07 18:52:47 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235247_8dbd52
-2025-12-07 18:52:47 [info     ] ghap_updated                   ghap_id=ghap_20251207_235247_8dbd52 hap_changed=True iteration=2
-2025-12-07 18:52:47 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235247_8dbd52
-2025-12-07 18:52:47 [info     ] ghap_updated                   ghap_id=ghap_20251207_235247_8dbd52 hap_changed=True iteration=3
-PASSED
-tests/observation/test_collector.py::test_text_truncation 2025-12-07 18:52:47 [info     ] session_started                session_id=session_20251207_235247_8d3e3c
-2025-12-07 18:52:47 [warning  ] text_truncated                 max_len=10000 original_len=15000
-2025-12-07 18:52:47 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235247_d00fd3
-2025-12-07 18:52:47 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235247_d00fd3 strategy=systematic-elimination
-PASSED
-tests/observation/test_collector.py::test_corrupted_current_ghap_recovery 2025-12-07 18:52:47 [info     ] session_started                session_id=session_20251207_235247_3aaf4b
-2025-12-07 18:52:47 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235247_4f7b8f
-2025-12-07 18:52:47 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235247_4f7b8f strategy=systematic-elimination
-2025-12-07 18:52:47 [error    ] corrupted_ghap_backed_up       backup=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-121/test_corrupted_current_ghap_re0/journal/current_ghap.corrupted.1765151567 error='Expecting value: line 1 column 1 (char 0)' file=/private/var/folders/kw/rp67pf8d5ng588lqp7d_gb240000gn/T/pytest-of-elliotmilco/pytest-121/test_corrupted_current_ghap_re0/journal/current_ghap.json
-PASSED
-tests/observation/test_collector.py::test_corrupted_session_entries_recovery 2025-12-07 18:52:47 [info     ] session_started                session_id=session_20251207_235247_5dcfbc
-2025-12-07 18:52:47 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235247_8d27e4
-2025-12-07 18:52:47 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235247_8d27e4 strategy=systematic-elimination
-2025-12-07 18:52:47 [info     ] ghap_resolved                  ghap_id=ghap_20251207_235247_8d27e4 iterations=1 status=confirmed tier=silver
-2025-12-07 18:52:47 [debug    ] ghap_saved                     ghap_id=ghap_20251207_235247_26e53d
-2025-12-07 18:52:47 [info     ] ghap_created                   domain=debugging ghap_id=ghap_20251207_235247_26e53d strategy=systematic-elimination
-2025-12-07 18:52:47 [info     ] ghap_resolved                  ghap_id=ghap_20251207_235247_26e53d iterations=1 status=confirmed tier=silver
-2025-12-07 18:52:47 [warning  ] corrupt_entry_skipped          error='Expecting value: line 1 column 1 (char 0)' line_num=2
-PASSED
+tests/observation/test_collector.py::test_full_session_lifecycle PASSED
+tests/observation/test_collector.py::test_state_survives_restart PASSED
+tests/observation/test_collector.py::test_multiple_iterations PASSED
+tests/observation/test_collector.py::test_text_truncation PASSED
+tests/observation/test_collector.py::test_corrupted_current_ghap_recovery PASSED
+tests/observation/test_collector.py::test_corrupted_session_entries_recovery PASSED
 tests/observation/test_models.py::test_root_cause_serialization PASSED
 tests/observation/test_models.py::test_lesson_serialization PASSED
 tests/observation/test_models.py::test_lesson_optional_takeaway PASSED
@@ -570,39 +517,13 @@ tests/observation/test_persister.py::test_very_long_field_values PASSED
 tests/observation/test_persister.py::test_special_regex_chars_in_field_values PASSED
 tests/observation/test_persister.py::test_all_confidence_tier_values PASSED
 tests/observation/test_persister.py::test_literal_template_syntax_in_fields PASSED
-tests/observation/test_persister.py::test_root_cause_without_surprise 2025-12-07 18:52:47 [warning  ] root_cause_without_surprise    ghap_id=ghap_test note='Skipping root_cause axis (requires surprise text)'
-PASSED
-tests/observation/test_persister.py::test_persist_confirmed_entry 2025-12-07 18:52:47 [info     ] axis_persisted                 axis=full collection=ghap_full ghap_id=ghap_20251204_120000_abc123
-2025-12-07 18:52:47 [info     ] axis_persisted                 axis=strategy collection=ghap_strategy ghap_id=ghap_20251204_120000_abc123
-PASSED
-tests/observation/test_persister.py::test_persist_falsified_entry_with_surprise 2025-12-07 18:52:47 [info     ] axis_persisted                 axis=full collection=ghap_full ghap_id=ghap_20251204_130000_def456
-2025-12-07 18:52:47 [info     ] axis_persisted                 axis=strategy collection=ghap_strategy ghap_id=ghap_20251204_130000_def456
-2025-12-07 18:52:47 [info     ] axis_persisted                 axis=surprise collection=ghap_surprise ghap_id=ghap_20251204_130000_def456
-2025-12-07 18:52:47 [info     ] axis_persisted                 axis=root_cause collection=ghap_root_cause ghap_id=ghap_20251204_130000_def456
-PASSED
-tests/observation/test_persister.py::test_persist_batch 2025-12-07 18:52:47 [info     ] axis_persisted                 axis=full collection=ghap_full ghap_id=ghap_20251204_120000_abc123
-2025-12-07 18:52:47 [info     ] axis_persisted                 axis=strategy collection=ghap_strategy ghap_id=ghap_20251204_120000_abc123
-2025-12-07 18:52:47 [info     ] axis_persisted                 axis=full collection=ghap_full ghap_id=ghap_20251204_130000_def456
-2025-12-07 18:52:47 [info     ] axis_persisted                 axis=strategy collection=ghap_strategy ghap_id=ghap_20251204_130000_def456
-2025-12-07 18:52:47 [info     ] axis_persisted                 axis=surprise collection=ghap_surprise ghap_id=ghap_20251204_130000_def456
-2025-12-07 18:52:47 [info     ] axis_persisted                 axis=root_cause collection=ghap_root_cause ghap_id=ghap_20251204_130000_def456
-2025-12-07 18:52:47 [info     ] batch_persisted                count=2
-PASSED
+tests/observation/test_persister.py::test_root_cause_without_surprise PASSED
+tests/observation/test_persister.py::test_persist_confirmed_entry PASSED
+tests/observation/test_persister.py::test_persist_falsified_entry_with_surprise PASSED
+tests/observation/test_persister.py::test_persist_batch PASSED
 tests/observation/test_persister.py::test_persist_without_outcome_raises PASSED
-tests/observation/test_persister.py::test_ensure_collections_creates_all 2025-12-07 18:52:47 [info     ] collection_created             collection=ghap_full dimension=768
-2025-12-07 18:52:47 [info     ] collection_created             collection=ghap_strategy dimension=768
-2025-12-07 18:52:47 [info     ] collection_created             collection=ghap_surprise dimension=768
-2025-12-07 18:52:47 [info     ] collection_created             collection=ghap_root_cause dimension=768
-PASSED
-tests/observation/test_persister.py::test_ensure_collections_idempotent 2025-12-07 18:52:47 [info     ] collection_created             collection=ghap_full dimension=768
-2025-12-07 18:52:47 [info     ] collection_created             collection=ghap_strategy dimension=768
-2025-12-07 18:52:47 [info     ] collection_created             collection=ghap_surprise dimension=768
-2025-12-07 18:52:47 [info     ] collection_created             collection=ghap_root_cause dimension=768
-2025-12-07 18:52:47 [debug    ] collection_already_exists      collection=ghap_full error='Collection already exists'
-2025-12-07 18:52:47 [debug    ] collection_already_exists      collection=ghap_strategy error='Collection already exists'
-2025-12-07 18:52:47 [debug    ] collection_already_exists      collection=ghap_surprise error='Collection already exists'
-2025-12-07 18:52:47 [debug    ] collection_already_exists      collection=ghap_root_cause error='Collection already exists'
-PASSED
+tests/observation/test_persister.py::test_ensure_collections_creates_all PASSED
+tests/observation/test_persister.py::test_ensure_collections_idempotent PASSED
 tests/observation/test_persister.py::test_embedding_failure_propagates PASSED
 tests/observation/test_persister.py::test_storage_failure_propagates PASSED
 tests/observation/test_persister.py::test_batch_fails_on_first_invalid_entry PASSED
@@ -619,10 +540,44 @@ tests/observation/test_utils.py::test_atomic_write_overwrites_existing PASSED
 tests/observation/test_utils.py::test_atomic_write_cleans_up_temp_on_error PASSED
 tests/observation/test_utils.py::test_truncate_text_short PASSED
 tests/observation/test_utils.py::test_truncate_text_exact_limit PASSED
-tests/observation/test_utils.py::test_truncate_text_too_long 2025-12-07 18:52:47 [warning  ] text_truncated                 max_len=100 original_len=200
-PASSED
-tests/observation/test_utils.py::test_truncate_text_unicode 2025-12-07 18:52:47 [warning  ] text_truncated                 max_len=50 original_len=1000
-PASSED
+tests/observation/test_utils.py::test_truncate_text_too_long PASSED
+tests/observation/test_utils.py::test_truncate_text_unicode PASSED
+tests/performance/test_import_time.py::TestImportTime::test_clams_import_time_under_threshold PASSED
+tests/performance/test_import_time.py::TestImportTime::test_clams_embedding_import_time_under_threshold PASSED
+tests/scripts/test_bug_037_verify_timeout.py::TestBug037Regression::test_verify_install_timeout_is_sufficient PASSED
+tests/scripts/test_bug_037_verify_timeout.py::TestBug037Regression::test_verify_install_uses_subprocess_timeout PASSED
+tests/scripts/test_bug_058_worktree_sync.py::TestBug058Regression::test_claws_worktree_syncs_dependencies_after_merge PASSED
+tests/scripts/test_bug_058_worktree_sync.py::TestBug058Regression::test_claws_worktree_skip_sync_flag_exists PASSED
+tests/scripts/test_bug_058_worktree_sync.py::TestBug058Regression::test_claws_worktree_checks_uv_availability PASSED
+tests/scripts/test_bug_058_worktree_sync.py::TestBug058Regression::test_sync_happens_in_merge_function PASSED
+tests/scripts/test_bug_059_worktree_health.py::TestBug059Regression::test_claws_worktree_has_health_command PASSED
+tests/scripts/test_bug_059_worktree_health.py::TestBug059Regression::test_health_command_in_usage PASSED
+tests/scripts/test_bug_059_worktree_health.py::TestBug059Regression::test_health_checks_key_conditions PASSED
+tests/scripts/test_bug_059_worktree_health.py::TestBug059Regression::test_health_has_fix_mode PASSED
+tests/scripts/test_bug_059_worktree_health.py::TestBug059Regression::test_health_outputs_structured_report PASSED
+tests/scripts/test_bug_059_worktree_health.py::TestBug059Regression::test_script_is_executable PASSED
+tests/scripts/test_bug_062_regression.py::TestBug062Regression::test_detect_project_type_function_exists PASSED
+tests/scripts/test_bug_062_regression.py::TestBug062Regression::test_claws_gate_uses_project_type PASSED
+tests/scripts/test_bug_062_regression.py::TestBug062Regression::test_python_project_detection PASSED
+tests/scripts/test_bug_062_regression.py::TestBug062Regression::test_javascript_project_detection PASSED
+tests/scripts/test_bug_062_regression.py::TestBug062Regression::test_rust_project_detection PASSED
+tests/scripts/test_bug_062_regression.py::TestBug062Regression::test_go_project_detection PASSED
+tests/scripts/test_bug_062_regression.py::TestBug062Regression::test_explicit_project_type_override PASSED
+tests/scripts/test_bug_062_regression.py::TestBug062Regression::test_unknown_project_type PASSED
+tests/scripts/test_bug_062_regression.py::TestBug062Regression::test_current_project_detected_as_python PASSED
+tests/scripts/test_bug_063_merge_conflict_check.py::TestBug063Regression::test_has_conflict_check_function PASSED
+tests/scripts/test_bug_063_merge_conflict_check.py::TestBug063Regression::test_conflict_check_uses_no_commit_merge PASSED
+tests/scripts/test_bug_063_merge_conflict_check.py::TestBug063Regression::test_conflict_check_aborts_test_merge PASSED
+tests/scripts/test_bug_063_merge_conflict_check.py::TestBug063Regression::test_has_check_only_option PASSED
+tests/scripts/test_bug_063_merge_conflict_check.py::TestBug063Regression::test_has_force_option PASSED
+tests/scripts/test_bug_063_merge_conflict_check.py::TestBug063Regression::test_shows_conflicting_files PASSED
+tests/scripts/test_bug_063_merge_conflict_check.py::TestBug063Regression::test_provides_resolution_guidance PASSED
+tests/scripts/test_bug_063_merge_conflict_check.py::TestBug063Regression::test_cmd_merge_calls_conflict_check PASSED
+tests/scripts/test_bug_063_merge_conflict_check.py::TestBug063Regression::test_usage_documents_options PASSED
+tests/scripts/test_bug_064_regression.py::TestBug064Regression::test_claws_session_has_auto_commit_logic PASSED
+tests/scripts/test_bug_064_regression.py::TestBug064Regression::test_claws_session_iterates_worktrees PASSED
+tests/scripts/test_bug_064_regression.py::TestBug064Regression::test_claws_session_appends_to_handoff PASSED
+tests/scripts/test_bug_064_regression.py::TestBug064Regression::test_auto_commit_default_enabled PASSED
 tests/search/test_results.py::TestMemoryResult::test_from_search_result_with_all_fields PASSED
 tests/search/test_results.py::TestMemoryResult::test_from_search_result_with_optional_fields_none PASSED
 tests/search/test_results.py::TestCodeResult::test_from_search_result_with_all_fields PASSED
@@ -658,145 +613,1196 @@ tests/search/test_searcher.py::TestSearchCommits::test_applies_author_and_date_f
 tests/search/test_searcher.py::TestSearchCommits::test_maps_results_correctly PASSED
 tests/search/test_searcher.py::TestCollectionName::test_experience_axis_mapping PASSED
 tests/search/test_searcher.py::TestCollectionName::test_invalid_axis_raises_error PASSED
-tests/server/test_config.py::test_default_settings PASSED
-tests/server/test_config.py::test_env_override PASSED
-tests/server/test_config.py::test_settings_immutable PASSED
-tests/server/test_main.py::test_registry_provides_embedder 2025-12-07 18:52:49 [info     ] semantic_embedder.loaded       dimension=768 model=nomic-ai/nomic-embed-text-v1.5
-PASSED
-tests/server/test_main.py::test_create_server 2025-12-07 18:52:52 [info     ] semantic_embedder.loaded       dimension=768 model=nomic-ai/nomic-embed-text-v1.5
-2025-12-07 18:52:53 [info     ] code_embedder.loaded           dimension=384 model=sentence-transformers/all-MiniLM-L6-v2
-2025-12-07 18:52:53 [info     ] services.initializing
-2025-12-07 18:52:53 [info     ] code.initialized
-2025-12-07 18:52:53 [info     ] git.repo_auto_detected         repo_path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006
-2025-12-07 18:52:53 [info     ] git.initialized                repo_path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006
-2025-12-07 18:52:53 [info     ] services.initialized           has_code=True has_git=True has_searcher=False
-2025-12-07 18:52:53 [info     ] tools.registered               has_code=True has_git=True has_searcher=False tool_count=24
-2025-12-07 18:52:53 [info     ] server.created                 server_name=learning-memory-server
-2025-12-07 18:52:53 [debug    ] services.metadata_store_closed
-PASSED
-tests/server/test_main.py::test_server_has_ping_tool 2025-12-07 18:52:56 [info     ] semantic_embedder.loaded       dimension=768 model=nomic-ai/nomic-embed-text-v1.5
-2025-12-07 18:52:57 [info     ] code_embedder.loaded           dimension=384 model=sentence-transformers/all-MiniLM-L6-v2
-2025-12-07 18:52:57 [info     ] services.initializing
-2025-12-07 18:52:57 [info     ] code.initialized
-2025-12-07 18:52:57 [info     ] git.repo_auto_detected         repo_path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006
-2025-12-07 18:52:57 [info     ] git.initialized                repo_path=/Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006
-2025-12-07 18:52:57 [info     ] services.initialized           has_code=True has_git=True has_searcher=False
-2025-12-07 18:52:57 [info     ] tools.registered               has_code=True has_git=True has_searcher=False tool_count=24
-2025-12-07 18:52:57 [info     ] server.created                 server_name=learning-memory-server
-2025-12-07 18:52:57 [debug    ] services.metadata_store_closed
-PASSED
+tests/server/test_bug_042_regression.py::test_bug_042_main_module_no_torch_at_import PASSED
+tests/server/test_bug_042_regression.py::test_bug_042_parse_args_no_heavy_imports PASSED
+tests/server/test_bug_042_regression.py::test_bug_042_daemon_start_does_not_crash PASSED
+tests/server/test_bug_043_regression.py::TestBug043MemoriesCollection::test_store_memory_creates_collection PASSED
+tests/server/test_bug_043_regression.py::TestBug043MemoriesCollection::test_retrieve_memories_creates_collection PASSED
+tests/server/test_bug_043_regression.py::TestBug043MemoriesCollection::test_list_memories_creates_collection PASSED
+tests/server/test_bug_043_regression.py::TestBug043MemoriesCollection::test_collection_created_only_once PASSED
+tests/server/test_bug_043_regression.py::TestBug043MemoriesCollection::test_handles_already_exists_error PASSED
+tests/server/test_bug_043_regression.py::TestBug043MemoriesCollection::test_handles_409_error PASSED
+tests/server/test_bug_043_regression.py::TestBug043CommitsCollection::test_index_commits_creates_collection PASSED
+tests/server/test_bug_043_regression.py::TestBug043CommitsCollection::test_search_commits_creates_collection PASSED
+tests/server/test_bug_043_regression.py::TestBug043ValuesCollection::test_store_value_creates_collection PASSED
+tests/server/test_bug_043_regression.py::TestBug043ValuesCollection::test_list_values_creates_collection PASSED
+tests/server/test_config.py::TestDefaultSettings::test_storage_paths PASSED
+tests/server/test_config.py::TestDefaultSettings::test_server_configuration PASSED
+tests/server/test_config.py::TestDefaultSettings::test_timeout_configuration PASSED
+tests/server/test_config.py::TestDefaultSettings::test_qdrant_configuration PASSED
+tests/server/test_config.py::TestDefaultSettings::test_embedding_configuration PASSED
+tests/server/test_config.py::TestDefaultSettings::test_clustering_configuration PASSED
+tests/server/test_config.py::TestDefaultSettings::test_ghap_configuration PASSED
+tests/server/test_config.py::TestDefaultSettings::test_logging_configuration PASSED
+tests/server/test_config.py::TestDefaultSettings::test_git_configuration PASSED
+tests/server/test_config.py::TestEnvironmentOverride::test_storage_path_override PASSED
+tests/server/test_config.py::TestEnvironmentOverride::test_log_level_override PASSED
+tests/server/test_config.py::TestEnvironmentOverride::test_embedding_dimension_override PASSED
+tests/server/test_config.py::TestEnvironmentOverride::test_server_command_override PASSED
+tests/server/test_config.py::TestEnvironmentOverride::test_timeout_override PASSED
+tests/server/test_config.py::TestSettingsMetadata::test_env_prefix PASSED
+tests/server/test_config.py::TestExportForShell::test_export_creates_file PASSED
+tests/server/test_config.py::TestExportForShell::test_export_creates_parent_directories PASSED
+tests/server/test_config.py::TestExportForShell::test_export_accepts_string_path PASSED
+tests/server/test_config.py::TestExportForShell::test_export_contains_required_values PASSED
+tests/server/test_config.py::TestExportForShell::test_export_is_shell_sourceable PASSED
+tests/server/test_config.py::TestExportForShell::test_export_values_roundtrip PASSED
+tests/server/test_config.py::TestExportForShell::test_export_with_custom_values PASSED
+tests/server/test_config.py::TestGetConfigEnvPath::test_default_path PASSED
+tests/server/test_config.py::TestGetConfigEnvPath::test_custom_storage_path PASSED
+tests/server/test_config.py::TestFieldDescriptions::test_all_fields_have_descriptions PASSED
+tests/server/test_config.py::TestConfigurationParity::test_clustering_uses_production_defaults PASSED
+tests/server/test_config.py::TestConfigurationParity::test_server_command_matches_hooks_config PASSED
+tests/server/test_context_tools.py::TestAssembleContext::test_returns_empty_when_no_data PASSED
+tests/server/test_context_tools.py::TestAssembleContext::test_includes_values_in_context PASSED
+tests/server/test_context_tools.py::TestAssembleContext::test_includes_experiences_in_context PASSED
+tests/server/test_context_tools.py::TestAssembleContext::test_includes_both_by_default PASSED
+tests/server/test_context_tools.py::TestAssembleContext::test_respects_limit_parameter_for_values PASSED
+tests/server/test_context_tools.py::TestAssembleContext::test_limits_experiences_to_5 PASSED
+tests/server/test_context_tools.py::TestAssembleContext::test_calculates_token_count PASSED
+tests/server/test_context_tools.py::TestAssembleContext::test_reports_truncation PASSED
+tests/server/test_context_tools.py::TestAssembleContext::test_handles_value_store_error PASSED
+tests/server/test_context_tools.py::TestAssembleContext::test_handles_searcher_error PASSED
+tests/server/test_context_tools.py::TestAssembleContext::test_skips_experiences_without_query PASSED
+tests/server/test_http.py::TestHttpServerCreation::test_http_server_init PASSED
+tests/server/test_http.py::TestHttpServerCreation::test_http_server_creates_sse_transport PASSED
+tests/server/test_http.py::TestHttpServerApp::test_create_app_handles_routes PASSED
+tests/server/test_http.py::TestHealthEndpoint::test_health_returns_healthy PASSED
+tests/server/test_http.py::TestApiCallEndpoint::test_api_call_invokes_tool PASSED
+tests/server/test_http.py::TestApiCallEndpoint::test_api_call_unknown_tool PASSED
+tests/server/test_http.py::TestApiCallEndpoint::test_api_call_missing_tool_name PASSED
+tests/server/test_http.py::TestApiCallEndpoint::test_api_call_returns_dict PASSED
+tests/server/test_http.py::TestDaemonManagement::test_get_pid_file_default PASSED
+tests/server/test_http.py::TestDaemonManagement::test_get_pid_file_from_env PASSED
+tests/server/test_http.py::TestDaemonManagement::test_is_server_running_no_pid_file PASSED
+tests/server/test_http.py::TestDaemonManagement::test_is_server_running_stale_pid PASSED
+tests/server/test_http_schemas.py::TestRequestSchema::test_valid_request_schema PASSED
+tests/server/test_http_schemas.py::TestRequestSchema::test_request_with_arguments PASSED
+tests/server/test_http_schemas.py::TestRequestSchema::test_request_with_default_arguments PASSED
+tests/server/test_http_schemas.py::TestRequestSchema::test_missing_params_field PASSED
+tests/server/test_http_schemas.py::TestRequestSchema::test_missing_name_in_params PASSED
+tests/server/test_http_schemas.py::TestRequestSchema::test_empty_params PASSED
+tests/server/test_http_schemas.py::TestRequestSchema::test_null_tool_name PASSED
+tests/server/test_http_schemas.py::TestRequestSchema::test_arguments_optional_when_tool_has_no_params PASSED
+tests/server/test_http_schemas.py::TestRequestSchema::test_method_field_ignored PASSED
+tests/server/test_http_schemas.py::TestRequestSchema::test_extra_fields_ignored PASSED
+tests/server/test_http_schemas.py::TestSuccessResponseSchema::test_dict_response_returned_directly PASSED
+tests/server/test_http_schemas.py::TestSuccessResponseSchema::test_list_response_returned_directly PASSED
+tests/server/test_http_schemas.py::TestSuccessResponseSchema::test_complex_nested_response PASSED
+tests/server/test_http_schemas.py::TestSuccessResponseSchema::test_response_content_type_is_json PASSED
+tests/server/test_http_schemas.py::TestErrorResponseSchema::test_invalid_json_error_format PASSED
+tests/server/test_http_schemas.py::TestErrorResponseSchema::test_unknown_tool_error_format PASSED
+tests/server/test_http_schemas.py::TestErrorResponseSchema::test_invalid_arguments_error_format PASSED
+tests/server/test_http_schemas.py::TestErrorResponseSchema::test_tool_error_format PASSED
+tests/server/test_http_schemas.py::TestErrorResponseSchema::test_error_response_content_type PASSED
+tests/server/test_http_schemas.py::TestJsonRpcStyleFormat::test_standard_hook_request_format PASSED
+tests/server/test_http_schemas.py::TestJsonRpcStyleFormat::test_mcp_call_tool_format PASSED
+tests/server/test_http_schemas.py::TestJsonRpcStyleFormat::test_params_name_must_be_string PASSED
+tests/server/test_http_schemas.py::TestJsonRpcStyleFormat::test_arguments_must_be_dict_like PASSED
+tests/server/test_http_schemas.py::TestMalformedRequests::test_empty_body PASSED
+tests/server/test_http_schemas.py::TestMalformedRequests::test_null_body XFAILteError)
+tests/server/test_http_schemas.py::TestMalformedRequests::test_array_body XFAILuteError)
+tests/server/test_http_schemas.py::TestMalformedRequests::test_truncated_json PASSED
+tests/server/test_http_schemas.py::TestMalformedRequests::test_wrong_content_type_with_valid_json PASSED
+tests/server/test_http_schemas.py::TestMalformedRequests::test_unicode_in_arguments PASSED
+tests/server/test_http_schemas.py::TestMalformedRequests::test_very_large_arguments PASSED
+tests/server/test_http_schemas.py::TestHttpStatusCodes::test_success_returns_200 PASSED
+tests/server/test_http_schemas.py::TestHttpStatusCodes::test_missing_params_returns_400 PASSED
+tests/server/test_http_schemas.py::TestHttpStatusCodes::test_invalid_json_returns_400 PASSED
+tests/server/test_http_schemas.py::TestHttpStatusCodes::test_unknown_tool_returns_404 PASSED
+tests/server/test_http_schemas.py::TestHttpStatusCodes::test_invalid_arguments_returns_400 PASSED
+tests/server/test_http_schemas.py::TestHttpStatusCodes::test_tool_error_returns_500 PASSED
+tests/server/test_http_schemas.py::TestHttpStatusCodes::test_get_method_not_allowed PASSED
+tests/server/test_main.py::test_registry_provides_embedder PASSED
+tests/server/test_main.py::test_create_server PASSED
+tests/server/test_main.py::test_server_has_ping_tool PASSED
+tests/server/test_session_tools.py::TestSessionManager::test_init_creates_manager PASSED
+tests/server/test_session_tools.py::TestSessionManager::test_load_tool_count_from_file PASSED
+tests/server/test_session_tools.py::TestSessionManager::test_load_tool_count_invalid_file PASSED
+tests/server/test_session_tools.py::TestSessionManager::test_save_tool_count PASSED
+tests/server/test_session_tools.py::TestSessionManager::test_get_current_session_id PASSED
+tests/server/test_session_tools.py::TestSessionManager::test_get_current_session_id_no_file PASSED
+tests/server/test_session_tools.py::TestStartSession::test_creates_session_id PASSED
+tests/server/test_session_tools.py::TestStartSession::test_writes_session_id_file PASSED
+tests/server/test_session_tools.py::TestStartSession::test_resets_tool_count PASSED
+tests/server/test_session_tools.py::TestStartSession::test_returns_timestamp PASSED
+tests/server/test_session_tools.py::TestGetOrphanedGhap::test_no_orphan_when_no_ghap_file PASSED
+tests/server/test_session_tools.py::TestGetOrphanedGhap::test_no_orphan_when_same_session PASSED
+tests/server/test_session_tools.py::TestGetOrphanedGhap::test_orphan_detected_for_different_session PASSED
+tests/server/test_session_tools.py::TestShouldCheckIn::test_returns_false_when_count_low PASSED
+tests/server/test_session_tools.py::TestShouldCheckIn::test_returns_true_when_count_equals_frequency PASSED
+tests/server/test_session_tools.py::TestShouldCheckIn::test_returns_true_when_count_exceeds_frequency PASSED
+tests/server/test_session_tools.py::TestShouldCheckIn::test_uses_default_frequency PASSED
+tests/server/test_session_tools.py::TestIncrementToolCount::test_increments_count PASSED
+tests/server/test_session_tools.py::TestIncrementToolCount::test_persists_to_file PASSED
+tests/server/test_session_tools.py::TestResetToolCount::test_resets_count_to_zero PASSED
+tests/server/test_session_tools.py::TestResetToolCount::test_persists_to_file PASSED
+tests/server/test_tool_response_schemas.py::TestStoreMemoryResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestStoreMemoryResponseSchema::test_error_response_invalid_category PASSED
+tests/server/test_tool_response_schemas.py::TestStoreMemoryResponseSchema::test_all_valid_categories_produce_valid_response PASSED
+tests/server/test_tool_response_schemas.py::TestRetrieveMemoriesResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestRetrieveMemoriesResponseSchema::test_empty_query_response PASSED
+tests/server/test_tool_response_schemas.py::TestRetrieveMemoriesResponseSchema::test_error_response_invalid_category PASSED
+tests/server/test_tool_response_schemas.py::TestListMemoriesResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestListMemoriesResponseSchema::test_error_response_invalid_offset PASSED
+tests/server/test_tool_response_schemas.py::TestDeleteMemoryResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestDeleteMemoryResponseSchema::test_failure_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestStartGhapResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestStartGhapResponseSchema::test_error_response_invalid_domain PASSED
+tests/server/test_tool_response_schemas.py::TestStartGhapResponseSchema::test_error_response_invalid_strategy PASSED
+tests/server/test_tool_response_schemas.py::TestStartGhapResponseSchema::test_all_valid_domains_accepted PASSED
+tests/server/test_tool_response_schemas.py::TestStartGhapResponseSchema::test_all_valid_strategies_accepted PASSED
+tests/server/test_tool_response_schemas.py::TestUpdateGhapResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestUpdateGhapResponseSchema::test_error_response_no_active_ghap PASSED
+tests/server/test_tool_response_schemas.py::TestResolveGhapResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestResolveGhapResponseSchema::test_error_response_invalid_status PASSED
+tests/server/test_tool_response_schemas.py::TestResolveGhapResponseSchema::test_all_valid_outcome_statuses PASSED
+tests/server/test_tool_response_schemas.py::TestResolveGhapResponseSchema::test_all_valid_root_cause_categories PASSED
+tests/server/test_tool_response_schemas.py::TestGetActiveGhapResponseSchema::test_response_with_active_ghap PASSED
+tests/server/test_tool_response_schemas.py::TestGetActiveGhapResponseSchema::test_response_without_active_ghap PASSED
+tests/server/test_tool_response_schemas.py::TestListGhapEntriesResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestListGhapEntriesResponseSchema::test_error_response_invalid_domain_filter PASSED
+tests/server/test_tool_response_schemas.py::TestListGhapEntriesResponseSchema::test_error_response_invalid_outcome_filter PASSED
+tests/server/test_tool_response_schemas.py::TestGetClustersResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestGetClustersResponseSchema::test_error_response_invalid_axis PASSED
+tests/server/test_tool_response_schemas.py::TestGetClustersResponseSchema::test_all_valid_axes_accepted PASSED
+tests/server/test_tool_response_schemas.py::TestGetClusterMembersResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestGetClusterMembersResponseSchema::test_error_response_invalid_cluster_id_format PASSED
+tests/server/test_tool_response_schemas.py::TestValidateValueResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestValidateValueResponseSchema::test_error_response_empty_text PASSED
+tests/server/test_tool_response_schemas.py::TestStoreValueResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestStoreValueResponseSchema::test_error_response_invalid_axis PASSED
+tests/server/test_tool_response_schemas.py::TestListValuesResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestListValuesResponseSchema::test_error_response_invalid_axis_filter PASSED
+tests/server/test_tool_response_schemas.py::TestSearchExperiencesResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestSearchExperiencesResponseSchema::test_empty_query_response PASSED
+tests/server/test_tool_response_schemas.py::TestSearchExperiencesResponseSchema::test_error_response_invalid_axis PASSED
+tests/server/test_tool_response_schemas.py::TestSearchExperiencesResponseSchema::test_error_response_invalid_domain PASSED
+tests/server/test_tool_response_schemas.py::TestSearchExperiencesResponseSchema::test_error_response_invalid_outcome PASSED
+tests/server/test_tool_response_schemas.py::TestSearchExperiencesResponseSchema::test_all_valid_axes_accepted PASSED
+tests/server/test_tool_response_schemas.py::TestSearchExperiencesResponseSchema::test_all_valid_domains_accepted PASSED
+tests/server/test_tool_response_schemas.py::TestSearchExperiencesResponseSchema::test_all_valid_outcomes_accepted PASSED
+tests/server/test_tool_response_schemas.py::TestStartSessionResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestGetOrphanedGhapResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestShouldCheckInResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestIncrementToolCountResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestResetToolCountResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestAssembleContextResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestAssembleContextResponseSchema::test_empty_query_response PASSED
+tests/server/test_tool_response_schemas.py::TestErrorResponseStructure::test_ghap_error_structure PASSED
+tests/server/test_tool_response_schemas.py::TestErrorResponseStructure::test_learning_error_structure PASSED
+tests/server/test_tool_response_schemas.py::TestErrorResponseStructure::test_search_error_structure PASSED
+tests/server/test_tool_response_schemas.py::TestEnumValuesInResponsesMatchSchema::test_domains_enum_values PASSED
+tests/server/test_tool_response_schemas.py::TestEnumValuesInResponsesMatchSchema::test_strategies_enum_values PASSED
+tests/server/test_tool_response_schemas.py::TestEnumValuesInResponsesMatchSchema::test_valid_axes_enum_values PASSED
+tests/server/test_tool_response_schemas.py::TestEnumValuesInResponsesMatchSchema::test_outcome_status_enum_values PASSED
+tests/server/test_tool_response_schemas.py::TestEnumValuesInResponsesMatchSchema::test_root_cause_categories_enum_values PASSED
+tests/server/test_tool_response_schemas.py::TestEnumValuesInResponsesMatchSchema::test_memory_categories_enum_values PASSED
 tests/server/tools/test_bug_005_clusterer_initialization.py::test_clusterer_has_correct_default_parameters PASSED
 tests/server/tools/test_bug_005_clusterer_initialization.py::test_experience_clusterer_accepts_clusterer_instance PASSED
 tests/server/tools/test_bug_005_clusterer_initialization.py::test_value_store_accepts_experience_clusterer_instance PASSED
 tests/server/tools/test_bug_005_clusterer_initialization.py::test_initialization_matches_fix_plan PASSED
-tests/server/tools/test_code.py::test_index_codebase_not_available ERROR
+tests/server/tools/test_bug_017_regression.py::test_bug_017_regression_get_clusters_no_collection PASSED
+tests/server/tools/test_bug_019_regression.py::test_bug_019_regression_validate_value_none_similarity PASSED
+tests/server/tools/test_bug_019_regression.py::test_bug_019_validate_value_with_similarity PASSED
+tests/server/tools/test_bug_020_regression.py::test_bug_020_regression_store_value_valueerror PASSED
+tests/server/tools/test_bug_020_regression.py::test_bug_020_store_value_success PASSED
+tests/server/tools/test_bug_021_regression.py::test_bug_021_regression_search_experiences_serialization PASSED
+tests/server/tools/test_bug_021_regression.py::test_bug_021_search_experiences_empty_results PASSED
+tests/server/tools/test_bug_022_regression.py::test_delete_file_units_handles_more_than_1000_entries PASSED
+tests/server/tools/test_bug_022_regression.py::test_delete_file_units_handles_empty_collection PASSED
+tests/server/tools/test_bug_022_regression.py::test_delete_file_units_handles_exactly_1000_entries PASSED
+tests/server/tools/test_bug_023_regression.py::test_nomic_dimension_queries_model PASSED
+tests/server/tools/test_bug_023_regression.py::test_nomic_dimension_returns_actual_model_dimension PASSED
+tests/server/tools/test_bug_023_regression.py::test_nomic_dimension_raises_on_none PASSED
+tests/server/tools/test_bug_024_regression.py::test_inmemory_error_message_contains_not_found PASSED
+tests/server/tools/test_bug_024_regression.py::test_inmemory_search_raises_collection_not_found PASSED
+tests/server/tools/test_bug_024_regression.py::test_inmemory_upsert_raises_collection_not_found PASSED
+tests/server/tools/test_bug_024_regression.py::test_inmemory_scroll_raises_collection_not_found PASSED
+tests/server/tools/test_bug_024_regression.py::test_inmemory_count_raises_collection_not_found PASSED
+tests/server/tools/test_bug_024_regression.py::test_inmemory_get_raises_collection_not_found PASSED
+tests/server/tools/test_bug_024_regression.py::test_inmemory_delete_raises_collection_not_found PASSED
+tests/server/tools/test_bug_025_regression.py::test_gte_filter PASSED
+tests/server/tools/test_bug_025_regression.py::test_lte_filter PASSED
+tests/server/tools/test_bug_025_regression.py::test_gt_filter PASSED
+tests/server/tools/test_bug_025_regression.py::test_lt_filter PASSED
+tests/server/tools/test_bug_025_regression.py::test_in_filter PASSED
+tests/server/tools/test_bug_025_regression.py::test_combined_range_filters PASSED
+tests/server/tools/test_bug_025_regression.py::test_range_filter_with_equality PASSED
+tests/server/tools/test_bug_025_regression.py::test_simple_equality_still_works PASSED
+tests/server/tools/test_bug_026_regression.py::TestDomainEnumConsistency::test_start_ghap_domain_matches_enums PASSED
+tests/server/tools/test_bug_026_regression.py::TestDomainEnumConsistency::test_list_ghap_entries_domain_matches_enums PASSED
+tests/server/tools/test_bug_026_regression.py::TestDomainEnumConsistency::test_search_experiences_domain_matches_enums PASSED
+tests/server/tools/test_bug_026_regression.py::TestStrategyEnumConsistency::test_start_ghap_strategy_matches_enums PASSED
+tests/server/tools/test_bug_026_regression.py::TestStrategyEnumConsistency::test_update_ghap_strategy_matches_enums PASSED
+tests/server/tools/test_bug_026_regression.py::TestOutcomeEnumConsistency::test_resolve_ghap_status_matches_enums PASSED
+tests/server/tools/test_bug_026_regression.py::TestOutcomeEnumConsistency::test_list_ghap_entries_outcome_matches_enums PASSED
+tests/server/tools/test_bug_026_regression.py::TestOutcomeEnumConsistency::test_search_experiences_outcome_matches_enums PASSED
+tests/server/tools/test_bug_026_regression.py::TestRootCauseEnumConsistency::test_resolve_ghap_root_cause_category_matches_enums PASSED
+tests/server/tools/test_bug_026_regression.py::TestAxisEnumConsistency::test_get_clusters_axis_matches_enums PASSED
+tests/server/tools/test_bug_026_regression.py::TestAxisEnumConsistency::test_store_value_axis_matches_enums PASSED
+tests/server/tools/test_bug_026_regression.py::TestAxisEnumConsistency::test_list_values_axis_matches_enums PASSED
+tests/server/tools/test_bug_026_regression.py::TestAxisEnumConsistency::test_search_experiences_axis_matches_enums PASSED
+tests/server/tools/test_bug_027_regression.py::TestListGhapEntriesDatetimeParsing::test_fromisoformat_parses_iso_string PASSED
+tests/server/tools/test_bug_027_regression.py::TestListGhapEntriesDatetimeParsing::test_fromisoformat_handles_various_formats PASSED
+tests/server/tools/test_bug_027_regression.py::TestListGhapEntriesDatetimeParsing::test_fromtimestamp_fails_on_iso_string PASSED
+tests/server/tools/test_bug_028_regression.py::TestContextItemHashEqContract::test_equal_items_have_equal_hash PASSED
+tests/server/tools/test_bug_028_regression.py::TestContextItemHashEqContract::test_items_with_different_length_have_different_hash PASSED
+tests/server/tools/test_bug_028_regression.py::TestContextItemHashEqContract::test_items_with_same_prefix_different_suffix_in_set PASSED
+tests/server/tools/test_bug_028_regression.py::TestContextItemHashEqContract::test_identical_items_deduplicate_in_set PASSED
+tests/server/tools/test_bug_028_regression.py::TestContextItemHashEqContract::test_items_with_different_source_not_equal PASSED
+tests/server/tools/test_bug_028_regression.py::TestContextItemHashEqContract::test_dict_key_behavior PASSED
+tests/server/tools/test_bug_028_regression.py::TestContextItemHashEqContract::test_short_content_hashes_correctly PASSED
+tests/server/tools/test_bug_029_regression.py::TestBug029ActiveGhapError::test_start_ghap_with_active_returns_helpful_error PASSED
+tests/server/tools/test_bug_029_regression.py::TestBug029ActiveGhapError::test_start_ghap_succeeds_after_resolve PASSED
+tests/server/tools/test_bug_030_regression.py::test_start_ghap_returns_minimal_response PASSED
+tests/server/tools/test_bug_030_regression.py::test_resolve_ghap_returns_minimal_response PASSED
+tests/server/tools/test_bug_030_regression.py::test_update_ghap_response_unchanged PASSED
+tests/server/tools/test_code.py::test_index_codebase_not_available PASSED
+tests/server/tools/test_code.py::test_search_code_not_available PASSED
+tests/server/tools/test_code.py::test_find_similar_code_not_available PASSED
+tests/server/tools/test_code.py::test_search_code_empty_query PASSED
+tests/server/tools/test_code.py::test_search_code_limit_validation PASSED
+tests/server/tools/test_code.py::test_find_similar_code_snippet_too_long PASSED
+tests/server/tools/test_code.py::test_find_similar_code_empty_snippet PASSED
+tests/server/tools/test_code.py::test_find_similar_code_limit_validation PASSED
+tests/server/tools/test_code.py::test_index_codebase_directory_not_found PASSED
+tests/server/tools/test_code.py::test_index_codebase_not_a_directory PASSED
+tests/server/tools/test_code.py::test_search_code_with_filters PASSED
+tests/server/tools/test_code.py::test_find_similar_code_with_project_filter PASSED
+tests/server/tools/test_enums.py::TestDomains::test_valid_domains PASSED
+tests/server/tools/test_enums.py::TestDomains::test_invalid_domain_raises_error PASSED
+tests/server/tools/test_enums.py::TestDomains::test_error_message_includes_valid_options PASSED
+tests/server/tools/test_enums.py::TestStrategies::test_valid_strategies PASSED
+tests/server/tools/test_enums.py::TestStrategies::test_invalid_strategy_raises_error PASSED
+tests/server/tools/test_enums.py::TestStrategies::test_error_message_includes_valid_options PASSED
+tests/server/tools/test_enums.py::TestAxes::test_valid_axes PASSED
+tests/server/tools/test_enums.py::TestAxes::test_invalid_axis_raises_error PASSED
+tests/server/tools/test_enums.py::TestAxes::test_error_message_includes_valid_options PASSED
+tests/server/tools/test_enums.py::TestAxes::test_domain_is_not_a_valid_axis PASSED
+tests/server/tools/test_enums.py::TestOutcomeStatus::test_valid_outcome_statuses PASSED
+tests/server/tools/test_enums.py::TestOutcomeStatus::test_invalid_outcome_status_raises_error PASSED
+tests/server/tools/test_enums.py::TestOutcomeStatus::test_error_message_includes_valid_options PASSED
+tests/server/tools/test_enums.py::TestRootCauseCategories::test_valid_root_cause_categories PASSED
+tests/server/tools/test_enums.py::TestRootCauseCategories::test_invalid_root_cause_category_raises_error PASSED
+tests/server/tools/test_enums.py::TestRootCauseCategories::test_error_message_includes_valid_options PASSED
+tests/server/tools/test_errors.py::test_mcp_error_is_exception PASSED
+tests/server/tools/test_errors.py::test_validation_error_is_mcp_error PASSED
+tests/server/tools/test_errors.py::test_not_found_error_is_mcp_error PASSED
+tests/server/tools/test_errors.py::test_insufficient_data_error_is_mcp_error PASSED
+tests/server/tools/test_errors.py::test_errors_can_be_raised PASSED
+tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_success PASSED
+tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_invalid_domain PASSED
+tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_invalid_strategy PASSED
+tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_empty_field PASSED
+tests/server/tools/test_ghap.py::TestStartGhap::test_start_ghap_field_too_long PASSED
+tests/server/tools/test_ghap.py::TestUpdateGhap::test_update_ghap_success PASSED
+tests/server/tools/test_ghap.py::TestUpdateGhap::test_update_ghap_no_active_entry PASSED
+tests/server/tools/test_ghap.py::TestUpdateGhap::test_update_ghap_field_too_long PASSED
+tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_confirmed PASSED
+tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_falsified PASSED
+tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_falsified_missing_surprise PASSED
+tests/server/tools/test_ghap.py::TestResolveGhap::test_resolve_ghap_invalid_status PASSED
+tests/server/tools/test_ghap.py::TestGetActiveGhap::test_get_active_ghap_with_entry PASSED
+tests/server/tools/test_ghap.py::TestGetActiveGhap::test_get_active_ghap_no_entry PASSED
+tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_default PASSED
+tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_invalid_limit PASSED
+tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_invalid_domain PASSED
+tests/server/tools/test_ghap.py::TestListGhapEntries::test_list_ghap_entries_invalid_date PASSED
+tests/server/tools/test_ghap.py::test_bug_001_schema_validation_alignment PASSED
+tests/server/tools/test_git.py::test_search_commits_not_available PASSED
+tests/server/tools/test_git.py::test_get_file_history_not_available PASSED
+tests/server/tools/test_git.py::test_get_churn_hotspots_not_available PASSED
+tests/server/tools/test_git.py::test_get_code_authors_not_available PASSED
+tests/server/tools/test_git.py::test_search_commits_empty_query PASSED
+tests/server/tools/test_git.py::test_search_commits_limit_validation PASSED
+tests/server/tools/test_git.py::test_search_commits_invalid_date_format PASSED
+tests/server/tools/test_git.py::test_get_file_history_limit_validation PASSED
+tests/server/tools/test_git.py::test_get_file_history_file_not_found PASSED
+tests/server/tools/test_git.py::test_get_churn_hotspots_days_validation PASSED
+tests/server/tools/test_git.py::test_get_churn_hotspots_limit_validation PASSED
+tests/server/tools/test_git.py::test_get_code_authors_file_not_found PASSED
+tests/server/tools/test_git.py::test_index_commits_not_available PASSED
+tests/server/tools/test_git.py::test_index_commits_invalid_date_format PASSED
+tests/server/tools/test_git.py::test_index_commits_invalid_limit PASSED
+tests/server/tools/test_git.py::test_index_and_search_commits_workflow PASSED
+tests/server/tools/test_git.py::test_index_commits_with_errors PASSED
+tests/server/tools/test_git.py::test_search_commits_includes_scores PASSED
+tests/server/tools/test_learning.py::TestGetClusters::test_get_clusters_success PASSED
+tests/server/tools/test_learning.py::TestGetClusters::test_get_clusters_invalid_axis PASSED
+tests/server/tools/test_learning.py::TestGetClusters::test_get_clusters_insufficient_data PASSED
+tests/server/tools/test_learning.py::TestGetClusterMembers::test_get_cluster_members_success PASSED
+tests/server/tools/test_learning.py::TestGetClusterMembers::test_get_cluster_members_invalid_format PASSED
+tests/server/tools/test_learning.py::TestGetClusterMembers::test_get_cluster_members_invalid_axis PASSED
+tests/server/tools/test_learning.py::TestGetClusterMembers::test_get_cluster_members_invalid_limit PASSED
+tests/server/tools/test_learning.py::TestValidateValue::test_validate_value_success PASSED
+tests/server/tools/test_learning.py::TestValidateValue::test_validate_value_empty_text PASSED
+tests/server/tools/test_learning.py::TestValidateValue::test_validate_value_text_too_long PASSED
+tests/server/tools/test_learning.py::TestValidateValue::test_validate_value_invalid_cluster_id PASSED
+tests/server/tools/test_learning.py::TestStoreValue::test_store_value_success PASSED
+tests/server/tools/test_learning.py::TestStoreValue::test_store_value_empty_text PASSED
+tests/server/tools/test_learning.py::TestStoreValue::test_store_value_invalid_axis PASSED
+tests/server/tools/test_learning.py::TestListValues::test_list_values_default PASSED
+tests/server/tools/test_learning.py::TestListValues::test_list_values_with_axis_filter PASSED
+tests/server/tools/test_learning.py::TestListValues::test_list_values_invalid_axis PASSED
+tests/server/tools/test_learning.py::TestListValues::test_list_values_invalid_limit PASSED
+tests/server/tools/test_memory.py::test_store_memory_success PASSED
+tests/server/tools/test_memory.py::test_store_memory_invalid_category PASSED
+tests/server/tools/test_memory.py::test_store_memory_content_too_long PASSED
+tests/server/tools/test_memory.py::test_store_memory_importance_out_of_range PASSED
+tests/server/tools/test_memory.py::test_store_memory_default_values PASSED
+tests/server/tools/test_memory.py::test_retrieve_memories_success PASSED
+tests/server/tools/test_memory.py::test_retrieve_memories_empty_query PASSED
+tests/server/tools/test_memory.py::test_retrieve_memories_with_filters PASSED
+tests/server/tools/test_memory.py::test_retrieve_memories_invalid_category PASSED
+tests/server/tools/test_memory.py::test_retrieve_memories_limit_validation PASSED
+tests/server/tools/test_memory.py::test_list_memories_success PASSED
+tests/server/tools/test_memory.py::test_list_memories_pagination PASSED
+tests/server/tools/test_memory.py::test_list_memories_with_filters PASSED
+tests/server/tools/test_memory.py::test_list_memories_invalid_offset PASSED
+tests/server/tools/test_memory.py::test_list_memories_limit_validation PASSED
+tests/server/tools/test_memory.py::test_delete_memory_success PASSED
+tests/server/tools/test_memory.py::test_delete_memory_not_found PASSED
+tests/server/tools/test_memory.py::test_all_valid_categories_accepted PASSED
+tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_success PASSED
+tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_empty_query PASSED
+tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_with_filters PASSED
+tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_invalid_axis PASSED
+tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_invalid_domain PASSED
+tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_invalid_outcome PASSED
+tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_invalid_limit PASSED
+tests/server/tools/test_search.py::TestSearchExperiences::test_search_experiences_limit_max PASSED
+tests/storage/test_bug_034_regression.py::TestBug034FloatTimeoutRegression::test_subsecond_timeout_not_truncated_to_zero PASSED
+tests/storage/test_bug_034_regression.py::TestBug034FloatTimeoutRegression::test_float_timeout_preserves_decimal PASSED
+tests/storage/test_bug_034_regression.py::TestBug034FloatTimeoutRegression::test_integer_timeout_still_works PASSED
+tests/storage/test_bug_034_regression.py::TestBug034FloatTimeoutRegression::test_url_mode_timeout_not_truncated PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_create_collection PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_create_duplicate_collection PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_delete_collection PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_upsert_and_get PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_upsert_update PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_upsert_wrong_dimension PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_search_cosine_similarity PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_search_with_filters PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_delete PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_scroll PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_scroll_with_filters PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_count PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_count_with_filters PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_get_nonexistent PASSED
+tests/storage/test_memory.py::TestInMemoryVectorStore::test_operations_on_nonexistent_collection PASSED
+tests/storage/test_metadata.py::TestIndexedFiles::test_add_indexed_file PASSED
+tests/storage/test_metadata.py::TestIndexedFiles::test_add_indexed_file_upsert PASSED
+tests/storage/test_metadata.py::TestIndexedFiles::test_get_indexed_file PASSED
+tests/storage/test_metadata.py::TestIndexedFiles::test_get_indexed_file_not_found PASSED
+tests/storage/test_metadata.py::TestIndexedFiles::test_list_indexed_files PASSED
+tests/storage/test_metadata.py::TestIndexedFiles::test_list_indexed_files_all_projects PASSED
+tests/storage/test_metadata.py::TestIndexedFiles::test_get_stale_files PASSED
+tests/storage/test_metadata.py::TestIndexedFiles::test_delete_indexed_file PASSED
+tests/storage/test_metadata.py::TestCallGraph::test_add_call PASSED
+tests/storage/test_metadata.py::TestCallGraph::test_add_call_upsert PASSED
+tests/storage/test_metadata.py::TestCallGraph::test_get_callers PASSED
+tests/storage/test_metadata.py::TestCallGraph::test_get_callees PASSED
+tests/storage/test_metadata.py::TestCallGraph::test_delete_calls_for_file PASSED
+tests/storage/test_metadata.py::TestProjects::test_add_project PASSED
+tests/storage/test_metadata.py::TestProjects::test_add_project_default_settings PASSED
+tests/storage/test_metadata.py::TestProjects::test_add_project_upsert PASSED
+tests/storage/test_metadata.py::TestProjects::test_get_project PASSED
+tests/storage/test_metadata.py::TestProjects::test_get_project_not_found PASSED
+tests/storage/test_metadata.py::TestProjects::test_list_projects PASSED
+tests/storage/test_metadata.py::TestProjects::test_update_project_last_indexed PASSED
+tests/storage/test_metadata.py::TestProjects::test_delete_project PASSED
+tests/storage/test_metadata.py::TestJSONSerialization::test_complex_settings_roundtrip PASSED
+tests/storage/test_metadata.py::TestJSONSerialization::test_empty_settings_roundtrip PASSED
+tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_simple_equality_filter PASSED
+tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_multiple_equality_filters PASSED
+tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_in_operator_filter PASSED
+tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_gte_operator_filter PASSED
+tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_lte_operator_filter PASSED
+tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_gte_and_lte_combined PASSED
+tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_mixed_operators_in_single_query PASSED
+tests/test_bug_052_regression.py::test_timeout_decorator_works PASSED
+tests/test_bug_052_regression.py::test_default_timeout_is_configured PASSED
+tests/test_bug_055_regression.py::test_slow_marker_is_recognized PASSED
+tests/test_bug_055_regression.py::test_slow_tests_excluded_by_default PASSED
+tests/test_bug_055_regression.py::test_slow_tests_can_be_explicitly_run PASSED
+tests/test_bug_055_regression.py::test_all_tests_can_be_run_with_empty_marker PASSED
+tests/test_bug_055_regression.py::test_this_test_runs_by_default PASSED
+tests/test_bug_057_regression.py::test_worker_permission_model_doc_exists PASSED
+tests/test_bug_057_regression.py::test_proposal_exists PASSED
+tests/test_bug_057_regression.py::test_decisions_documented PASSED
+tests/test_json_merge.py::test_merge_mcp_server_new PASSED
+tests/test_json_merge.py::test_merge_mcp_server_existing PASSED
+tests/test_json_merge.py::test_merge_mcp_server_no_change PASSED
+tests/test_json_merge.py::test_merge_hooks_preserves_existing PASSED
+tests/test_json_merge.py::test_merge_hooks_new_event PASSED
+tests/test_json_merge.py::test_merge_hooks_updates_existing PASSED
+tests/test_json_merge.py::test_merge_hooks_no_change PASSED
+tests/test_json_merge.py::test_remove_mcp_server PASSED
+tests/test_json_merge.py::test_remove_mcp_server_not_found PASSED
+tests/test_json_merge.py::test_remove_hooks PASSED
+tests/test_json_merge.py::test_remove_hooks_multiple_commands PASSED
+tests/test_json_merge.py::test_remove_hooks_not_found PASSED
+tests/test_placeholder.py::test_placeholder PASSED
+tests/test_placeholder.py::test_fixture PASSED
+tests/unit/test_schema_consistency.py::TestDomainEnumConsistency::test_start_ghap_domain_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestDomainEnumConsistency::test_list_ghap_entries_domain_filter_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestDomainEnumConsistency::test_search_experiences_domain_filter_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestStrategyEnumConsistency::test_start_ghap_strategy_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestStrategyEnumConsistency::test_update_ghap_strategy_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestMemoryCategoryEnumConsistency::test_store_memory_category_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestMemoryCategoryEnumConsistency::test_retrieve_memories_category_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestMemoryCategoryEnumConsistency::test_list_memories_category_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestOutcomeStatusEnumConsistency::test_resolve_ghap_status_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestOutcomeStatusEnumConsistency::test_list_ghap_entries_outcome_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestOutcomeStatusEnumConsistency::test_search_experiences_outcome_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestAxisEnumConsistency::test_get_clusters_axis_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestAxisEnumConsistency::test_store_value_axis_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestAxisEnumConsistency::test_list_values_axis_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestAxisEnumConsistency::test_search_experiences_axis_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestRootCauseCategoryEnumConsistency::test_resolve_ghap_root_cause_category_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestContextTypesEnumConsistency::test_assemble_context_context_types_enum PASSED
+tests/unit/test_schema_consistency.py::TestAllEnumsHaveConsistencyTests::test_all_enum_properties_covered PASSED
+tests/unit/test_type_boundaries.py::TestSearchResultTypeConsistency::test_context_module_reexports_search_results PASSED
+tests/unit/test_type_boundaries.py::TestSearchResultTypeConsistency::test_nested_types_also_reexported PASSED
+tests/unit/test_type_boundaries.py::TestSearcherABCImplementation::test_searcher_inherits_from_abc PASSED
+tests/unit/test_type_boundaries.py::TestSearcherABCImplementation::test_all_abstract_methods_implemented PASSED
+tests/unit/test_type_boundaries.py::TestSearcherABCImplementation::test_method_signatures_compatible PASSED
+tests/unit/test_type_boundaries.py::TestSearcherABCImplementation::test_return_types_compatible PASSED
+tests/unit/test_type_boundaries.py::TestRootCauseConsistency::test_rootcause_field_names_match PASSED
+tests/unit/test_type_boundaries.py::TestRootCauseConsistency::test_rootcause_field_types_match PASSED
+tests/unit/test_type_boundaries.py::TestLessonConsistency::test_lesson_field_names_match PASSED
+tests/unit/test_type_boundaries.py::TestLessonConsistency::test_lesson_field_types_match PASSED
+tests/unit/test_type_boundaries.py::TestClusterInfoConsistency::test_clusterinfo_exists_in_both_modules PASSED
+tests/unit/test_type_boundaries.py::TestClusterInfoConsistency::test_clusterinfo_common_fields_match PASSED
+tests/unit/test_type_boundaries.py::TestVectorStoreTypes::test_search_result_is_dataclass PASSED
+tests/unit/test_type_boundaries.py::TestVectorStoreTypes::test_search_result_has_required_fields PASSED
+tests/unit/test_type_boundaries.py::TestVectorStoreTypes::test_result_converters_use_correct_fields PASSED
+tests/unit/test_type_boundaries.py::TestContextModelsConsistency::test_context_item_is_dataclass PASSED
+tests/unit/test_type_boundaries.py::TestContextModelsConsistency::test_formatted_context_is_dataclass PASSED
+tests/unit/test_type_boundaries.py::TestGitTypesConsistency::test_commit_dataclass_fields PASSED
+tests/unit/test_type_boundaries.py::TestGitTypesConsistency::test_commit_result_matches_commit PASSED
+tests/unit/test_type_boundaries.py::TestEnumConsistency::test_domain_enum_values PASSED
+tests/unit/test_type_boundaries.py::TestEnumConsistency::test_strategy_enum_values PASSED
+tests/unit/test_type_boundaries.py::TestEnumConsistency::test_outcome_status_enum_values PASSED
+tests/unit/test_type_boundaries.py::TestEnumConsistency::test_confidence_tier_enum_values PASSED
+tests/unit/test_type_boundaries.py::TestModuleBoundaryContracts::test_embedding_vector_type_alias PASSED
+tests/unit/test_type_boundaries.py::TestModuleBoundaryContracts::test_ghap_entry_serialization_roundtrip_fields PASSED
+tests/unit/test_type_boundaries.py::TestExperienceResultToGHAPMapping::test_experience_result_has_ghap_fields PASSED
+tests/unit/test_type_boundaries.py::TestExperienceResultToGHAPMapping::test_experience_result_has_search_fields PASSED
+tests/utils/test_datetime.py::TestSerializeDatetime::test_serialize_utc_datetime PASSED
+tests/utils/test_datetime.py::TestSerializeDatetime::test_serialize_naive_datetime_assumes_utc PASSED
+tests/utils/test_datetime.py::TestSerializeDatetime::test_serialize_datetime_with_microseconds PASSED
+tests/utils/test_datetime.py::TestSerializeDatetime::test_serialize_datetime_with_other_timezone PASSED
+tests/utils/test_datetime.py::TestSerializeDatetime::test_serialize_datetime_midnight PASSED
+tests/utils/test_datetime.py::TestSerializeDatetime::test_serialize_datetime_end_of_day PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_iso_string_with_utc PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_naive_iso_string_assumes_utc PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_iso_string_with_microseconds PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_iso_string_with_z_suffix PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_unix_timestamp_int PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_unix_timestamp_float PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_zero_timestamp PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_negative_timestamp PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_invalid_iso_string_raises_value_error PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_date_only_iso_string PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_malformed_iso_string_raises_value_error PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_invalid_type_raises_type_error PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_list_raises_type_error PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_dict_raises_type_error PASSED
+tests/utils/test_datetime.py::TestRoundTrip::test_round_trip_utc_datetime PASSED
+tests/utils/test_datetime.py::TestRoundTrip::test_round_trip_naive_datetime PASSED
+tests/utils/test_datetime.py::TestRoundTrip::test_round_trip_with_microseconds PASSED
+tests/utils/test_datetime.py::TestRoundTrip::test_round_trip_other_timezone PASSED
+tests/utils/test_datetime.py::TestRoundTrip::test_round_trip_various_years[1970] PASSED
+tests/utils/test_datetime.py::TestRoundTrip::test_round_trip_various_years[2000] PASSED
+tests/utils/test_datetime.py::TestRoundTrip::test_round_trip_various_years[2024] PASSED
+tests/utils/test_datetime.py::TestRoundTrip::test_round_trip_various_years[2050] PASSED
+tests/utils/test_datetime.py::TestRoundTrip::test_round_trip_various_years[2100] PASSED
+tests/utils/test_datetime.py::TestTimezoneHandling::test_utc_is_default_for_naive_serialize PASSED
+tests/utils/test_datetime.py::TestTimezoneHandling::test_utc_is_default_for_naive_deserialize PASSED
+tests/utils/test_datetime.py::TestTimezoneHandling::test_positive_offset_timezone PASSED
+tests/utils/test_datetime.py::TestTimezoneHandling::test_negative_offset_timezone PASSED
+tests/utils/test_datetime.py::TestTimezoneHandling::test_half_hour_offset_timezone PASSED
+tests/utils/test_datetime.py::TestEdgeCases::test_very_old_date PASSED
+tests/utils/test_datetime.py::TestEdgeCases::test_far_future_date PASSED
+tests/utils/test_datetime.py::TestEdgeCases::test_leap_second_boundary PASSED
+tests/utils/test_datetime.py::TestEdgeCases::test_leap_year_feb_29 PASSED
+tests/utils/test_datetime.py::TestEdgeCases::test_empty_string_raises_value_error PASSED
+tests/utils/test_datetime.py::TestEdgeCases::test_whitespace_string_raises_value_error PASSED
+tests/values/test_integration.py::TestIntegration::test_full_workflow PASSED
+tests/values/test_integration.py::TestIntegration::test_invalid_value_rejected PASSED
+tests/values/test_integration.py::TestIntegration::test_multiple_values_per_cluster PASSED
+tests/values/test_integration.py::TestIntegration::test_real_embedding_consistency PASSED
+tests/values/test_store.py::TestGetClusters::test_valid_axis PASSED
+tests/values/test_store.py::TestGetClusters::test_sorted_by_size_descending PASSED
+tests/values/test_store.py::TestGetClusters::test_invalid_axis PASSED
+tests/values/test_store.py::TestGetClusters::test_domain_not_valid_axis PASSED
+tests/values/test_store.py::TestGetClusters::test_all_valid_axes[full] PASSED
+tests/values/test_store.py::TestGetClusters::test_all_valid_axes[strategy] PASSED
+tests/values/test_store.py::TestGetClusters::test_all_valid_axes[surprise] PASSED
+tests/values/test_store.py::TestGetClusters::test_all_valid_axes[root_cause] PASSED
+tests/values/test_store.py::TestGetClusters::test_insufficient_experiences PASSED
+tests/values/test_store.py::TestGetClusterMembers::test_get_members_success PASSED
+tests/values/test_store.py::TestGetClusterMembers::test_invalid_cluster_id_format PASSED
+tests/values/test_store.py::TestGetClusterMembers::test_invalid_axis_in_cluster_id PASSED
+tests/values/test_store.py::TestGetClusterMembers::test_cluster_not_found PASSED
+tests/values/test_store.py::TestGetClusterMembers::test_correct_collection_name PASSED
+tests/values/test_store.py::TestValidateValueCandidate::test_valid_candidate_close_to_centroid PASSED
+tests/values/test_store.py::TestValidateValueCandidate::test_invalid_candidate_far_from_centroid PASSED
+tests/values/test_store.py::TestValidateValueCandidate::test_empty_cluster PASSED
+tests/values/test_store.py::TestValidateValueCandidate::test_validation_threshold_calculation PASSED
+tests/values/test_store.py::TestValidateValueCandidate::test_validate_with_insufficient_experiences PASSED
+tests/values/test_store.py::TestStoreValue::test_store_valid_value PASSED
+tests/values/test_store.py::TestStoreValue::test_store_invalid_value_raises_error PASSED
+tests/values/test_store.py::TestStoreValue::test_value_id_format PASSED
+tests/values/test_store.py::TestStoreValue::test_stored_payload_structure PASSED
+tests/values/test_store.py::TestListValues::test_list_all_values PASSED
+tests/values/test_store.py::TestListValues::test_list_values_filtered_by_axis PASSED
+tests/values/test_store.py::TestListValues::test_list_values_invalid_axis PASSED
+tests/values/test_store.py::TestListValues::test_list_values_sorted_by_recency PASSED
+tests/values/test_store.py::TestGetCluster::test_get_cluster_success PASSED
+tests/values/test_store.py::TestGetCluster::test_get_cluster_invalid_format PASSED
+tests/values/test_store.py::TestGetCluster::test_get_cluster_not_found PASSED
+tests/values/test_store.py::TestInsufficientDataRegression::test_get_clusters_with_insufficient_data PASSED
+tests/values/test_store.py::TestInsufficientDataRegression::test_validate_value_with_insufficient_data PASSED
+tests/values/test_store.py::TestInsufficientDataRegression::test_store_value_with_insufficient_data PASSED
 
-==================================== ERRORS ====================================
-_____________ ERROR at setup of test_index_codebase_not_available ______________
-
-self = <Coroutine test_index_codebase_not_available>
-
-    def setup(self) -> None:
-        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
-        if runner_fixture_id not in self.fixturenames:
-            self.fixturenames.append(runner_fixture_id)
->       return super().setup()
-               ^^^^^^^^^^^^^^^
-
-.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:458: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:730: in pytest_fixture_setup
-    return (yield)
-            ^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-mock_embedding_service = <AsyncMock id='4940977440'>
-mock_vector_store = <AsyncMock id='4912685872'>
-mock_metadata_store = <AsyncMock id='4905758656'>
-
-    @pytest.fixture
-    def mock_services(mock_embedding_service, mock_vector_store, mock_metadata_store):
-        """Create mock service container with core services."""
->       return ServiceContainer(
-            embedding_service=mock_embedding_service,
-            vector_store=mock_vector_store,
-            metadata_store=mock_metadata_store,
-            code_indexer=None,
-            git_analyzer=None,
-            searcher=None,
-        )
-E       TypeError: ServiceContainer.__init__() got an unexpected keyword argument 'embedding_service'
-
-tests/server/tools/conftest.py:43: TypeError
 =============================== warnings summary ===============================
+tests/clustering/test_bug_031_regression.py: 6 warnings
 tests/clustering/test_clusterer.py: 208 warnings
 tests/clustering/test_experience.py: 22 warnings
-  /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006/.venv/lib/python3.12/site-packages/sklearn/utils/deprecation.py:132: FutureWarning: 'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will be removed in 1.8.
+  /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-062/.venv/lib/python3.12/site-packages/sklearn/utils/deprecation.py:132: FutureWarning: 'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will be removed in 1.8.
     warnings.warn(
 
+tests/server/test_main.py::test_create_server
+tests/server/test_main.py::test_server_has_ping_tool
+tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_simple_equality_filter
+tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_multiple_equality_filters
+tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_in_operator_filter
+tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_gte_operator_filter
+tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_lte_operator_filter
+tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_gte_and_lte_combined
+tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_mixed_operators_in_single_query
+  /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-062/src/clams/storage/qdrant.py:62: UserWarning: Qdrant client version 1.16.1 is incompatible with server version 1.12.1. Major versions should match and minor version difference must not exceed 1. Set check_compatibility=False to skip version check.
+    self._client = AsyncQdrantClient(
+
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-=========================== short test summary info ============================
-ERROR tests/server/tools/test_code.py::test_index_codebase_not_available - TypeError: ServiceContainer.__init__() got an unexpected keyword argument 'embedding_service'
-!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
-==== 298 passed, 55 deselected, 230 warnings, 1 error in 144.35s (0:02:24) =====
+=== 1076 passed, 81 deselected, 2 xfailed, 245 warnings in 418.13s (0:06:58) ===
 
 === Test Summary ===
-Total: 299 | Passed: 298 | Failed: 0 | Errors: 1 | Skipped: 0
-Duration: 144.35s
+Total: 1076 | Passed: 1076 | Failed: 0 | Errors: 0 | Skipped: 0
+Duration: 418.13s
 Test results logged to database
 
-FAIL: Tests failed
-✗ Tests pass: FAIL
+PASS: All tests passed
+✓ Tests pass: PASS
 
 --- Gate: Linter clean ---
 === Running Linter ===
-Directory: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006
+Directory: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-062
 
 Detected: Python
 Running: ruff check
-I001 [*] Import block is un-sorted or un-formatted
-  --> tests/server/test_main.py:3:1
+UP017 [*] Use `datetime.UTC` alias
+  --> src/clams/utils/datetime.py:44:32
    |
- 1 |   """Tests for server main module."""
- 2 |
- 3 | / import pytest
- 4 | |
- 5 | | from learning_memory_server.embedding import (
- 6 | |     EmbeddingService,
- 7 | |     initialize_registry,
- 8 | |     get_semantic_embedder,
- 9 | | )
-10 | | from learning_memory_server.server.config import ServerSettings
-11 | | from learning_memory_server.server.main import create_server
-   | |____________________________________________________________^
+42 |     """
+43 |     if dt.tzinfo is None:
+44 |         dt = dt.replace(tzinfo=timezone.utc)
+   |                                ^^^^^^^^^^^^
+45 |     return dt.isoformat()
+   |
+help: Convert to `datetime.UTC` alias
+
+UP007 [*] Use `X | Y` for type annotations
+  --> src/clams/utils/datetime.py:48:33
+   |
+48 | def deserialize_datetime(value: Union[str, float, int]) -> datetime:
+   |                                 ^^^^^^^^^^^^^^^^^^^^^^
+49 |     """Deserialize datetime from various formats.
+   |
+help: Convert to `X | Y`
+
+UP017 [*] Use `datetime.UTC` alias
+  --> src/clams/utils/datetime.py:94:36
+   |
+92 |         # Ensure UTC timezone if naive
+93 |         if dt.tzinfo is None:
+94 |             dt = dt.replace(tzinfo=timezone.utc)
+   |                                    ^^^^^^^^^^^^
+95 |         return dt
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> src/clams/utils/datetime.py:100:53
+    |
+ 98 |         # Handle Unix timestamps
+ 99 |         try:
+100 |             return datetime.fromtimestamp(value, tz=timezone.utc)
+    |                                                     ^^^^^^^^^^^^
+101 |         except (OSError, OverflowError, ValueError) as e:
+102 |             raise ValueError(
+    |
+help: Convert to `datetime.UTC` alias
+
+E402 Module level import not at top of file
+  --> tests/integration/test_data_flows.py:28:1
+   |
+26 | pytestmark = pytest.mark.integration
+27 |
+28 | from clams.embedding.mock import MockEmbedding
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+29 | from clams.observation import (
+30 |     Domain,
+   |
+
+E402 Module level import not at top of file
+  --> tests/integration/test_data_flows.py:29:1
+   |
+28 |   from clams.embedding.mock import MockEmbedding
+29 | / from clams.observation import (
+30 | |     Domain,
+31 | |     Lesson,
+32 | |     ObservationCollector,
+33 | |     ObservationPersister,
+34 | |     OutcomeStatus,
+35 | |     RootCause,
+36 | |     Strategy,
+37 | | )
+   | |_^
+38 |   from clams.search.searcher import Searcher
+39 |   from clams.storage.metadata import MetadataStore
+   |
+
+E402 Module level import not at top of file
+  --> tests/integration/test_data_flows.py:38:1
+   |
+36 |     Strategy,
+37 | )
+38 | from clams.search.searcher import Searcher
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+39 | from clams.storage.metadata import MetadataStore
+40 | from clams.storage.qdrant import QdrantVectorStore
+   |
+
+E402 Module level import not at top of file
+  --> tests/integration/test_data_flows.py:39:1
+   |
+37 | )
+38 | from clams.search.searcher import Searcher
+39 | from clams.storage.metadata import MetadataStore
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+40 | from clams.storage.qdrant import QdrantVectorStore
+   |
+
+F401 [*] `clams.storage.metadata.MetadataStore` imported but unused
+  --> tests/integration/test_data_flows.py:39:36
+   |
+37 | )
+38 | from clams.search.searcher import Searcher
+39 | from clams.storage.metadata import MetadataStore
+   |                                    ^^^^^^^^^^^^^
+40 | from clams.storage.qdrant import QdrantVectorStore
+   |
+help: Remove unused import: `clams.storage.metadata.MetadataStore`
+
+E402 Module level import not at top of file
+  --> tests/integration/test_data_flows.py:40:1
+   |
+38 | from clams.search.searcher import Searcher
+39 | from clams.storage.metadata import MetadataStore
+40 | from clams.storage.qdrant import QdrantVectorStore
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+41 |
+42 | pytest_plugins = ("pytest_asyncio",)
+   |
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/integration/test_data_flows.py:166:48
+    |
+165 |             # 2. Create GHAP entry
+166 |             original_created_at = datetime.now(timezone.utc)
+    |                                                ^^^^^^^^^^^^
+167 |             entry = await collector.create_ghap(
+168 |                 domain=Domain.DEBUGGING,
+    |
+help: Convert to `datetime.UTC` alias
+
+F401 [*] `unittest.mock.patch` imported but unused
+   --> tests/integration/test_data_flows.py:256:35
+    |
+254 |     ) -> None:
+255 |         """Test falsified GHAP flow with root cause captures all data."""
+256 |         from unittest.mock import patch
+    |                                   ^^^^^
+257 |
+258 |         with tempfile.TemporaryDirectory() as tmpdir:
+    |
+help: Remove unused import: `unittest.mock.patch`
+
+F841 Local variable `ghap_id` is assigned to but never used
+   --> tests/integration/test_data_flows.py:277:13
+    |
+275 |                 prediction="Will find the root cause",
+276 |             )
+277 |             ghap_id = entry.id
+    |             ^^^^^^^
+278 |
+279 |             # Resolve as falsified with root cause
+    |
+help: Remove assignment to unused variable `ghap_id`
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/integration/test_data_flows.py:334:44
+    |
+332 |         memory_id = str(uuid4())
+333 |         content = "Important fact about data flow testing"
+334 |         original_created_at = datetime.now(timezone.utc)
+    |                                            ^^^^^^^^^^^^
+335 |
+336 |         # 1. Store memory
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/integration/test_data_flows.py:589:70
+    |
+587 |                 "author": "test_author",
+588 |                 "author_email": "test@example.com",
+589 |                 "timestamp": datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc).isoformat(),
+    |                                                                      ^^^^^^^^^^^^
+590 |                 "files_changed": ["math_utils.py"],
+591 |                 "insertions": 15,
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/integration/test_data_flows.py:600:70
+    |
+598 |                 "author": "test_author",
+599 |                 "author_email": "test@example.com",
+600 |                 "timestamp": datetime(2024, 1, 16, 14, 20, 0, tzinfo=timezone.utc).isoformat(),
+    |                                                                      ^^^^^^^^^^^^
+601 |                 "files_changed": ["math_utils.py"],
+602 |                 "insertions": 3,
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/integration/test_data_flows.py:611:68
+    |
+609 |                 "author": "another_author",
+610 |                 "author_email": "another@example.com",
+611 |                 "timestamp": datetime(2024, 1, 17, 9, 0, 0, tzinfo=timezone.utc).isoformat(),
+    |                                                                    ^^^^^^^^^^^^
+612 |                 "files_changed": ["processor.py", "tests/test_processor.py"],
+613 |                 "insertions": 25,
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/integration/test_data_flows.py:681:72
+    |
+679 |                 "author": "test_author",
+680 |                 "author_email": "test@example.com",
+681 |                 "timestamp": datetime(2024, 1, i + 1, 10, 0, 0, tzinfo=timezone.utc).isoformat(),
+    |                                                                        ^^^^^^^^^^^^
+682 |                 "files_changed": ["math_utils.py"],
+683 |                 "insertions": i * 5,
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/integration/test_data_flows.py:838:61
+    |
+837 |         # Test with explicit UTC timezone
+838 |         utc_time = datetime(2024, 6, 15, 12, 30, 45, tzinfo=timezone.utc)
+    |                                                             ^^^^^^^^^^^^
+839 |
+840 |         commit = {
+    |
+help: Convert to `datetime.UTC` alias
+
+F401 [*] `pytest` imported but unused
+  --> tests/unit/test_type_boundaries.py:18:8
+   |
+16 | from typing import get_type_hints
+17 |
+18 | import pytest
+   |        ^^^^^^
+   |
+help: Remove unused import: `pytest`
+
+I001 [*] Import block is un-sorted or un-formatted
+   --> tests/unit/test_type_boundaries.py:307:9
+    |
+305 |       def test_result_converters_use_correct_fields(self) -> None:
+306 |           """Verify all from_search_result methods access valid SearchResult fields."""
+307 | /         from clams.storage.base import SearchResult
+308 | |         from clams.search.results import (
+309 | |             CodeResult,
+310 | |             CommitResult,
+311 | |             ExperienceResult,
+312 | |             MemoryResult,
+313 | |             ValueResult,
+314 | |         )
+    | |_________^
+315 |
+316 |           search_result_fields = {f.name for f in fields(SearchResult)}
+    |
+help: Organize imports
+
+F841 Local variable `search_result_fields` is assigned to but never used
+   --> tests/unit/test_type_boundaries.py:316:9
+    |
+314 |         )
+315 |
+316 |         search_result_fields = {f.name for f in fields(SearchResult)}
+    |         ^^^^^^^^^^^^^^^^^^^^
+317 |
+318 |         # All result types with from_search_result methods
+    |
+help: Remove assignment to unused variable `search_result_fields`
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> tests/utils/test_datetime.py:7:1
+   |
+ 5 |   """
+ 6 |
+ 7 | / from datetime import datetime, timezone, timedelta
+ 8 | | import pytest
+ 9 | |
+10 | | from clams.utils.datetime import serialize_datetime, deserialize_datetime
+   | |_________________________________________________________________________^
    |
 help: Organize imports
 
-Found 1 error.
-[*] 1 fixable with the `--fix` option.
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:18:55
+   |
+16 |     def test_serialize_utc_datetime(self) -> None:
+17 |         """Serialize UTC-aware datetime to ISO 8601 string."""
+18 |         dt = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+   |                                                       ^^^^^^^^^^^^
+19 |         result = serialize_datetime(dt)
+20 |         assert result == "2024-12-14T10:30:00+00:00"
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:30:63
+   |
+28 |     def test_serialize_datetime_with_microseconds(self) -> None:
+29 |         """Microseconds are preserved in serialization."""
+30 |         dt = datetime(2024, 12, 14, 10, 30, 0, 123456, tzinfo=timezone.utc)
+   |                                                               ^^^^^^^^^^^^
+31 |         result = serialize_datetime(dt)
+32 |         assert result == "2024-12-14T10:30:00.123456+00:00"
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:44:53
+   |
+42 |     def test_serialize_datetime_midnight(self) -> None:
+43 |         """Midnight time serializes correctly."""
+44 |         dt = datetime(2024, 12, 14, 0, 0, 0, tzinfo=timezone.utc)
+   |                                                     ^^^^^^^^^^^^
+45 |         result = serialize_datetime(dt)
+46 |         assert result == "2024-12-14T00:00:00+00:00"
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:50:64
+   |
+48 |     def test_serialize_datetime_end_of_day(self) -> None:
+49 |         """End of day serializes correctly."""
+50 |         dt = datetime(2024, 12, 14, 23, 59, 59, 999999, tzinfo=timezone.utc)
+   |                                                                ^^^^^^^^^^^^
+51 |         result = serialize_datetime(dt)
+52 |         assert result == "2024-12-14T23:59:59.999999+00:00"
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:61:61
+   |
+59 |         """Deserialize ISO 8601 string with UTC timezone."""
+60 |         result = deserialize_datetime("2024-12-14T10:30:00+00:00")
+61 |         expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+   |                                                             ^^^^^^^^^^^^
+62 |         assert result == expected
+63 |         assert result.tzinfo == timezone.utc
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:63:33
+   |
+61 |         expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+62 |         assert result == expected
+63 |         assert result.tzinfo == timezone.utc
+   |                                 ^^^^^^^^^^^^
+64 |
+65 |     def test_deserialize_naive_iso_string_assumes_utc(self) -> None:
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:68:61
+   |
+66 |         """Naive ISO string is assumed to be UTC."""
+67 |         result = deserialize_datetime("2024-12-14T10:30:00")
+68 |         expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+   |                                                             ^^^^^^^^^^^^
+69 |         assert result == expected
+70 |         assert result.tzinfo == timezone.utc
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:70:33
+   |
+68 |         expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+69 |         assert result == expected
+70 |         assert result.tzinfo == timezone.utc
+   |                                 ^^^^^^^^^^^^
+71 |
+72 |     def test_deserialize_iso_string_with_microseconds(self) -> None:
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:75:69
+   |
+73 |         """Microseconds are preserved in deserialization."""
+74 |         result = deserialize_datetime("2024-12-14T10:30:00.123456+00:00")
+75 |         expected = datetime(2024, 12, 14, 10, 30, 0, 123456, tzinfo=timezone.utc)
+   |                                                                     ^^^^^^^^^^^^
+76 |         assert result == expected
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:84:65
+   |
+82 |         try:
+83 |             result = deserialize_datetime("2024-12-14T10:30:00Z")
+84 |             expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+   |                                                                 ^^^^^^^^^^^^
+85 |             assert result == expected
+86 |         except ValueError:
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:95:61
+   |
+93 |         timestamp = 1734172200
+94 |         result = deserialize_datetime(timestamp)
+95 |         expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+   |                                                             ^^^^^^^^^^^^
+96 |         assert result == expected
+97 |         assert result.tzinfo == timezone.utc
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:97:33
+   |
+95 |         expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+96 |         assert result == expected
+97 |         assert result.tzinfo == timezone.utc
+   |                                 ^^^^^^^^^^^^
+98 |
+99 |     def test_deserialize_unix_timestamp_float(self) -> None:
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:103:33
+    |
+101 |         timestamp = 1734172200.123456
+102 |         result = deserialize_datetime(timestamp)
+103 |         assert result.tzinfo == timezone.utc
+    |                                 ^^^^^^^^^^^^
+104 |         # Float precision may vary slightly
+105 |         assert result.year == 2024
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:114:57
+    |
+112 |         """Deserialize Unix epoch (timestamp 0)."""
+113 |         result = deserialize_datetime(0)
+114 |         expected = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    |                                                         ^^^^^^^^^^^^
+115 |         assert result == expected
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:121:60
+    |
+119 |         # 1969-12-31 23:00:00 UTC
+120 |         result = deserialize_datetime(-3600)
+121 |         expected = datetime(1969, 12, 31, 23, 0, 0, tzinfo=timezone.utc)
+    |                                                            ^^^^^^^^^^^^
+122 |         assert result == expected
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:132:59
+    |
+130 |         """Date-only ISO string deserializes to midnight UTC (Python 3.11+)."""
+131 |         result = deserialize_datetime("2024-12-14")
+132 |         expected = datetime(2024, 12, 14, 0, 0, 0, tzinfo=timezone.utc)
+    |                                                           ^^^^^^^^^^^^
+133 |         assert result == expected
+134 |         assert result.tzinfo == timezone.utc
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:134:33
+    |
+132 |         expected = datetime(2024, 12, 14, 0, 0, 0, tzinfo=timezone.utc)
+133 |         assert result == expected
+134 |         assert result.tzinfo == timezone.utc
+    |                                 ^^^^^^^^^^^^
+135 |
+136 |     def test_deserialize_malformed_iso_string_raises_value_error(self) -> None:
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:162:61
+    |
+160 |     def test_round_trip_utc_datetime(self) -> None:
+161 |         """UTC datetime survives round-trip serialization."""
+162 |         original = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+    |                                                             ^^^^^^^^^^^^
+163 |         serialized = serialize_datetime(original)
+164 |         deserialized = deserialize_datetime(serialized)
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:173:44
+    |
+171 |         deserialized = deserialize_datetime(serialized)
+172 |         # Original was naive, but deserialized is UTC-aware
+173 |         expected = original.replace(tzinfo=timezone.utc)
+    |                                            ^^^^^^^^^^^^
+174 |         assert deserialized == expected
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:178:69
+    |
+176 |     def test_round_trip_with_microseconds(self) -> None:
+177 |         """Microseconds are preserved through round-trip."""
+178 |         original = datetime(2024, 12, 14, 10, 30, 0, 123456, tzinfo=timezone.utc)
+    |                                                                     ^^^^^^^^^^^^
+179 |         serialized = serialize_datetime(original)
+180 |         deserialized = deserialize_datetime(serialized)
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:197:59
+    |
+195 |     def test_round_trip_various_years(self, year: int) -> None:
+196 |         """Various years round-trip correctly."""
+197 |         original = datetime(year, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
+    |                                                           ^^^^^^^^^^^^
+198 |         serialized = serialize_datetime(original)
+199 |         deserialized = deserialize_datetime(serialized)
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:215:33
+    |
+213 |         """Naive ISO string deserializes with UTC timezone."""
+214 |         result = deserialize_datetime("2024-12-14T10:30:00")
+215 |         assert result.tzinfo == timezone.utc
+    |                                 ^^^^^^^^^^^^
+216 |
+217 |     def test_positive_offset_timezone(self) -> None:
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:254:51
+    |
+252 |         """Very old dates can be serialized/deserialized."""
+253 |         # Year 1000
+254 |         dt = datetime(1000, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    |                                                   ^^^^^^^^^^^^
+255 |         serialized = serialize_datetime(dt)
+256 |         deserialized = deserialize_datetime(serialized)
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:262:56
+    |
+260 |         """Far future dates can be serialized/deserialized."""
+261 |         # Year 9999 (max for Python datetime)
+262 |         dt = datetime(9999, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
+    |                                                        ^^^^^^^^^^^^
+263 |         serialized = serialize_datetime(dt)
+264 |         deserialized = deserialize_datetime(serialized)
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:270:56
+    |
+268 |         """Dates near leap second boundaries work correctly."""
+269 |         # 2016-12-31 23:59:59 UTC (just before leap second)
+270 |         dt = datetime(2016, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
+    |                                                        ^^^^^^^^^^^^
+271 |         serialized = serialize_datetime(dt)
+272 |         deserialized = deserialize_datetime(serialized)
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:277:53
+    |
+275 |     def test_leap_year_feb_29(self) -> None:
+276 |         """Leap year February 29 works correctly."""
+277 |         dt = datetime(2024, 2, 29, 12, 0, 0, tzinfo=timezone.utc)
+    |                                                     ^^^^^^^^^^^^
+278 |         serialized = serialize_datetime(dt)
+279 |         deserialized = deserialize_datetime(serialized)
+    |
+help: Convert to `datetime.UTC` alias
+
+Found 49 errors.
+[*] 42 fixable with the `--fix` option (2 hidden fixes can be enabled with the `--unsafe-fixes` option).
 
 FAIL: Linter errors found
 ✗ Linter clean: FAIL
 
 --- Gate: Type check clean ---
 === Running Type Checker ===
-Directory: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006
+Directory: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-062
 
 Detected: Python
 Running: mypy --strict (via uv run)
-Success: no issues found in 61 source files
+Success: no issues found in 66 source files
 
 PASS: Type check clean
 ✓ Type check clean: PASS
-
---- Gate: No untracked TODOs ---
-=== Checking for Untracked TODOs ===
-Directory: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-006
-
-No TODO comments found
-
-PASS: No untracked TODOs
-✓ No untracked TODOs: PASS
 
 ==========================================
 GATE RESULT: FAIL

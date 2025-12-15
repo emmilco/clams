@@ -57,6 +57,13 @@ cleanup_stale_workers() {
         sqlite3 "$DB_PATH" "SELECT handoff_content FROM sessions WHERE id = '$pending_handoff';" | base64 -d
         echo ""
         echo "--- End of Handoff ---"
+
+        # Display next commands prominently
+        echo ""
+        echo "=== Next Commands (copy-paste ready) ==="
+        "$SCRIPT_DIR/claws-session" next-commands 2>/dev/null || true
+        echo ""
+
         # Mark as resumed
         sqlite3 "$DB_PATH" "UPDATE sessions SET resumed_at = datetime('now') WHERE id = '$pending_handoff';"
         echo "(Handoff marked as resumed)"

@@ -14,8 +14,7 @@ Design decisions:
 - All returned datetimes are timezone-aware (UTC)
 """
 
-from datetime import datetime, timezone
-from typing import Union
+from datetime import UTC, datetime
 
 __all__ = ["serialize_datetime", "deserialize_datetime"]
 
@@ -41,11 +40,11 @@ def serialize_datetime(dt: datetime) -> str:
         '2024-12-14T10:30:00+00:00'
     """
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+        dt = dt.replace(tzinfo=UTC)
     return dt.isoformat()
 
 
-def deserialize_datetime(value: Union[str, float, int]) -> datetime:
+def deserialize_datetime(value: str | float | int) -> datetime:
     """Deserialize datetime from various formats.
 
     Handles both ISO 8601 strings and Unix timestamps to provide
@@ -91,13 +90,13 @@ def deserialize_datetime(value: Union[str, float, int]) -> datetime:
 
         # Ensure UTC timezone if naive
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
+            dt = dt.replace(tzinfo=UTC)
         return dt
 
     elif isinstance(value, (int, float)):
         # Handle Unix timestamps
         try:
-            return datetime.fromtimestamp(value, tz=timezone.utc)
+            return datetime.fromtimestamp(value, tz=UTC)
         except (OSError, OverflowError, ValueError) as e:
             raise ValueError(
                 f"Cannot parse Unix timestamp: {value!r}"
