@@ -22,9 +22,6 @@ from uuid import uuid4
 import httpx
 import pytest
 
-# Mark all tests in this module as integration tests (require external services)
-pytestmark = pytest.mark.integration
-
 from clams.embedding.mock import MockEmbedding
 from clams.observation import (
     Domain,
@@ -37,6 +34,9 @@ from clams.observation import (
 )
 from clams.search.searcher import Searcher
 from clams.storage.qdrant import QdrantVectorStore
+
+# Mark all tests in this module as integration tests (require external services)
+pytestmark = pytest.mark.integration
 
 pytest_plugins = ("pytest_asyncio",)
 
