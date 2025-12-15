@@ -1,22 +1,23 @@
 === Gate Check: INVESTIGATED-FIXED ===
-Task: BUG-065
-Worktree: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-065
+Task: BUG-062
+Worktree: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-062
+Project type: python
 
 
 --- Gate: Implementation code exists ---
 ✓ Implementation code exists: PASS
 Changed files:
-  tests/scripts/test_bug_065_regression.py
+  tests/scripts/test_bug_062_regression.py
 
 --- Gate: Regression test added ---
 ✓ Regression test added: PASS
 Test files changed:
-  tests/scripts/test_bug_065_regression.py
+  tests/scripts/test_bug_062_regression.py
 
 --- Gate: Tests pass ---
 === Running Tests ===
-Directory: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-065
-Task ID: BUG-065
+Directory: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-062
+Task ID: BUG-062
 
 Detected: Python (pytest)
 
@@ -24,15 +25,18 @@ Syncing dependencies with uv...
 
 Running tests (cleanup timeout: 30s)...
 ============================= test session starts ==============================
-platform darwin -- Python 3.12.12, pytest-9.0.1, pluggy-1.6.0 -- /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-065/.venv/bin/python
+platform darwin -- Python 3.12.12, pytest-9.0.1, pluggy-1.6.0 -- /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-062/.venv/bin/python
 cachedir: .pytest_cache
 hypothesis profile 'default'
-rootdir: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-065
+rootdir: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-062
 configfile: pyproject.toml
 testpaths: tests
-plugins: mock-3.15.1, hypothesis-6.148.6, anyio-4.12.0, asyncio-1.3.0
+plugins: mock-3.15.1, hypothesis-6.148.6, anyio-4.12.0, timeout-2.4.0, asyncio-1.3.0
+timeout: 60.0s
+timeout method: signal
+timeout func_only: False
 asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collecting ... collected 751 items / 56 deselected / 695 selected
+collecting ... collected 1159 items / 81 deselected / 1078 selected
 
 tests/bugs/test_bug_041_searcher_inheritance.py::test_searcher_is_subclass_of_abc PASSED
 tests/bugs/test_bug_041_searcher_inheritance.py::test_searcher_instance_is_abc_instance PASSED
@@ -40,6 +44,20 @@ tests/bugs/test_bug_041_searcher_inheritance.py::test_searcher_implements_all_ab
 tests/bugs/test_bug_041_searcher_inheritance.py::test_context_assembler_accepts_concrete_searcher PASSED
 tests/bugs/test_bug_041_searcher_inheritance.py::test_concrete_searcher_methods_are_callable PASSED
 tests/bugs/test_bug_041_searcher_inheritance.py::test_abc_method_signatures_match_concrete PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestThreadLeakTracker::test_clean_test_passes PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestThreadLeakTracker::test_joined_thread_does_not_leak PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestLeakDetectionMechanism::test_thread_leak_tracker_exists PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestLeakDetectionMechanism::test_ignored_thread_prefixes_configured PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestLeakDetectionMechanism::test_daemon_threads_not_tracked PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestLeakDetectionMechanism::test_main_thread_not_tracked PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestLeakDetectionMechanism::test_custom_named_thread_is_tracked PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestLeakDetectionMechanism::test_generic_numbered_threads_not_tracked PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestLeakDetectionLogic::test_leaked_thread_detection_logic PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestLeakDetectionLogic::test_multiple_leaked_threads_detected PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestLeakDetectionLogic::test_cleaned_thread_not_reported PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestNoResourceTrackingMarker::test_marker_disables_tracking PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestRealWorldScenarios::test_background_worker_pattern_with_cleanup PASSED
+tests/bugs/test_bug_054_resource_leaks.py::TestRealWorldScenarios::test_thread_pool_pattern_with_cleanup PASSED
 tests/clustering/test_bug_031_regression.py::test_clustering_forms_with_similar_embeddings PASSED
 tests/clustering/test_bug_031_regression.py::test_old_parameters_would_fail PASSED
 tests/clustering/test_clusterer.py::test_cluster_basic PASSED
@@ -58,74 +76,74 @@ tests/clustering/test_clusterer.py::test_cluster_invariants PASSED
 tests/clustering/test_clusterer.py::test_centroid_invariants PASSED
 tests/clustering/test_clusterer.py::test_cluster_result_types PASSED
 tests/clustering/test_clusterer.py::test_cluster_info_types PASSED
-tests/clustering/test_experience.py::test_cluster_axis_success 2025-12-14 12:58:25 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
+tests/clustering/test_experience.py::test_cluster_axis_success 2025-12-14 14:20:00 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
 PASSED
 tests/clustering/test_experience.py::test_cluster_axis_invalid PASSED
 tests/clustering/test_experience.py::test_cluster_axis_no_data PASSED
-tests/clustering/test_experience.py::test_cluster_axis_with_weights 2025-12-14 12:58:25 [info     ] clustering.complete            axis=strategy n_clusters=2 noise_count=10 total_points=20
+tests/clustering/test_experience.py::test_cluster_axis_with_weights 2025-12-14 14:20:00 [info     ] clustering.complete            axis=strategy n_clusters=2 noise_count=10 total_points=20
 PASSED
-tests/clustering/test_experience.py::test_cluster_axis_missing_tier 2025-12-14 12:58:25 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
+tests/clustering/test_experience.py::test_cluster_axis_missing_tier 2025-12-14 14:20:00 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
 PASSED
-tests/clustering/test_experience.py::test_cluster_axis_all_noise 2025-12-14 12:58:25 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=5 total_points=5
+tests/clustering/test_experience.py::test_cluster_axis_all_noise 2025-12-14 14:20:00 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=5 total_points=5
 PASSED
-tests/clustering/test_experience.py::test_cluster_all_axes 2025-12-14 12:58:25 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=10 total_points=10
-2025-12-14 12:58:25 [warning  ] clustering.all_noise           axis=strategy message='HDBSCAN labeled all points as noise - no clusters found' noise_count=15 total_points=15
-2025-12-14 12:58:25 [warning  ] clustering.axis_skipped        axis=surprise error="No embeddings found for axis 'surprise' (collection: ghap_surprise)" message='Skipping axis due to error'
-2025-12-14 12:58:25 [warning  ] clustering.axis_skipped        axis=root_cause error="No embeddings found for axis 'root_cause' (collection: ghap_root_cause)" message='Skipping axis due to error'
+tests/clustering/test_experience.py::test_cluster_all_axes 2025-12-14 14:20:00 [warning  ] clustering.all_noise           axis=full message='HDBSCAN labeled all points as noise - no clusters found' noise_count=10 total_points=10
+2025-12-14 14:20:00 [warning  ] clustering.all_noise           axis=strategy message='HDBSCAN labeled all points as noise - no clusters found' noise_count=15 total_points=15
+2025-12-14 14:20:00 [warning  ] clustering.axis_skipped        axis=surprise error="No embeddings found for axis 'surprise' (collection: ghap_surprise)" message='Skipping axis due to error'
+2025-12-14 14:20:00 [warning  ] clustering.axis_skipped        axis=root_cause error="No embeddings found for axis 'root_cause' (collection: ghap_root_cause)" message='Skipping axis due to error'
 PASSED
-tests/clustering/test_experience.py::test_cluster_all_axes_all_empty 2025-12-14 12:58:25 [warning  ] clustering.axis_skipped        axis=full error="No embeddings found for axis 'full' (collection: ghap_full)" message='Skipping axis due to error'
-2025-12-14 12:58:25 [warning  ] clustering.axis_skipped        axis=strategy error="No embeddings found for axis 'strategy' (collection: ghap_strategy)" message='Skipping axis due to error'
-2025-12-14 12:58:25 [warning  ] clustering.axis_skipped        axis=surprise error="No embeddings found for axis 'surprise' (collection: ghap_surprise)" message='Skipping axis due to error'
-2025-12-14 12:58:25 [warning  ] clustering.axis_skipped        axis=root_cause error="No embeddings found for axis 'root_cause' (collection: ghap_root_cause)" message='Skipping axis due to error'
+tests/clustering/test_experience.py::test_cluster_all_axes_all_empty 2025-12-14 14:20:00 [warning  ] clustering.axis_skipped        axis=full error="No embeddings found for axis 'full' (collection: ghap_full)" message='Skipping axis due to error'
+2025-12-14 14:20:00 [warning  ] clustering.axis_skipped        axis=strategy error="No embeddings found for axis 'strategy' (collection: ghap_strategy)" message='Skipping axis due to error'
+2025-12-14 14:20:00 [warning  ] clustering.axis_skipped        axis=surprise error="No embeddings found for axis 'surprise' (collection: ghap_surprise)" message='Skipping axis due to error'
+2025-12-14 14:20:00 [warning  ] clustering.axis_skipped        axis=root_cause error="No embeddings found for axis 'root_cause' (collection: ghap_root_cause)" message='Skipping axis due to error'
 PASSED
-tests/clustering/test_experience.py::test_cluster_axis_calls_correct_collection 2025-12-14 12:58:25 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
-2025-12-14 12:58:25 [info     ] clustering.complete            axis=strategy n_clusters=2 noise_count=10 total_points=20
-2025-12-14 12:58:25 [info     ] clustering.complete            axis=surprise n_clusters=2 noise_count=10 total_points=20
-2025-12-14 12:58:25 [info     ] clustering.complete            axis=root_cause n_clusters=2 noise_count=10 total_points=20
+tests/clustering/test_experience.py::test_cluster_axis_calls_correct_collection 2025-12-14 14:20:00 [info     ] clustering.complete            axis=full n_clusters=2 noise_count=10 total_points=20
+2025-12-14 14:20:00 [info     ] clustering.complete            axis=strategy n_clusters=2 noise_count=10 total_points=20
+2025-12-14 14:20:00 [info     ] clustering.complete            axis=surprise n_clusters=2 noise_count=10 total_points=20
+2025-12-14 14:20:00 [info     ] clustering.complete            axis=root_cause n_clusters=2 noise_count=10 total_points=20
 PASSED
-tests/clustering/test_experience.py::test_cluster_axis_scroll_limit_warning 2025-12-14 12:58:25 [warning  ] clustering.scroll_limit_reached axis=full collection=ghap_full count=10000 message='May have truncated results - consider pagination'
-2025-12-14 12:58:35 [info     ] clustering.complete            axis=full n_clusters=358 noise_count=8166 total_points=10000
+tests/clustering/test_experience.py::test_cluster_axis_scroll_limit_warning 2025-12-14 14:20:00 [warning  ] clustering.scroll_limit_reached axis=full collection=ghap_full count=10000 message='May have truncated results - consider pagination'
+2025-12-14 14:20:08 [info     ] clustering.complete            axis=full n_clusters=358 noise_count=8166 total_points=10000
 PASSED
 tests/clustering/test_types.py::test_confidence_weights_mapping PASSED
 tests/clustering/test_types.py::test_get_weight_valid_tiers PASSED
 tests/clustering/test_types.py::test_get_weight_case_insensitive PASSED
 tests/clustering/test_types.py::test_get_weight_none PASSED
 tests/clustering/test_types.py::test_get_weight_invalid PASSED
-tests/context/test_assembler.py::test_assemble_single_source_memories 2025-12-14 12:58:35 [info     ] assembling_context             component=context_assembler context_types=['memories'] limit=20 max_tokens=1000 query='coding preferences'
-2025-12-14 12:58:35 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=1
-2025-12-14 12:58:35 [debug    ] source_budget_used             budget=1000 component=context_assembler items_selected=1 source=memories unused=983 used=17
-2025-12-14 12:58:35 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=983
+tests/context/test_assembler.py::test_assemble_single_source_memories 2025-12-14 14:20:08 [info     ] assembling_context             component=context_assembler context_types=['memories'] limit=20 max_tokens=1000 query='coding preferences'
+2025-12-14 14:20:08 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=1
+2025-12-14 14:20:08 [debug    ] source_budget_used             budget=1000 component=context_assembler items_selected=1 source=memories unused=983 used=17
+2025-12-14 14:20:08 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=983
 PASSED
-tests/context/test_assembler.py::test_assemble_multiple_sources 2025-12-14 12:58:35 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=2000 query='python examples'
-2025-12-14 12:58:35 [info     ] deduplication_complete         component=context_assembler deduplicated_count=2 original_count=2
-2025-12-14 12:58:35 [debug    ] source_budget_used             budget=666 component=context_assembler items_selected=1 source=memories unused=649 used=17
-2025-12-14 12:58:35 [debug    ] source_budget_used             budget=1333 component=context_assembler items_selected=1 source=code unused=1308 used=25
-2025-12-14 12:58:35 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=1957
+tests/context/test_assembler.py::test_assemble_multiple_sources 2025-12-14 14:20:08 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=2000 query='python examples'
+2025-12-14 14:20:08 [info     ] deduplication_complete         component=context_assembler deduplicated_count=2 original_count=2
+2025-12-14 14:20:08 [debug    ] source_budget_used             budget=666 component=context_assembler items_selected=1 source=memories unused=649 used=17
+2025-12-14 14:20:08 [debug    ] source_budget_used             budget=1333 component=context_assembler items_selected=1 source=code unused=1308 used=25
+2025-12-14 14:20:08 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=1957
 PASSED
 tests/context/test_assembler.py::test_invalid_context_type PASSED
-tests/context/test_assembler.py::test_empty_results 2025-12-14 12:58:35 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=1000 query=nothing
-2025-12-14 12:58:35 [info     ] deduplication_complete         component=context_assembler deduplicated_count=0 original_count=0
+tests/context/test_assembler.py::test_empty_results 2025-12-14 14:20:08 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=1000 query=nothing
+2025-12-14 14:20:08 [info     ] deduplication_complete         component=context_assembler deduplicated_count=0 original_count=0
 PASSED
-tests/context/test_assembler.py::test_token_budget_distribution 2025-12-14 12:58:35 [info     ] assembling_context             component=context_assembler context_types=['memories'] limit=20 max_tokens=500 query=test
-2025-12-14 12:58:35 [info     ] deduplication_complete         component=context_assembler deduplicated_count=8 original_count=8
-2025-12-14 12:58:35 [debug    ] source_budget_used             budget=500 component=context_assembler items_selected=8 source=memories unused=354 used=146
-2025-12-14 12:58:35 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=354
+tests/context/test_assembler.py::test_token_budget_distribution 2025-12-14 14:20:08 [info     ] assembling_context             component=context_assembler context_types=['memories'] limit=20 max_tokens=500 query=test
+2025-12-14 14:20:08 [info     ] deduplication_complete         component=context_assembler deduplicated_count=8 original_count=8
+2025-12-14 14:20:08 [debug    ] source_budget_used             budget=500 component=context_assembler items_selected=8 source=memories unused=354 used=146
+2025-12-14 14:20:08 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=354
 PASSED
-tests/context/test_assembler.py::test_deduplication 2025-12-14 12:58:35 [info     ] assembling_context             component=context_assembler context_types=['experiences', 'values'] limit=20 max_tokens=2000 query=test
-2025-12-14 12:58:35 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=2
-2025-12-14 12:58:35 [debug    ] source_budget_used             budget=500 component=context_assembler items_selected=1 source=values unused=487 used=13
-2025-12-14 12:58:35 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=487
+tests/context/test_assembler.py::test_deduplication 2025-12-14 14:20:08 [info     ] assembling_context             component=context_assembler context_types=['experiences', 'values'] limit=20 max_tokens=2000 query=test
+2025-12-14 14:20:08 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=2
+2025-12-14 14:20:08 [debug    ] source_budget_used             budget=500 component=context_assembler items_selected=1 source=values unused=487 used=13
+2025-12-14 14:20:08 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=487
 PASSED
-tests/context/test_assembler.py::test_premortem_context 2025-12-14 12:58:35 [info     ] assembling_premortem           component=context_assembler domain=debugging limit=10 strategy=systematic
+tests/context/test_assembler.py::test_premortem_context 2025-12-14 14:20:08 [info     ] assembling_premortem           component=context_assembler domain=debugging limit=10 strategy=systematic
 PASSED
-tests/context/test_assembler.py::test_premortem_partial_failure 2025-12-14 12:58:35 [info     ] assembling_premortem           component=context_assembler domain=debugging limit=10 strategy=None
-2025-12-14 12:58:35 [warning  ] premortem_query_partial_failure component=context_assembler error='Surprise axis failed' query_index=1
+tests/context/test_assembler.py::test_premortem_partial_failure 2025-12-14 14:20:08 [info     ] assembling_premortem           component=context_assembler domain=debugging limit=10 strategy=None
+2025-12-14 14:20:08 [warning  ] premortem_query_partial_failure component=context_assembler error='Surprise axis failed' query_index=1
 PASSED
-tests/context/test_assembler.py::test_partial_source_failure 2025-12-14 12:58:35 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=2000 query=test
-2025-12-14 12:58:35 [warning  ] source_query_partial_failure   component=context_assembler error='Code search failed' source=code
-2025-12-14 12:58:35 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=1
-2025-12-14 12:58:35 [debug    ] source_budget_used             budget=666 component=context_assembler items_selected=1 source=memories unused=652 used=14
-2025-12-14 12:58:35 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=652
+tests/context/test_assembler.py::test_partial_source_failure 2025-12-14 14:20:08 [info     ] assembling_context             component=context_assembler context_types=['memories', 'code'] limit=20 max_tokens=2000 query=test
+2025-12-14 14:20:08 [warning  ] source_query_partial_failure   component=context_assembler error='Code search failed' source=code
+2025-12-14 14:20:08 [info     ] deduplication_complete         component=context_assembler deduplicated_count=1 original_count=1
+2025-12-14 14:20:08 [debug    ] source_budget_used             budget=666 component=context_assembler items_selected=1 source=memories unused=652 used=14
+2025-12-14 14:20:08 [debug    ] redistributing_unused_budget   component=context_assembler total_unused=652
 PASSED
 tests/context/test_bug_036_regression.py::test_bug_036_invalid_context_type PASSED
 tests/context/test_bug_036_regression.py::test_bug_036_multiple_invalid_types PASSED
@@ -202,21 +220,40 @@ tests/embedding/test_mock.py::TestMockEmbedding::test_embed_handles_special_char
 tests/embedding/test_mock.py::TestMockEmbedding::test_embed_long_text PASSED
 tests/embedding/test_registry.py::test_registry_not_initialized PASSED
 tests/embedding/test_registry.py::test_registry_initialization PASSED
-tests/embedding/test_registry.py::test_lazy_loading_code_embedder 2025-12-14 12:58:50 [info     ] code_embedder.loaded           dimension=384 model=sentence-transformers/all-MiniLM-L6-v2
+tests/embedding/test_registry.py::test_lazy_loading_code_embedder 2025-12-14 14:20:26 [info     ] code_embedder.loaded           dimension=384 model=sentence-transformers/all-MiniLM-L6-v2
 PASSED
-tests/embedding/test_registry.py::test_lazy_loading_semantic_embedder 2025-12-14 12:58:53 [info     ] semantic_embedder.loaded       dimension=768 model=nomic-ai/nomic-embed-text-v1.5
+tests/embedding/test_registry.py::test_lazy_loading_semantic_embedder 2025-12-14 14:20:29 [info     ] semantic_embedder.loaded       dimension=768 model=nomic-ai/nomic-embed-text-v1.5
 PASSED
-tests/embedding/test_registry.py::test_instance_caching 2025-12-14 12:58:54 [info     ] code_embedder.loaded           dimension=384 model=sentence-transformers/all-MiniLM-L6-v2
-2025-12-14 12:58:56 [info     ] semantic_embedder.loaded       dimension=768 model=nomic-ai/nomic-embed-text-v1.5
+tests/embedding/test_registry.py::test_instance_caching 2025-12-14 14:20:30 [info     ] code_embedder.loaded           dimension=384 model=sentence-transformers/all-MiniLM-L6-v2
+2025-12-14 14:20:33 [info     ] semantic_embedder.loaded       dimension=768 model=nomic-ai/nomic-embed-text-v1.5
 PASSED
 tests/embedding/test_registry.py::test_env_var_override_code_model PASSED
 tests/embedding/test_registry.py::test_env_var_override_semantic_model PASSED
-tests/embedding/test_registry.py::test_registry_separate_instances 2025-12-14 12:58:57 [info     ] code_embedder.loaded           dimension=384 model=sentence-transformers/all-MiniLM-L6-v2
-2025-12-14 12:59:00 [info     ] semantic_embedder.loaded       dimension=768 model=nomic-ai/nomic-embed-text-v1.5
+tests/embedding/test_registry.py::test_registry_separate_instances 2025-12-14 14:20:34 [info     ] code_embedder.loaded           dimension=384 model=sentence-transformers/all-MiniLM-L6-v2
+2025-12-14 14:20:37 [info     ] semantic_embedder.loaded       dimension=768 model=nomic-ai/nomic-embed-text-v1.5
 PASSED
 tests/embedding/test_registry.py::test_registry_model_logging PASSED
 tests/embedding/test_registry.py::test_direct_registry_usage PASSED
-tests/gates/test_check_types.py::test_check_types_completes_standalone PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestColdStartQdrant::test_cold_start_has_no_collections PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestColdStartQdrant::test_cold_start_is_isolated PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestColdStartQdrant::test_cold_start_cleanup_after_previous_test PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestPopulatedQdrant::test_populated_has_standard_collections PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestPopulatedQdrant::test_populated_collections_are_empty PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestQdrantState::test_qdrant_state_runs_both_scenarios[cold_start] PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestQdrantState::test_qdrant_state_runs_both_scenarios[populated] PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestColdStartDb::test_cold_start_db_is_empty PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestColdStartDb::test_cold_start_db_is_functional PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestPopulatedDb::test_populated_db_has_sample_data PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestDbState::test_db_state_runs_both_scenarios[cold_start] PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestDbState::test_db_state_runs_both_scenarios[populated] PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestCombinedEnvironments::test_cold_start_env_is_complete PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestCombinedEnvironments::test_populated_env_is_complete PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestCombinedEnvironments::test_storage_env_parameterized[cold_start] PASSED
+tests/fixtures/test_cold_start_fixtures.py::TestCombinedEnvironments::test_storage_env_parameterized[populated] PASSED
+tests/gates/test_cleanup_timeout.py::test_check_tests_has_timeout_variable PASSED
+tests/gates/test_cleanup_timeout.py::test_check_tests_has_timeout_function PASSED
+tests/gates/test_cleanup_timeout.py::test_timeout_with_hanging_script PASSED
+tests/gates/test_cleanup_timeout.py::test_normal_operation_implicit PASSED
 tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_initial PASSED
 tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_incremental PASSED
 tests/git/test_analyzer.py::TestGitAnalyzer::test_index_commits_already_up_to_date PASSED
@@ -236,7 +273,6 @@ tests/git/test_analyzer.py::TestGitAnalyzer::test_embedding_text_format PASSED
 tests/git/test_analyzer.py::TestGitAnalyzer::test_embedding_text_truncation PASSED
 tests/git/test_analyzer.py::TestGitAnalyzer::test_index_state_tracking PASSED
 tests/git/test_analyzer.py::TestGitAnalyzer::test_batch_embedding_performance PASSED
-tests/git/test_analyzer.py::test_integration_with_real_repo PASSED
 tests/git/test_reader.py::TestGitPythonReader::test_init_with_valid_repo PASSED
 tests/git/test_reader.py::TestGitPythonReader::test_init_with_invalid_repo PASSED
 tests/git/test_reader.py::TestGitPythonReader::test_init_with_nonexistent_path PASSED
@@ -265,6 +301,74 @@ tests/hooks/test_bug_050_regression.py::test_bug_050_ghap_instructions_present P
 tests/hooks/test_bug_051_regression.py::TestBug051Regression::test_bug_051_user_prompt_submit_hook_output_schema PASSED
 tests/hooks/test_bug_051_regression.py::TestBug051Regression::test_bug_051_no_legacy_schema_fields PASSED
 tests/hooks/test_bug_051_regression.py::TestBug051Regression::test_bug_051_source_contains_correct_schema PASSED
+tests/hooks/test_bug_056_regression.py::TestBug056Regression::test_bug_056_detects_missing_stdin PASSED
+tests/hooks/test_bug_056_regression.py::TestBug056Regression::test_bug_056_accepts_stdin_devnull PASSED
+tests/hooks/test_bug_056_regression.py::TestBug056Regression::test_bug_056_accepts_stdin_pipe PASSED
+tests/hooks/test_bug_056_regression.py::TestBug056Regression::test_bug_056_accepts_input_parameter PASSED
+tests/hooks/test_bug_056_regression.py::TestBug056Regression::test_bug_056_detects_popen_without_stdin PASSED
+tests/hooks/test_bug_056_regression.py::TestBug056Regression::test_bug_056_detects_call_without_stdin PASSED
+tests/hooks/test_bug_056_regression.py::TestBug056Regression::test_bug_056_multiple_issues_reported PASSED
+tests/hooks/test_bug_056_regression.py::TestBug056Regression::test_bug_056_pre_commit_config_exists PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyPackagesList::test_torch_is_heavy PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyPackagesList::test_sentence_transformers_is_heavy PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyPackagesList::test_transformers_is_heavy PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyPackagesList::test_nomic_is_heavy PASSED
+tests/hooks/test_heavy_imports.py::TestAllowedModules::test_minilm_is_allowed PASSED
+tests/hooks/test_heavy_imports.py::TestAllowedModules::test_nomic_is_allowed PASSED
+tests/hooks/test_heavy_imports.py::TestIsTestFile::test_test_directory_detected PASSED
+tests/hooks/test_heavy_imports.py::TestIsTestFile::test_test_prefix_detected PASSED
+tests/hooks/test_heavy_imports.py::TestIsTestFile::test_test_suffix_detected PASSED
+tests/hooks/test_heavy_imports.py::TestIsTestFile::test_conftest_detected PASSED
+tests/hooks/test_heavy_imports.py::TestIsTestFile::test_regular_file_not_test PASSED
+tests/hooks/test_heavy_imports.py::TestIsAllowedModule::test_minilm_is_allowed PASSED
+tests/hooks/test_heavy_imports.py::TestIsAllowedModule::test_nomic_is_allowed PASSED
+tests/hooks/test_heavy_imports.py::TestIsAllowedModule::test_registry_not_allowed PASSED
+tests/hooks/test_heavy_imports.py::TestIsAllowedModule::test_arbitrary_file_not_allowed PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_detects_import_torch PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_detects_from_torch_import PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_detects_from_torch_submodule PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_detects_sentence_transformers PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_detects_transformers PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_detects_nomic PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_allows_lazy_import_in_function PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_allows_lazy_import_in_async_function PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_allows_lazy_import_in_method PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_allows_other_imports PASSED
+tests/hooks/test_heavy_imports.py::TestHeavyImportChecker::test_detects_multiple_violations PASSED
+tests/hooks/test_heavy_imports.py::TestCheckFileIntegration::test_skips_test_files PASSED
+tests/hooks/test_heavy_imports.py::TestCheckFileIntegration::test_skips_syntax_errors PASSED
+tests/hooks/test_heavy_imports.py::TestActualSourceFiles::test_embedding_registry_passes PASSED
+tests/hooks/test_heavy_imports.py::TestActualSourceFiles::test_embedding_init_passes PASSED
+tests/hooks/test_heavy_imports.py::TestActualSourceFiles::test_minilm_is_allowed PASSED
+tests/hooks/test_heavy_imports.py::TestActualSourceFiles::test_nomic_is_allowed PASSED
+tests/hooks/test_hook_schemas.py::TestSessionStartSchema::test_output_is_valid_json PASSED
+tests/hooks/test_hook_schemas.py::TestSessionStartSchema::test_has_hook_specific_output PASSED
+tests/hooks/test_hook_schemas.py::TestSessionStartSchema::test_hook_event_name_is_session_start PASSED
+tests/hooks/test_hook_schemas.py::TestSessionStartSchema::test_has_additional_context PASSED
+tests/hooks/test_hook_schemas.py::TestSessionStartSchema::test_additional_context_is_string PASSED
+tests/hooks/test_hook_schemas.py::TestSessionStartSchema::test_no_legacy_schema_fields PASSED
+tests/hooks/test_hook_schemas.py::TestSessionStartSchema::test_conforms_to_schema PASSED
+tests/hooks/test_hook_schemas.py::TestSessionStartSchema::test_contains_ghap_instructions PASSED
+tests/hooks/test_hook_schemas.py::TestUserPromptSubmitSchema::test_output_is_valid_json PASSED
+tests/hooks/test_hook_schemas.py::TestUserPromptSubmitSchema::test_has_hook_specific_output PASSED
+tests/hooks/test_hook_schemas.py::TestUserPromptSubmitSchema::test_hook_event_name_is_user_prompt_submit PASSED
+tests/hooks/test_hook_schemas.py::TestUserPromptSubmitSchema::test_has_additional_context PASSED
+tests/hooks/test_hook_schemas.py::TestUserPromptSubmitSchema::test_additional_context_is_string PASSED
+tests/hooks/test_hook_schemas.py::TestUserPromptSubmitSchema::test_no_legacy_schema_fields PASSED
+tests/hooks/test_hook_schemas.py::TestUserPromptSubmitSchema::test_conforms_to_schema PASSED
+tests/hooks/test_hook_schemas.py::TestUserPromptSubmitSchema::test_graceful_degradation_format PASSED
+tests/hooks/test_hook_schemas.py::TestSessionEndSchema::test_hook_exists PASSED
+tests/hooks/test_hook_schemas.py::TestSessionEndSchema::test_script_is_executable PASSED
+tests/hooks/test_hook_schemas.py::TestSessionEndSchema::test_script_has_shebang PASSED
+tests/hooks/test_hook_schemas.py::TestSessionEndSchema::test_script_notes_unsupported_status PASSED
+tests/hooks/test_hook_schemas.py::TestSchemaConsistency::test_all_schemas_have_required_structure PASSED
+tests/hooks/test_hook_schemas.py::TestSchemaConsistency::test_schema_hook_event_names_match_constants PASSED
+tests/hooks/test_hook_schemas.py::TestSchemaConsistency::test_all_schemas_have_documentation_reference PASSED
+tests/hooks/test_hook_schemas.py::TestSchemaConsistency::test_all_hook_scripts_exist PASSED
+tests/hooks/test_hook_schemas.py::TestHookSourceCodePatterns::test_source_contains_correct_schema_pattern[session_start-SessionStart] PASSED
+tests/hooks/test_hook_schemas.py::TestHookSourceCodePatterns::test_source_contains_correct_schema_pattern[user_prompt_submit-UserPromptSubmit] PASSED
+tests/hooks/test_hook_schemas.py::TestHookSourceCodePatterns::test_source_does_not_contain_legacy_patterns[session_start] PASSED
+tests/hooks/test_hook_schemas.py::TestHookSourceCodePatterns::test_source_does_not_contain_legacy_patterns[user_prompt_submit] PASSED
 tests/hooks/test_mcp_client.py::TestMCPClient::test_init PASSED
 tests/hooks/test_mcp_client.py::TestMCPClient::test_connect_success PASSED
 tests/hooks/test_mcp_client.py::TestMCPClient::test_connect_timeout PASSED
@@ -309,6 +413,53 @@ tests/indexers/test_tree_sitter.py::test_parse_cpp PASSED
 tests/indexers/test_tree_sitter.py::test_parse_swift PASSED
 tests/indexers/test_tree_sitter.py::test_parse_empty_file PASSED
 tests/indexers/test_tree_sitter.py::test_parse_malformed_file PASSED
+tests/infrastructure/test_config_parity.py::TestClusteringConfiguration::test_production_clustering_defaults PASSED
+tests/infrastructure/test_config_parity.py::TestClusteringConfiguration::test_integration_tests_use_production_defaults PASSED
+tests/infrastructure/test_config_parity.py::TestClusteringConfiguration::test_server_tools_tests_use_production_defaults PASSED
+tests/infrastructure/test_config_parity.py::TestClusteringConfiguration::test_performance_benchmarks_use_production_defaults PASSED
+tests/infrastructure/test_config_parity.py::TestServerCommandConfiguration::test_hooks_config_uses_correct_server_command PASSED
+tests/infrastructure/test_config_parity.py::TestServerCommandConfiguration::test_integration_tests_use_correct_server_command PASSED
+tests/infrastructure/test_config_parity.py::TestServerCommandConfiguration::test_mcp_client_uses_correct_server_path PASSED
+tests/infrastructure/test_config_parity.py::TestServerCommandConfiguration::test_hooks_and_tests_use_same_command_pattern PASSED
+tests/infrastructure/test_config_parity.py::TestSessionStartHookConfiguration::test_session_start_constructs_server_path_correctly PASSED
+tests/infrastructure/test_config_parity.py::TestSessionStartHookConfiguration::test_session_start_has_clams_server_fallback PASSED
+tests/infrastructure/test_config_parity.py::TestGHAPFrequencyConfiguration::test_ghap_frequency_matches_production PASSED
+tests/infrastructure/test_config_parity.py::TestDocumentedDifferences::test_intentional_differences_are_in_unit_tests_only PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithABC::test_mock_searcher_has_all_abc_methods PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithABC::test_mock_searcher_abc_signature_search_memories PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithABC::test_mock_searcher_abc_signature_search_code PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithABC::test_mock_searcher_abc_signature_search_experiences PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithABC::test_mock_searcher_abc_signature_search_values PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithABC::test_mock_searcher_abc_signature_search_commits PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithConcrete::test_mock_searcher_has_all_concrete_methods PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithConcrete::test_mock_searcher_concrete_signature_search_memories PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithConcrete::test_mock_searcher_concrete_signature_search_code PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithConcrete::test_mock_searcher_concrete_signature_search_experiences PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithConcrete::test_mock_searcher_concrete_signature_search_values PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherParityWithConcrete::test_mock_searcher_concrete_signature_search_commits PASSED
+tests/infrastructure/test_mock_parity.py::TestConcreteMatchesABC::test_concrete_searcher_matches_abc PASSED
+tests/infrastructure/test_mock_parity.py::TestMockEmbedderParity::test_mock_embedder_has_all_production_methods PASSED
+tests/infrastructure/test_mock_parity.py::TestMockEmbedderParity::test_mock_embedder_signature_embed PASSED
+tests/infrastructure/test_mock_parity.py::TestMockEmbedderParity::test_mock_embedder_signature_embed_batch PASSED
+tests/infrastructure/test_mock_parity.py::TestMockEmbedderParity::test_mock_embedder_has_dimension_property PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherReturnTypes::test_mock_searcher_return_types_match_abc PASSED
+tests/infrastructure/test_mock_parity.py::TestMockSearcherReturnTypes::test_mock_searcher_return_types_match_concrete PASSED
+tests/infrastructure/test_mock_parity.py::TestMockEmbedderReturnTypes::test_mock_embedder_return_types_match_production PASSED
+tests/infrastructure/test_mock_parity.py::TestGeneralizedMockVerification::test_verify_mock_interface_helper_with_abc PASSED
+tests/infrastructure/test_mock_parity.py::TestGeneralizedMockVerification::test_verify_mock_interface_helper_with_concrete PASSED
+tests/infrastructure/test_mock_parity.py::TestGeneralizedMockVerification::test_verify_embedder_mock PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_mock_has_all_production_methods[MockSearcher vs ABC] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_mock_has_all_production_methods[MockSearcher vs Concrete] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_mock_has_all_production_methods[MockEmbedder vs ABC] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_mock_signatures_match_production[MockSearcher vs ABC] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_mock_signatures_match_production[MockSearcher vs Concrete] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_mock_signatures_match_production[MockEmbedder vs ABC] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_mock_return_types_match_production[MockSearcher vs ABC] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_mock_return_types_match_production[MockSearcher vs Concrete] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_mock_return_types_match_production[MockEmbedder vs ABC] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_complete_mock_interface_verification[MockSearcher vs ABC] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_complete_mock_interface_verification[MockSearcher vs Concrete] PASSED
+tests/infrastructure/test_mock_parity.py::TestParameterizedMockParity::test_complete_mock_interface_verification[MockEmbedder vs ABC] PASSED
 tests/observation/test_collector.py::test_create_ghap PASSED
 tests/observation/test_collector.py::test_create_ghap_auto_starts_session PASSED
 tests/observation/test_collector.py::test_create_ghap_when_active_raises PASSED
@@ -391,23 +542,42 @@ tests/observation/test_utils.py::test_truncate_text_short PASSED
 tests/observation/test_utils.py::test_truncate_text_exact_limit PASSED
 tests/observation/test_utils.py::test_truncate_text_too_long PASSED
 tests/observation/test_utils.py::test_truncate_text_unicode PASSED
+tests/performance/test_import_time.py::TestImportTime::test_clams_import_time_under_threshold PASSED
+tests/performance/test_import_time.py::TestImportTime::test_clams_embedding_import_time_under_threshold PASSED
 tests/scripts/test_bug_037_verify_timeout.py::TestBug037Regression::test_verify_install_timeout_is_sufficient PASSED
 tests/scripts/test_bug_037_verify_timeout.py::TestBug037Regression::test_verify_install_uses_subprocess_timeout PASSED
-tests/scripts/test_bug_065_regression.py::TestBug065Regression::test_get_next_action_function_exists PASSED
-tests/scripts/test_bug_065_regression.py::TestBug065Regression::test_describe_next_action_function_exists PASSED
-tests/scripts/test_bug_065_regression.py::TestBug065Regression::test_generate_next_commands_function_exists PASSED
-tests/scripts/test_bug_065_regression.py::TestBug065Regression::test_next_commands_subcommand_in_case_statement PASSED
-tests/scripts/test_bug_065_regression.py::TestBug065Regression::test_next_commands_in_usage PASSED
-tests/scripts/test_bug_065_regression.py::TestBug065Regression::test_bug_phases_have_actions PASSED
-tests/scripts/test_bug_065_regression.py::TestBug065Regression::test_feature_phases_have_actions PASSED
-tests/scripts/test_bug_065_regression.py::TestBug065Regression::test_investigated_phase_has_gate_check PASSED
-tests/scripts/test_bug_065_regression.py::TestBug065Regression::test_implement_phase_has_gate_check PASSED
-tests/scripts/test_bug_065_regression.py::TestBug065Regression::test_merge_command_for_integrate_phase PASSED
-tests/scripts/test_bug_065_regression.py::TestBug065Regression::test_claws_status_calls_next_commands PASSED
-tests/scripts/test_bug_065_regression.py::TestBug065Regression::test_next_commands_displayed_prominently PASSED
-tests/scripts/test_bug_065_regression.py::TestBug065Regression::test_pending_actions_section_exists PASSED
-tests/scripts/test_bug_065_regression.py::TestBug065Regression::test_code_block_in_next_commands PASSED
-tests/scripts/test_bug_065_regression.py::TestBug065Regression::test_task_show_command_included PASSED
+tests/scripts/test_bug_058_worktree_sync.py::TestBug058Regression::test_claws_worktree_syncs_dependencies_after_merge PASSED
+tests/scripts/test_bug_058_worktree_sync.py::TestBug058Regression::test_claws_worktree_skip_sync_flag_exists PASSED
+tests/scripts/test_bug_058_worktree_sync.py::TestBug058Regression::test_claws_worktree_checks_uv_availability PASSED
+tests/scripts/test_bug_058_worktree_sync.py::TestBug058Regression::test_sync_happens_in_merge_function PASSED
+tests/scripts/test_bug_059_worktree_health.py::TestBug059Regression::test_claws_worktree_has_health_command PASSED
+tests/scripts/test_bug_059_worktree_health.py::TestBug059Regression::test_health_command_in_usage PASSED
+tests/scripts/test_bug_059_worktree_health.py::TestBug059Regression::test_health_checks_key_conditions PASSED
+tests/scripts/test_bug_059_worktree_health.py::TestBug059Regression::test_health_has_fix_mode PASSED
+tests/scripts/test_bug_059_worktree_health.py::TestBug059Regression::test_health_outputs_structured_report PASSED
+tests/scripts/test_bug_059_worktree_health.py::TestBug059Regression::test_script_is_executable PASSED
+tests/scripts/test_bug_062_regression.py::TestBug062Regression::test_detect_project_type_function_exists PASSED
+tests/scripts/test_bug_062_regression.py::TestBug062Regression::test_claws_gate_uses_project_type PASSED
+tests/scripts/test_bug_062_regression.py::TestBug062Regression::test_python_project_detection PASSED
+tests/scripts/test_bug_062_regression.py::TestBug062Regression::test_javascript_project_detection PASSED
+tests/scripts/test_bug_062_regression.py::TestBug062Regression::test_rust_project_detection PASSED
+tests/scripts/test_bug_062_regression.py::TestBug062Regression::test_go_project_detection PASSED
+tests/scripts/test_bug_062_regression.py::TestBug062Regression::test_explicit_project_type_override PASSED
+tests/scripts/test_bug_062_regression.py::TestBug062Regression::test_unknown_project_type PASSED
+tests/scripts/test_bug_062_regression.py::TestBug062Regression::test_current_project_detected_as_python PASSED
+tests/scripts/test_bug_063_merge_conflict_check.py::TestBug063Regression::test_has_conflict_check_function PASSED
+tests/scripts/test_bug_063_merge_conflict_check.py::TestBug063Regression::test_conflict_check_uses_no_commit_merge PASSED
+tests/scripts/test_bug_063_merge_conflict_check.py::TestBug063Regression::test_conflict_check_aborts_test_merge PASSED
+tests/scripts/test_bug_063_merge_conflict_check.py::TestBug063Regression::test_has_check_only_option PASSED
+tests/scripts/test_bug_063_merge_conflict_check.py::TestBug063Regression::test_has_force_option PASSED
+tests/scripts/test_bug_063_merge_conflict_check.py::TestBug063Regression::test_shows_conflicting_files PASSED
+tests/scripts/test_bug_063_merge_conflict_check.py::TestBug063Regression::test_provides_resolution_guidance PASSED
+tests/scripts/test_bug_063_merge_conflict_check.py::TestBug063Regression::test_cmd_merge_calls_conflict_check PASSED
+tests/scripts/test_bug_063_merge_conflict_check.py::TestBug063Regression::test_usage_documents_options PASSED
+tests/scripts/test_bug_064_regression.py::TestBug064Regression::test_claws_session_has_auto_commit_logic PASSED
+tests/scripts/test_bug_064_regression.py::TestBug064Regression::test_claws_session_iterates_worktrees PASSED
+tests/scripts/test_bug_064_regression.py::TestBug064Regression::test_claws_session_appends_to_handoff PASSED
+tests/scripts/test_bug_064_regression.py::TestBug064Regression::test_auto_commit_default_enabled PASSED
 tests/search/test_results.py::TestMemoryResult::test_from_search_result_with_all_fields PASSED
 tests/search/test_results.py::TestMemoryResult::test_from_search_result_with_optional_fields_none PASSED
 tests/search/test_results.py::TestCodeResult::test_from_search_result_with_all_fields PASSED
@@ -456,9 +626,33 @@ tests/server/test_bug_043_regression.py::TestBug043CommitsCollection::test_index
 tests/server/test_bug_043_regression.py::TestBug043CommitsCollection::test_search_commits_creates_collection PASSED
 tests/server/test_bug_043_regression.py::TestBug043ValuesCollection::test_store_value_creates_collection PASSED
 tests/server/test_bug_043_regression.py::TestBug043ValuesCollection::test_list_values_creates_collection PASSED
-tests/server/test_config.py::test_default_settings PASSED
-tests/server/test_config.py::test_env_override PASSED
-tests/server/test_config.py::test_settings_immutable PASSED
+tests/server/test_config.py::TestDefaultSettings::test_storage_paths PASSED
+tests/server/test_config.py::TestDefaultSettings::test_server_configuration PASSED
+tests/server/test_config.py::TestDefaultSettings::test_timeout_configuration PASSED
+tests/server/test_config.py::TestDefaultSettings::test_qdrant_configuration PASSED
+tests/server/test_config.py::TestDefaultSettings::test_embedding_configuration PASSED
+tests/server/test_config.py::TestDefaultSettings::test_clustering_configuration PASSED
+tests/server/test_config.py::TestDefaultSettings::test_ghap_configuration PASSED
+tests/server/test_config.py::TestDefaultSettings::test_logging_configuration PASSED
+tests/server/test_config.py::TestDefaultSettings::test_git_configuration PASSED
+tests/server/test_config.py::TestEnvironmentOverride::test_storage_path_override PASSED
+tests/server/test_config.py::TestEnvironmentOverride::test_log_level_override PASSED
+tests/server/test_config.py::TestEnvironmentOverride::test_embedding_dimension_override PASSED
+tests/server/test_config.py::TestEnvironmentOverride::test_server_command_override PASSED
+tests/server/test_config.py::TestEnvironmentOverride::test_timeout_override PASSED
+tests/server/test_config.py::TestSettingsMetadata::test_env_prefix PASSED
+tests/server/test_config.py::TestExportForShell::test_export_creates_file PASSED
+tests/server/test_config.py::TestExportForShell::test_export_creates_parent_directories PASSED
+tests/server/test_config.py::TestExportForShell::test_export_accepts_string_path PASSED
+tests/server/test_config.py::TestExportForShell::test_export_contains_required_values PASSED
+tests/server/test_config.py::TestExportForShell::test_export_is_shell_sourceable PASSED
+tests/server/test_config.py::TestExportForShell::test_export_values_roundtrip PASSED
+tests/server/test_config.py::TestExportForShell::test_export_with_custom_values PASSED
+tests/server/test_config.py::TestGetConfigEnvPath::test_default_path PASSED
+tests/server/test_config.py::TestGetConfigEnvPath::test_custom_storage_path PASSED
+tests/server/test_config.py::TestFieldDescriptions::test_all_fields_have_descriptions PASSED
+tests/server/test_config.py::TestConfigurationParity::test_clustering_uses_production_defaults PASSED
+tests/server/test_config.py::TestConfigurationParity::test_server_command_matches_hooks_config PASSED
 tests/server/test_context_tools.py::TestAssembleContext::test_returns_empty_when_no_data PASSED
 tests/server/test_context_tools.py::TestAssembleContext::test_includes_values_in_context PASSED
 tests/server/test_context_tools.py::TestAssembleContext::test_includes_experiences_in_context PASSED
@@ -482,6 +676,43 @@ tests/server/test_http.py::TestDaemonManagement::test_get_pid_file_default PASSE
 tests/server/test_http.py::TestDaemonManagement::test_get_pid_file_from_env PASSED
 tests/server/test_http.py::TestDaemonManagement::test_is_server_running_no_pid_file PASSED
 tests/server/test_http.py::TestDaemonManagement::test_is_server_running_stale_pid PASSED
+tests/server/test_http_schemas.py::TestRequestSchema::test_valid_request_schema PASSED
+tests/server/test_http_schemas.py::TestRequestSchema::test_request_with_arguments PASSED
+tests/server/test_http_schemas.py::TestRequestSchema::test_request_with_default_arguments PASSED
+tests/server/test_http_schemas.py::TestRequestSchema::test_missing_params_field PASSED
+tests/server/test_http_schemas.py::TestRequestSchema::test_missing_name_in_params PASSED
+tests/server/test_http_schemas.py::TestRequestSchema::test_empty_params PASSED
+tests/server/test_http_schemas.py::TestRequestSchema::test_null_tool_name PASSED
+tests/server/test_http_schemas.py::TestRequestSchema::test_arguments_optional_when_tool_has_no_params PASSED
+tests/server/test_http_schemas.py::TestRequestSchema::test_method_field_ignored PASSED
+tests/server/test_http_schemas.py::TestRequestSchema::test_extra_fields_ignored PASSED
+tests/server/test_http_schemas.py::TestSuccessResponseSchema::test_dict_response_returned_directly PASSED
+tests/server/test_http_schemas.py::TestSuccessResponseSchema::test_list_response_returned_directly PASSED
+tests/server/test_http_schemas.py::TestSuccessResponseSchema::test_complex_nested_response PASSED
+tests/server/test_http_schemas.py::TestSuccessResponseSchema::test_response_content_type_is_json PASSED
+tests/server/test_http_schemas.py::TestErrorResponseSchema::test_invalid_json_error_format PASSED
+tests/server/test_http_schemas.py::TestErrorResponseSchema::test_unknown_tool_error_format PASSED
+tests/server/test_http_schemas.py::TestErrorResponseSchema::test_invalid_arguments_error_format PASSED
+tests/server/test_http_schemas.py::TestErrorResponseSchema::test_tool_error_format PASSED
+tests/server/test_http_schemas.py::TestErrorResponseSchema::test_error_response_content_type PASSED
+tests/server/test_http_schemas.py::TestJsonRpcStyleFormat::test_standard_hook_request_format PASSED
+tests/server/test_http_schemas.py::TestJsonRpcStyleFormat::test_mcp_call_tool_format PASSED
+tests/server/test_http_schemas.py::TestJsonRpcStyleFormat::test_params_name_must_be_string PASSED
+tests/server/test_http_schemas.py::TestJsonRpcStyleFormat::test_arguments_must_be_dict_like PASSED
+tests/server/test_http_schemas.py::TestMalformedRequests::test_empty_body PASSED
+tests/server/test_http_schemas.py::TestMalformedRequests::test_null_body XFAILteError)
+tests/server/test_http_schemas.py::TestMalformedRequests::test_array_body XFAILuteError)
+tests/server/test_http_schemas.py::TestMalformedRequests::test_truncated_json PASSED
+tests/server/test_http_schemas.py::TestMalformedRequests::test_wrong_content_type_with_valid_json PASSED
+tests/server/test_http_schemas.py::TestMalformedRequests::test_unicode_in_arguments PASSED
+tests/server/test_http_schemas.py::TestMalformedRequests::test_very_large_arguments PASSED
+tests/server/test_http_schemas.py::TestHttpStatusCodes::test_success_returns_200 PASSED
+tests/server/test_http_schemas.py::TestHttpStatusCodes::test_missing_params_returns_400 PASSED
+tests/server/test_http_schemas.py::TestHttpStatusCodes::test_invalid_json_returns_400 PASSED
+tests/server/test_http_schemas.py::TestHttpStatusCodes::test_unknown_tool_returns_404 PASSED
+tests/server/test_http_schemas.py::TestHttpStatusCodes::test_invalid_arguments_returns_400 PASSED
+tests/server/test_http_schemas.py::TestHttpStatusCodes::test_tool_error_returns_500 PASSED
+tests/server/test_http_schemas.py::TestHttpStatusCodes::test_get_method_not_allowed PASSED
 tests/server/test_main.py::test_registry_provides_embedder PASSED
 tests/server/test_main.py::test_create_server PASSED
 tests/server/test_main.py::test_server_has_ping_tool PASSED
@@ -506,6 +737,67 @@ tests/server/test_session_tools.py::TestIncrementToolCount::test_increments_coun
 tests/server/test_session_tools.py::TestIncrementToolCount::test_persists_to_file PASSED
 tests/server/test_session_tools.py::TestResetToolCount::test_resets_count_to_zero PASSED
 tests/server/test_session_tools.py::TestResetToolCount::test_persists_to_file PASSED
+tests/server/test_tool_response_schemas.py::TestStoreMemoryResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestStoreMemoryResponseSchema::test_error_response_invalid_category PASSED
+tests/server/test_tool_response_schemas.py::TestStoreMemoryResponseSchema::test_all_valid_categories_produce_valid_response PASSED
+tests/server/test_tool_response_schemas.py::TestRetrieveMemoriesResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestRetrieveMemoriesResponseSchema::test_empty_query_response PASSED
+tests/server/test_tool_response_schemas.py::TestRetrieveMemoriesResponseSchema::test_error_response_invalid_category PASSED
+tests/server/test_tool_response_schemas.py::TestListMemoriesResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestListMemoriesResponseSchema::test_error_response_invalid_offset PASSED
+tests/server/test_tool_response_schemas.py::TestDeleteMemoryResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestDeleteMemoryResponseSchema::test_failure_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestStartGhapResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestStartGhapResponseSchema::test_error_response_invalid_domain PASSED
+tests/server/test_tool_response_schemas.py::TestStartGhapResponseSchema::test_error_response_invalid_strategy PASSED
+tests/server/test_tool_response_schemas.py::TestStartGhapResponseSchema::test_all_valid_domains_accepted PASSED
+tests/server/test_tool_response_schemas.py::TestStartGhapResponseSchema::test_all_valid_strategies_accepted PASSED
+tests/server/test_tool_response_schemas.py::TestUpdateGhapResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestUpdateGhapResponseSchema::test_error_response_no_active_ghap PASSED
+tests/server/test_tool_response_schemas.py::TestResolveGhapResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestResolveGhapResponseSchema::test_error_response_invalid_status PASSED
+tests/server/test_tool_response_schemas.py::TestResolveGhapResponseSchema::test_all_valid_outcome_statuses PASSED
+tests/server/test_tool_response_schemas.py::TestResolveGhapResponseSchema::test_all_valid_root_cause_categories PASSED
+tests/server/test_tool_response_schemas.py::TestGetActiveGhapResponseSchema::test_response_with_active_ghap PASSED
+tests/server/test_tool_response_schemas.py::TestGetActiveGhapResponseSchema::test_response_without_active_ghap PASSED
+tests/server/test_tool_response_schemas.py::TestListGhapEntriesResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestListGhapEntriesResponseSchema::test_error_response_invalid_domain_filter PASSED
+tests/server/test_tool_response_schemas.py::TestListGhapEntriesResponseSchema::test_error_response_invalid_outcome_filter PASSED
+tests/server/test_tool_response_schemas.py::TestGetClustersResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestGetClustersResponseSchema::test_error_response_invalid_axis PASSED
+tests/server/test_tool_response_schemas.py::TestGetClustersResponseSchema::test_all_valid_axes_accepted PASSED
+tests/server/test_tool_response_schemas.py::TestGetClusterMembersResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestGetClusterMembersResponseSchema::test_error_response_invalid_cluster_id_format PASSED
+tests/server/test_tool_response_schemas.py::TestValidateValueResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestValidateValueResponseSchema::test_error_response_empty_text PASSED
+tests/server/test_tool_response_schemas.py::TestStoreValueResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestStoreValueResponseSchema::test_error_response_invalid_axis PASSED
+tests/server/test_tool_response_schemas.py::TestListValuesResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestListValuesResponseSchema::test_error_response_invalid_axis_filter PASSED
+tests/server/test_tool_response_schemas.py::TestSearchExperiencesResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestSearchExperiencesResponseSchema::test_empty_query_response PASSED
+tests/server/test_tool_response_schemas.py::TestSearchExperiencesResponseSchema::test_error_response_invalid_axis PASSED
+tests/server/test_tool_response_schemas.py::TestSearchExperiencesResponseSchema::test_error_response_invalid_domain PASSED
+tests/server/test_tool_response_schemas.py::TestSearchExperiencesResponseSchema::test_error_response_invalid_outcome PASSED
+tests/server/test_tool_response_schemas.py::TestSearchExperiencesResponseSchema::test_all_valid_axes_accepted PASSED
+tests/server/test_tool_response_schemas.py::TestSearchExperiencesResponseSchema::test_all_valid_domains_accepted PASSED
+tests/server/test_tool_response_schemas.py::TestSearchExperiencesResponseSchema::test_all_valid_outcomes_accepted PASSED
+tests/server/test_tool_response_schemas.py::TestStartSessionResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestGetOrphanedGhapResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestShouldCheckInResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestIncrementToolCountResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestResetToolCountResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestAssembleContextResponseSchema::test_success_response_structure PASSED
+tests/server/test_tool_response_schemas.py::TestAssembleContextResponseSchema::test_empty_query_response PASSED
+tests/server/test_tool_response_schemas.py::TestErrorResponseStructure::test_ghap_error_structure PASSED
+tests/server/test_tool_response_schemas.py::TestErrorResponseStructure::test_learning_error_structure PASSED
+tests/server/test_tool_response_schemas.py::TestErrorResponseStructure::test_search_error_structure PASSED
+tests/server/test_tool_response_schemas.py::TestEnumValuesInResponsesMatchSchema::test_domains_enum_values PASSED
+tests/server/test_tool_response_schemas.py::TestEnumValuesInResponsesMatchSchema::test_strategies_enum_values PASSED
+tests/server/test_tool_response_schemas.py::TestEnumValuesInResponsesMatchSchema::test_valid_axes_enum_values PASSED
+tests/server/test_tool_response_schemas.py::TestEnumValuesInResponsesMatchSchema::test_outcome_status_enum_values PASSED
+tests/server/test_tool_response_schemas.py::TestEnumValuesInResponsesMatchSchema::test_root_cause_categories_enum_values PASSED
+tests/server/test_tool_response_schemas.py::TestEnumValuesInResponsesMatchSchema::test_memory_categories_enum_values PASSED
 tests/server/tools/test_bug_005_clusterer_initialization.py::test_clusterer_has_correct_default_parameters PASSED
 tests/server/tools/test_bug_005_clusterer_initialization.py::test_experience_clusterer_accepts_clusterer_instance PASSED
 tests/server/tools/test_bug_005_clusterer_initialization.py::test_value_store_accepts_experience_clusterer_instance PASSED
@@ -729,6 +1021,16 @@ tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_gte_operato
 tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_lte_operator_filter PASSED
 tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_gte_and_lte_combined PASSED
 tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_mixed_operators_in_single_query PASSED
+tests/test_bug_052_regression.py::test_timeout_decorator_works PASSED
+tests/test_bug_052_regression.py::test_default_timeout_is_configured PASSED
+tests/test_bug_055_regression.py::test_slow_marker_is_recognized PASSED
+tests/test_bug_055_regression.py::test_slow_tests_excluded_by_default PASSED
+tests/test_bug_055_regression.py::test_slow_tests_can_be_explicitly_run PASSED
+tests/test_bug_055_regression.py::test_all_tests_can_be_run_with_empty_marker PASSED
+tests/test_bug_055_regression.py::test_this_test_runs_by_default PASSED
+tests/test_bug_057_regression.py::test_worker_permission_model_doc_exists PASSED
+tests/test_bug_057_regression.py::test_proposal_exists PASSED
+tests/test_bug_057_regression.py::test_decisions_documented PASSED
 tests/test_json_merge.py::test_merge_mcp_server_new PASSED
 tests/test_json_merge.py::test_merge_mcp_server_existing PASSED
 tests/test_json_merge.py::test_merge_mcp_server_no_change PASSED
@@ -743,6 +1045,91 @@ tests/test_json_merge.py::test_remove_hooks_multiple_commands PASSED
 tests/test_json_merge.py::test_remove_hooks_not_found PASSED
 tests/test_placeholder.py::test_placeholder PASSED
 tests/test_placeholder.py::test_fixture PASSED
+tests/unit/test_schema_consistency.py::TestDomainEnumConsistency::test_start_ghap_domain_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestDomainEnumConsistency::test_list_ghap_entries_domain_filter_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestDomainEnumConsistency::test_search_experiences_domain_filter_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestStrategyEnumConsistency::test_start_ghap_strategy_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestStrategyEnumConsistency::test_update_ghap_strategy_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestMemoryCategoryEnumConsistency::test_store_memory_category_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestMemoryCategoryEnumConsistency::test_retrieve_memories_category_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestMemoryCategoryEnumConsistency::test_list_memories_category_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestOutcomeStatusEnumConsistency::test_resolve_ghap_status_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestOutcomeStatusEnumConsistency::test_list_ghap_entries_outcome_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestOutcomeStatusEnumConsistency::test_search_experiences_outcome_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestAxisEnumConsistency::test_get_clusters_axis_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestAxisEnumConsistency::test_store_value_axis_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestAxisEnumConsistency::test_list_values_axis_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestAxisEnumConsistency::test_search_experiences_axis_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestRootCauseCategoryEnumConsistency::test_resolve_ghap_root_cause_category_enum_matches_validation PASSED
+tests/unit/test_schema_consistency.py::TestContextTypesEnumConsistency::test_assemble_context_context_types_enum PASSED
+tests/unit/test_schema_consistency.py::TestAllEnumsHaveConsistencyTests::test_all_enum_properties_covered PASSED
+tests/unit/test_type_boundaries.py::TestSearchResultTypeConsistency::test_context_module_reexports_search_results PASSED
+tests/unit/test_type_boundaries.py::TestSearchResultTypeConsistency::test_nested_types_also_reexported PASSED
+tests/unit/test_type_boundaries.py::TestSearcherABCImplementation::test_searcher_inherits_from_abc PASSED
+tests/unit/test_type_boundaries.py::TestSearcherABCImplementation::test_all_abstract_methods_implemented PASSED
+tests/unit/test_type_boundaries.py::TestSearcherABCImplementation::test_method_signatures_compatible PASSED
+tests/unit/test_type_boundaries.py::TestSearcherABCImplementation::test_return_types_compatible PASSED
+tests/unit/test_type_boundaries.py::TestRootCauseConsistency::test_rootcause_field_names_match PASSED
+tests/unit/test_type_boundaries.py::TestRootCauseConsistency::test_rootcause_field_types_match PASSED
+tests/unit/test_type_boundaries.py::TestLessonConsistency::test_lesson_field_names_match PASSED
+tests/unit/test_type_boundaries.py::TestLessonConsistency::test_lesson_field_types_match PASSED
+tests/unit/test_type_boundaries.py::TestClusterInfoConsistency::test_clusterinfo_exists_in_both_modules PASSED
+tests/unit/test_type_boundaries.py::TestClusterInfoConsistency::test_clusterinfo_common_fields_match PASSED
+tests/unit/test_type_boundaries.py::TestVectorStoreTypes::test_search_result_is_dataclass PASSED
+tests/unit/test_type_boundaries.py::TestVectorStoreTypes::test_search_result_has_required_fields PASSED
+tests/unit/test_type_boundaries.py::TestVectorStoreTypes::test_result_converters_use_correct_fields PASSED
+tests/unit/test_type_boundaries.py::TestContextModelsConsistency::test_context_item_is_dataclass PASSED
+tests/unit/test_type_boundaries.py::TestContextModelsConsistency::test_formatted_context_is_dataclass PASSED
+tests/unit/test_type_boundaries.py::TestGitTypesConsistency::test_commit_dataclass_fields PASSED
+tests/unit/test_type_boundaries.py::TestGitTypesConsistency::test_commit_result_matches_commit PASSED
+tests/unit/test_type_boundaries.py::TestEnumConsistency::test_domain_enum_values PASSED
+tests/unit/test_type_boundaries.py::TestEnumConsistency::test_strategy_enum_values PASSED
+tests/unit/test_type_boundaries.py::TestEnumConsistency::test_outcome_status_enum_values PASSED
+tests/unit/test_type_boundaries.py::TestEnumConsistency::test_confidence_tier_enum_values PASSED
+tests/unit/test_type_boundaries.py::TestModuleBoundaryContracts::test_embedding_vector_type_alias PASSED
+tests/unit/test_type_boundaries.py::TestModuleBoundaryContracts::test_ghap_entry_serialization_roundtrip_fields PASSED
+tests/unit/test_type_boundaries.py::TestExperienceResultToGHAPMapping::test_experience_result_has_ghap_fields PASSED
+tests/unit/test_type_boundaries.py::TestExperienceResultToGHAPMapping::test_experience_result_has_search_fields PASSED
+tests/utils/test_datetime.py::TestSerializeDatetime::test_serialize_utc_datetime PASSED
+tests/utils/test_datetime.py::TestSerializeDatetime::test_serialize_naive_datetime_assumes_utc PASSED
+tests/utils/test_datetime.py::TestSerializeDatetime::test_serialize_datetime_with_microseconds PASSED
+tests/utils/test_datetime.py::TestSerializeDatetime::test_serialize_datetime_with_other_timezone PASSED
+tests/utils/test_datetime.py::TestSerializeDatetime::test_serialize_datetime_midnight PASSED
+tests/utils/test_datetime.py::TestSerializeDatetime::test_serialize_datetime_end_of_day PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_iso_string_with_utc PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_naive_iso_string_assumes_utc PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_iso_string_with_microseconds PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_iso_string_with_z_suffix PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_unix_timestamp_int PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_unix_timestamp_float PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_zero_timestamp PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_negative_timestamp PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_invalid_iso_string_raises_value_error PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_date_only_iso_string PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_malformed_iso_string_raises_value_error PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_invalid_type_raises_type_error PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_list_raises_type_error PASSED
+tests/utils/test_datetime.py::TestDeserializeDatetime::test_deserialize_dict_raises_type_error PASSED
+tests/utils/test_datetime.py::TestRoundTrip::test_round_trip_utc_datetime PASSED
+tests/utils/test_datetime.py::TestRoundTrip::test_round_trip_naive_datetime PASSED
+tests/utils/test_datetime.py::TestRoundTrip::test_round_trip_with_microseconds PASSED
+tests/utils/test_datetime.py::TestRoundTrip::test_round_trip_other_timezone PASSED
+tests/utils/test_datetime.py::TestRoundTrip::test_round_trip_various_years[1970] PASSED
+tests/utils/test_datetime.py::TestRoundTrip::test_round_trip_various_years[2000] PASSED
+tests/utils/test_datetime.py::TestRoundTrip::test_round_trip_various_years[2024] PASSED
+tests/utils/test_datetime.py::TestRoundTrip::test_round_trip_various_years[2050] PASSED
+tests/utils/test_datetime.py::TestRoundTrip::test_round_trip_various_years[2100] PASSED
+tests/utils/test_datetime.py::TestTimezoneHandling::test_utc_is_default_for_naive_serialize PASSED
+tests/utils/test_datetime.py::TestTimezoneHandling::test_utc_is_default_for_naive_deserialize PASSED
+tests/utils/test_datetime.py::TestTimezoneHandling::test_positive_offset_timezone PASSED
+tests/utils/test_datetime.py::TestTimezoneHandling::test_negative_offset_timezone PASSED
+tests/utils/test_datetime.py::TestTimezoneHandling::test_half_hour_offset_timezone PASSED
+tests/utils/test_datetime.py::TestEdgeCases::test_very_old_date PASSED
+tests/utils/test_datetime.py::TestEdgeCases::test_far_future_date PASSED
+tests/utils/test_datetime.py::TestEdgeCases::test_leap_second_boundary PASSED
+tests/utils/test_datetime.py::TestEdgeCases::test_leap_year_feb_29 PASSED
+tests/utils/test_datetime.py::TestEdgeCases::test_empty_string_raises_value_error PASSED
+tests/utils/test_datetime.py::TestEdgeCases::test_whitespace_string_raises_value_error PASSED
 tests/values/test_integration.py::TestIntegration::test_full_workflow PASSED
 tests/values/test_integration.py::TestIntegration::test_invalid_value_rejected PASSED
 tests/values/test_integration.py::TestIntegration::test_multiple_values_per_cluster PASSED
@@ -785,7 +1172,7 @@ tests/values/test_store.py::TestInsufficientDataRegression::test_store_value_wit
 tests/clustering/test_bug_031_regression.py: 6 warnings
 tests/clustering/test_clusterer.py: 208 warnings
 tests/clustering/test_experience.py: 22 warnings
-  /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-065/.venv/lib/python3.12/site-packages/sklearn/utils/deprecation.py:132: FutureWarning: 'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will be removed in 1.8.
+  /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-062/.venv/lib/python3.12/site-packages/sklearn/utils/deprecation.py:132: FutureWarning: 'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will be removed in 1.8.
     warnings.warn(
 
 tests/server/test_main.py::test_create_server
@@ -797,15 +1184,15 @@ tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_gte_operato
 tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_lte_operator_filter
 tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_gte_and_lte_combined
 tests/storage/test_qdrant_filters.py::TestQdrantFilterBuilding::test_mixed_operators_in_single_query
-  /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-065/src/clams/storage/qdrant.py:62: UserWarning: Qdrant client version 1.16.1 is incompatible with server version 1.12.1. Major versions should match and minor version difference must not exceed 1. Set check_compatibility=False to skip version check.
+  /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-062/src/clams/storage/qdrant.py:62: UserWarning: Qdrant client version 1.16.1 is incompatible with server version 1.12.1. Major versions should match and minor version difference must not exceed 1. Set check_compatibility=False to skip version check.
     self._client = AsyncQdrantClient(
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-========= 695 passed, 56 deselected, 245 warnings in 159.62s (0:02:39) =========
+=== 1076 passed, 81 deselected, 2 xfailed, 245 warnings in 418.13s (0:06:58) ===
 
 === Test Summary ===
-Total: 695 | Passed: 695 | Failed: 0 | Errors: 0 | Skipped: 0
-Duration: 159.62s
+Total: 1076 | Passed: 1076 | Failed: 0 | Errors: 0 | Skipped: 0
+Duration: 418.13s
 Test results logged to database
 
 PASS: All tests passed
@@ -813,1997 +1200,606 @@ PASS: All tests passed
 
 --- Gate: Linter clean ---
 === Running Linter ===
-Directory: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-065
+Directory: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-062
 
 Detected: Python
 Running: ruff check
-I001 [*] Import block is un-sorted or un-formatted
-  --> generate_12_ghap_async_debug.py:3:1
+UP017 [*] Use `datetime.UTC` alias
+  --> src/clams/utils/datetime.py:44:32
    |
- 1 |   """Generate 12 GHAP entries for async/concurrent debugging theme."""
- 2 |
- 3 | / import asyncio
- 4 | | from datetime import datetime
- 5 | |
- 6 | | from clams.observation import (
- 7 | |     Domain,
- 8 | |     Lesson,
- 9 | |     ObservationCollector,
-10 | |     ObservationPersister,
-11 | |     OutcomeStatus,
-12 | |     RootCause,
-13 | |     Strategy,
-14 | | )
-15 | | from clams.storage.qdrant import QdrantVectorStore
-16 | | from clams.embedding import NomicEmbedding
-   | |__________________________________________^
+42 |     """
+43 |     if dt.tzinfo is None:
+44 |         dt = dt.replace(tzinfo=timezone.utc)
+   |                                ^^^^^^^^^^^^
+45 |     return dt.isoformat()
    |
-help: Organize imports
+help: Convert to `datetime.UTC` alias
 
-F401 [*] `datetime.datetime` imported but unused
- --> generate_12_ghap_async_debug.py:4:22
-  |
-3 | import asyncio
-4 | from datetime import datetime
-  |                      ^^^^^^^^
-5 |
-6 | from clams.observation import (
-  |
-help: Remove unused import: `datetime.datetime`
-
-E501 Line too long (97 > 88)
-  --> generate_12_ghap_async_debug.py:23:89
-   |
-21 |     {
-22 |         "goal": "Fix race condition in user session handler causing data corruption",
-23 |         "hypothesis": "Multiple requests updating session simultaneously without proper locking",
-   |                                                                                         ^^^^^^^^^
-24 |         "action": "Add mutex around session write operations",
-25 |         "prediction": "Session corruption will stop after adding lock",
-   |
-
-E501 Line too long (110 > 88)
-  --> generate_12_ghap_async_debug.py:28:89
-   |
-26 |         "strategy": Strategy.ROOT_CAUSE_ANALYSIS,
-27 |         "outcome": "confirmed",
-28 |         "result": "Added asyncio.Lock around session writes, corruption stopped completely in stress testing",
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^
-29 |         "lesson": {
-30 |             "what_worked": "Identified race condition through concurrent request simulation, lock eliminated all corruption",
-   |
-
-E501 Line too long (125 > 88)
-  --> generate_12_ghap_async_debug.py:30:89
-   |
-28 |         "result": "Added asyncio.Lock around session writes, corruption stopped completely in stress testing",
-29 |         "lesson": {
-30 |             "what_worked": "Identified race condition through concurrent request simulation, lock eliminated all corruption",
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-31 |             "takeaway": "Always protect shared mutable state in async handlers with explicit locking primitives"
-32 |         }
-   |
-
-E501 Line too long (112 > 88)
-  --> generate_12_ghap_async_debug.py:31:89
-   |
-29 |         "lesson": {
-30 |             "what_worked": "Identified race condition through concurrent request simulation, lock eliminated all corruption",
-31 |             "takeaway": "Always protect shared mutable state in async handlers with explicit locking primitives"
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^
-32 |         }
-33 |     },
-   |
-
-E501 Line too long (97 > 88)
-  --> generate_12_ghap_async_debug.py:41:89
-   |
-39 |         "strategy": Strategy.SYSTEMATIC_ELIMINATION,
-40 |         "outcome": "confirmed",
-41 |         "result": "Implemented lock ordering by connection ID, no deadlocks in 48hr stress test",
-   |                                                                                         ^^^^^^^^^
-42 |         "lesson": {
-43 |             "what_worked": "Thread dump analysis revealed lock inversion, consistent ordering resolved it",
-   |
-
-E501 Line too long (107 > 88)
-  --> generate_12_ghap_async_debug.py:43:89
-   |
-41 |         "result": "Implemented lock ordering by connection ID, no deadlocks in 48hr stress test",
-42 |         "lesson": {
-43 |             "what_worked": "Thread dump analysis revealed lock inversion, consistent ordering resolved it",
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^
-44 |             "takeaway": "Lock ordering protocol prevents deadlocks in multi-resource scenarios"
-45 |         }
-   |
-
-E501 Line too long (95 > 88)
-  --> generate_12_ghap_async_debug.py:44:89
-   |
-42 |         "lesson": {
-43 |             "what_worked": "Thread dump analysis revealed lock inversion, consistent ordering resolved it",
-44 |             "takeaway": "Lock ordering protocol prevents deadlocks in multi-resource scenarios"
-   |                                                                                         ^^^^^^^
-45 |         }
-46 |     },
-   |
-
-E501 Line too long (90 > 88)
-  --> generate_12_ghap_async_debug.py:51:89
-   |
-49 |         "hypothesis": "Event loop blocking during I/O operations",
-50 |         "action": "Offload CPU-intensive work to thread pool executor",
-51 |         "prediction": "Timeouts will disappear after moving blocking work off event loop",
-   |                                                                                         ^^
-52 |         "strategy": Strategy.CHECK_ASSUMPTIONS,
-53 |         "outcome": "falsified",
-   |
-
-E501 Line too long (122 > 88)
-  --> generate_12_ghap_async_debug.py:58:89
-   |
-56 |         "root_cause": {
-57 |             "category": "wrong_hypothesis",
-58 |             "description": "Actual cause was connection pool exhaustion from not releasing connections in exception paths"
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-59 |         },
-60 |         "lesson": {
-   |
-
-E501 Line too long (103 > 88)
-  --> generate_12_ghap_async_debug.py:62:89
-   |
-60 |         "lesson": {
-61 |             "what_worked": "Added connection tracking revealed leak in error handlers",
-62 |             "takeaway": "Profile before optimizing - assumed CPU bottleneck was actually resource leak"
-   |                                                                                         ^^^^^^^^^^^^^^^
-63 |         }
-64 |     },
-   |
-
-E501 Line too long (96 > 88)
-  --> generate_12_ghap_async_debug.py:72:89
-   |
-70 |         "strategy": Strategy.READ_THE_ERROR,
-71 |         "outcome": "confirmed",
-72 |         "result": "Added context managers for all connection usage, pool exhaustion eliminated",
-   |                                                                                         ^^^^^^^^
-73 |         "lesson": {
-74 |             "what_worked": "Pool monitoring showed connections never freed, context managers fixed it",
-   |
-
-E501 Line too long (103 > 88)
-  --> generate_12_ghap_async_debug.py:74:89
-   |
-72 |         "result": "Added context managers for all connection usage, pool exhaustion eliminated",
-73 |         "lesson": {
-74 |             "what_worked": "Pool monitoring showed connections never freed, context managers fixed it",
-   |                                                                                         ^^^^^^^^^^^^^^^
-75 |             "takeaway": "Always use context managers for resource cleanup in async code"
-76 |         }
-   |
-
-E501 Line too long (117 > 88)
-  --> generate_12_ghap_async_debug.py:89:89
-   |
-87 |         "root_cause": {
-88 |             "category": "misunderstanding",
-89 |             "description": "Used queue.get() instead of queue.get_nowait() inside a cancelled task, blocking forever"
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-90 |         },
-91 |         "lesson": {
-   |
-
-E501 Line too long (100 > 88)
-  --> generate_12_ghap_async_debug.py:92:89
-   |
-90 |         },
-91 |         "lesson": {
-92 |             "what_worked": "Task cancellation testing revealed blocking get() in cancelled context",
-   |                                                                                         ^^^^^^^^^^^^
-93 |             "takeaway": "Use get_nowait() or get(timeout=) in cancellable async contexts"
-94 |         }
-   |
-
-E501 Line too long (89 > 88)
-  --> generate_12_ghap_async_debug.py:93:89
-   |
-91 |         "lesson": {
-92 |             "what_worked": "Task cancellation testing revealed blocking get() in cancelled context",
-93 |             "takeaway": "Use get_nowait() or get(timeout=) in cancellable async contexts"
-   |                                                                                         ^
-94 |         }
-95 |     },
-   |
-
-E501 Line too long (95 > 88)
-   --> generate_12_ghap_async_debug.py:103:89
-    |
-101 |         "strategy": Strategy.CHECK_ASSUMPTIONS,
-102 |         "outcome": "confirmed",
-103 |         "result": "Added try/except CancelledError with cleanup, no more unhandled exceptions",
-    |                                                                                         ^^^^^^^
-104 |         "lesson": {
-105 |             "what_worked": "Wrapped task bodies with cancellation cleanup, errors disappeared",
-    |
-
-E501 Line too long (95 > 88)
-   --> generate_12_ghap_async_debug.py:105:89
-    |
-103 |         "result": "Added try/except CancelledError with cleanup, no more unhandled exceptions",
-104 |         "lesson": {
-105 |             "what_worked": "Wrapped task bodies with cancellation cleanup, errors disappeared",
-    |                                                                                         ^^^^^^^
-106 |             "takeaway": "Always handle CancelledError explicitly in long-running async tasks"
-107 |         }
-    |
-
-E501 Line too long (93 > 88)
-   --> generate_12_ghap_async_debug.py:106:89
-    |
-104 |         "lesson": {
-105 |             "what_worked": "Wrapped task bodies with cancellation cleanup, errors disappeared",
-106 |             "takeaway": "Always handle CancelledError explicitly in long-running async tasks"
-    |                                                                                         ^^^^^
-107 |         }
-108 |     },
-    |
-
-E501 Line too long (110 > 88)
-   --> generate_12_ghap_async_debug.py:120:89
-    |
-118 |         "root_cause": {
-119 |             "category": "wrong_hypothesis",
-120 |             "description": "Actual cause was DNS resolution blocking - used sync getaddrinfo instead of async"
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^
-121 |         },
-122 |         "lesson": {
-    |
-
-E501 Line too long (102 > 88)
-   --> generate_12_ghap_async_debug.py:123:89
-    |
-121 |         },
-122 |         "lesson": {
-123 |             "what_worked": "Event loop instrumentation showed DNS calls blocking, switched to aiodns",
-    |                                                                                         ^^^^^^^^^^^^^^
-124 |             "takeaway": "DNS resolution is blocking by default in Python - use async DNS library"
-125 |         }
-    |
-
-E501 Line too long (97 > 88)
-   --> generate_12_ghap_async_debug.py:124:89
-    |
-122 |         "lesson": {
-123 |             "what_worked": "Event loop instrumentation showed DNS calls blocking, switched to aiodns",
-124 |             "takeaway": "DNS resolution is blocking by default in Python - use async DNS library"
-    |                                                                                         ^^^^^^^^^
-125 |         }
-126 |     },
-    |
-
-E501 Line too long (89 > 88)
-   --> generate_12_ghap_async_debug.py:130:89
-    |
-128 |         "goal": "Debug task leak causing unbounded memory growth",
-129 |         "hypothesis": "Tasks being created but never awaited",
-130 |         "action": "Enable asyncio debug mode and check for unawaited coroutine warnings",
-    |                                                                                         ^
-131 |         "prediction": "Debug mode will show which tasks are not being awaited",
-132 |         "strategy": Strategy.READ_THE_ERROR,
-    |
-
-E501 Line too long (90 > 88)
-   --> generate_12_ghap_async_debug.py:134:89
-    |
-132 |         "strategy": Strategy.READ_THE_ERROR,
-133 |         "outcome": "confirmed",
-134 |         "result": "Found 15 fire-and-forget tasks never awaited, collected them properly",
-    |                                                                                         ^^
-135 |         "lesson": {
-136 |             "what_worked": "asyncio.run(debug=True) revealed all unawaited coroutines",
-    |
-
-E501 Line too long (112 > 88)
-   --> generate_12_ghap_async_debug.py:151:89
-    |
-149 |         "root_cause": {
-150 |             "category": "wrong_hypothesis",
-151 |             "description": "Problem was actually semaphore release waking all waiters at once, not retry timing"
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^
-152 |         },
-153 |         "lesson": {
-    |
-
-E501 Line too long (91 > 88)
-   --> generate_12_ghap_async_debug.py:154:89
-    |
-152 |         },
-153 |         "lesson": {
-154 |             "what_worked": "Switched to queue-based fair acquisition instead of semaphore",
-    |                                                                                         ^^^
-155 |             "takeaway": "Semaphores can cause thundering herd - use queues for fair resource distribution"
-156 |         }
-    |
-
-E501 Line too long (106 > 88)
-   --> generate_12_ghap_async_debug.py:155:89
-    |
-153 |         "lesson": {
-154 |             "what_worked": "Switched to queue-based fair acquisition instead of semaphore",
-155 |             "takeaway": "Semaphores can cause thundering herd - use queues for fair resource distribution"
-    |                                                                                         ^^^^^^^^^^^^^^^^^^
-156 |         }
-157 |     },
-    |
-
-E501 Line too long (106 > 88)
-   --> generate_12_ghap_async_debug.py:167:89
-    |
-165 |         "result": "Released lock before nested call, deadlock eliminated",
-166 |         "lesson": {
-167 |             "what_worked": "Lock ordering analysis showed circular dependency, early release broke cycle",
-    |                                                                                         ^^^^^^^^^^^^^^^^^^
-168 |             "takeaway": "Never hold lock while calling code that might acquire the same lock"
-169 |         }
-    |
-
-E501 Line too long (93 > 88)
-   --> generate_12_ghap_async_debug.py:168:89
-    |
-166 |         "lesson": {
-167 |             "what_worked": "Lock ordering analysis showed circular dependency, early release broke cycle",
-168 |             "takeaway": "Never hold lock while calling code that might acquire the same lock"
-    |                                                                                         ^^^^^
-169 |         }
-170 |     },
-    |
-
-E501 Line too long (97 > 88)
-   --> generate_12_ghap_async_debug.py:181:89
-    |
-179 |         "lesson": {
-180 |             "what_worked": "Lock around check+set makes it atomic, prevents race",
-181 |             "takeaway": "Check-then-act patterns need atomicity - use locks or atomic primitives"
-    |                                                                                         ^^^^^^^^^
-182 |         }
-183 |     },
-    |
-
-E501 Line too long (90 > 88)
-   --> generate_12_ghap_async_debug.py:192:89
-    |
-190 |         "outcome": "falsified",
-191 |         "result": "Inner calls already timeout correctly with wait_for",
-192 |         "surprise": "wait_for cancels entire task tree, timeout propagates automatically",
-    |                                                                                         ^^
-193 |         "root_cause": {
-194 |             "category": "misunderstanding",
-    |
-
-E501 Line too long (117 > 88)
-   --> generate_12_ghap_async_debug.py:195:89
-    |
-193 |         "root_cause": {
-194 |             "category": "misunderstanding",
-195 |             "description": "Thought timeout needed manual propagation, but wait_for cancels the whole coroutine tree"
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-196 |         },
-197 |         "lesson": {
-    |
-
-E501 Line too long (93 > 88)
-   --> generate_12_ghap_async_debug.py:198:89
-    |
-196 |         },
-197 |         "lesson": {
-198 |             "what_worked": "wait_for handles nested timeouts automatically via cancellation",
-    |                                                                                         ^^^^^
-199 |             "takeaway": "asyncio.wait_for propagates timeout through entire coroutine chain"
-200 |         }
-    |
-
-E501 Line too long (92 > 88)
-   --> generate_12_ghap_async_debug.py:199:89
-    |
-197 |         "lesson": {
-198 |             "what_worked": "wait_for handles nested timeouts automatically via cancellation",
-199 |             "takeaway": "asyncio.wait_for propagates timeout through entire coroutine chain"
-    |                                                                                         ^^^^
-200 |         }
-201 |     }
-    |
-
-E501 Line too long (92 > 88)
-   --> generate_12_ghap_async_debug.py:212:89
-    |
-211 |     collector = ObservationCollector()
-212 |     persister = ObservationPersister(vector_store=vector_store, embedding_service=embedding)
-    |                                                                                         ^^^^
-213 |
-214 |     print(f"Generating {len(GHAP_ENTRIES)} GHAP entries for async/concurrent debugging...")
-    |
-
-E501 Line too long (91 > 88)
-   --> generate_12_ghap_async_debug.py:214:89
-    |
-212 |     persister = ObservationPersister(vector_store=vector_store, embedding_service=embedding)
-213 |
-214 |     print(f"Generating {len(GHAP_ENTRIES)} GHAP entries for async/concurrent debugging...")
-    |                                                                                         ^^^
-215 |
-216 |     for i, entry_data in enumerate(GHAP_ENTRIES, 1):
-    |
-
-E501 Line too long (101 > 88)
-   --> generate_12_ghap_async_debug.py:228:89
-    |
-226 |             )
-227 |
-228 |             print(f"[{i}/{len(GHAP_ENTRIES)}] Created GHAP {entry.id}: {entry_data['goal'][:60]}...")
-    |                                                                                         ^^^^^^^^^^^^^
-229 |
-230 |             # Prepare outcome data
-    |
-
-E501 Line too long (106 > 88)
-   --> generate_12_ghap_async_debug.py:275:89
-    |
-274 |     print(f"\nSuccessfully generated {len(GHAP_ENTRIES)} GHAP entries!")
-275 |     print("All entries focused on: async/concurrent debugging, race conditions, deadlocks, timing issues")
-    |                                                                                         ^^^^^^^^^^^^^^^^^^
-    |
-
-I001 [*] Import block is un-sorted or un-formatted
-  --> generate_api_network_ghap.py:3:1
-   |
- 1 |   """Generate 12 GHAP entries for debugging API and network issues."""
- 2 |
- 3 | / import asyncio
- 4 | | import random
- 5 | | from datetime import datetime
- 6 | |
- 7 | | from clams.observation import (
- 8 | |     Domain,
- 9 | |     Lesson,
-10 | |     ObservationCollector,
-11 | |     ObservationPersister,
-12 | |     OutcomeStatus,
-13 | |     RootCause,
-14 | |     Strategy,
-15 | | )
-16 | | from clams.storage.qdrant import QdrantVectorStore
-17 | | from clams.embedding import NomicEmbedding
-   | |__________________________________________^
-   |
-help: Organize imports
-
-F401 [*] `random` imported but unused
- --> generate_api_network_ghap.py:4:8
-  |
-3 | import asyncio
-4 | import random
-  |        ^^^^^^
-5 | from datetime import datetime
-  |
-help: Remove unused import: `random`
-
-F401 [*] `datetime.datetime` imported but unused
- --> generate_api_network_ghap.py:5:22
-  |
-3 | import asyncio
-4 | import random
-5 | from datetime import datetime
-  |                      ^^^^^^^^
-6 |
-7 | from clams.observation import (
-  |
-help: Remove unused import: `datetime.datetime`
-
-E501 Line too long (103 > 88)
-  --> generate_api_network_ghap.py:23:89
-   |
-21 | GHAP_ENTRIES = [
-22 |     {
-23 |         "goal": "Fix API timeout errors occurring after exactly 30 seconds on /v1/embeddings endpoint",
-   |                                                                                         ^^^^^^^^^^^^^^^
-24 |         "hypothesis": "Default HTTP client timeout is too short for large embedding batches",
-25 |         "action": "Increase httpx client timeout from 30s to 120s for embedding requests",
-   |
-
-E501 Line too long (93 > 88)
-  --> generate_api_network_ghap.py:24:89
-   |
-22 |     {
-23 |         "goal": "Fix API timeout errors occurring after exactly 30 seconds on /v1/embeddings endpoint",
-24 |         "hypothesis": "Default HTTP client timeout is too short for large embedding batches",
-   |                                                                                         ^^^^^
-25 |         "action": "Increase httpx client timeout from 30s to 120s for embedding requests",
-26 |         "prediction": "Large batches will complete successfully with longer timeout",
-   |
-
-E501 Line too long (90 > 88)
-  --> generate_api_network_ghap.py:25:89
-   |
-23 |         "goal": "Fix API timeout errors occurring after exactly 30 seconds on /v1/embeddings endpoint",
-24 |         "hypothesis": "Default HTTP client timeout is too short for large embedding batches",
-25 |         "action": "Increase httpx client timeout from 30s to 120s for embedding requests",
-   |                                                                                         ^^
-26 |         "prediction": "Large batches will complete successfully with longer timeout",
-27 |         "strategy": Strategy.ROOT_CAUSE_ANALYSIS,
-   |
-
-E501 Line too long (120 > 88)
-  --> generate_api_network_ghap.py:29:89
-   |
-27 |         "strategy": Strategy.ROOT_CAUSE_ANALYSIS,
-28 |         "outcome": "confirmed",
-29 |         "result": "Extended timeout to 120s, all large batch requests now complete successfully without timeout errors",
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-30 |         "lesson": {
-31 |             "what_worked": "Identified exact 30s timeout pattern, traced to httpx default timeout, increased limit resolved issue",
-   |
-
-E501 Line too long (131 > 88)
-  --> generate_api_network_ghap.py:31:89
-   |
-29 |         "result": "Extended timeout to 120s, all large batch requests now complete successfully without timeout errors",
-30 |         "lesson": {
-31 |             "what_worked": "Identified exact 30s timeout pattern, traced to httpx default timeout, increased limit resolved issue",
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-32 |             "takeaway": "Set explicit timeouts based on expected operation duration, not client defaults"
-33 |         }
-   |
-
-E501 Line too long (105 > 88)
-  --> generate_api_network_ghap.py:32:89
-   |
-30 |         "lesson": {
-31 |             "what_worked": "Identified exact 30s timeout pattern, traced to httpx default timeout, increased limit resolved issue",
-32 |             "takeaway": "Set explicit timeouts based on expected operation duration, not client defaults"
-   |                                                                                         ^^^^^^^^^^^^^^^^^
-33 |         }
-34 |     },
-   |
-
-E501 Line too long (118 > 88)
-  --> generate_api_network_ghap.py:42:89
-   |
-40 |         "strategy": Strategy.SYSTEMATIC_ELIMINATION,
-41 |         "outcome": "confirmed",
-42 |         "result": "Implemented tenacity retry decorator with exponential backoff, 503 errors recovered automatically",
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-43 |         "lesson": {
-44 |             "what_worked": "Retry logic with backoff handles transient service failures gracefully",
-   |
-
-E501 Line too long (100 > 88)
-  --> generate_api_network_ghap.py:44:89
-   |
-42 |         "result": "Implemented tenacity retry decorator with exponential backoff, 503 errors recovered automatically",
-43 |         "lesson": {
-44 |             "what_worked": "Retry logic with backoff handles transient service failures gracefully",
-   |                                                                                         ^^^^^^^^^^^^
-45 |             "takeaway": "Always implement retry logic for external API calls with exponential backoff"
-46 |         }
-   |
-
-E501 Line too long (102 > 88)
-  --> generate_api_network_ghap.py:45:89
-   |
-43 |         "lesson": {
-44 |             "what_worked": "Retry logic with backoff handles transient service failures gracefully",
-45 |             "takeaway": "Always implement retry logic for external API calls with exponential backoff"
-   |                                                                                         ^^^^^^^^^^^^^^
-46 |         }
-47 |     },
-   |
-
-E501 Line too long (134 > 88)
-  --> generate_api_network_ghap.py:59:89
-   |
-57 |         "root_cause": {
-58 |             "category": "wrong_hypothesis",
-59 |             "description": "API has separate per-endpoint limits not documented - /search has 20 req/min while /embed has 100 req/min"
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-60 |         },
-61 |         "lesson": {
-   |
-
-E501 Line too long (109 > 88)
-  --> generate_api_network_ghap.py:62:89
-   |
-60 |         },
-61 |         "lesson": {
-62 |             "what_worked": "Added per-endpoint rate limiting based on response headers, eliminated all 429s",
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^
-63 |             "takeaway": "Don't trust documented rate limits - read actual limit headers from responses"
-64 |         }
-   |
-
-E501 Line too long (103 > 88)
-  --> generate_api_network_ghap.py:63:89
-   |
-61 |         "lesson": {
-62 |             "what_worked": "Added per-endpoint rate limiting based on response headers, eliminated all 429s",
-63 |             "takeaway": "Don't trust documented rate limits - read actual limit headers from responses"
-   |                                                                                         ^^^^^^^^^^^^^^^
-64 |         }
-65 |     },
-   |
-
-E501 Line too long (89 > 88)
-  --> generate_api_network_ghap.py:73:89
-   |
-71 |         "strategy": Strategy.DIVIDE_AND_CONQUER,
-72 |         "outcome": "falsified",
-73 |         "result": "Larger pool delayed the problem but errors still occurred under load",
-   |                                                                                         ^
-74 |         "surprise": "File descriptor exhaustion persisted even with larger pool",
-75 |         "root_cause": {
-   |
-
-E501 Line too long (126 > 88)
-  --> generate_api_network_ghap.py:77:89
-   |
-75 |         "root_cause": {
-76 |             "category": "wrong_hypothesis",
-77 |             "description": "Connections were leaking due to missing connection cleanup in error paths - not a pool size issue"
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-78 |         },
-79 |         "lesson": {
-   |
-
-E501 Line too long (104 > 88)
-  --> generate_api_network_ghap.py:80:89
-   |
-78 |         },
-79 |         "lesson": {
-80 |             "what_worked": "Added explicit connection close in finally blocks, leak stopped completely",
-   |                                                                                         ^^^^^^^^^^^^^^^^
-81 |             "takeaway": "Connection leaks look like pool exhaustion - check cleanup in error paths first"
-82 |         }
-   |
-
-E501 Line too long (105 > 88)
-  --> generate_api_network_ghap.py:81:89
-   |
-79 |         "lesson": {
-80 |             "what_worked": "Added explicit connection close in finally blocks, leak stopped completely",
-81 |             "takeaway": "Connection leaks look like pool exhaustion - check cleanup in error paths first"
-   |                                                                                         ^^^^^^^^^^^^^^^^^
-82 |         }
-83 |     },
-   |
-
-E501 Line too long (91 > 88)
-  --> generate_api_network_ghap.py:86:89
-   |
-84 |     {
-85 |         "goal": "Debug SSL certificate verification failures on production API",
-86 |         "hypothesis": "Certificate expired or hostname mismatch in production environment",
-   |                                                                                         ^^^
-87 |         "action": "Check certificate validity and common name against actual hostname",
-88 |         "prediction": "Will find expired cert or CN mismatch causing verification failure",
-   |
-
-E501 Line too long (91 > 88)
-  --> generate_api_network_ghap.py:88:89
-   |
-86 |         "hypothesis": "Certificate expired or hostname mismatch in production environment",
-87 |         "action": "Check certificate validity and common name against actual hostname",
-88 |         "prediction": "Will find expired cert or CN mismatch causing verification failure",
-   |                                                                                         ^^^
-89 |         "strategy": Strategy.READ_THE_ERROR,
-90 |         "outcome": "confirmed",
-   |
-
-E501 Line too long (104 > 88)
-  --> generate_api_network_ghap.py:91:89
-   |
-89 |         "strategy": Strategy.READ_THE_ERROR,
-90 |         "outcome": "confirmed",
-91 |         "result": "Production cert CN was '*.api.example.com' but we were calling 'api-v2.example.com'",
-   |                                                                                         ^^^^^^^^^^^^^^^^
-92 |         "lesson": {
-93 |             "what_worked": "Examined SSLError details, found CN mismatch, updated hostname to match wildcard pattern",
-   |
-
-E501 Line too long (118 > 88)
-  --> generate_api_network_ghap.py:93:89
-   |
-91 |         "result": "Production cert CN was '*.api.example.com' but we were calling 'api-v2.example.com'",
-92 |         "lesson": {
-93 |             "what_worked": "Examined SSLError details, found CN mismatch, updated hostname to match wildcard pattern",
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-94 |             "takeaway": "SSL errors often indicate hostname/cert mismatch - verify CN matches request hostname"
-95 |         }
-   |
-
-E501 Line too long (111 > 88)
-  --> generate_api_network_ghap.py:94:89
-   |
-92 |         "lesson": {
-93 |             "what_worked": "Examined SSLError details, found CN mismatch, updated hostname to match wildcard pattern",
-94 |             "takeaway": "SSL errors often indicate hostname/cert mismatch - verify CN matches request hostname"
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^
-95 |         }
-96 |     },
-   |
-
-E501 Line too long (91 > 88)
-   --> generate_api_network_ghap.py:98:89
-    |
- 96 |     },
- 97 |     {
- 98 |         "goal": "Resolve DNS resolution timeouts causing intermittent connection failures",
-    |                                                                                         ^^^
- 99 |         "hypothesis": "DNS server is slow or unreliable causing timeout on name resolution",
-100 |         "action": "Add DNS caching with aiodns to avoid repeated lookups",
-    |
-
-E501 Line too long (92 > 88)
-   --> generate_api_network_ghap.py:99:89
-    |
- 97 |     {
- 98 |         "goal": "Resolve DNS resolution timeouts causing intermittent connection failures",
- 99 |         "hypothesis": "DNS server is slow or unreliable causing timeout on name resolution",
-    |                                                                                         ^^^^
-100 |         "action": "Add DNS caching with aiodns to avoid repeated lookups",
-101 |         "prediction": "DNS cache will eliminate timeout by reusing resolved addresses",
-    |
-
-E501 Line too long (99 > 88)
-   --> generate_api_network_ghap.py:104:89
-    |
-102 |         "strategy": Strategy.SYSTEMATIC_ELIMINATION,
-103 |         "outcome": "confirmed",
-104 |         "result": "Implemented aiodns with 5-minute TTL cache, DNS timeouts eliminated completely",
-    |                                                                                         ^^^^^^^^^^^
-105 |         "lesson": {
-106 |             "what_worked": "DNS caching reduced resolution calls by 95%, all timeouts disappeared",
-    |
-
-E501 Line too long (99 > 88)
-   --> generate_api_network_ghap.py:106:89
-    |
-104 |         "result": "Implemented aiodns with 5-minute TTL cache, DNS timeouts eliminated completely",
-105 |         "lesson": {
-106 |             "what_worked": "DNS caching reduced resolution calls by 95%, all timeouts disappeared",
-    |                                                                                         ^^^^^^^^^^^
-107 |             "takeaway": "DNS resolution is often overlooked bottleneck - implement caching for frequently accessed hosts"
-108 |         }
-    |
-
-E501 Line too long (121 > 88)
-   --> generate_api_network_ghap.py:107:89
-    |
-105 |         "lesson": {
-106 |             "what_worked": "DNS caching reduced resolution calls by 95%, all timeouts disappeared",
-107 |             "takeaway": "DNS resolution is often overlooked bottleneck - implement caching for frequently accessed hosts"
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-108 |         }
-109 |     },
-    |
-
-E501 Line too long (139 > 88)
-   --> generate_api_network_ghap.py:121:89
-    |
-119 | …
-120 | …
-121 | …zation: Bearer <token>' but we were sending 'Authorization: <token>' without Bearer prefix"
-    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-122 | …
-123 | …
-    |
-
-E501 Line too long (109 > 88)
-   --> generate_api_network_ghap.py:124:89
-    |
-122 |         },
-123 |         "lesson": {
-124 |             "what_worked": "Checked request headers against API docs, added 'Bearer' prefix, auth works now",
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^
-125 |             "takeaway": "Authorization header format matters - verify exact format required by API"
-126 |         }
-    |
-
-E501 Line too long (99 > 88)
-   --> generate_api_network_ghap.py:125:89
-    |
-123 |         "lesson": {
-124 |             "what_worked": "Checked request headers against API docs, added 'Bearer' prefix, auth works now",
-125 |             "takeaway": "Authorization header format matters - verify exact format required by API"
-    |                                                                                         ^^^^^^^^^^^
-126 |         }
-127 |     },
-    |
-
-E501 Line too long (92 > 88)
-   --> generate_api_network_ghap.py:130:89
-    |
-128 |     {
-129 |         "goal": "Debug slow API response times averaging 5+ seconds per request",
-130 |         "hypothesis": "Server-side processing is slow, nothing we can optimize client-side",
-    |                                                                                         ^^^^
-131 |         "action": "Add request timing instrumentation to identify bottlenecks",
-132 |         "prediction": "Will confirm server processing is the bottleneck",
-    |
-
-E501 Line too long (92 > 88)
-   --> generate_api_network_ghap.py:135:89
-    |
-133 |         "strategy": Strategy.ROOT_CAUSE_ANALYSIS,
-134 |         "outcome": "falsified",
-135 |         "result": "Timing showed 4.8s in connection establishment, only 0.2s in processing",
-    |                                                                                         ^^^^
-136 |         "surprise": "Server was fast, connection setup was the bottleneck",
-137 |         "root_cause": {
-    |
-
-E501 Line too long (117 > 88)
-   --> generate_api_network_ghap.py:139:89
-    |
-137 |         "root_cause": {
-138 |             "category": "wrong_hypothesis",
-139 |             "description": "Connection pooling was disabled so every request did full TLS handshake - extremely slow"
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-140 |         },
-141 |         "lesson": {
-    |
-
-E501 Line too long (104 > 88)
-   --> generate_api_network_ghap.py:142:89
-    |
-140 |         },
-141 |         "lesson": {
-142 |             "what_worked": "Enabled connection pooling with keep-alive, response time dropped to 200ms",
-    |                                                                                         ^^^^^^^^^^^^^^^^
-143 |             "takeaway": "Profile request lifecycle - connection overhead often exceeds processing time"
-144 |         }
-    |
-
-E501 Line too long (103 > 88)
-   --> generate_api_network_ghap.py:143:89
-    |
-141 |         "lesson": {
-142 |             "what_worked": "Enabled connection pooling with keep-alive, response time dropped to 200ms",
-143 |             "takeaway": "Profile request lifecycle - connection overhead often exceeds processing time"
-    |                                                                                         ^^^^^^^^^^^^^^^
-144 |         }
-145 |     },
-    |
-
-E501 Line too long (89 > 88)
-   --> generate_api_network_ghap.py:147:89
-    |
-145 |     },
-146 |     {
-147 |         "goal": "Resolve API returning stale data despite cache headers saying no-cache",
-    |                                                                                         ^
-148 |         "hypothesis": "Intermediate proxy is caching despite no-cache directive",
-149 |         "action": "Add unique query parameter to bust any intermediate caches",
-    |
-
-E501 Line too long (95 > 88)
-   --> generate_api_network_ghap.py:155:89
-    |
-153 |         "result": "Added timestamp query param, all responses now fresh",
-154 |         "lesson": {
-155 |             "what_worked": "Query param bypassed aggressive proxy caching we couldn't control",
-    |                                                                                         ^^^^^^^
-156 |             "takeaway": "When cache headers fail, query param cache-busting forces fresh responses"
-157 |         }
-    |
-
-E501 Line too long (99 > 88)
-   --> generate_api_network_ghap.py:156:89
-    |
-154 |         "lesson": {
-155 |             "what_worked": "Query param bypassed aggressive proxy caching we couldn't control",
-156 |             "takeaway": "When cache headers fail, query param cache-busting forces fresh responses"
-    |                                                                                         ^^^^^^^^^^^
-157 |         }
-158 |     },
-    |
-
-E501 Line too long (98 > 88)
-   --> generate_api_network_ghap.py:166:89
-    |
-164 |         "strategy": Strategy.READ_THE_ERROR,
-165 |         "outcome": "confirmed",
-166 |         "result": "Added explicit await response.aread() before json parsing, truncation stopped",
-    |                                                                                         ^^^^^^^^^^
-167 |         "lesson": {
-168 |             "what_worked": "Forcing complete body read before parsing handled chunked encoding correctly",
-    |
-
-E501 Line too long (106 > 88)
-   --> generate_api_network_ghap.py:168:89
-    |
-166 |         "result": "Added explicit await response.aread() before json parsing, truncation stopped",
-167 |         "lesson": {
-168 |             "what_worked": "Forcing complete body read before parsing handled chunked encoding correctly",
-    |                                                                                         ^^^^^^^^^^^^^^^^^^
-169 |             "takeaway": "Async HTTP clients need explicit body read for chunked responses"
-170 |         }
-    |
-
-E501 Line too long (90 > 88)
-   --> generate_api_network_ghap.py:169:89
-    |
-167 |         "lesson": {
-168 |             "what_worked": "Forcing complete body read before parsing handled chunked encoding correctly",
-169 |             "takeaway": "Async HTTP clients need explicit body read for chunked responses"
-    |                                                                                         ^^
-170 |         }
-171 |     },
-    |
-
-E501 Line too long (108 > 88)
-   --> generate_api_network_ghap.py:179:89
-    |
-177 |         "strategy": Strategy.CHECK_ASSUMPTIONS,
-178 |         "outcome": "confirmed",
-179 |         "result": "httpx wasn't auto-setting Content-Length for streaming bodies, explicit header fixed it",
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^
-180 |         "lesson": {
-181 |             "what_worked": "Manual Content-Length calculation for streaming request bodies resolved 411 errors",
-    |
-
-E501 Line too long (112 > 88)
-   --> generate_api_network_ghap.py:181:89
-    |
-179 |         "result": "httpx wasn't auto-setting Content-Length for streaming bodies, explicit header fixed it",
-180 |         "lesson": {
-181 |             "what_worked": "Manual Content-Length calculation for streaming request bodies resolved 411 errors",
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^
-182 |             "takeaway": "Streaming request bodies may need explicit Content-Length header"
-183 |         }
-    |
-
-E501 Line too long (90 > 88)
-   --> generate_api_network_ghap.py:182:89
-    |
-180 |         "lesson": {
-181 |             "what_worked": "Manual Content-Length calculation for streaming request bodies resolved 411 errors",
-182 |             "takeaway": "Streaming request bodies may need explicit Content-Length header"
-    |                                                                                         ^^
-183 |         }
-184 |     },
-    |
-
-E501 Line too long (92 > 88)
-   --> generate_api_network_ghap.py:188:89
-    |
-186 |         "goal": "Resolve API WebSocket connection dropping after exactly 60 seconds",
-187 |         "hypothesis": "Server-side idle timeout disconnecting inactive connections",
-188 |         "action": "Implement ping/pong heartbeat every 30 seconds to keep connection alive",
-    |                                                                                         ^^^^
-189 |         "prediction": "Heartbeat will prevent idle timeout disconnections",
-190 |         "strategy": Strategy.DIVIDE_AND_CONQUER,
-    |
-
-E501 Line too long (105 > 88)
-   --> generate_api_network_ghap.py:194:89
-    |
-192 |         "result": "Added 30s ping interval, connections now stable for hours",
-193 |         "lesson": {
-194 |             "what_worked": "Regular heartbeat prevents idle timeout on long-lived WebSocket connections",
-    |                                                                                         ^^^^^^^^^^^^^^^^^
-195 |             "takeaway": "WebSocket connections need periodic activity to avoid idle timeouts"
-196 |         }
-    |
-
-E501 Line too long (93 > 88)
-   --> generate_api_network_ghap.py:195:89
-    |
-193 |         "lesson": {
-194 |             "what_worked": "Regular heartbeat prevents idle timeout on long-lived WebSocket connections",
-195 |             "takeaway": "WebSocket connections need periodic activity to avoid idle timeouts"
-    |                                                                                         ^^^^^
-196 |         }
-197 |     },
-    |
-
-E501 Line too long (92 > 88)
-   --> generate_api_network_ghap.py:208:89
-    |
-207 |     collector = ObservationCollector()
-208 |     persister = ObservationPersister(vector_store=vector_store, embedding_service=embedding)
-    |                                                                                         ^^^^
-209 |
-210 |     print(f"Generating {len(GHAP_ENTRIES)} GHAP entries for API and network debugging...")
-    |
-
-E501 Line too long (90 > 88)
-   --> generate_api_network_ghap.py:210:89
-    |
-208 |     persister = ObservationPersister(vector_store=vector_store, embedding_service=embedding)
-209 |
-210 |     print(f"Generating {len(GHAP_ENTRIES)} GHAP entries for API and network debugging...")
-    |                                                                                         ^^
-211 |
-212 |     for i, entry_data in enumerate(GHAP_ENTRIES, 1):
-    |
-
-E501 Line too long (120 > 88)
-   --> generate_api_network_ghap.py:271:89
-    |
-270 |     print(f"\nSuccessfully generated {len(GHAP_ENTRIES)} GHAP entries!")
-271 |     print("All entries focused on: API debugging, network issues, timeouts, rate limiting, SSL/TLS, connection pooling")
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |
-
-I001 [*] Import block is un-sorted or un-formatted
-  --> generate_db_debugging_ghap.py:3:1
-   |
- 1 |   """Generate 12 GHAP entries for database and data layer debugging theme."""
- 2 |
- 3 | / import asyncio
- 4 | | import random
- 5 | | from datetime import datetime
- 6 | |
- 7 | | from clams.observation import (
- 8 | |     Domain,
- 9 | |     Lesson,
-10 | |     ObservationCollector,
-11 | |     ObservationPersister,
-12 | |     OutcomeStatus,
-13 | |     RootCause,
-14 | |     Strategy,
-15 | | )
-16 | | from clams.storage.qdrant import QdrantVectorStore
-17 | | from clams.embedding import NomicEmbedding
-   | |__________________________________________^
-   |
-help: Organize imports
-
-F401 [*] `random` imported but unused
- --> generate_db_debugging_ghap.py:4:8
-  |
-3 | import asyncio
-4 | import random
-  |        ^^^^^^
-5 | from datetime import datetime
-  |
-help: Remove unused import: `random`
-
-F401 [*] `datetime.datetime` imported but unused
- --> generate_db_debugging_ghap.py:5:22
-  |
-3 | import asyncio
-4 | import random
-5 | from datetime import datetime
-  |                      ^^^^^^^^
-6 |
-7 | from clams.observation import (
-  |
-help: Remove unused import: `datetime.datetime`
-
-E501 Line too long (93 > 88)
-  --> generate_db_debugging_ghap.py:24:89
-   |
-22 |     {
-23 |         "goal": "Fix N+1 query problem causing severe API slowdown",
-24 |         "hypothesis": "ORM lazy loading triggers individual queries for each related object",
-   |                                                                                         ^^^^^
-25 |         "action": "Add eager loading with select_related() for foreign keys",
-26 |         "prediction": "Query count will drop from 1000+ to under 10 per request",
-   |
-
-E501 Line too long (126 > 88)
-  --> generate_db_debugging_ghap.py:29:89
-   |
-27 |         "strategy": Strategy.ROOT_CAUSE_ANALYSIS,
-28 |         "outcome": "confirmed",
-29 |         "result": "Added select_related('user', 'category') - queries dropped from 1203 to 3, response time from 8s to 120ms",
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-30 |         "lesson": {
-31 |             "what_worked": "Django debug toolbar revealed N+1, select_related eliminated extra queries",
-   |
-
-E501 Line too long (104 > 88)
-  --> generate_db_debugging_ghap.py:31:89
-   |
-29 |         "result": "Added select_related('user', 'category') - queries dropped from 1203 to 3, response time from 8s to 120ms",
-30 |         "lesson": {
-31 |             "what_worked": "Django debug toolbar revealed N+1, select_related eliminated extra queries",
-   |                                                                                         ^^^^^^^^^^^^^^^^
-32 |             "takeaway": "Always use select_related() or prefetch_related() when accessing foreign key relationships in loops"
-33 |         }
-   |
-
-E501 Line too long (125 > 88)
-  --> generate_db_debugging_ghap.py:32:89
-   |
-30 |         "lesson": {
-31 |             "what_worked": "Django debug toolbar revealed N+1, select_related eliminated extra queries",
-32 |             "takeaway": "Always use select_related() or prefetch_related() when accessing foreign key relationships in loops"
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-33 |         }
-34 |     },
-   |
-
-E501 Line too long (104 > 88)
-  --> generate_db_debugging_ghap.py:42:89
-   |
-40 |         "strategy": Strategy.SYSTEMATIC_ELIMINATION,
-41 |         "outcome": "confirmed",
-42 |         "result": "Found 3 exception handlers that failed to release connections, added proper cleanup",
-   |                                                                                         ^^^^^^^^^^^^^^^^
-43 |         "lesson": {
-44 |             "what_worked": "Connection pool monitoring showed gradual exhaustion, traced to exception paths",
-   |
-
-E501 Line too long (109 > 88)
-  --> generate_db_debugging_ghap.py:44:89
-   |
-42 |         "result": "Found 3 exception handlers that failed to release connections, added proper cleanup",
-43 |         "lesson": {
-44 |             "what_worked": "Connection pool monitoring showed gradual exhaustion, traced to exception paths",
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^
-45 |             "takeaway": "Always use context managers or try/finally blocks to guarantee connection cleanup, especially in error paths"
-46 |         }
-   |
-
-E501 Line too long (134 > 88)
-  --> generate_db_debugging_ghap.py:45:89
+UP007 [*] Use `X | Y` for type annotations
+  --> src/clams/utils/datetime.py:48:33
    |
-43 |         "lesson": {
-44 |             "what_worked": "Connection pool monitoring showed gradual exhaustion, traced to exception paths",
-45 |             "takeaway": "Always use context managers or try/finally blocks to guarantee connection cleanup, especially in error paths"
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-46 |         }
-47 |     },
+48 | def deserialize_datetime(value: Union[str, float, int]) -> datetime:
+   |                                 ^^^^^^^^^^^^^^^^^^^^^^
+49 |     """Deserialize datetime from various formats.
    |
+help: Convert to `X | Y`
 
-E501 Line too long (99 > 88)
-  --> generate_db_debugging_ghap.py:51:89
+UP017 [*] Use `datetime.UTC` alias
+  --> src/clams/utils/datetime.py:94:36
    |
-49 |         "goal": "Resolve transaction deadlocks occurring during concurrent updates",
-50 |         "hypothesis": "Two transactions acquiring row locks in different orders",
-51 |         "action": "Standardize lock acquisition order by primary key across all update operations",
-   |                                                                                         ^^^^^^^^^^^
-52 |         "prediction": "Deadlocks will cease after enforcing consistent ordering",
-53 |         "strategy": Strategy.ROOT_CAUSE_ANALYSIS,
+92 |         # Ensure UTC timezone if naive
+93 |         if dt.tzinfo is None:
+94 |             dt = dt.replace(tzinfo=timezone.utc)
+   |                                    ^^^^^^^^^^^^
+95 |         return dt
    |
+help: Convert to `datetime.UTC` alias
 
-E501 Line too long (176 > 88)
-  --> generate_db_debugging_ghap.py:59:89
-   |
-57 | …
-58 | …
-59 | …uiring gap locks in different orders based on WHERE clause order - needed to order by PK in the SELECT itself"
-   |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-60 | …
-61 | …
-   |
-
-E501 Line too long (102 > 88)
-  --> generate_db_debugging_ghap.py:62:89
-   |
-60 | …     },
-61 | …     "lesson": {
-62 | …         "what_worked": "Added ORDER BY id to all SELECT FOR UPDATE queries, deadlocks eliminated",
-   |                                                                                       ^^^^^^^^^^^^^^
-63 | …         "takeaway": "Gap locks from range queries can deadlock - always use ORDER BY in SELECT FOR UPDATE to ensure consistent lock …
-64 | …     }
-   |
-
-E501 Line too long (145 > 88)
-  --> generate_db_debugging_ghap.py:63:89
-   |
-61 | …
-62 | …ll SELECT FOR UPDATE queries, deadlocks eliminated",
-63 | …ies can deadlock - always use ORDER BY in SELECT FOR UPDATE to ensure consistent lock ordering"
-   |                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-64 | …
-65 | …
-   |
-
-E501 Line too long (112 > 88)
-  --> generate_db_debugging_ghap.py:73:89
-   |
-71 |         "strategy": Strategy.CHECK_ASSUMPTIONS,
-72 |         "outcome": "confirmed",
-73 |         "result": "Added composite index on (created_at, status, user_id), query time dropped from 45s to 0.3s",
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^
-74 |         "lesson": {
-75 |             "what_worked": "EXPLAIN ANALYZE showed sequential scan, composite index enabled index-only scan",
-   |
-
-E501 Line too long (109 > 88)
-  --> generate_db_debugging_ghap.py:75:89
-   |
-73 |         "result": "Added composite index on (created_at, status, user_id), query time dropped from 45s to 0.3s",
-74 |         "lesson": {
-75 |             "what_worked": "EXPLAIN ANALYZE showed sequential scan, composite index enabled index-only scan",
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^
-76 |             "takeaway": "Always check query plans with EXPLAIN before adding indexes - composite indexes for multi-column filters"
-77 |         }
-   |
-
-E501 Line too long (130 > 88)
-  --> generate_db_debugging_ghap.py:76:89
-   |
-74 |         "lesson": {
-75 |             "what_worked": "EXPLAIN ANALYZE showed sequential scan, composite index enabled index-only scan",
-76 |             "takeaway": "Always check query plans with EXPLAIN before adding indexes - composite indexes for multi-column filters"
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-77 |         }
-78 |     },
-   |
-
-E501 Line too long (155 > 88)
-  --> generate_db_debugging_ghap.py:90:89
-   |
-88 | …
-89 | …
-90 | …data from database read replicas with replication lag - cache was correct but source data was stale"
-   |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-91 | …
-92 | …
-   |
-
-E501 Line too long (122 > 88)
-  --> generate_db_debugging_ghap.py:93:89
-   |
-91 |         },
-92 |         "lesson": {
-93 |             "what_worked": "Added read-your-writes consistency by routing updates to primary, replication lag monitoring",
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-94 |             "takeaway": "Consider replication lag when debugging cache issues - stale replica reads can appear as cache problems"
-95 |         }
-   |
-
-E501 Line too long (129 > 88)
-  --> generate_db_debugging_ghap.py:94:89
-   |
-92 |         "lesson": {
-93 |             "what_worked": "Added read-your-writes consistency by routing updates to primary, replication lag monitoring",
-94 |             "takeaway": "Consider replication lag when debugging cache issues - stale replica reads can appear as cache problems"
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-95 |         }
-96 |     },
-   |
-
-E501 Line too long (99 > 88)
-   --> generate_db_debugging_ghap.py:106:89
-    |
-104 |         "result": "Set max_idle_time from 3600s to 300s, connection leaks disappeared",
-105 |         "lesson": {
-106 |             "what_worked": "Aggressive timeout recycled leaked connections before pool exhaustion",
-    |                                                                                         ^^^^^^^^^^^
-107 |             "takeaway": "Set conservative connection timeouts to compensate for application bugs that leak connections"
-108 |         }
-    |
-
-E501 Line too long (119 > 88)
-   --> generate_db_debugging_ghap.py:107:89
-    |
-105 |         "lesson": {
-106 |             "what_worked": "Aggressive timeout recycled leaked connections before pool exhaustion",
-107 |             "takeaway": "Set conservative connection timeouts to compensate for application bugs that leak connections"
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-108 |         }
-109 |     },
-    |
-
-E501 Line too long (104 > 88)
-   --> generate_db_debugging_ghap.py:117:89
-    |
-115 |         "strategy": Strategy.CHECK_ASSUMPTIONS,
-116 |         "outcome": "confirmed",
-117 |         "result": "Changed to bulk_create(batch_size=1000), time dropped from 3h to 4min for 100k rows",
-    |                                                                                         ^^^^^^^^^^^^^^^^
-118 |         "lesson": {
-119 |             "what_worked": "Bulk insert with batching amortized transaction overhead across many rows",
-    |
-
-E501 Line too long (103 > 88)
-   --> generate_db_debugging_ghap.py:119:89
-    |
-117 |         "result": "Changed to bulk_create(batch_size=1000), time dropped from 3h to 4min for 100k rows",
-118 |         "lesson": {
-119 |             "what_worked": "Bulk insert with batching amortized transaction overhead across many rows",
-    |                                                                                         ^^^^^^^^^^^^^^^
-120 |             "takeaway": "Use bulk operations for large datasets - batch_size prevents memory bloat and transaction size issues"
-121 |         }
-    |
-
-E501 Line too long (127 > 88)
-   --> generate_db_debugging_ghap.py:120:89
-    |
-118 |         "lesson": {
-119 |             "what_worked": "Bulk insert with batching amortized transaction overhead across many rows",
-120 |             "takeaway": "Use bulk operations for large datasets - batch_size prevents memory bloat and transaction size issues"
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-121 |         }
-122 |     },
-    |
-
-E501 Line too long (160 > 88)
-   --> generate_db_debugging_ghap.py:134:89
-    |
-132 | …
-133 | …
-134 | …nullable to NOT NULL with default value, existing NULL rows got default value breaking business logic"
-    |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-135 | …
-136 | …
-    |
-
-E501 Line too long (129 > 88)
-   --> generate_db_debugging_ghap.py:137:89
-    |
-135 |         },
-136 |         "lesson": {
-137 |             "what_worked": "Compared pre/post migration data, found NULL -> default conversions, backfilled with correct values",
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-138 |             "takeaway": "Validate data integrity after schema migrations, especially NULL handling changes"
-139 |         }
-    |
-
-E501 Line too long (107 > 88)
-   --> generate_db_debugging_ghap.py:138:89
+UP017 [*] Use `datetime.UTC` alias
+   --> src/clams/utils/datetime.py:100:53
     |
-136 |         "lesson": {
-137 |             "what_worked": "Compared pre/post migration data, found NULL -> default conversions, backfilled with correct values",
-138 |             "takeaway": "Validate data integrity after schema migrations, especially NULL handling changes"
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^
-139 |         }
-140 |     },
+ 98 |         # Handle Unix timestamps
+ 99 |         try:
+100 |             return datetime.fromtimestamp(value, tz=timezone.utc)
+    |                                                     ^^^^^^^^^^^^
+101 |         except (OSError, OverflowError, ValueError) as e:
+102 |             raise ValueError(
     |
-
-E501 Line too long (104 > 88)
-   --> generate_db_debugging_ghap.py:150:89
-    |
-148 |         "result": "Wrapped delete operations in transaction, violations eliminated",
-149 |         "lesson": {
-150 |             "what_worked": "Transaction isolation prevented race between parent delete and child query",
-    |                                                                                         ^^^^^^^^^^^^^^^^
-151 |             "takeaway": "Always use transactions for multi-table operations with referential integrity requirements"
-152 |         }
-    |
-
-E501 Line too long (116 > 88)
-   --> generate_db_debugging_ghap.py:151:89
-    |
-149 |         "lesson": {
-150 |             "what_worked": "Transaction isolation prevented race between parent delete and child query",
-151 |             "takeaway": "Always use transactions for multi-table operations with referential integrity requirements"
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-152 |         }
-153 |     },
-    |
-
-E501 Line too long (96 > 88)
-   --> generate_db_debugging_ghap.py:161:89
-    |
-159 |         "strategy": Strategy.SYSTEMATIC_ELIMINATION,
-160 |         "outcome": "confirmed",
-161 |         "result": "Replaced 3-level nested subquery with JOIN, execution time from 12s to 0.8s",
-    |                                                                                         ^^^^^^^^
-162 |         "lesson": {
-163 |             "what_worked": "Raw SQL analysis showed unnecessary nesting, refactored to use annotate() with joins",
-    |
-
-E501 Line too long (114 > 88)
-   --> generate_db_debugging_ghap.py:163:89
-    |
-161 |         "result": "Replaced 3-level nested subquery with JOIN, execution time from 12s to 0.8s",
-162 |         "lesson": {
-163 |             "what_worked": "Raw SQL analysis showed unnecessary nesting, refactored to use annotate() with joins",
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
-164 |             "takeaway": "Review generated SQL for complex querysets - sometimes manual query construction is clearer and faster"
-165 |         }
-    |
-
-E501 Line too long (128 > 88)
-   --> generate_db_debugging_ghap.py:164:89
-    |
-162 |         "lesson": {
-163 |             "what_worked": "Raw SQL analysis showed unnecessary nesting, refactored to use annotate() with joins",
-164 |             "takeaway": "Review generated SQL for complex querysets - sometimes manual query construction is clearer and faster"
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-165 |         }
-166 |     },
-    |
-
-E501 Line too long (141 > 88)
-   --> generate_db_debugging_ghap.py:178:89
-    |
-176 | …
-177 | …
-178 | …instances each with their own pools - total connections across all instances exceeded limit"
-    |                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-179 | …
-180 | …
-    |
-
-E501 Line too long (136 > 88)
-   --> generate_db_debugging_ghap.py:181:89
-    |
-179 | …
-180 | …
-181 | …s (pool_size × instance_count), set per-instance pool = max_connections / instance_count",
-    |                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-182 | …s must account for all application instances, not just one"
-183 | …
-    |
-
-E501 Line too long (105 > 88)
-   --> generate_db_debugging_ghap.py:182:89
-    |
-180 |         "lesson": {
-181 |             "what_worked": "Calculated total as (pool_size × instance_count), set per-instance pool = max_connections / instance_coun…
-182 |             "takeaway": "Connection pool limits must account for all application instances, not just one"
-    |                                                                                         ^^^^^^^^^^^^^^^^^
-183 |         }
-184 |     },
-    |
-
-E501 Line too long (91 > 88)
-   --> generate_db_debugging_ghap.py:192:89
-    |
-190 |         "strategy": Strategy.ROOT_CAUSE_ANALYSIS,
-191 |         "outcome": "confirmed",
-192 |         "result": "Set REPEATABLE READ for critical transactions, lost updates eliminated",
-    |                                                                                         ^^^
-193 |         "lesson": {
-194 |             "what_worked": "Higher isolation level prevented phantom reads during read-modify-write cycles",
-    |
-
-E501 Line too long (108 > 88)
-   --> generate_db_debugging_ghap.py:194:89
-    |
-192 |         "result": "Set REPEATABLE READ for critical transactions, lost updates eliminated",
-193 |         "lesson": {
-194 |             "what_worked": "Higher isolation level prevented phantom reads during read-modify-write cycles",
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^
-195 |             "takeaway": "Use REPEATABLE READ or SERIALIZABLE for read-modify-write patterns to prevent lost updates"
-196 |         }
-    |
-
-E501 Line too long (116 > 88)
-   --> generate_db_debugging_ghap.py:195:89
-    |
-193 |         "lesson": {
-194 |             "what_worked": "Higher isolation level prevented phantom reads during read-modify-write cycles",
-195 |             "takeaway": "Use REPEATABLE READ or SERIALIZABLE for read-modify-write patterns to prevent lost updates"
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-196 |         }
-197 |     },
-    |
-
-E501 Line too long (92 > 88)
-   --> generate_db_debugging_ghap.py:208:89
-    |
-207 |     collector = ObservationCollector()
-208 |     persister = ObservationPersister(vector_store=vector_store, embedding_service=embedding)
-    |                                                                                         ^^^^
-209 |
-210 |     print(f"Generating {len(GHAP_ENTRIES)} GHAP entries for database/data layer debugging...")
-    |
-
-E501 Line too long (94 > 88)
-   --> generate_db_debugging_ghap.py:210:89
-    |
-208 |     persister = ObservationPersister(vector_store=vector_store, embedding_service=embedding)
-209 |
-210 |     print(f"Generating {len(GHAP_ENTRIES)} GHAP entries for database/data layer debugging...")
-    |                                                                                         ^^^^^^
-211 |
-212 |     for i, entry_data in enumerate(GHAP_ENTRIES, 1):
-    |
-
-E501 Line too long (101 > 88)
-   --> generate_db_debugging_ghap.py:224:89
-    |
-222 |             )
-223 |
-224 |             print(f"[{i}/{len(GHAP_ENTRIES)}] Created GHAP {entry.id}: {entry_data['goal'][:60]}...")
-    |                                                                                         ^^^^^^^^^^^^^
-225 |
-226 |             # Prepare outcome data
-    |
-
-E501 Line too long (122 > 88)
-   --> generate_db_debugging_ghap.py:271:89
-    |
-270 |     print(f"\nSuccessfully generated {len(GHAP_ENTRIES)} GHAP entries!")
-271 |     print("All entries focused on: database debugging, N+1 queries, connection management, deadlocks, query optimization")
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |
-
-I001 [*] Import block is un-sorted or un-formatted
-  --> generate_testing_ghaps.py:4:1
-   |
- 2 |   """Generate 12 GHAP entries focused on debugging testing and CI/CD issues."""
- 3 |
- 4 | / import asyncio
- 5 | |
- 6 | | from clams.observation import (
- 7 | |     Domain,
- 8 | |     ObservationCollector,
- 9 | |     ObservationPersister,
-10 | |     OutcomeStatus,
-11 | |     RootCause,
-12 | |     Lesson,
-13 | |     Strategy,
-14 | | )
-15 | | from clams.embedding import NomicEmbedding
-16 | | from clams.storage.qdrant import QdrantVectorStore
-   | |__________________________________________________^
-   |
-help: Organize imports
+help: Convert to `datetime.UTC` alias
 
-E501 Line too long (92 > 88)
-  --> generate_testing_ghaps.py:26:89
+E402 Module level import not at top of file
+  --> tests/integration/test_data_flows.py:28:1
    |
-24 |     vector_store = QdrantVectorStore()
-25 |     collector = ObservationCollector()
-26 |     persister = ObservationPersister(vector_store=vector_store, embedding_service=embedding)
-   |                                                                                         ^^^^
+26 | pytestmark = pytest.mark.integration
 27 |
-28 |     # GHAP 1: Flaky test with race condition (confirmed)
+28 | from clams.embedding.mock import MockEmbedding
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+29 | from clams.observation import (
+30 |     Domain,
    |
 
-E501 Line too long (99 > 88)
-  --> generate_testing_ghaps.py:33:89
+E402 Module level import not at top of file
+  --> tests/integration/test_data_flows.py:29:1
    |
-31 |         strategy=Strategy.ROOT_CAUSE_ANALYSIS,
-32 |         goal="Fix intermittent failure in test_session_cleanup",
-33 |         hypothesis="Test fails because cleanup worker thread doesn't finish before assertions run",
-   |                                                                                         ^^^^^^^^^^^
-34 |         action="Add thread synchronization with join() and verify cleanup completion",
-35 |         prediction="Test will pass consistently when cleanup thread is properly synchronized"
-   |
-
-E501 Line too long (93 > 88)
-  --> generate_testing_ghaps.py:35:89
-   |
-33 |         hypothesis="Test fails because cleanup worker thread doesn't finish before assertions run",
-34 |         action="Add thread synchronization with join() and verify cleanup completion",
-35 |         prediction="Test will pass consistently when cleanup thread is properly synchronized"
-   |                                                                                         ^^^^^
-36 |     )
-37 |     resolved1 = await collector.resolve_ghap(
+28 |   from clams.embedding.mock import MockEmbedding
+29 | / from clams.observation import (
+30 | |     Domain,
+31 | |     Lesson,
+32 | |     ObservationCollector,
+33 | |     ObservationPersister,
+34 | |     OutcomeStatus,
+35 | |     RootCause,
+36 | |     Strategy,
+37 | | )
+   | |_^
+38 |   from clams.search.searcher import Searcher
+39 |   from clams.storage.metadata import MetadataStore
    |
 
-E501 Line too long (98 > 88)
-  --> generate_testing_ghaps.py:39:89
+E402 Module level import not at top of file
+  --> tests/integration/test_data_flows.py:38:1
    |
-37 |     resolved1 = await collector.resolve_ghap(
-38 |         status=OutcomeStatus.CONFIRMED,
-39 |         result="Added threading.Event to signal cleanup completion, test now passes 100/100 runs",
-   |                                                                                         ^^^^^^^^^^
-40 |         lesson=Lesson(
-41 |             what_worked="Using Event.wait(timeout=5) to ensure cleanup finishes before assertions",
-   |
-
-E501 Line too long (99 > 88)
-  --> generate_testing_ghaps.py:41:89
-   |
-39 |         result="Added threading.Event to signal cleanup completion, test now passes 100/100 runs",
-40 |         lesson=Lesson(
-41 |             what_worked="Using Event.wait(timeout=5) to ensure cleanup finishes before assertions",
-   |                                                                                         ^^^^^^^^^^^
-42 |             takeaway="Always synchronize with background threads in tests using events or joins"
-43 |         )
+36 |     Strategy,
+37 | )
+38 | from clams.search.searcher import Searcher
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+39 | from clams.storage.metadata import MetadataStore
+40 | from clams.storage.qdrant import QdrantVectorStore
    |
 
-E501 Line too long (96 > 88)
-  --> generate_testing_ghaps.py:42:89
+E402 Module level import not at top of file
+  --> tests/integration/test_data_flows.py:39:1
    |
-40 |         lesson=Lesson(
-41 |             what_worked="Using Event.wait(timeout=5) to ensure cleanup finishes before assertions",
-42 |             takeaway="Always synchronize with background threads in tests using events or joins"
-   |                                                                                         ^^^^^^^^
-43 |         )
-44 |     )
-   |
-
-E501 Line too long (89 > 88)
-  --> generate_testing_ghaps.py:53:89
-   |
-51 |         strategy=Strategy.CHECK_ASSUMPTIONS,
-52 |         goal="Fix test_api_call failure where mock never gets called",
-53 |         hypothesis="Mock patch path is incorrect, should be where it's used not defined",
-   |                                                                                         ^
-54 |         action="Change @patch('module.api') to @patch('tested_module.api')",
-55 |         prediction="Mock will be called when patched at import location"
+37 | )
+38 | from clams.search.searcher import Searcher
+39 | from clams.storage.metadata import MetadataStore
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+40 | from clams.storage.qdrant import QdrantVectorStore
    |
 
-E501 Line too long (113 > 88)
-  --> generate_testing_ghaps.py:59:89
+F401 [*] `clams.storage.metadata.MetadataStore` imported but unused
+  --> tests/integration/test_data_flows.py:39:36
    |
-57 |     resolved2 = await collector.resolve_ghap(
-58 |         status=OutcomeStatus.FALSIFIED,
-59 |         result="Patch path was correct. Real issue was test calling old cached instance before mock was set up.",
-   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^
-60 |         surprise="Mock path was fine, but instance caching bypassed the mock entirely",
-61 |         root_cause=RootCause(
+37 | )
+38 | from clams.search.searcher import Searcher
+39 | from clams.storage.metadata import MetadataStore
+   |                                    ^^^^^^^^^^^^^
+40 | from clams.storage.qdrant import QdrantVectorStore
    |
+help: Remove unused import: `clams.storage.metadata.MetadataStore`
 
-E501 Line too long (106 > 88)
-  --> generate_testing_ghaps.py:63:89
+E402 Module level import not at top of file
+  --> tests/integration/test_data_flows.py:40:1
    |
-61 |         root_cause=RootCause(
-62 |             category="wrong-assumption",
-63 |             description="Focused on patch location when real issue was singleton cache loaded before test"
-   |                                                                                         ^^^^^^^^^^^^^^^^^^
-64 |         ),
-65 |         lesson=Lesson(
-   |
-
-E501 Line too long (104 > 88)
-  --> generate_testing_ghaps.py:84:89
-   |
-82 |     resolved3 = await collector.resolve_ghap(
-83 |         status=OutcomeStatus.CONFIRMED,
-84 |         result="Found test_database_migration taking 18 minutes. Split into unit tests with mocked DB.",
-   |                                                                                         ^^^^^^^^^^^^^^^^
-85 |         lesson=Lesson(
-86 |             what_worked="pytest --durations=10 revealed the bottleneck immediately",
+38 | from clams.search.searcher import Searcher
+39 | from clams.storage.metadata import MetadataStore
+40 | from clams.storage.qdrant import QdrantVectorStore
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+41 |
+42 | pytest_plugins = ("pytest_asyncio",)
    |
 
-E501 Line too long (104 > 88)
-  --> generate_testing_ghaps.py:87:89
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/integration/test_data_flows.py:166:48
+    |
+165 |             # 2. Create GHAP entry
+166 |             original_created_at = datetime.now(timezone.utc)
+    |                                                ^^^^^^^^^^^^
+167 |             entry = await collector.create_ghap(
+168 |                 domain=Domain.DEBUGGING,
+    |
+help: Convert to `datetime.UTC` alias
+
+F401 [*] `unittest.mock.patch` imported but unused
+   --> tests/integration/test_data_flows.py:256:35
+    |
+254 |     ) -> None:
+255 |         """Test falsified GHAP flow with root cause captures all data."""
+256 |         from unittest.mock import patch
+    |                                   ^^^^^
+257 |
+258 |         with tempfile.TemporaryDirectory() as tmpdir:
+    |
+help: Remove unused import: `unittest.mock.patch`
+
+F841 Local variable `ghap_id` is assigned to but never used
+   --> tests/integration/test_data_flows.py:277:13
+    |
+275 |                 prediction="Will find the root cause",
+276 |             )
+277 |             ghap_id = entry.id
+    |             ^^^^^^^
+278 |
+279 |             # Resolve as falsified with root cause
+    |
+help: Remove assignment to unused variable `ghap_id`
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/integration/test_data_flows.py:334:44
+    |
+332 |         memory_id = str(uuid4())
+333 |         content = "Important fact about data flow testing"
+334 |         original_created_at = datetime.now(timezone.utc)
+    |                                            ^^^^^^^^^^^^
+335 |
+336 |         # 1. Store memory
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/integration/test_data_flows.py:589:70
+    |
+587 |                 "author": "test_author",
+588 |                 "author_email": "test@example.com",
+589 |                 "timestamp": datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc).isoformat(),
+    |                                                                      ^^^^^^^^^^^^
+590 |                 "files_changed": ["math_utils.py"],
+591 |                 "insertions": 15,
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/integration/test_data_flows.py:600:70
+    |
+598 |                 "author": "test_author",
+599 |                 "author_email": "test@example.com",
+600 |                 "timestamp": datetime(2024, 1, 16, 14, 20, 0, tzinfo=timezone.utc).isoformat(),
+    |                                                                      ^^^^^^^^^^^^
+601 |                 "files_changed": ["math_utils.py"],
+602 |                 "insertions": 3,
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/integration/test_data_flows.py:611:68
+    |
+609 |                 "author": "another_author",
+610 |                 "author_email": "another@example.com",
+611 |                 "timestamp": datetime(2024, 1, 17, 9, 0, 0, tzinfo=timezone.utc).isoformat(),
+    |                                                                    ^^^^^^^^^^^^
+612 |                 "files_changed": ["processor.py", "tests/test_processor.py"],
+613 |                 "insertions": 25,
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/integration/test_data_flows.py:681:72
+    |
+679 |                 "author": "test_author",
+680 |                 "author_email": "test@example.com",
+681 |                 "timestamp": datetime(2024, 1, i + 1, 10, 0, 0, tzinfo=timezone.utc).isoformat(),
+    |                                                                        ^^^^^^^^^^^^
+682 |                 "files_changed": ["math_utils.py"],
+683 |                 "insertions": i * 5,
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/integration/test_data_flows.py:838:61
+    |
+837 |         # Test with explicit UTC timezone
+838 |         utc_time = datetime(2024, 6, 15, 12, 30, 45, tzinfo=timezone.utc)
+    |                                                             ^^^^^^^^^^^^
+839 |
+840 |         commit = {
+    |
+help: Convert to `datetime.UTC` alias
+
+F401 [*] `pytest` imported but unused
+  --> tests/unit/test_type_boundaries.py:18:8
    |
-85 |         lesson=Lesson(
-86 |             what_worked="pytest --durations=10 revealed the bottleneck immediately",
-87 |             takeaway="Profile test duration regularly, set --timeout per test to catch slow tests early"
-   |                                                                                         ^^^^^^^^^^^^^^^^
-88 |         )
-89 |     )
+16 | from typing import get_type_hints
+17 |
+18 | import pytest
+   |        ^^^^^^
    |
+help: Remove unused import: `pytest`
 
-E501 Line too long (107 > 88)
-   --> generate_testing_ghaps.py:104:89
+I001 [*] Import block is un-sorted or un-formatted
+   --> tests/unit/test_type_boundaries.py:307:9
     |
-102 |     resolved4 = await collector.resolve_ghap(
-103 |         status=OutcomeStatus.CONFIRMED,
-104 |         result="Added DATABASE_URL to GitHub Actions secrets, updated .env.example with all required vars",
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^
-105 |         lesson=Lesson(
-106 |             what_worked="Checking .env.example against actual code usage to find missing vars",
+305 |       def test_result_converters_use_correct_fields(self) -> None:
+306 |           """Verify all from_search_result methods access valid SearchResult fields."""
+307 | /         from clams.storage.base import SearchResult
+308 | |         from clams.search.results import (
+309 | |             CodeResult,
+310 | |             CommitResult,
+311 | |             ExperienceResult,
+312 | |             MemoryResult,
+313 | |             ValueResult,
+314 | |         )
+    | |_________^
+315 |
+316 |           search_result_fields = {f.name for f in fields(SearchResult)}
     |
+help: Organize imports
 
-E501 Line too long (95 > 88)
-   --> generate_testing_ghaps.py:106:89
+F841 Local variable `search_result_fields` is assigned to but never used
+   --> tests/unit/test_type_boundaries.py:316:9
     |
-104 |         result="Added DATABASE_URL to GitHub Actions secrets, updated .env.example with all required vars",
-105 |         lesson=Lesson(
-106 |             what_worked="Checking .env.example against actual code usage to find missing vars",
-    |                                                                                         ^^^^^^^
-107 |             takeaway="Maintain .env.example with all required variables, validate in CI setup"
-108 |         )
+314 |         )
+315 |
+316 |         search_result_fields = {f.name for f in fields(SearchResult)}
+    |         ^^^^^^^^^^^^^^^^^^^^
+317 |
+318 |         # All result types with from_search_result methods
     |
+help: Remove assignment to unused variable `search_result_fields`
 
-E501 Line too long (94 > 88)
-   --> generate_testing_ghaps.py:107:89
-    |
-105 |         lesson=Lesson(
-106 |             what_worked="Checking .env.example against actual code usage to find missing vars",
-107 |             takeaway="Maintain .env.example with all required variables, validate in CI setup"
-    |                                                                                         ^^^^^^
-108 |         )
-109 |     )
-    |
-
-E501 Line too long (130 > 88)
-   --> generate_testing_ghaps.py:124:89
-    |
-122 |     resolved5 = await collector.resolve_ghap(
-123 |         status=OutcomeStatus.FALSIFIED,
-124 |         result="Database cleanup was fine. Issue was module-level import executing code that created test user before tests ran.",
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-125 |         surprise="Test isolation issue was at import time, not during test execution",
-126 |         root_cause=RootCause(
-    |
-
-E501 Line too long (90 > 88)
-   --> generate_testing_ghaps.py:128:89
-    |
-126 |         root_cause=RootCause(
-127 |             category="wrong-scope",
-128 |             description="Looked at test cleanup when issue was module import side effects"
-    |                                                                                         ^^
-129 |         ),
-130 |         lesson=Lesson(
-    |
-
-E501 Line too long (112 > 88)
-   --> generate_testing_ghaps.py:131:89
-    |
-129 |         ),
-130 |         lesson=Lesson(
-131 |             what_worked="Moving code from module level to test fixtures eliminated the import-time side effect",
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^
-132 |             takeaway="Avoid code execution at module import - use fixtures or setUp instead"
-133 |         )
-    |
-
-E501 Line too long (92 > 88)
-   --> generate_testing_ghaps.py:132:89
-    |
-130 |         lesson=Lesson(
-131 |             what_worked="Moving code from module level to test fixtures eliminated the import-time side effect",
-132 |             takeaway="Avoid code execution at module import - use fixtures or setUp instead"
-    |                                                                                         ^^^^
-133 |         )
-134 |     )
-    |
-
-E501 Line too long (91 > 88)
-   --> generate_testing_ghaps.py:143:89
-    |
-141 |         strategy=Strategy.ROOT_CAUSE_ANALYSIS,
-142 |         goal="Fix pytest fixture dependency causing test_api to fail",
-143 |         hypothesis="Fixtures executing in wrong order, database not ready when API starts",
-    |                                                                                         ^^^
-144 |         action="Add explicit fixture dependencies: api_client depends on db_session",
-145 |         prediction="Correct dependency order will ensure database is ready"
-    |
-
-E501 Line too long (104 > 88)
-   --> generate_testing_ghaps.py:149:89
-    |
-147 |     resolved6 = await collector.resolve_ghap(
-148 |         status=OutcomeStatus.CONFIRMED,
-149 |         result="Changed @pytest.fixture to take db_session parameter, pytest now ensures correct order",
-    |                                                                                         ^^^^^^^^^^^^^^^^
-150 |         lesson=Lesson(
-151 |             what_worked="Using fixture parameters to declare dependencies explicitly",
-    |
-
-E501 Line too long (99 > 88)
-   --> generate_testing_ghaps.py:152:89
-    |
-150 |         lesson=Lesson(
-151 |             what_worked="Using fixture parameters to declare dependencies explicitly",
-152 |             takeaway="Declare fixture dependencies via parameters, don't rely on implicit ordering"
-    |                                                                                         ^^^^^^^^^^^
-153 |         )
-154 |     )
-    |
-
-E501 Line too long (101 > 88)
-   --> generate_testing_ghaps.py:169:89
-    |
-167 |     resolved7 = await collector.resolve_ghap(
-168 |         status=OutcomeStatus.CONFIRMED,
-169 |         result="Reordered Dockerfile, added GitHub Actions cache, build now 3 minutes instead of 15",
-    |                                                                                         ^^^^^^^^^^^^^
-170 |         lesson=Lesson(
-171 |             what_worked="Copy requirements.txt first, then COPY . later so code changes don't invalidate dependency layer",
-    |
-
-E501 Line too long (123 > 88)
-   --> generate_testing_ghaps.py:171:89
-    |
-169 |         result="Reordered Dockerfile, added GitHub Actions cache, build now 3 minutes instead of 15",
-170 |         lesson=Lesson(
-171 |             what_worked="Copy requirements.txt first, then COPY . later so code changes don't invalidate dependency layer",
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-172 |             takeaway="Optimize Dockerfile layer order: least-changing files first, most-changing last"
-173 |         )
-    |
-
-E501 Line too long (102 > 88)
-   --> generate_testing_ghaps.py:172:89
-    |
-170 |         lesson=Lesson(
-171 |             what_worked="Copy requirements.txt first, then COPY . later so code changes don't invalidate dependency layer",
-172 |             takeaway="Optimize Dockerfile layer order: least-changing files first, most-changing last"
-    |                                                                                         ^^^^^^^^^^^^^^
-173 |         )
-174 |     )
-    |
-
-E501 Line too long (113 > 88)
-   --> generate_testing_ghaps.py:189:89
-    |
-187 |     resolved8 = await collector.resolve_ghap(
-188 |         status=OutcomeStatus.FALSIFIED,
-189 |         result="Test data was correct. Bug was in production code - edge case not handled for negative numbers.",
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^
-190 |         surprise="Test was correctly catching a real bug, not a test issue",
-191 |         root_cause=RootCause(
-    |
-
-E501 Line too long (97 > 88)
-   --> generate_testing_ghaps.py:193:89
-    |
-191 |         root_cause=RootCause(
-192 |             category="wrong-assumption",
-193 |             description="Assumed test was wrong when it was correctly identifying production bug"
-    |                                                                                         ^^^^^^^^^
-194 |         ),
-195 |         lesson=Lesson(
-    |
-
-E501 Line too long (111 > 88)
-   --> generate_testing_ghaps.py:196:89
-    |
-194 |         ),
-195 |         lesson=Lesson(
-196 |             what_worked="Stepping through test case revealed production code assumption about positive inputs",
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^
-197 |             takeaway="When one parametrized case fails, it may be finding a real bug, not test issue"
-198 |         )
-    |
-
-E501 Line too long (101 > 88)
-   --> generate_testing_ghaps.py:197:89
-    |
-195 |         lesson=Lesson(
-196 |             what_worked="Stepping through test case revealed production code assumption about positive inputs",
-197 |             takeaway="When one parametrized case fails, it may be finding a real bug, not test issue"
-    |                                                                                         ^^^^^^^^^^^^^
-198 |         )
-199 |     )
-    |
-
-E501 Line too long (95 > 88)
-   --> generate_testing_ghaps.py:214:89
-    |
-212 |     resolved9 = await collector.resolve_ghap(
-213 |         status=OutcomeStatus.CONFIRMED,
-214 |         result="Added @freeze_time('2024-01-15 10:00:00'), test now passes at any time of day",
-    |                                                                                         ^^^^^^^
-215 |         lesson=Lesson(
-216 |             what_worked="freezegun library for simple time freezing in tests",
-    |
-
-E501 Line too long (90 > 88)
-   --> generate_testing_ghaps.py:217:89
-    |
-215 |         lesson=Lesson(
-216 |             what_worked="freezegun library for simple time freezing in tests",
-217 |             takeaway="Never rely on real time in tests - use time mocking for determinism"
-    |                                                                                         ^^
-218 |         )
-219 |     )
-    |
-
-E501 Line too long (107 > 88)
-   --> generate_testing_ghaps.py:234:89
-    |
-232 |     resolved10 = await collector.resolve_ghap(
-233 |         status=OutcomeStatus.CONFIRMED,
-234 |         result="Found match statement (3.10+) and union types (3.10+). Replaced with if/elif and Union[].",
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^
-235 |         lesson=Lesson(
-236 |             what_worked="Error trace showed SyntaxError pointing directly to match statement",
-    |
-
-E501 Line too long (94 > 88)
-   --> generate_testing_ghaps.py:236:89
-    |
-234 |         result="Found match statement (3.10+) and union types (3.10+). Replaced with if/elif and Union[].",
-235 |         lesson=Lesson(
-236 |             what_worked="Error trace showed SyntaxError pointing directly to match statement",
-    |                                                                                         ^^^^^^
-237 |             takeaway="Check minimum Python version in CI matrix matches project requirements"
-238 |         )
-    |
-
-E501 Line too long (93 > 88)
-   --> generate_testing_ghaps.py:237:89
-    |
-235 |         lesson=Lesson(
-236 |             what_worked="Error trace showed SyntaxError pointing directly to match statement",
-237 |             takeaway="Check minimum Python version in CI matrix matches project requirements"
-    |                                                                                         ^^^^^
-238 |         )
-239 |     )
-    |
-
-E501 Line too long (131 > 88)
-   --> generate_testing_ghaps.py:254:89
-    |
-252 |     resolved11 = await collector.resolve_ghap(
-253 |         status=OutcomeStatus.FALSIFIED,
-254 |         result="Coverage was actually 86% locally. CI failure was because it included migration files. Fixed .coveragerc exclude.",
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-255 |         surprise="Coverage was passing threshold, but CI included files it shouldn't",
-256 |         root_cause=RootCause(
-    |
-
-E501 Line too long (107 > 88)
-   --> generate_testing_ghaps.py:258:89
-    |
-256 |         root_cause=RootCause(
-257 |             category="wrong-scope",
-258 |             description="Assumed missing tests when issue was coverage configuration including wrong files"
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^
-259 |         ),
-260 |         lesson=Lesson(
-    |
-
-E501 Line too long (107 > 88)
-   --> generate_testing_ghaps.py:261:89
-    |
-259 |         ),
-260 |         lesson=Lesson(
-261 |             what_worked="Comparing local coverage output with CI to spot the difference in included files",
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^
-262 |             takeaway="Ensure .coveragerc omit patterns match between local and CI environments"
-263 |         )
-    |
-
-E501 Line too long (95 > 88)
-   --> generate_testing_ghaps.py:262:89
-    |
-260 |         lesson=Lesson(
-261 |             what_worked="Comparing local coverage output with CI to spot the difference in included files",
-262 |             takeaway="Ensure .coveragerc omit patterns match between local and CI environments"
-    |                                                                                         ^^^^^^^
-263 |         )
-264 |     )
-    |
-
-E501 Line too long (101 > 88)
-   --> generate_testing_ghaps.py:279:89
-    |
-277 |     resolved12 = await collector.resolve_ghap(
-278 |         status=OutcomeStatus.CONFIRMED,
-279 |         result="Found 5 file operations without context managers. Changed to 'with open()' pattern.",
-    |                                                                                         ^^^^^^^^^^^^^
-280 |         lesson=Lesson(
-281 |             what_worked="pytest -Werror::ResourceWarning to make warnings fail tests, grep for 'open(' to find all cases",
-    |
-
-E501 Line too long (122 > 88)
-   --> generate_testing_ghaps.py:281:89
-    |
-279 |         result="Found 5 file operations without context managers. Changed to 'with open()' pattern.",
-280 |         lesson=Lesson(
-281 |             what_worked="pytest -Werror::ResourceWarning to make warnings fail tests, grep for 'open(' to find all cases",
-    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-282 |             takeaway="Always use context managers for resources (files, connections, locks)"
-283 |         )
-    |
-
-E501 Line too long (92 > 88)
-   --> generate_testing_ghaps.py:282:89
-    |
-280 |         lesson=Lesson(
-281 |             what_worked="pytest -Werror::ResourceWarning to make warnings fail tests, grep for 'open(' to find all cases",
-282 |             takeaway="Always use context managers for resources (files, connections, locks)"
-    |                                                                                         ^^^^
-283 |         )
-284 |     )
-    |
-
-F401 [*] `starlette.routing.Mount` imported but unused
-  --> src/clams/server/http.py:31:31
+I001 [*] Import block is un-sorted or un-formatted
+  --> tests/utils/test_datetime.py:7:1
    |
-29 | from starlette.requests import Request
-30 | from starlette.responses import JSONResponse, Response
-31 | from starlette.routing import Mount, Route
-   |                               ^^^^^
-32 |
-33 | from clams.server.tools import ServiceContainer
+ 5 |   """
+ 6 |
+ 7 | / from datetime import datetime, timezone, timedelta
+ 8 | | import pytest
+ 9 | |
+10 | | from clams.utils.datetime import serialize_datetime, deserialize_datetime
+   | |_________________________________________________________________________^
    |
-help: Remove unused import: `starlette.routing.Mount`
+help: Organize imports
 
-Found 176 errors.
-[*] 10 fixable with the `--fix` option.
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:18:55
+   |
+16 |     def test_serialize_utc_datetime(self) -> None:
+17 |         """Serialize UTC-aware datetime to ISO 8601 string."""
+18 |         dt = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+   |                                                       ^^^^^^^^^^^^
+19 |         result = serialize_datetime(dt)
+20 |         assert result == "2024-12-14T10:30:00+00:00"
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:30:63
+   |
+28 |     def test_serialize_datetime_with_microseconds(self) -> None:
+29 |         """Microseconds are preserved in serialization."""
+30 |         dt = datetime(2024, 12, 14, 10, 30, 0, 123456, tzinfo=timezone.utc)
+   |                                                               ^^^^^^^^^^^^
+31 |         result = serialize_datetime(dt)
+32 |         assert result == "2024-12-14T10:30:00.123456+00:00"
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:44:53
+   |
+42 |     def test_serialize_datetime_midnight(self) -> None:
+43 |         """Midnight time serializes correctly."""
+44 |         dt = datetime(2024, 12, 14, 0, 0, 0, tzinfo=timezone.utc)
+   |                                                     ^^^^^^^^^^^^
+45 |         result = serialize_datetime(dt)
+46 |         assert result == "2024-12-14T00:00:00+00:00"
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:50:64
+   |
+48 |     def test_serialize_datetime_end_of_day(self) -> None:
+49 |         """End of day serializes correctly."""
+50 |         dt = datetime(2024, 12, 14, 23, 59, 59, 999999, tzinfo=timezone.utc)
+   |                                                                ^^^^^^^^^^^^
+51 |         result = serialize_datetime(dt)
+52 |         assert result == "2024-12-14T23:59:59.999999+00:00"
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:61:61
+   |
+59 |         """Deserialize ISO 8601 string with UTC timezone."""
+60 |         result = deserialize_datetime("2024-12-14T10:30:00+00:00")
+61 |         expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+   |                                                             ^^^^^^^^^^^^
+62 |         assert result == expected
+63 |         assert result.tzinfo == timezone.utc
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:63:33
+   |
+61 |         expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+62 |         assert result == expected
+63 |         assert result.tzinfo == timezone.utc
+   |                                 ^^^^^^^^^^^^
+64 |
+65 |     def test_deserialize_naive_iso_string_assumes_utc(self) -> None:
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:68:61
+   |
+66 |         """Naive ISO string is assumed to be UTC."""
+67 |         result = deserialize_datetime("2024-12-14T10:30:00")
+68 |         expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+   |                                                             ^^^^^^^^^^^^
+69 |         assert result == expected
+70 |         assert result.tzinfo == timezone.utc
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:70:33
+   |
+68 |         expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+69 |         assert result == expected
+70 |         assert result.tzinfo == timezone.utc
+   |                                 ^^^^^^^^^^^^
+71 |
+72 |     def test_deserialize_iso_string_with_microseconds(self) -> None:
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:75:69
+   |
+73 |         """Microseconds are preserved in deserialization."""
+74 |         result = deserialize_datetime("2024-12-14T10:30:00.123456+00:00")
+75 |         expected = datetime(2024, 12, 14, 10, 30, 0, 123456, tzinfo=timezone.utc)
+   |                                                                     ^^^^^^^^^^^^
+76 |         assert result == expected
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:84:65
+   |
+82 |         try:
+83 |             result = deserialize_datetime("2024-12-14T10:30:00Z")
+84 |             expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+   |                                                                 ^^^^^^^^^^^^
+85 |             assert result == expected
+86 |         except ValueError:
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:95:61
+   |
+93 |         timestamp = 1734172200
+94 |         result = deserialize_datetime(timestamp)
+95 |         expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+   |                                                             ^^^^^^^^^^^^
+96 |         assert result == expected
+97 |         assert result.tzinfo == timezone.utc
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+  --> tests/utils/test_datetime.py:97:33
+   |
+95 |         expected = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+96 |         assert result == expected
+97 |         assert result.tzinfo == timezone.utc
+   |                                 ^^^^^^^^^^^^
+98 |
+99 |     def test_deserialize_unix_timestamp_float(self) -> None:
+   |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:103:33
+    |
+101 |         timestamp = 1734172200.123456
+102 |         result = deserialize_datetime(timestamp)
+103 |         assert result.tzinfo == timezone.utc
+    |                                 ^^^^^^^^^^^^
+104 |         # Float precision may vary slightly
+105 |         assert result.year == 2024
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:114:57
+    |
+112 |         """Deserialize Unix epoch (timestamp 0)."""
+113 |         result = deserialize_datetime(0)
+114 |         expected = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    |                                                         ^^^^^^^^^^^^
+115 |         assert result == expected
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:121:60
+    |
+119 |         # 1969-12-31 23:00:00 UTC
+120 |         result = deserialize_datetime(-3600)
+121 |         expected = datetime(1969, 12, 31, 23, 0, 0, tzinfo=timezone.utc)
+    |                                                            ^^^^^^^^^^^^
+122 |         assert result == expected
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:132:59
+    |
+130 |         """Date-only ISO string deserializes to midnight UTC (Python 3.11+)."""
+131 |         result = deserialize_datetime("2024-12-14")
+132 |         expected = datetime(2024, 12, 14, 0, 0, 0, tzinfo=timezone.utc)
+    |                                                           ^^^^^^^^^^^^
+133 |         assert result == expected
+134 |         assert result.tzinfo == timezone.utc
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:134:33
+    |
+132 |         expected = datetime(2024, 12, 14, 0, 0, 0, tzinfo=timezone.utc)
+133 |         assert result == expected
+134 |         assert result.tzinfo == timezone.utc
+    |                                 ^^^^^^^^^^^^
+135 |
+136 |     def test_deserialize_malformed_iso_string_raises_value_error(self) -> None:
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:162:61
+    |
+160 |     def test_round_trip_utc_datetime(self) -> None:
+161 |         """UTC datetime survives round-trip serialization."""
+162 |         original = datetime(2024, 12, 14, 10, 30, 0, tzinfo=timezone.utc)
+    |                                                             ^^^^^^^^^^^^
+163 |         serialized = serialize_datetime(original)
+164 |         deserialized = deserialize_datetime(serialized)
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:173:44
+    |
+171 |         deserialized = deserialize_datetime(serialized)
+172 |         # Original was naive, but deserialized is UTC-aware
+173 |         expected = original.replace(tzinfo=timezone.utc)
+    |                                            ^^^^^^^^^^^^
+174 |         assert deserialized == expected
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:178:69
+    |
+176 |     def test_round_trip_with_microseconds(self) -> None:
+177 |         """Microseconds are preserved through round-trip."""
+178 |         original = datetime(2024, 12, 14, 10, 30, 0, 123456, tzinfo=timezone.utc)
+    |                                                                     ^^^^^^^^^^^^
+179 |         serialized = serialize_datetime(original)
+180 |         deserialized = deserialize_datetime(serialized)
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:197:59
+    |
+195 |     def test_round_trip_various_years(self, year: int) -> None:
+196 |         """Various years round-trip correctly."""
+197 |         original = datetime(year, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
+    |                                                           ^^^^^^^^^^^^
+198 |         serialized = serialize_datetime(original)
+199 |         deserialized = deserialize_datetime(serialized)
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:215:33
+    |
+213 |         """Naive ISO string deserializes with UTC timezone."""
+214 |         result = deserialize_datetime("2024-12-14T10:30:00")
+215 |         assert result.tzinfo == timezone.utc
+    |                                 ^^^^^^^^^^^^
+216 |
+217 |     def test_positive_offset_timezone(self) -> None:
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:254:51
+    |
+252 |         """Very old dates can be serialized/deserialized."""
+253 |         # Year 1000
+254 |         dt = datetime(1000, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    |                                                   ^^^^^^^^^^^^
+255 |         serialized = serialize_datetime(dt)
+256 |         deserialized = deserialize_datetime(serialized)
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:262:56
+    |
+260 |         """Far future dates can be serialized/deserialized."""
+261 |         # Year 9999 (max for Python datetime)
+262 |         dt = datetime(9999, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
+    |                                                        ^^^^^^^^^^^^
+263 |         serialized = serialize_datetime(dt)
+264 |         deserialized = deserialize_datetime(serialized)
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:270:56
+    |
+268 |         """Dates near leap second boundaries work correctly."""
+269 |         # 2016-12-31 23:59:59 UTC (just before leap second)
+270 |         dt = datetime(2016, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
+    |                                                        ^^^^^^^^^^^^
+271 |         serialized = serialize_datetime(dt)
+272 |         deserialized = deserialize_datetime(serialized)
+    |
+help: Convert to `datetime.UTC` alias
+
+UP017 [*] Use `datetime.UTC` alias
+   --> tests/utils/test_datetime.py:277:53
+    |
+275 |     def test_leap_year_feb_29(self) -> None:
+276 |         """Leap year February 29 works correctly."""
+277 |         dt = datetime(2024, 2, 29, 12, 0, 0, tzinfo=timezone.utc)
+    |                                                     ^^^^^^^^^^^^
+278 |         serialized = serialize_datetime(dt)
+279 |         deserialized = deserialize_datetime(serialized)
+    |
+help: Convert to `datetime.UTC` alias
+
+Found 49 errors.
+[*] 42 fixable with the `--fix` option (2 hidden fixes can be enabled with the `--unsafe-fixes` option).
 
 FAIL: Linter errors found
 ✗ Linter clean: FAIL
 
 --- Gate: Type check clean ---
 === Running Type Checker ===
-Directory: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-065
+Directory: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/BUG-062
 
 Detected: Python
 Running: mypy --strict (via uv run)
-Success: no issues found in 64 source files
+Success: no issues found in 66 source files
 
 PASS: Type check clean
 ✓ Type check clean: PASS
