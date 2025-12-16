@@ -110,14 +110,9 @@ class ServerSettings(BaseSettings):
     qdrant_url: str = "http://localhost:6333"
     qdrant_timeout: float = 5.0
 
-    # =========================================================================
-    # Collection names
-    # =========================================================================
-    collection_memories: str = "memories"
-    collection_code: str = "code"  # From CollectionName.CODE
-    collection_commits: str = "commits"
-    collection_values: str = "values"
-    collection_ghap_prefix: str = "ghap"
+    # NOTE: Collection names are NOT stored in ServerSettings.
+    # CollectionName class remains the canonical source (no duplication).
+    # ServerSettings.export_for_shell() imports from CollectionName for shell export.
 
     # =========================================================================
     # Timeouts (seconds)
@@ -175,11 +170,11 @@ def export_for_shell(self, path: Path | str) -> None:
         f"CLAMS_VERIFICATION_TIMEOUT={self.verification_timeout}",
         f"CLAMS_HTTP_CALL_TIMEOUT={self.http_call_timeout}",
         "",
-        "# Collection names",
-        f"CLAMS_COLLECTION_MEMORIES={self.collection_memories}",
-        f"CLAMS_COLLECTION_CODE={self.collection_code}",
-        f"CLAMS_COLLECTION_COMMITS={self.collection_commits}",
-        f"CLAMS_COLLECTION_VALUES={self.collection_values}",
+        "# Collection names (from CollectionName class)",
+        f"CLAMS_COLLECTION_MEMORIES={CollectionName.MEMORIES}",
+        f"CLAMS_COLLECTION_CODE={CollectionName.CODE}",
+        f"CLAMS_COLLECTION_COMMITS={CollectionName.COMMITS}",
+        f"CLAMS_COLLECTION_VALUES={CollectionName.VALUES}",
         "",
     ]
     # ... write to file
