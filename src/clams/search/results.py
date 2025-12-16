@@ -3,23 +3,18 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+from clams.observation.models import Lesson, RootCause
 from clams.storage.base import SearchResult
 
-
-@dataclass
-class RootCause:
-    """Nested dataclass for root cause information."""
-
-    category: str
-    description: str
-
-
-@dataclass
-class Lesson:
-    """Nested dataclass for lesson information."""
-
-    what_worked: str
-    takeaway: str | None
+__all__ = [
+    "CodeResult",
+    "CommitResult",
+    "ExperienceResult",
+    "Lesson",
+    "MemoryResult",
+    "RootCause",
+    "ValueResult",
+]
 
 
 @dataclass
