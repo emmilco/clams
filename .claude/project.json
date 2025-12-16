@@ -1,7 +1,15 @@
 {
+  "project_type": "python",
   "implementation_dirs": ["src/", "clams-visualizer/"],
   "test_dirs": ["tests/"],
   "script_dirs": [".claude/bin/", "scripts/"],
   "doc_dirs": ["docs/", "planning_docs/", "bug_reports/"],
-  "frontend_dirs": ["clams-visualizer/"]
+  "frontend_dirs": ["clams-visualizer/"],
+  "gate_config": {
+    "composite_types": {
+      "clams-visualizer": "javascript"
+    },
+    "skip_checks": [],
+    "extra_checks": []
+  }
 }
