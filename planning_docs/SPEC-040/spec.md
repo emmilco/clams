@@ -40,8 +40,8 @@ Meanwhile, `claws-gate` already uses `detect_project_type()` for routing but dup
 Each type-specific check script follows a standard interface:
 
 ```bash
-# Usage: check_<category>_<type>.sh <worktree_path>
-# Returns: 0 on success, 1 on failure
+# Usage: check_<category>_<type>.sh <worktree_path> [task_id]
+# Returns: 0 on success, 1 on failure, 2 on skip (tool not available)
 # Output: Human-readable progress and results to stdout
 # Errors: Error messages to stderr
 ```
@@ -69,6 +69,7 @@ A new configuration file defines the mapping from (category, type) to scripts:
 
 ```json
 {
+  "version": "1.0",
   "checks": {
     "tests": {
       "python": "check_tests_python.sh",
@@ -88,6 +89,8 @@ A new configuration file defines the mapping from (category, type) to scripts:
     "types": {
       "python": "check_types_python.sh",
       "javascript": "check_types_javascript.sh",
+      "rust": null,
+      "go": null,
       "default": null
     },
     "todos": {
@@ -97,20 +100,15 @@ A new configuration file defines the mapping from (category, type) to scripts:
       "python": "check_orphans_python.sh",
       "default": "check_orphans_generic.sh"
     }
-  },
-  "composite_detection": {
-    "enabled": true,
-    "subdirs": {
-      "clams-visualizer": "javascript"
-    }
   }
 }
 ```
 
+Note: Composite project detection is configured in `project.json` under `gate_config.composite_types`, not in the registry. This keeps project-specific configuration separate from the global check script registry.
+
 **Key features**:
 - `"default"` key provides fallback when no type-specific script exists
-- `null` value means "skip this check for this type"
-- `composite_detection` enables checking multiple project types in subdirectories
+- `null` value means "skip this check for this type" (e.g., Rust/Go have built-in type checking)
 
 ### 3. Routing Logic
 
@@ -316,13 +314,13 @@ None.
 | Migration breaks existing gates | High | Phased rollout with backwards compatibility |
 | Too many small scripts to maintain | Medium | Keep scripts focused; share common functions via sourcing |
 
-## Open Questions
+## Open Questions (Resolved)
 
 1. **Q**: Should `jq` be a required dependency for registry parsing?
-   **Recommendation**: Yes, for robust JSON handling. Add a check and helpful error message.
+   **Decision**: Yes. `jq` is required for robust JSON handling. The dispatcher will check for `jq` availability and provide a helpful error message with install instructions if missing.
 
 2. **Q**: Should composite detection be automatic or require explicit configuration?
-   **Recommendation**: Require explicit configuration via `gate_config.composite_types` to avoid surprises.
+   **Decision**: Explicit configuration via `gate_config.composite_types` in `project.json`. This keeps behavior predictable and avoids surprises from automatic detection.
 
 3. **Q**: How should check failures in composite projects be reported?
-   **Recommendation**: Run all checks, collect all failures, report aggregated results at the end.
+   **Decision**: Run all checks for all detected types, collect all failures, and report aggregated results at the end. This ensures all issues are surfaced in a single gate run.
