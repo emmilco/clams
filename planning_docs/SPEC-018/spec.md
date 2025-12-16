@@ -68,13 +68,15 @@ Add integration tests that verify cold-start collection creation against a real 
 
 ### Values Collection Tests
 
+- [ ] Test `store_value` creates `values` collection on cold start
 - [ ] Test `list_values` creates `values` collection on cold start
 - [ ] Verify collection has correct dimension (768 for embedding service)
+- [ ] Verify stored value is retrievable after cold-start creation
 
 ### Code Units Collection Tests
 
 - [ ] Test `index_file` creates `code_units` collection on cold start
-- [ ] Verify collection has correct dimension (matches embedding service)
+- [ ] Verify collection has correct dimension (768 for code embedder)
 - [ ] Verify indexed code unit is searchable after cold-start creation
 
 ### GHAP Collections Tests
