@@ -2,26 +2,28 @@
 
 ## Problem Statement
 
-MCP tool responses must match the schemas advertised in `_get_all_tool_definitions()` in `src/clams/server/tools/__init__.py`. BUG-026 showed that advertised enums can drift from actual validation. Tests should verify that tool responses match advertised schemas.
+MCP tool responses contain enum values and structured data that must remain consistent with the canonical definitions in `src/clams/server/tools/enums.py`. BUG-026 showed that advertised enums can drift from actual validation. Tests should verify that tool responses contain valid enum values and consistent structure.
 
-When tool responses don't match advertised schemas:
+**Note**: MCP tool definitions only specify input schemas, not output schemas. This spec tests response consistency (valid enums, expected field presence) rather than formal output schema validation.
+
+When tool responses become inconsistent:
 1. Clients may fail to parse responses correctly
 2. Documentation becomes inaccurate
 3. Type-safe clients get incorrect type information
 
 ## Proposed Solution
 
-Add integration tests that invoke MCP tools and verify their response structure matches the schemas advertised in tool definitions.
+Add integration tests that invoke MCP tools and verify their response structure is consistent and contains valid enum values from canonical sources.
 
 ## Acceptance Criteria
 
 - [ ] Test file exists at `tests/server/test_tool_response_schemas.py`
-- [ ] For each MCP tool, tests verify response structure matches advertised output format
+- [ ] For each MCP tool, tests verify response contains expected fields for that tool category
 - [ ] Tests exercise at least one success case per tool
 - [ ] Tests exercise at least one error case per tool (where applicable)
-- [ ] Tests validate that enum values in responses are valid per schema
-- [ ] Tests verify required fields are present in responses
-- [ ] Tests run in CI and fail if response schemas drift
+- [ ] Tests validate that enum values in responses match canonical enums in `enums.py` (e.g., domain, strategy, axis values)
+- [ ] Tests verify required fields are present in responses (e.g., `ghap_id` for start_ghap, `memory_id` for store_memory)
+- [ ] Tests run in CI and fail if response structure drifts
 
 ## Implementation Notes
 
