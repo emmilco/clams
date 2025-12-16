@@ -60,12 +60,14 @@ class HeavyImportChecker(ast.NodeVisitor):
     """AST visitor that checks for top-level heavy imports.
 
     Only flags imports at module level (not inside functions, methods, or classes).
+    Allows imports inside TYPE_CHECKING blocks (for type hints only).
     """
 
     def __init__(self, filename: str) -> None:
         self.filename = filename
         self.issues: list[HeavyImportIssue] = []
         self._in_function = False
+        self._in_type_checking = False
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         """Track when we're inside a function."""
@@ -81,10 +83,33 @@ class HeavyImportChecker(ast.NodeVisitor):
         self.generic_visit(node)
         self._in_function = old_in_function
 
+    def visit_If(self, node: ast.If) -> None:
+        """Track when we're inside an 'if TYPE_CHECKING:' block.
+
+        TYPE_CHECKING imports only execute during static analysis (mypy/pyright),
+        never at runtime, so they're safe for type hints without fork issues.
+        """
+        is_type_checking = (
+            isinstance(node.test, ast.Name) and node.test.id == "TYPE_CHECKING"
+        )
+
+        if is_type_checking:
+            old_in_type_checking = self._in_type_checking
+            self._in_type_checking = True
+            # Only visit the body (true branch), not the orelse (else branch)
+            for child in node.body:
+                self.visit(child)
+            self._in_type_checking = old_in_type_checking
+            # Visit the else branch normally (not inside TYPE_CHECKING)
+            for child in node.orelse:
+                self.visit(child)
+        else:
+            self.generic_visit(node)
+
     def visit_Import(self, node: ast.Import) -> None:
         """Check 'import X' statements."""
-        if self._in_function:
-            return  # Lazy imports inside functions are OK
+        if self._in_function or self._in_type_checking:
+            return  # Lazy imports inside functions or TYPE_CHECKING are OK
 
         for alias in node.names:
             # Get the top-level package name (e.g., 'torch' from 'torch.nn')
@@ -101,8 +126,8 @@ class HeavyImportChecker(ast.NodeVisitor):
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
         """Check 'from X import Y' statements."""
-        if self._in_function:
-            return  # Lazy imports inside functions are OK
+        if self._in_function or self._in_type_checking:
+            return  # Lazy imports inside functions or TYPE_CHECKING are OK
 
         if node.module is None:
             return  # Relative imports without module name
