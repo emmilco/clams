@@ -1,6 +1,10 @@
-"""Vector storage and retrieval."""
+"""Vector storage and retrieval.
 
-from .base import CollectionInfo, SearchResult, StorageSettings, Vector, VectorStore
+Note: StorageSettings has been removed as part of SPEC-029.
+All configuration should now be sourced from clams.server.config.ServerSettings.
+"""
+
+from .base import CollectionInfo, SearchResult, Vector, VectorStore
 from .memory import InMemoryVectorStore
 from .metadata import CallGraphEntry, IndexedFile, MetadataStore, ProjectConfig
 from .qdrant import QdrantVectorStore
@@ -14,7 +18,6 @@ __all__ = [
     "ProjectConfig",
     "QdrantVectorStore",
     "SearchResult",
-    "StorageSettings",
     "Vector",
     "VectorStore",
 ]

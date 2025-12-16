@@ -37,6 +37,16 @@ class TestDefaultSettings:
         assert settings.http_host == "127.0.0.1"
         assert settings.http_port == 6334
 
+    def test_pid_and_log_file_paths(self) -> None:
+        """Test default PID file and log file settings.
+
+        Reference: SPEC-029 - Canonical configuration module.
+        """
+        settings = ServerSettings()
+
+        assert settings.pid_file == "~/.clams/server.pid"
+        assert settings.log_file == "~/.clams/server.log"
+
     def test_timeout_configuration(self) -> None:
         """Test default timeout settings.
 
@@ -203,6 +213,99 @@ class TestExportForShell:
             assert "CLAMS_HDBSCAN_MIN_CLUSTER_SIZE=5" in content
             assert "CLAMS_HDBSCAN_MIN_SAMPLES=3" in content
 
+    def test_export_contains_pid_and_log_file(self) -> None:
+        """Test that exported config contains PID and log file paths.
+
+        Reference: SPEC-029 - Shell scripts need access to PID/log paths.
+        """
+        settings = ServerSettings()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            config_path = Path(tmpdir) / "config.env"
+            settings.export_for_shell(config_path)
+
+            content = config_path.read_text()
+
+            # PID and log file should be exported
+            assert "CLAMS_PID_FILE=" in content
+            assert "CLAMS_LOG_FILE=" in content
+
+    def test_export_expands_tilde_paths(self) -> None:
+        """Test that paths with ~ are expanded in shell export.
+
+        Reference: SPEC-029 - Shell scripts receive absolute paths.
+        """
+        settings = ServerSettings()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            config_path = Path(tmpdir) / "config.env"
+            settings.export_for_shell(config_path)
+
+            content = config_path.read_text()
+
+            # Paths should NOT contain ~ (should be expanded)
+            # Extract lines with file paths
+            for line in content.splitlines():
+                if "=" in line and ("PATH" in line or "FILE" in line):
+                    key, value = line.split("=", 1)
+                    # Skip non-path lines like JOURNAL_PATH (relative path)
+                    if key == "CLAMS_JOURNAL_PATH":
+                        continue
+                    assert "~" not in value, (
+                        f"Path {key} should be expanded, got: {value}"
+                    )
+
+    def test_export_contains_collection_names(self) -> None:
+        """Test that exported config contains collection names.
+
+        Reference: SPEC-029 - Shell scripts may need collection names.
+        """
+        from clams.search.collections import CollectionName
+
+        settings = ServerSettings()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            config_path = Path(tmpdir) / "config.env"
+            settings.export_for_shell(config_path)
+
+            content = config_path.read_text()
+
+            # Collection names should be exported
+            assert f"CLAMS_COLLECTION_MEMORIES={CollectionName.MEMORIES}" in content
+            assert f"CLAMS_COLLECTION_CODE={CollectionName.CODE}" in content
+            assert f"CLAMS_COLLECTION_COMMITS={CollectionName.COMMITS}" in content
+            assert f"CLAMS_COLLECTION_VALUES={CollectionName.VALUES}" in content
+            assert (
+                f"CLAMS_COLLECTION_GHAP_FULL={CollectionName.EXPERIENCES_FULL}"
+                in content
+            )
+
+    def test_export_all_paths_readable_by_bash(self) -> None:
+        """Test that all exported paths can be read by bash.
+
+        Reference: SPEC-029 - Hooks source this file.
+        """
+        settings = ServerSettings()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            config_path = Path(tmpdir) / "config.env"
+            settings.export_for_shell(config_path)
+
+            # Source the file and echo PID_FILE to verify paths work
+            result = subprocess.run(
+                [
+                    "bash",
+                    "-c",
+                    f"source {config_path} && echo $CLAMS_PID_FILE",
+                ],
+                capture_output=True,
+                text=True,
+            )
+
+            assert result.returncode == 0
+            # Should be absolute path (expanded)
+            assert result.stdout.strip().startswith("/")
+
     def test_export_is_shell_sourceable(self) -> None:
         """Test that exported config can be sourced by bash.
 
@@ -319,6 +422,32 @@ class TestFieldDescriptions:
             assert len(field_info.description) > 10, (
                 f"Field '{field_name}' has a too-short description"
             )
+
+
+class TestStorageSettingsRemoval:
+    """Test that StorageSettings has been removed.
+
+    Reference: SPEC-029 - Single source of truth from ServerSettings.
+    """
+
+    def test_storage_settings_import_fails(self) -> None:
+        """Verify StorageSettings is no longer available.
+
+        Reference: SPEC-029 - Eliminates duplicate configuration.
+        """
+        with pytest.raises(ImportError):
+            from clams.storage import StorageSettings  # noqa: F401
+
+    def test_qdrant_vector_store_uses_server_settings(self) -> None:
+        """Verify QdrantVectorStore gets defaults from ServerSettings."""
+        from clams.storage.qdrant import QdrantVectorStore
+
+        # Create instance with explicit in-memory mode
+        store = QdrantVectorStore(url=":memory:")
+
+        # Verify defaults come from ServerSettings, not old StorageSettings
+        settings = ServerSettings()
+        assert store._timeout == settings.qdrant_timeout
 
 
 class TestConfigurationParity:

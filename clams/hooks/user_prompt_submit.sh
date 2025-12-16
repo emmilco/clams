@@ -6,14 +6,30 @@
 # SPEC-008: Uses HTTP transport to singleton MCP server
 # - Blocking: waits for server to be ready (up to 30s)
 # - HTTP: calls assemble_context via POST to /mcp
+#
+# SPEC-029: Sources configuration from ~/.clams/config.env
 
 set -uo pipefail  # No -e: we handle errors explicitly
 
-# Configuration
-CLAMS_DIR="${HOME}/.clams"
-PID_FILE="${CLAMS_DIR}/server.pid"
-SERVER_PORT="${CLAMS_PORT:-6334}"
-SERVER_HOST="${CLAMS_HOST:-127.0.0.1}"
+# Source CLAMS configuration (written by server on startup)
+# See SPEC-029 for canonical configuration module
+CLAMS_CONFIG="${HOME}/.clams/config.env"
+if [ -f "$CLAMS_CONFIG" ]; then
+    # shellcheck source=/dev/null
+    source "$CLAMS_CONFIG"
+fi
+
+# Fallback defaults if config not available (must match ServerSettings defaults)
+CLAMS_HTTP_HOST="${CLAMS_HTTP_HOST:-127.0.0.1}"
+CLAMS_HTTP_PORT="${CLAMS_HTTP_PORT:-6334}"
+CLAMS_PID_FILE="${CLAMS_PID_FILE:-${HOME}/.clams/server.pid}"
+CLAMS_STORAGE_PATH="${CLAMS_STORAGE_PATH:-${HOME}/.clams}"
+
+# Derived configuration using sourced values
+CLAMS_DIR="${CLAMS_STORAGE_PATH}"
+PID_FILE="${CLAMS_PID_FILE}"
+SERVER_PORT="${CLAMS_HTTP_PORT}"
+SERVER_HOST="${CLAMS_HTTP_HOST}"
 SERVER_URL="http://${SERVER_HOST}:${SERVER_PORT}"
 
 # Check if server is running

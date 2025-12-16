@@ -6,7 +6,6 @@ from typing import Any
 
 import numpy as np
 import numpy.typing as npt
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Type alias for vector representation
 Vector = npt.NDArray[np.float32]
@@ -173,21 +172,6 @@ class VectorStore(ABC):
         pass
 
 
-class StorageSettings(BaseSettings):
-    """Storage configuration settings."""
-
-    model_config = SettingsConfigDict(
-        env_prefix="STORAGE_",
-        env_file=".env",
-        env_file_encoding="utf-8",
-        extra="ignore",
-    )
-
-    # Qdrant settings
-    qdrant_url: str = "http://localhost:6333"
-    qdrant_api_key: str | None = None
-    qdrant_timeout: float = 30.0
-
-    # Storage paths
-    storage_path: str = "~/.clams"
-    sqlite_path: str = "~/.clams/metadata.db"
+# NOTE: StorageSettings has been removed as part of SPEC-029.
+# All configuration should now be sourced from clams.server.config.ServerSettings.
+# This eliminates duplicate configuration and prevents drift issues like BUG-037.
