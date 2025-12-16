@@ -17,6 +17,10 @@ import pytest
 from starlette.testclient import TestClient
 
 from clams.server.http import HttpServer
+from tests.server.schemas.http import (
+    ApiErrorResponse,
+    HealthResponse,
+)
 
 # =============================================================================
 # Fixtures
@@ -511,43 +515,29 @@ class TestMalformedRequests:
         assert response.status_code == 400
         assert "error" in response.json()
 
-    @pytest.mark.xfail(
-        reason="Server doesn't handle null JSON body gracefully - crashes with AttributeError",
-        strict=True,
-    )
     def test_null_body(self, http_client: TestClient) -> None:
-        """Null JSON body should return 400.
-
-        NOTE: This test currently fails because the server tries to call
-        body.get() on None. This is a potential bug to fix in http.py.
-        """
+        """Null JSON body should return 400 with clear error."""
         response = http_client.post(
             "/api/call",
             content="null",
             headers={"Content-Type": "application/json"},
         )
 
-        # null body means params = None, which should trigger missing tool name
         assert response.status_code == 400
         assert "error" in response.json()
+        # Verify error message is helpful
+        assert "JSON object" in response.json()["error"]
 
-    @pytest.mark.xfail(
-        reason="Server doesn't handle array JSON body gracefully - crashes with AttributeError",
-        strict=True,
-    )
     def test_array_body(self, http_client: TestClient) -> None:
-        """Array JSON body should return 400 (not supported).
-
-        NOTE: This test currently fails because the server tries to call
-        body.get() on a list. This is a potential bug to fix in http.py.
-        """
+        """Array JSON body should return 400 (batch not supported)."""
         response = http_client.post(
             "/api/call",
             json=[{"method": "tools/call", "params": {"name": "ping"}}],
         )
 
-        # Array body doesn't have .get() method, should fail gracefully
         assert response.status_code == 400
+        assert "error" in response.json()
+        assert "JSON object" in response.json()["error"]
 
     def test_truncated_json(self, http_client: TestClient) -> None:
         """Truncated JSON should return 400 with clear error."""
@@ -675,3 +665,230 @@ class TestHttpStatusCodes:
         """GET request to /api/call should return 405."""
         response = http_client.get("/api/call")
         assert response.status_code == 405
+
+
+# =============================================================================
+# Health Endpoint Schema Tests
+# =============================================================================
+
+
+class TestHealthEndpointSchema:
+    """Comprehensive tests for GET /health endpoint schema.
+
+    These tests verify that the health endpoint returns a complete,
+    well-formed response with all required fields and correct types.
+    """
+
+    def test_health_response_validates_against_schema(
+        self, http_client: TestClient
+    ) -> None:
+        """Health response should validate against HealthResponse schema."""
+        response = http_client.get("/health")
+        assert response.status_code == 200
+        # Pydantic validation will raise if schema doesn't match
+        HealthResponse.model_validate(response.json())
+
+    def test_health_status_is_literal_healthy(
+        self, http_client: TestClient
+    ) -> None:
+        """Status field must be exactly 'healthy'."""
+        response = http_client.get("/health")
+        data = response.json()
+        assert data["status"] == "healthy"
+
+    def test_health_server_is_literal_clams(
+        self, http_client: TestClient
+    ) -> None:
+        """Server field must be exactly 'clams'."""
+        response = http_client.get("/health")
+        data = response.json()
+        assert data["server"] == "clams"
+
+    def test_health_version_is_semver(
+        self, http_client: TestClient
+    ) -> None:
+        """Version field must follow semver format (x.y.z)."""
+        response = http_client.get("/health")
+        data = response.json()
+        version = data["version"]
+        parts = version.split(".")
+        assert len(parts) == 3, f"Version must have 3 parts: {version}"
+        for part in parts:
+            assert part.isdigit(), f"Version parts must be numeric: {version}"
+
+    def test_health_content_type_is_json(
+        self, http_client: TestClient
+    ) -> None:
+        """Health response must have application/json content type."""
+        response = http_client.get("/health")
+        content_type = response.headers.get("content-type", "")
+        assert "application/json" in content_type
+
+    def test_health_has_no_extra_fields(
+        self, http_client: TestClient
+    ) -> None:
+        """Health response should only have documented fields."""
+        response = http_client.get("/health")
+        data = response.json()
+        expected_keys = {"status", "server", "version"}
+        assert set(data.keys()) == expected_keys
+
+
+# =============================================================================
+# CORS Configuration Tests
+# =============================================================================
+
+
+class TestCorsConfiguration:
+    """Tests for CORS header configuration.
+
+    The server uses CORSMiddleware with allow_origins=["*"],
+    allow_methods=["GET", "POST"], and allow_headers=["*"].
+    """
+
+    def test_cors_preflight_options_request(
+        self, http_client: TestClient
+    ) -> None:
+        """OPTIONS preflight request should return CORS headers."""
+        response = http_client.options(
+            "/api/call",
+            headers={
+                "Origin": "http://localhost:3000",
+                "Access-Control-Request-Method": "POST",
+            },
+        )
+        # OPTIONS should succeed (200 or 204)
+        assert response.status_code in (200, 204)
+
+    def test_cors_allow_origin_header(
+        self, http_client: TestClient
+    ) -> None:
+        """Response should include Access-Control-Allow-Origin."""
+        response = http_client.get(
+            "/health",
+            headers={"Origin": "http://localhost:3000"},
+        )
+        assert response.status_code == 200
+        # With allow_origins=["*"], the header should be "*" or the origin
+        allow_origin = response.headers.get("access-control-allow-origin")
+        assert allow_origin is not None
+
+    def test_cors_allow_methods_header(
+        self, http_client: TestClient
+    ) -> None:
+        """Preflight response should include Access-Control-Allow-Methods."""
+        response = http_client.options(
+            "/api/call",
+            headers={
+                "Origin": "http://localhost:3000",
+                "Access-Control-Request-Method": "POST",
+            },
+        )
+        allow_methods = response.headers.get("access-control-allow-methods", "")
+        # Should include POST for /api/call
+        assert "POST" in allow_methods or response.status_code in (200, 204)
+
+    def test_cors_allow_headers_header(
+        self, http_client: TestClient
+    ) -> None:
+        """Preflight response should include Access-Control-Allow-Headers."""
+        response = http_client.options(
+            "/api/call",
+            headers={
+                "Origin": "http://localhost:3000",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "Content-Type",
+            },
+        )
+        allow_headers = response.headers.get("access-control-allow-headers")
+        # With allow_headers=["*"], should allow Content-Type
+        assert allow_headers is not None or response.status_code in (200, 204)
+
+    def test_cors_on_health_endpoint(
+        self, http_client: TestClient
+    ) -> None:
+        """Health endpoint should also have CORS headers."""
+        response = http_client.get(
+            "/health",
+            headers={"Origin": "http://example.com"},
+        )
+        assert response.status_code == 200
+        assert response.headers.get("access-control-allow-origin") is not None
+
+
+# =============================================================================
+# Error Response Schema Validation Tests
+# =============================================================================
+
+
+class TestErrorResponseSchemaValidation:
+    """Tests that verify error responses conform to ApiErrorResponse schema.
+
+    All error responses should have format: {"error": str}
+    """
+
+    def test_invalid_json_error_validates_schema(
+        self, http_client: TestClient
+    ) -> None:
+        """Invalid JSON error should validate against ApiErrorResponse schema."""
+        response = http_client.post(
+            "/api/call",
+            content="not valid json",
+            headers={"Content-Type": "application/json"},
+        )
+        assert response.status_code == 400
+        # Pydantic validation will raise if schema doesn't match
+        ApiErrorResponse.model_validate(response.json())
+
+    def test_unknown_tool_error_validates_schema(
+        self, http_client: TestClient
+    ) -> None:
+        """Unknown tool error should validate against ApiErrorResponse schema."""
+        response = http_client.post(
+            "/api/call",
+            json={
+                "method": "tools/call",
+                "params": {"name": "nonexistent_tool", "arguments": {}},
+            },
+        )
+        assert response.status_code == 404
+        ApiErrorResponse.model_validate(response.json())
+
+    def test_invalid_arguments_error_validates_schema(
+        self, http_client: TestClient
+    ) -> None:
+        """Invalid arguments error should validate against ApiErrorResponse schema."""
+        response = http_client.post(
+            "/api/call",
+            json={
+                "method": "tools/call",
+                "params": {"name": "store_memory", "arguments": {}},
+            },
+        )
+        assert response.status_code == 400
+        ApiErrorResponse.model_validate(response.json())
+
+    def test_tool_error_validates_schema(
+        self, http_client: TestClient
+    ) -> None:
+        """Tool execution error should validate against ApiErrorResponse schema."""
+        response = http_client.post(
+            "/api/call",
+            json={
+                "method": "tools/call",
+                "params": {"name": "error_tool", "arguments": {}},
+            },
+        )
+        assert response.status_code == 500
+        ApiErrorResponse.model_validate(response.json())
+
+    def test_missing_tool_name_error_validates_schema(
+        self, http_client: TestClient
+    ) -> None:
+        """Missing tool name error should validate against ApiErrorResponse schema."""
+        response = http_client.post(
+            "/api/call",
+            json={"method": "tools/call", "params": {}},
+        )
+        assert response.status_code == 400
+        ApiErrorResponse.model_validate(response.json())

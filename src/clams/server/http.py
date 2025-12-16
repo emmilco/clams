@@ -161,6 +161,14 @@ class HttpServer:
             logger.warning("api.invalid_json", error=str(e))
             return JSONResponse({"error": f"Invalid JSON: {e}"}, status_code=400)
 
+        # Validate body is a dict (not null, array, or primitive)
+        if not isinstance(body, dict):
+            logger.warning("api.invalid_body_type", body_type=type(body).__name__)
+            return JSONResponse(
+                {"error": "Request body must be a JSON object"},
+                status_code=400,
+            )
+
         # Extract tool name and arguments
         params = body.get("params", {})
         tool_name = params.get("name")
