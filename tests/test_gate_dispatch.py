@@ -300,9 +300,10 @@ class TestScriptInterface:
         assert "WORKTREE" in content
         # Should source claws-common.sh
         assert "claws-common.sh" in content
-        # Should have proper exit codes
-        assert "exit 0" in content
-        assert "exit 1" in content
+        # Should have proper exit codes (via return or exit)
+        # Scripts use 'return 0/1' in functions and 'exit $?' at end
+        assert "return 0" in content or "exit 0" in content
+        assert "return 1" in content or "exit 1" in content
 
     def test_python_linter_script_interface(self) -> None:
         """Python linter script follows standard interface."""
