@@ -13,10 +13,6 @@ import os
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any
-
-import pytest
-
 
 # Path to the CLAWS scripts
 SCRIPT_DIR = Path(__file__).parent.parent / ".claude" / "bin"
@@ -103,17 +99,23 @@ class TestDispatcherScript:
     def test_dispatcher_validates_category(self) -> None:
         """Dispatcher rejects invalid categories."""
         with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(__file__).parent.parent
             result = subprocess.run(
                 [str(DISPATCH_SCRIPT), "invalid_category", tmpdir],
                 capture_output=True,
                 text=True,
+                cwd=str(project_root),
             )
             assert result.returncode == 2
             assert "Invalid category" in result.stderr
 
 
 class TestProjectTypeDetection:
-    """Tests for project type detection."""
+    """Tests for project type detection.
+
+    Note: The dispatcher requires git context to find the registry.
+    These tests run within the project directory to ensure registry access.
+    """
 
     def test_python_detection_pyproject(self) -> None:
         """Python projects detected via pyproject.toml."""
@@ -121,10 +123,13 @@ class TestProjectTypeDetection:
             # Create pyproject.toml
             (Path(tmpdir) / "pyproject.toml").write_text("[project]\nname = 'test'\n")
 
+            # Run from project root so dispatcher finds registry
+            project_root = Path(__file__).parent.parent
             result = subprocess.run(
                 [str(DISPATCH_SCRIPT), "linter", tmpdir],
                 capture_output=True,
                 text=True,
+                cwd=str(project_root),
             )
             # Should detect python and try to run python linter
             assert "type=python" in result.stdout or "python" in result.stdout.lower()
@@ -134,22 +139,29 @@ class TestProjectTypeDetection:
         with tempfile.TemporaryDirectory() as tmpdir:
             (Path(tmpdir) / "package.json").write_text('{"name": "test"}')
 
+            project_root = Path(__file__).parent.parent
             result = subprocess.run(
                 [str(DISPATCH_SCRIPT), "linter", tmpdir],
                 capture_output=True,
                 text=True,
+                cwd=str(project_root),
             )
-            assert "type=javascript" in result.stdout or "javascript" in result.stdout.lower()
+            assert (
+                "type=javascript" in result.stdout
+                or "javascript" in result.stdout.lower()
+            )
 
     def test_rust_detection_cargo_toml(self) -> None:
         """Rust projects detected via Cargo.toml."""
         with tempfile.TemporaryDirectory() as tmpdir:
             (Path(tmpdir) / "Cargo.toml").write_text('[package]\nname = "test"\n')
 
+            project_root = Path(__file__).parent.parent
             result = subprocess.run(
                 [str(DISPATCH_SCRIPT), "linter", tmpdir],
                 capture_output=True,
                 text=True,
+                cwd=str(project_root),
             )
             assert "type=rust" in result.stdout or "rust" in result.stdout.lower()
 
@@ -158,20 +170,24 @@ class TestProjectTypeDetection:
         with tempfile.TemporaryDirectory() as tmpdir:
             (Path(tmpdir) / "go.mod").write_text("module test\n")
 
+            project_root = Path(__file__).parent.parent
             result = subprocess.run(
                 [str(DISPATCH_SCRIPT), "linter", tmpdir],
                 capture_output=True,
                 text=True,
+                cwd=str(project_root),
             )
             assert "type=go" in result.stdout or "go" in result.stdout.lower()
 
     def test_unknown_type_detection(self) -> None:
         """Unknown project type when no markers present."""
         with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(__file__).parent.parent
             result = subprocess.run(
                 [str(DISPATCH_SCRIPT), "linter", tmpdir],
                 capture_output=True,
                 text=True,
+                cwd=str(project_root),
             )
             assert "type=unknown" in result.stdout or "unknown" in result.stdout.lower()
 
@@ -182,13 +198,18 @@ class TestProjectTypeDetection:
             (Path(tmpdir) / "pyproject.toml").write_text("[project]\nname = 'test'\n")
 
             # But specify javascript explicitly
+            project_root = Path(__file__).parent.parent
             result = subprocess.run(
                 [str(DISPATCH_SCRIPT), "linter", tmpdir, "javascript"],
                 capture_output=True,
                 text=True,
+                cwd=str(project_root),
             )
             # Should use javascript despite python markers
-            assert "type=javascript" in result.stdout or "javascript" in result.stdout.lower()
+            assert (
+                "type=javascript" in result.stdout
+                or "javascript" in result.stdout.lower()
+            )
 
 
 class TestNullSkipBehavior:
@@ -211,10 +232,12 @@ class TestNullSkipBehavior:
             (Path(tmpdir) / "Cargo.toml").write_text('[package]\nname = "test"\n')
 
             # Types check should skip (return 0) for Rust
+            project_root = Path(__file__).parent.parent
             result = subprocess.run(
                 [str(DISPATCH_SCRIPT), "types", tmpdir, "rust"],
                 capture_output=True,
                 text=True,
+                cwd=str(project_root),
             )
             assert result.returncode == 0
             assert "skip" in result.stdout.lower() or "null" in result.stdout.lower()
@@ -355,7 +378,7 @@ class TestIntegration:
         # Exit code depends on linter result (may pass or fail based on code state)
 
     def test_dispatcher_todos_runs(self) -> None:
-        """Dispatcher successfully runs TODO check."""
+        """Dispatcher successfully runs todos check (SPEC-040)."""
         project_root = Path(__file__).parent.parent
 
         result = subprocess.run(
@@ -366,5 +389,5 @@ class TestIntegration:
         )
 
         # Should use default todos script (language-agnostic)
-        # Output indicates check ran
-        assert "TODO" in result.stdout or result.returncode in [0, 1]
+        # Output indicates check ran - check for "todos" category dispatch
+        assert "todos" in result.stdout.lower() or result.returncode in [0, 1]
