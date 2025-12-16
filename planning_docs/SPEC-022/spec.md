@@ -7,9 +7,10 @@ Add comprehensive tests to verify that all HTTP API responses conform to documen
 ## Background
 
 The CLAMS server exposes an HTTP API that serves two primary use cases:
-1. **Claude Code integration** via SSE at `/sse` endpoint
-2. **Hook script integration** via POST at `/api/call` endpoint
-3. **Health monitoring** via GET at `/health` endpoint
+1. **Hook script integration** via POST at `/api/call` endpoint
+2. **Health monitoring** via GET at `/health` endpoint
+
+Note: The SSE endpoint (`/sse`) for Claude Code integration is out of scope for this spec due to its streaming nature requiring different testing approaches.
 
 Previous bugs (e.g., BUG-033) have demonstrated that schema mismatches between hooks and server can cause integration failures. While `test_http_schemas.py` and `test_tool_response_schemas.py` already exist and provide substantial coverage, there are gaps in coverage that this spec addresses.
 
@@ -49,6 +50,8 @@ Previous bugs (e.g., BUG-033) have demonstrated that schema mismatches between h
 5. **Known edge cases marked xfail**: Two tests in `test_http_schemas.py` are marked `xfail` for null/array body handling - these represent actual server bugs that should be fixed.
 
 ## Endpoints to Test
+
+Note: Only `/health` and `/api/call` are in scope. The `/sse` endpoint requires separate testing due to its streaming nature.
 
 ### GET /health
 
@@ -105,18 +108,6 @@ Previous bugs (e.g., BUG-033) have demonstrated that schema mismatches between h
 - Test HTTP method restrictions (GET should return 405)
 - Verify OPTIONS preflight for CORS
 - Test request size limits (if any)
-
-### GET /sse
-
-**Schema considerations**:
-- SSE stream format with event/data fields
-- Session initialization messages
-- Connection lifecycle events
-
-**Required tests**:
-- Connection establishment response headers
-- Initial handshake message format
-- Graceful disconnection handling
 
 ## Schema Validation Approach
 
