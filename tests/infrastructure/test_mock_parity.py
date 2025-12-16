@@ -8,19 +8,22 @@ The tests verify:
 1. Mocks have all methods defined in the production class (both ABC and concrete)
 2. Method signatures match (parameter names, types, defaults)
 3. Return type annotations match
-4. All mock classes across the test suite are verified
+4. Dataclass mocks have correct field names and types
+5. All mock classes across the test suite are verified
 
 Design:
 - The ABC (e.g., clams.context.searcher_types.Searcher) defines the interface contract
 - The concrete class (e.g., clams.search.searcher.Searcher) implements the contract
 - Mocks must implement the ABC interface, which should match the concrete class
 - We test against BOTH to catch drift between ABC and concrete implementations
+- Dataclass mocks are verified for field name and type parity
 
 Reference: R6-A ticket in planning_docs/tickets/recommendations-r5-r8.md
 Related bugs: BUG-040, BUG-041
 """
 
 import inspect
+from dataclasses import fields, is_dataclass
 from typing import Any, get_type_hints
 
 import pytest
@@ -164,6 +167,65 @@ def compare_return_types(
             differences.append(
                 f"{method_name}: return type mismatch - "
                 f"prod={prod_return}, mock={mock_return}"
+            )
+
+    return differences
+
+
+def get_dataclass_fields(cls: type) -> dict[str, type]:
+    """Get field names and types from a dataclass.
+
+    Args:
+        cls: A dataclass type
+
+    Returns:
+        Dict mapping field name to field type
+    """
+    if not is_dataclass(cls):
+        return {}
+
+    return {field.name: field.type for field in fields(cls)}
+
+
+def compare_dataclass_fields(
+    prod_cls: type,
+    mock_cls: type,
+    required_fields: set[str] | None = None,
+) -> list[str]:
+    """Compare dataclass fields between production and mock.
+
+    Args:
+        prod_cls: Production dataclass
+        mock_cls: Mock dataclass
+        required_fields: If set, only verify these fields exist in mock.
+                        If None, verify mock has ALL production fields.
+
+    Returns:
+        List of differences (empty if fields match)
+    """
+    differences: list[str] = []
+
+    prod_fields = get_dataclass_fields(prod_cls)
+    mock_fields = get_dataclass_fields(mock_cls)
+
+    if not prod_fields:
+        differences.append(f"{prod_cls.__name__} is not a dataclass")
+        return differences
+
+    if not mock_fields:
+        differences.append(f"{mock_cls.__name__} is not a dataclass")
+        return differences
+
+    # Determine which fields to check
+    fields_to_verify = required_fields or set(prod_fields.keys())
+
+    # Check for missing fields
+    for field_name in fields_to_verify:
+        if field_name not in prod_fields:
+            continue  # Skip if not actually in production (bad required_fields)
+        if field_name not in mock_fields:
+            differences.append(
+                f"Mock missing field '{field_name}' (type: {prod_fields[field_name]})"
             )
 
     return differences
@@ -820,4 +882,162 @@ class TestParameterizedMockParity:
         assert result["passed"], (
             f"{pair_name}: Interface verification failed:\n"
             + "\n".join(issues)
+        )
+
+
+class TestMockExperienceResultParity:
+    """Verify MockExperienceResult from test_context_tools matches production.
+
+    The mock is a simplified version that only uses fields accessed by the
+    test code. We verify those specific fields match the production dataclass.
+
+    Reference: BUG-040 - bugs caused by dataclass field name mismatches.
+    """
+
+    def test_mock_experience_result_has_required_fields(self) -> None:
+        """Test MockExperienceResult has fields it uses in tests."""
+        from clams.search.results import ExperienceResult
+        from tests.server.test_context_tools import MockExperienceResult
+
+        # The mock uses these fields in tests
+        required_fields = {"domain", "goal", "outcome_status"}
+
+        differences = compare_dataclass_fields(
+            ExperienceResult, MockExperienceResult, required_fields
+        )
+
+        assert not differences, (
+            f"MockExperienceResult field mismatches:\n"
+            + "\n".join(differences)
+            + "\n\nThe mock must have fields matching the production dataclass "
+            "to prevent 'works in test, fails in production' bugs. "
+            "See BUG-040 for an example."
+        )
+
+    def test_mock_experience_result_fields_have_compatible_types(self) -> None:
+        """Test that field types in mock are compatible with production."""
+        from clams.search.results import ExperienceResult
+        from tests.server.test_context_tools import MockExperienceResult
+
+        prod_fields = get_dataclass_fields(ExperienceResult)
+        mock_fields = get_dataclass_fields(MockExperienceResult)
+
+        # Check the fields that exist in both
+        for field_name in mock_fields:
+            if field_name not in prod_fields:
+                continue  # Mock has extra field (allowed)
+
+            prod_type = prod_fields[field_name]
+            mock_type = mock_fields[field_name]
+
+            # For this simple case, types should match exactly
+            assert prod_type == mock_type, (
+                f"Field '{field_name}' type mismatch: "
+                f"production={prod_type}, mock={mock_type}"
+            )
+
+
+def get_all_mock_dataclass_pairs() -> (
+    list[tuple[type, type, str, set[str] | None]]
+):
+    """Return all known mock/production dataclass pairs for verification.
+
+    Each tuple contains:
+    - Production dataclass
+    - Mock dataclass
+    - Description for error messages
+    - Optional set of required fields (None = verify all fields)
+
+    Add new mock/production dataclass pairs here when new mocks are introduced.
+    This ensures all dataclass mocks stay in sync with production.
+
+    Reference: BUG-040 - bugs caused by dataclass field name mismatches.
+    """
+    from clams.search.results import ExperienceResult
+    from tests.server.test_context_tools import MockExperienceResult
+
+    return [
+        # MockExperienceResult only implements subset of fields
+        (
+            ExperienceResult,
+            MockExperienceResult,
+            "MockExperienceResult (test_context_tools)",
+            {"domain", "goal", "outcome_status"},  # Fields used in tests
+        ),
+    ]
+
+
+class TestParameterizedDataclassParity:
+    """Parameterized tests for mock dataclass pairs.
+
+    Similar to TestParameterizedMockParity but for dataclasses
+    where we verify field names rather than method signatures.
+
+    Adding a new mock/production dataclass pair to get_all_mock_dataclass_pairs()
+    automatically includes it in these tests.
+
+    Reference: BUG-040 - bugs caused by dataclass field name mismatches.
+    """
+
+    @pytest.mark.parametrize(
+        "prod_cls,mock_cls,pair_name,required_fields",
+        get_all_mock_dataclass_pairs(),
+        ids=[pair[2] for pair in get_all_mock_dataclass_pairs()],
+    )
+    def test_mock_dataclass_has_required_fields(
+        self,
+        prod_cls: type,
+        mock_cls: type,
+        pair_name: str,
+        required_fields: set[str] | None,
+    ) -> None:
+        """Verify mock dataclass has required fields from production."""
+        differences = compare_dataclass_fields(prod_cls, mock_cls, required_fields)
+
+        assert not differences, (
+            f"{pair_name}: Field mismatches found:\n"
+            + "\n".join(differences)
+            + "\n\nDataclass field mismatches can cause tests to pass but "
+            "production to fail with AttributeError. See BUG-040."
+        )
+
+    @pytest.mark.parametrize(
+        "prod_cls,mock_cls,pair_name,required_fields",
+        get_all_mock_dataclass_pairs(),
+        ids=[pair[2] for pair in get_all_mock_dataclass_pairs()],
+    )
+    def test_mock_dataclass_field_types_match(
+        self,
+        prod_cls: type,
+        mock_cls: type,
+        pair_name: str,
+        required_fields: set[str] | None,
+    ) -> None:
+        """Verify mock dataclass field types match production."""
+        prod_fields = get_dataclass_fields(prod_cls)
+        mock_fields = get_dataclass_fields(mock_cls)
+
+        # Determine which fields to check
+        fields_to_check = required_fields or set(mock_fields.keys())
+
+        type_mismatches: list[str] = []
+        for field_name in fields_to_check:
+            if field_name not in mock_fields:
+                continue  # Missing field handled by other test
+            if field_name not in prod_fields:
+                continue  # Not in production (bad required_fields)
+
+            prod_type = prod_fields[field_name]
+            mock_type = mock_fields[field_name]
+
+            if prod_type != mock_type:
+                type_mismatches.append(
+                    f"Field '{field_name}': prod={prod_type}, mock={mock_type}"
+                )
+
+        assert not type_mismatches, (
+            f"{pair_name}: Field type mismatches found:\n"
+            + "\n".join(type_mismatches)
+            + "\n\nField type differences can cause subtle runtime errors "
+            "that pass in tests but fail in production."
         )
