@@ -67,6 +67,16 @@ class ServerSettings(BaseSettings):
         description="Port for HTTP server mode (used by hooks)",
     )
 
+    pid_file: str = Field(
+        default="~/.clams/server.pid",
+        description="Path to server PID file for daemon management",
+    )
+
+    log_file: str = Field(
+        default="~/.clams/server.log",
+        description="Path to server log file for daemon mode",
+    )
+
     # =========================================================================
     # Timeout configuration
     # =========================================================================
@@ -187,7 +197,8 @@ class ServerSettings(BaseSettings):
         """Export configuration as a shell-sourceable file.
 
         Creates a file that can be sourced by bash scripts to access
-        configuration values as environment variables.
+        configuration values as environment variables. Paths containing
+        ~ are expanded to absolute paths.
 
         Args:
             path: Path to write the config file (e.g., ~/.clams/config.env)
@@ -201,6 +212,9 @@ class ServerSettings(BaseSettings):
             >>> echo $CLAMS_SERVER_COMMAND
             .venv/bin/clams-server
         """
+        # Import here to avoid circular dependency
+        from clams.search.collections import CollectionName
+
         if isinstance(path, str):
             path = Path(path)
 
@@ -215,19 +229,31 @@ class ServerSettings(BaseSettings):
             f"CLAMS_SERVER_COMMAND={self.server_command}",
             f"CLAMS_HTTP_HOST={self.http_host}",
             f"CLAMS_HTTP_PORT={self.http_port}",
+            f"CLAMS_PID_FILE={Path(self.pid_file).expanduser()}",
+            f"CLAMS_LOG_FILE={Path(self.log_file).expanduser()}",
             "",
             "# Timeouts (seconds)",
             f"CLAMS_VERIFICATION_TIMEOUT={self.verification_timeout}",
             f"CLAMS_HTTP_CALL_TIMEOUT={self.http_call_timeout}",
             f"CLAMS_QDRANT_TIMEOUT={self.qdrant_timeout}",
             "",
-            "# Storage paths",
-            f"CLAMS_STORAGE_PATH={self.storage_path}",
-            f"CLAMS_SQLITE_PATH={self.sqlite_path}",
+            "# Storage paths (expanded)",
+            f"CLAMS_STORAGE_PATH={Path(self.storage_path).expanduser()}",
+            f"CLAMS_SQLITE_PATH={Path(self.sqlite_path).expanduser()}",
             f"CLAMS_JOURNAL_PATH={self.journal_path}",
             "",
             "# Qdrant configuration",
             f"CLAMS_QDRANT_URL={self.qdrant_url}",
+            "",
+            "# Collection names (from CollectionName class)",
+            f"CLAMS_COLLECTION_MEMORIES={CollectionName.MEMORIES}",
+            f"CLAMS_COLLECTION_CODE={CollectionName.CODE}",
+            f"CLAMS_COLLECTION_COMMITS={CollectionName.COMMITS}",
+            f"CLAMS_COLLECTION_VALUES={CollectionName.VALUES}",
+            f"CLAMS_COLLECTION_GHAP_FULL={CollectionName.EXPERIENCES_FULL}",
+            f"CLAMS_COLLECTION_GHAP_STRATEGY={CollectionName.EXPERIENCES_STRATEGY}",
+            f"CLAMS_COLLECTION_GHAP_SURPRISE={CollectionName.EXPERIENCES_SURPRISE}",
+            f"CLAMS_COLLECTION_GHAP_ROOT_CAUSE={CollectionName.EXPERIENCES_ROOT_CAUSE}",
             "",
             "# Clustering configuration",
             f"CLAMS_HDBSCAN_MIN_CLUSTER_SIZE={self.hdbscan_min_cluster_size}",

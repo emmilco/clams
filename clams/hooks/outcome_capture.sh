@@ -6,12 +6,26 @@
 # SPEC-008: Uses HTTP transport to singleton MCP server
 # - Quick: 1s timeout on HTTP calls
 # - Silent failure: if server not ready, skip silently
+#
+# SPEC-029: Sources configuration from ~/.clams/config.env
 
 set -uo pipefail  # No -e: we handle errors explicitly
 
-# Configuration
-SERVER_PORT="${CLAMS_PORT:-6335}"
-SERVER_HOST="${CLAMS_HOST:-127.0.0.1}"
+# Source CLAMS configuration (written by server on startup)
+# See SPEC-029 for canonical configuration module
+CLAMS_CONFIG="${HOME}/.clams/config.env"
+if [ -f "$CLAMS_CONFIG" ]; then
+    # shellcheck source=/dev/null
+    source "$CLAMS_CONFIG"
+fi
+
+# Fallback defaults if config not available (must match ServerSettings defaults)
+CLAMS_HTTP_HOST="${CLAMS_HTTP_HOST:-127.0.0.1}"
+CLAMS_HTTP_PORT="${CLAMS_HTTP_PORT:-6334}"
+
+# Derived configuration using sourced values
+SERVER_PORT="${CLAMS_HTTP_PORT}"
+SERVER_HOST="${CLAMS_HTTP_HOST}"
 SERVER_URL="http://${SERVER_HOST}:${SERVER_PORT}"
 
 # Call MCP tool via HTTP (with short timeout)

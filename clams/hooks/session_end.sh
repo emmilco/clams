@@ -2,8 +2,18 @@
 # clams/hooks/session_end.sh
 # Hook: SessionEnd (NOT YET SUPPORTED BY CLAUDE CODE)
 # Purpose: Session cleanup
+#
+# SPEC-029: Sources configuration from ~/.clams/config.env
 
 set -uo pipefail  # No -e: we handle errors explicitly
+
+# Source CLAMS configuration (written by server on startup)
+# See SPEC-029 for canonical configuration module
+CLAMS_CONFIG="${HOME}/.clams/config.env"
+if [ -f "$CLAMS_CONFIG" ]; then
+    # shellcheck source=/dev/null
+    source "$CLAMS_CONFIG"
+fi
 
 # Get script directory
 # This file is at clams/hooks/session_end.sh

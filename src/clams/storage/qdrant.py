@@ -7,7 +7,7 @@ import numpy as np
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http import models as qmodels
 
-from .base import CollectionInfo, SearchResult, StorageSettings, Vector, VectorStore
+from .base import CollectionInfo, SearchResult, Vector, VectorStore
 
 # Namespace UUID for generating deterministic UUIDs from string IDs
 _NAMESPACE = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
@@ -42,14 +42,17 @@ class QdrantVectorStore(VectorStore):
         """Initialize Qdrant client.
 
         Args:
-            url: Qdrant server URL (defaults to settings). Use
-                ":memory:" for in-memory mode.
+            url: Qdrant server URL. Defaults to ServerSettings value.
+                Use ":memory:" for in-memory mode.
             api_key: Optional API key for authentication
-            timeout: Request timeout in seconds
+            timeout: Request timeout in seconds. Defaults to ServerSettings value.
         """
-        settings = StorageSettings()
+        # Import here to avoid circular dependency
+        from clams.server.config import ServerSettings
+
+        settings = ServerSettings()
         self._url = url or settings.qdrant_url
-        self._api_key = api_key or settings.qdrant_api_key
+        self._api_key = api_key  # No default in ServerSettings (it's a secret)
         self._timeout = timeout or settings.qdrant_timeout
 
         # Handle in-memory mode
