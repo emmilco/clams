@@ -253,6 +253,90 @@ import structlog
 
         assert len(issues) == 0
 
+    def test_allows_type_checking_import(self) -> None:
+        """Allows imports inside 'if TYPE_CHECKING:' blocks."""
+        source = """
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import torch
+    from sentence_transformers import SentenceTransformer
+
+def process(tensor: "torch.Tensor") -> None:
+    import torch
+    return torch.zeros(10)
+"""
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".py", delete=False
+        ) as f:
+            f.write(source)
+            f.flush()
+            issues = check_file(Path(f.name))
+
+        assert len(issues) == 0
+
+    def test_allows_type_checking_from_import(self) -> None:
+        """Allows 'from X import Y' inside TYPE_CHECKING blocks."""
+        source = """
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from torch import Tensor
+    from torch.nn import Module
+
+def get_tensor() -> "Tensor":
+    from torch import Tensor
+    return Tensor([1, 2, 3])
+"""
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".py", delete=False
+        ) as f:
+            f.write(source)
+            f.flush()
+            issues = check_file(Path(f.name))
+
+        assert len(issues) == 0
+
+    def test_detects_import_outside_type_checking_else(self) -> None:
+        """Detects heavy imports in else branch of TYPE_CHECKING."""
+        source = """
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import torch
+else:
+    import transformers  # Should be flagged - runs at runtime!
+"""
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".py", delete=False
+        ) as f:
+            f.write(source)
+            f.flush()
+            issues = check_file(Path(f.name))
+
+        assert len(issues) == 1
+        assert issues[0].module_name == "transformers"
+
+    def test_detects_import_after_type_checking_block(self) -> None:
+        """Detects heavy imports after TYPE_CHECKING block ends."""
+        source = """
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import torch  # OK
+
+import sentence_transformers  # Should be flagged - at module level
+"""
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".py", delete=False
+        ) as f:
+            f.write(source)
+            f.flush()
+            issues = check_file(Path(f.name))
+
+        assert len(issues) == 1
+        assert issues[0].module_name == "sentence_transformers"
+
     def test_detects_multiple_violations(self) -> None:
         """Detects all top-level heavy imports."""
         source = """
