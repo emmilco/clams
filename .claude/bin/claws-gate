@@ -200,6 +200,89 @@ run_gate() {
     fi
 }
 
+# Run a gate check via the dispatcher (type-aware routing)
+# Usage: run_dispatch_gate <description> <category> <worktree> [project_type]
+run_dispatch_gate() {
+    local name="$1"
+    local category="$2"
+    local worktree="$3"
+    local project_type="${4:-}"
+
+    echo "--- Gate: $name ---"
+
+    local dispatch_args=("$category" "$worktree")
+    if [[ -n "$project_type" ]]; then
+        dispatch_args+=("$project_type")
+    fi
+
+    if "$SCRIPT_DIR/claws-gate-dispatch" "${dispatch_args[@]}"; then
+        echo "✓ $name: PASS"
+        return 0
+    else
+        local exit_code=$?
+        if [[ $exit_code -eq 2 ]]; then
+            # Exit code 2 = configuration error or tool not available (skip)
+            echo "⚠ $name: SKIP (tool not available)"
+            return 0
+        fi
+        echo "✗ $name: FAIL"
+        return 1
+    fi
+}
+
+# Run checks for composite project (multiple language subdirs)
+# Usage: run_composite_checks <worktree> <failed_var>
+run_composite_checks() {
+    local worktree="$1"
+    local -n _failed=$2
+
+    # Read composite types from project.json
+    local project_config="$CLAUDE_DIR/project.json"
+
+    if [[ ! -f "$project_config" ]] || ! command -v jq &>/dev/null; then
+        return 0
+    fi
+
+    # Check if composite_types is configured
+    if ! jq -e '.gate_config.composite_types' "$project_config" &>/dev/null; then
+        return 0
+    fi
+
+    echo ""
+    echo "=== Composite Project Checks ==="
+
+    # Iterate over composite subdirs
+    local subdirs
+    subdirs=$(jq -r '.gate_config.composite_types | keys[]' "$project_config" 2>/dev/null)
+
+    for subdir in $subdirs; do
+        local subtype subpath
+        subtype=$(jq -r --arg d "$subdir" '.gate_config.composite_types[$d]' "$project_config")
+        subpath="$worktree/$subdir"
+
+        if [[ ! -d "$subpath" ]]; then
+            echo "Warning: Composite subdir not found: $subpath"
+            continue
+        fi
+
+        echo ""
+        echo "--- Checking composite subdir: $subdir ($subtype) ---"
+
+        # Run checks for this subdir with explicit type
+        if ! run_dispatch_gate "Tests pass ($subdir)" "tests" "$subpath" "$subtype"; then
+            _failed=1
+        fi
+        echo ""
+        if ! run_dispatch_gate "Linter clean ($subdir)" "linter" "$subpath" "$subtype"; then
+            _failed=1
+        fi
+        echo ""
+        if ! run_dispatch_gate "Type check ($subdir)" "types" "$subpath" "$subtype"; then
+            _failed=1
+        fi
+    done
+}
+
 check_file_exists() {
     local path="$1"
     local desc="$2"
@@ -347,88 +430,26 @@ cmd_check() {
                 echo "$code_changes" | sed 's/^/  /'
             fi
 
-            # Run appropriate checks based on project type
-            case "$project_type" in
-                python)
-                    echo ""
-                    if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    echo ""
-                    if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    echo ""
-                    if ! run_gate "Type check clean" "check_types.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    echo ""
-                    if ! run_gate "No untracked TODOs" "check_todos.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    ;;
-                javascript)
-                    echo ""
-                    if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    echo ""
-                    if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    echo ""
-                    # TypeScript projects get type checking
-                    if [[ -f "$worktree/tsconfig.json" ]]; then
-                        if ! run_gate "Type check clean" "check_types.sh" "$worktree"; then
-                            failed=1
-                        fi
-                    fi
-                    echo ""
-                    if ! run_gate "No untracked TODOs" "check_todos.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    ;;
-                rust)
-                    echo ""
-                    if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    echo ""
-                    if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    # Rust has built-in type checking via cargo
-                    echo ""
-                    if ! run_gate "No untracked TODOs" "check_todos.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    ;;
-                go)
-                    echo ""
-                    if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    echo ""
-                    if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    # Go has built-in type checking
-                    echo ""
-                    if ! run_gate "No untracked TODOs" "check_todos.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    ;;
-                unknown)
-                    echo ""
-                    echo "--- Skipping language-specific checks (unknown project type) ---"
-                    echo "Note: Project type could not be detected."
-                    echo "Add a .claude/project.json with {\"project_type\": \"<type>\"} to enable checks."
-                    echo ""
-                    if ! run_gate "No untracked TODOs" "check_todos.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    ;;
-            esac
+            # Run type-aware checks via dispatcher
+            echo ""
+            if ! run_dispatch_gate "Tests pass" "tests" "$worktree"; then
+                failed=1
+            fi
+            echo ""
+            if ! run_dispatch_gate "Linter clean" "linter" "$worktree"; then
+                failed=1
+            fi
+            echo ""
+            if ! run_dispatch_gate "Type check clean" "types" "$worktree"; then
+                failed=1
+            fi
+            echo ""
+            if ! run_dispatch_gate "No untracked TODOs" "todos" "$worktree"; then
+                failed=1
+            fi
+
+            # Run composite project checks if configured
+            run_composite_checks "$worktree" failed
             ;;
 
         CODE_REVIEW-TEST)
@@ -442,7 +463,7 @@ cmd_check() {
 
         TEST-INTEGRATE)
             echo ""
-            if ! run_gate "Full test suite passes" "check_tests.sh" "$worktree"; then
+            if ! run_dispatch_gate "Full test suite passes" "tests" "$worktree"; then
                 failed=1
             fi
             ;;
@@ -554,61 +575,18 @@ cmd_check() {
             fi
             echo ""
 
-            # Run appropriate checks based on project type
-            case "$project_type" in
-                python)
-                    if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    echo ""
-                    if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    echo ""
-                    if ! run_gate "Type check clean" "check_types.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    ;;
-                javascript)
-                    if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    echo ""
-                    if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    echo ""
-                    if [[ -f "$worktree/tsconfig.json" ]]; then
-                        if ! run_gate "Type check clean" "check_types.sh" "$worktree"; then
-                            failed=1
-                        fi
-                    fi
-                    ;;
-                rust)
-                    if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    echo ""
-                    if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    ;;
-                go)
-                    if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    echo ""
-                    if ! run_gate "Linter clean" "check_linter.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    ;;
-                unknown)
-                    echo "WARNING: Unknown project type - running generic checks"
-                    if ! run_gate "Tests pass" "check_tests.sh" "$worktree"; then
-                        failed=1
-                    fi
-                    ;;
-            esac
+            # Run type-aware checks via dispatcher
+            if ! run_dispatch_gate "Tests pass" "tests" "$worktree"; then
+                failed=1
+            fi
+            echo ""
+            if ! run_dispatch_gate "Linter clean" "linter" "$worktree"; then
+                failed=1
+            fi
+            echo ""
+            if ! run_dispatch_gate "Type check clean" "types" "$worktree"; then
+                failed=1
+            fi
             ;;
 
         FIXED-REVIEWED)
@@ -621,9 +599,9 @@ cmd_check() {
 
         REVIEWED-TESTED)
             echo ""
-            # check_tests.sh already enforces no skipped tests (fails if any are skipped)
+            # Test check already enforces no skipped tests (fails if any are skipped)
             # So this single gate covers both "tests pass" and "no skipped tests"
-            if ! run_gate "Full test suite passes (no skipped tests)" "check_tests.sh" "$worktree"; then
+            if ! run_dispatch_gate "Full test suite passes (no skipped tests)" "tests" "$worktree"; then
                 failed=1
             fi
             ;;

@@ -1,0 +1,36 @@
+{
+  "$schema": "registry-schema.json",
+  "version": "1.0",
+  "description": "Maps (category, project_type) pairs to type-specific check scripts",
+  "checks": {
+    "tests": {
+      "python": "check_tests_python.sh",
+      "javascript": "check_tests_javascript.sh",
+      "rust": "check_tests_rust.sh",
+      "go": "check_tests_go.sh",
+      "default": "check_tests_generic.sh"
+    },
+    "linter": {
+      "python": "check_linter_python.sh",
+      "javascript": "check_linter_javascript.sh",
+      "rust": "check_linter_rust.sh",
+      "go": "check_linter_go.sh",
+      "shell": "check_linter_shell.sh",
+      "default": "check_linter_generic.sh"
+    },
+    "types": {
+      "python": "check_types_python.sh",
+      "javascript": "check_types_javascript.sh",
+      "rust": null,
+      "go": null,
+      "default": null
+    },
+    "todos": {
+      "default": "check_todos.sh"
+    },
+    "orphans": {
+      "python": "check_orphans_python.sh",
+      "default": "check_orphans_generic.sh"
+    }
+  }
+}
