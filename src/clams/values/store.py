@@ -7,15 +7,13 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from clams.embedding.base import EmbeddingService
+from clams.server.tools.enums import VALID_AXES
 from clams.storage.base import VectorStore
 
 from .types import ClusterInfo, Experience, ValidationResult, Value
 
 if TYPE_CHECKING:
     from clams.clustering import ExperienceClusterer
-
-# Valid clustering axes (domain is NOT an axis - it's a metadata filter)
-VALID_AXES = {"full", "strategy", "surprise", "root_cause"}
 
 # Collection names (aligned with SPEC-002-14 ghap_* naming)
 EXPERIENCES_COLLECTION_PREFIX = "ghap_"  # e.g., "ghap_full"
