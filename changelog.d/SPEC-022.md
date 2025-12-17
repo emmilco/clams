@@ -9,4 +9,3 @@ Added comprehensive tests for HTTP API schema validation.
 - Added tests for error response consistency
 - Added tests for CORS configuration
 - Fixed edge case in http.py for body type validation
-- Marked slow embedding registry tests that load Nomic model
