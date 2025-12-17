@@ -62,8 +62,12 @@ def test_lazy_loading_code_embedder() -> None:
     assert embedder2 is embedder1  # Same instance
 
 
+@pytest.mark.slow
 def test_lazy_loading_semantic_embedder() -> None:
-    """Test that semantic embedder is loaded on first access."""
+    """Test that semantic embedder is loaded on first access.
+
+    Note: Loading the Nomic model is slow (~500MB download on first run).
+    """
     code_model = "sentence-transformers/all-MiniLM-L6-v2"
     semantic_model = "nomic-ai/nomic-embed-text-v1.5"
 
@@ -79,8 +83,12 @@ def test_lazy_loading_semantic_embedder() -> None:
     assert embedder2 is embedder1  # Same instance
 
 
+@pytest.mark.slow
 def test_instance_caching() -> None:
-    """Test that embedders are cached and reused."""
+    """Test that embedders are cached and reused.
+
+    Note: Loading the Nomic model is slow (~500MB download on first run).
+    """
     code_model = "sentence-transformers/all-MiniLM-L6-v2"
     semantic_model = "nomic-ai/nomic-embed-text-v1.5"
 
@@ -145,8 +153,12 @@ def test_env_var_override_semantic_model() -> None:
         assert registry_module._registry._semantic_model == custom_model
 
 
+@pytest.mark.slow
 def test_registry_separate_instances() -> None:
-    """Test that code and semantic embedders are separate instances."""
+    """Test that code and semantic embedders are separate instances.
+
+    Note: Loading the Nomic model is slow (~500MB download on first run).
+    """
     code_model = "sentence-transformers/all-MiniLM-L6-v2"
     semantic_model = "nomic-ai/nomic-embed-text-v1.5"
 
@@ -163,8 +175,12 @@ def test_registry_separate_instances() -> None:
     assert semantic_embedder.settings.model_name == semantic_model
 
 
+@pytest.mark.slow
 def test_registry_model_logging(caplog) -> None:
-    """Test that registry logs when models are loaded."""
+    """Test that registry logs when models are loaded.
+
+    Note: Loading the Nomic model is slow (~500MB download on first run).
+    """
     import structlog
 
     # Configure structlog to capture logs
@@ -186,8 +202,12 @@ def test_registry_model_logging(caplog) -> None:
     # Check that dimension is logged (proves model was loaded)
 
 
+@pytest.mark.slow
 def test_direct_registry_usage() -> None:
-    """Test using EmbeddingRegistry directly without global functions."""
+    """Test using EmbeddingRegistry directly without global functions.
+
+    Note: Loading the Nomic model is slow (~500MB download on first run).
+    """
     code_model = "sentence-transformers/all-MiniLM-L6-v2"
     semantic_model = "nomic-ai/nomic-embed-text-v1.5"
 
