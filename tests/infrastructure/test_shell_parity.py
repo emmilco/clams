@@ -187,23 +187,41 @@ class TestShellScriptConfiguration:
         )
 
     def test_session_start_uses_configurable_port(self) -> None:
-        """Verify session_start.sh uses configurable port, not hardcoded."""
+        """Verify session_start.sh uses configurable port with fallback default.
+
+        The script can use either:
+        1. Direct pattern: SERVER_PORT="${CLAMS_PORT:-6334}"
+        2. Two-step pattern: CLAMS_HTTP_PORT="${CLAMS_HTTP_PORT:-6334}" followed by
+           SERVER_PORT="${CLAMS_HTTP_PORT}"
+
+        Both are valid - the key is having a fallback default that matches ServerSettings.
+
+        Regression test for BUG-071: Original test pattern was too strict and didn't
+        recognize the valid two-step configuration pattern.
+        """
         hook_path = get_repo_root() / "clams" / "hooks" / "session_start.sh"
         content = hook_path.read_text()
 
         settings = ServerSettings()
 
-        # Should use environment variable with default
-        # Pattern: SERVER_PORT="${CLAMS_PORT:-6334}" or similar
-        port_pattern = r'SERVER_PORT=.*\$\{.*:-(\d+)\}'
-        match = re.search(port_pattern, content)
+        # Check for either pattern:
+        # 1. Direct: SERVER_PORT="${...:-6334}"
+        # 2. Two-step: CLAMS_HTTP_PORT="${CLAMS_HTTP_PORT:-6334}" (then used later)
+        direct_pattern = r'SERVER_PORT=.*\$\{.*:-(\d+)\}'
+        indirect_pattern = r'CLAMS_HTTP_PORT=.*\$\{CLAMS_HTTP_PORT:-(\d+)\}'
 
-        assert match, (
+        direct_match = re.search(direct_pattern, content)
+        indirect_match = re.search(indirect_pattern, content)
+
+        assert direct_match or indirect_match, (
             "session_start.sh should use configurable port with default. "
-            'Expected pattern like: SERVER_PORT="${CLAMS_PORT:-6334}". '
-            "See SPEC-024."
+            'Expected pattern like: SERVER_PORT="${CLAMS_PORT:-6334}" or '
+            'CLAMS_HTTP_PORT="${CLAMS_HTTP_PORT:-6334}". See SPEC-024.'
         )
 
+        # Extract the default port from whichever pattern matched
+        match = direct_match or indirect_match
+        assert match is not None  # For type checker
         default_port = int(match.group(1))
         assert default_port == settings.http_port, (
             f"session_start.sh default port is {default_port}, "
@@ -212,21 +230,41 @@ class TestShellScriptConfiguration:
         )
 
     def test_session_start_uses_configurable_host(self) -> None:
-        """Verify session_start.sh uses configurable host, not hardcoded."""
+        """Verify session_start.sh uses configurable host with fallback default.
+
+        The script can use either:
+        1. Direct pattern: SERVER_HOST="${CLAMS_HOST:-127.0.0.1}"
+        2. Two-step pattern: CLAMS_HTTP_HOST="${CLAMS_HTTP_HOST:-127.0.0.1}" followed by
+           SERVER_HOST="${CLAMS_HTTP_HOST}"
+
+        Both are valid - the key is having a fallback default that matches ServerSettings.
+
+        Regression test for BUG-071: Original test pattern was too strict and didn't
+        recognize the valid two-step configuration pattern.
+        """
         hook_path = get_repo_root() / "clams" / "hooks" / "session_start.sh"
         content = hook_path.read_text()
 
         settings = ServerSettings()
 
-        # Pattern: SERVER_HOST="${CLAMS_HOST:-127.0.0.1}" or similar
-        host_pattern = r'SERVER_HOST=.*\$\{.*:-([^}]+)\}'
-        match = re.search(host_pattern, content)
+        # Check for either pattern:
+        # 1. Direct: SERVER_HOST="${...:-127.0.0.1}"
+        # 2. Two-step: CLAMS_HTTP_HOST="${CLAMS_HTTP_HOST:-127.0.0.1}" (then used later)
+        direct_pattern = r'SERVER_HOST=.*\$\{.*:-([^}]+)\}'
+        indirect_pattern = r'CLAMS_HTTP_HOST=.*\$\{CLAMS_HTTP_HOST:-([^}]+)\}'
 
-        assert match, (
+        direct_match = re.search(direct_pattern, content)
+        indirect_match = re.search(indirect_pattern, content)
+
+        assert direct_match or indirect_match, (
             "session_start.sh should use configurable host with default. "
-            "See SPEC-024."
+            'Expected pattern like: SERVER_HOST="${CLAMS_HOST:-127.0.0.1}" or '
+            'CLAMS_HTTP_HOST="${CLAMS_HTTP_HOST:-127.0.0.1}". See SPEC-024.'
         )
 
+        # Extract the default host from whichever pattern matched
+        match = direct_match or indirect_match
+        assert match is not None  # For type checker
         default_host = match.group(1)
         assert default_host == settings.http_host, (
             f"session_start.sh default host is {default_host}, "
