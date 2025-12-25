@@ -94,12 +94,14 @@ echo "Dispatching: category=$CATEGORY type=$PROJECT_TYPE worktree=$WORKTREE"
 
 # Look up script in registry: checks[category][type] or checks[category][default]
 # Use jq to safely handle JSON parsing
+# NOTE: Must use has() to check key existence because null is falsy in jq.
+# A null value means "skip this check", not "key missing". See BUG-070.
 SCRIPT=$(jq -r --arg cat "$CATEGORY" --arg type "$PROJECT_TYPE" \
     '
     if .checks[$cat] then
-        if .checks[$cat][$type] then
+        if (.checks[$cat] | has($type)) then
             .checks[$cat][$type]
-        elif .checks[$cat]["default"] then
+        elif (.checks[$cat] | has("default")) then
             .checks[$cat]["default"]
         else
             "NOTFOUND"
