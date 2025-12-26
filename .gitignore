@@ -16,4 +16,7 @@ htmlcov/
 .claude/clams.db
 .claude/settings.local.json
 test_output.log
+e2e_output.log
+gate_output.log
+tests/performance/benchmark_results.json
 .hypothesis/
