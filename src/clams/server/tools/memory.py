@@ -131,7 +131,15 @@ def get_memory_tools(services: ServiceContainer) -> dict[str, ToolFunc]:
 
             logger.info("memory.stored", memory_id=memory_id, category=category)
 
-            return payload
+            # Return confirmation without content (token-efficient)
+            # Content is only needed on retrieval, not store confirmation
+            return {
+                "id": memory_id,
+                "status": "stored",
+                "category": category,
+                "importance": importance,
+                "created_at": created_at.isoformat(),
+            }
 
         except Exception as e:
             logger.error("memory.store_failed", error=str(e), exc_info=True)
@@ -265,7 +273,18 @@ def get_memory_tools(services: ServiceContainer) -> dict[str, ToolFunc]:
                 reverse=True,
             )
 
-            formatted = [r.payload for r in sorted_results]
+            # Return metadata only (no content) for token efficiency
+            # List is for browsing/filtering, not semantic search context
+            formatted = [
+                {
+                    "id": r.id,  # Use SearchResult.id, not payload
+                    "category": r.payload.get("category", "unknown"),
+                    "importance": r.payload.get("importance", 0.5),
+                    "tags": r.payload.get("tags", []),
+                    "created_at": r.payload.get("created_at", ""),
+                }
+                for r in sorted_results
+            ]
 
             logger.info("memory.listed", count=len(formatted), total=total)
 
