@@ -231,10 +231,11 @@ run_dispatch_gate() {
 }
 
 # Run checks for composite project (multiple language subdirs)
-# Usage: run_composite_checks <worktree> <failed_var>
+# Usage: run_composite_checks <worktree>
+# Returns: 0 if all checks pass, 1 if any check fails
 run_composite_checks() {
     local worktree="$1"
-    local -n _failed=$2
+    local composite_failed=0
 
     # Read composite types from project.json
     local project_config="$CLAUDE_DIR/project.json"
@@ -270,17 +271,19 @@ run_composite_checks() {
 
         # Run checks for this subdir with explicit type
         if ! run_dispatch_gate "Tests pass ($subdir)" "tests" "$subpath" "$subtype"; then
-            _failed=1
+            composite_failed=1
         fi
         echo ""
         if ! run_dispatch_gate "Linter clean ($subdir)" "linter" "$subpath" "$subtype"; then
-            _failed=1
+            composite_failed=1
         fi
         echo ""
         if ! run_dispatch_gate "Type check ($subdir)" "types" "$subpath" "$subtype"; then
-            _failed=1
+            composite_failed=1
         fi
     done
+
+    return $composite_failed
 }
 
 check_file_exists() {
@@ -449,7 +452,9 @@ cmd_check() {
             fi
 
             # Run composite project checks if configured
-            run_composite_checks "$worktree" failed
+            if ! run_composite_checks "$worktree"; then
+                failed=1
+            fi
             ;;
 
         CODE_REVIEW-TEST)
