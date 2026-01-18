@@ -34,5 +34,41 @@
     "iterations": 1,
     "timestamp": 1765767160.736007,
     "percentage_of_target": 2.513326659973245
+  },
+  {
+    "name": "code_search",
+    "value_ms": 13.080241656280121,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1766706762.666199,
+    "percentage_of_target": 6.54012082814006
+  },
+  {
+    "name": "memory_retrieval",
+    "value_ms": 10.484861079021353,
+    "target_ms": 200.0,
+    "passed": true,
+    "iterations": 100,
+    "timestamp": 1766706763.188832,
+    "percentage_of_target": 5.242430539510677
+  },
+  {
+    "name": "context_assembly",
+    "value_ms": 7.003573240945115,
+    "target_ms": 500.0,
+    "passed": true,
+    "iterations": 10,
+    "timestamp": 1766706763.265682,
+    "percentage_of_target": 1.400714648189023
+  },
+  {
+    "name": "clustering_4_axes",
+    "value_s": 0.17467395903076977,
+    "target_s": 5.0,
+    "passed": true,
+    "iterations": 1,
+    "timestamp": 1766706763.442668,
+    "percentage_of_target": 3.4934791806153958
   }
 ]
