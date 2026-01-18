@@ -13,18 +13,26 @@ Add tests that measure and assert on memory tool response sizes to ensure they s
 ## Acceptance Criteria
 
 - [ ] Tests exist in `tests/server/test_response_efficiency.py` (same file as SPEC-044)
-- [ ] Tests verify memory tool responses are under size limits:
+- [ ] Tests verify memory tool responses are under size limits (exclusive, i.e., `<`):
   - `store_memory`: response < 500 bytes (confirmation, not echo of content)
-  - `retrieve_memories`: response < 1000 bytes per memory (summaries)
-  - `list_memories`: response < 500 bytes per entry
+  - `retrieve_memories`: response < 1000 bytes per memory (includes content for search context)
+  - `list_memories`: response < 500 bytes per entry (metadata only, no content)
   - `delete_memory`: response < 300 bytes (simple confirmation)
+- [ ] Tests verify responses are non-empty (minimum 10 bytes to catch broken endpoints)
 - [ ] Tests verify responses don't echo back full content on store
 - [ ] Tests use large content inputs to verify no content echo
 - [ ] Clear assertion messages show actual vs expected size
-- [ ] Test documents expected response structure in comments
+- [ ] Test documents why each limit was chosen (in comments)
+- [ ] Tests are regression tests - failures block CI/merges (not just informational)
+- [ ] Tests fail if responses exceed limits
 
 ## Implementation Notes
 
+- Size limits rationale:
+  - **500 bytes for store_memory**: Store operations need only return confirmation message and memory ID (UUID is 36 chars). A UUID + status + minimal JSON overhead fits in ~100-200 bytes. 500 bytes provides headroom while catching content echo-back bugs.
+  - **1000 bytes for retrieve_memories per memory**: Retrieved memories include content (for search context) but should have truncated content. Typical useful summaries are 200-500 chars. 1000 bytes per entry allows meaningful content while preventing bloat.
+  - **500 bytes for list_memories per entry**: List operations return metadata only (ID, category, importance, created_at), no content. This is pure metadata which should be ~100-200 bytes per entry.
+  - **300 bytes for delete_memory**: Simplest operation - just needs confirmation + deleted ID. Should be under 100 bytes typically.
 - Key insight: `store_memory` should NOT echo back the full content
 - Test with large content to verify this:
   ```python
