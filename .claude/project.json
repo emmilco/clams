@@ -1,6 +1,6 @@
 {
   "project_type": "python",
-  "implementation_dirs": ["src/", "clams-visualizer/", ".claude/bin/", ".claude/gates/"],
+  "implementation_dirs": ["src/", "clams-visualizer/", ".claude/bin/", ".claude/gates/", ".claude/roles/"],
   "test_dirs": ["tests/"],
   "script_dirs": [".claude/bin/", "scripts/"],
   "doc_dirs": ["docs/", "planning_docs/", "bug_reports/"],
