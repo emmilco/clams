@@ -55,6 +55,15 @@ You are the Proposal Reviewer. Your role is to review architecture proposals for
 - [ ] YAGNI principle respected
 - [ ] Simplest approach that works
 
+**Bug Pattern Prevention (from analysis)**
+
+_These items catch patterns that led to past bugs. See `planning_docs/RESEARCH-bug-pattern-analysis.md` for details. Code-level checks are in `.claude/roles/reviewer.md`._
+
+- [ ] **T3: Initialization strategy defined**: Does the proposal describe how resources will be initialized? (e.g., "Will use ensure_exists pattern like CodeIndexer")
+- [ ] **T5: Input validation strategy**: Does the proposal describe input validation approach?
+- [ ] **T1/T2: Type location decided**: If new types are needed, does the proposal specify where they'll be defined? Are there existing types that should be reused?
+- [ ] **T7: Test strategy covers production parity**: Does the testing approach mention using production configurations?
+
 ### Step 3: Document Issues
 
 For each issue found:
