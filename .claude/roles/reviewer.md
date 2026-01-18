@@ -85,6 +85,42 @@ For each issue found, provide:
 - [ ] No unnecessary complexity
 - [ ] Changes are focused (no scope creep)
 
+## Additional Checklist Items (Bug Pattern Prevention)
+
+These items are based on recurring bug patterns. See `planning_docs/RESEARCH-bug-pattern-analysis.md` for details.
+
+### Initialization Patterns (T3)
+
+_Rationale: BUG-016 and BUG-043 showed collections being used without ensure_exists calls, causing 404 errors on first use._
+
+- [ ] **New collections have ensure_exists**: If adding a new Qdrant collection, does the code call `_ensure_collection()` or equivalent before first use?
+- [ ] **No upsert without ensure**: Does this code upsert to a collection? If so, is there an ensure step somewhere in the initialization path?
+- [ ] **Pre-existing state assumptions documented**: Are there assumptions about state that must exist? Are they validated or documented?
+
+### Input Validation (T5)
+
+_Rationale: BUG-029 and BUG-036 showed functions raising cryptic KeyError deep in the stack instead of helpful validation errors at the boundary._
+
+- [ ] **Public functions validate inputs**: Do public functions validate their inputs at the start, before processing?
+- [ ] **Error messages are helpful**: When validation fails, does the error message list valid options? (e.g., "Invalid type 'foo'. Valid types: bar, baz, qux")
+- [ ] **No bare dict access**: Are there any `dict[key]` accesses that could raise KeyError? Should they use `.get()` with default or explicit validation?
+
+### Test-Production Parity (T7)
+
+_Rationale: BUG-031 used different clustering parameters in tests vs production. BUG-033 used different server commands. BUG-040 had mocks with different interfaces than production._
+
+- [ ] **Production configurations in tests**: Do tests use production configuration values? If using test-specific values, is there explicit justification in comments?
+- [ ] **Mocks match production interfaces**: If tests use mocks, do the mocks have the same method signatures as the production classes they replace?
+- [ ] **Commands match production**: Are the commands run in tests (e.g., server startup) identical to production commands?
+
+### Type Consistency (T1, T2)
+
+_Rationale: BUG-040 had duplicate CodeResult types with different field names. BUG-041 had concrete Searcher not inheriting from abstract Searcher._
+
+- [ ] **Types in canonical location**: If defining new shared types, are they in the canonical `types/` module (or equivalent central location)?
+- [ ] **No duplicate definitions**: Is this type already defined elsewhere? Should this use an import instead of a new definition?
+- [ ] **Inheritance respected**: If there's an abstract base class, does the concrete implementation inherit from it?
+
 ## Recording Your Review (REQUIRED)
 
 **You MUST record your review in the database before completing.** The transition gate will not pass without recorded reviews.
