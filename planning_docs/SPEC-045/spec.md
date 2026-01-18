@@ -30,10 +30,13 @@ Add tests that measure and assert on memory tool response sizes to ensure they s
 
 - Size limits rationale:
   - **500 bytes for store_memory**: Store operations need only return confirmation message and memory ID (UUID is 36 chars). A UUID + status + minimal JSON overhead fits in ~100-200 bytes. 500 bytes provides headroom while catching content echo-back bugs.
-  - **1000 bytes for retrieve_memories per memory**: Retrieved memories include content (for search context) but should have truncated content. Typical useful summaries are 200-500 chars. 1000 bytes per entry allows meaningful content while preventing bloat.
-  - **500 bytes for list_memories per entry**: List operations return metadata only (ID, category, importance, created_at), no content. This is pure metadata which should be ~100-200 bytes per entry.
+  - **1000 bytes for retrieve_memories per memory**: Retrieved memories include content (for search context). The LLM needs content to evaluate relevance. Content should be bounded but present. 1000 bytes per entry allows ~500 chars of useful content plus metadata.
+  - **500 bytes for list_memories per entry**: List operations return metadata only (ID, category, importance, tags, created_at), **no content**. This is for browsing/filtering, not search. Pure metadata should be ~100-200 bytes per entry.
   - **300 bytes for delete_memory**: Simplest operation - just needs confirmation + deleted ID. Should be under 100 bytes typically.
-- Key insight: `store_memory` should NOT echo back the full content
+- Key insights:
+  - `store_memory` should NOT echo back the full content
+  - `list_memories` should NOT include content (metadata only for browsing)
+  - `retrieve_memories` SHOULD include content (needed for semantic search results)
 - Test with large content to verify this:
   ```python
   class TestMemoryResponseEfficiency:
@@ -55,7 +58,7 @@ Add tests that measure and assert on memory tool response sizes to ensure they s
           )
 
       async def test_retrieve_memories_response_size(self, memory_tools):
-          """retrieve_memories should return summaries, not full content."""
+          """retrieve_memories should have bounded per-entry size."""
           # Store some memories first
           for i in range(5):
               await memory_tools.store_memory(
@@ -66,7 +69,7 @@ Add tests that measure and assert on memory tool response sizes to ensure they s
           response = await memory_tools.retrieve_memories("Memory", limit=5)
 
           # Each result should be reasonably sized
-          for result in response:
+          for result in response["results"]:
               result_size = len(json.dumps(result))
               assert result_size < 1000, (
                   f"Single memory result too large: {result_size} bytes"
