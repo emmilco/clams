@@ -91,7 +91,9 @@ class TestBug043MemoriesCollection:
         # Assert: memory was stored
         fresh_vector_store.upsert.assert_called_once()
         assert "id" in result
-        assert result["content"] == "Test memory content"
+        # Note: store_memory no longer returns content in response (token efficiency)
+        # See SPEC-045 for rationale - content is only needed on retrieval
+        assert result["status"] == "stored"
 
     @pytest.mark.asyncio
     async def test_retrieve_memories_creates_collection(
@@ -177,7 +179,8 @@ class TestBug043MemoriesCollection:
 
         # Assert: memory was still stored
         fresh_vector_store.upsert.assert_called_once()
-        assert result["content"] == "Test memory"
+        # Note: store_memory no longer returns content (SPEC-045 token efficiency)
+        assert result["status"] == "stored"
 
     @pytest.mark.asyncio
     async def test_handles_409_error(

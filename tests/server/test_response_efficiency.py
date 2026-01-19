@@ -1,10 +1,9 @@
-"""Tests for GHAP response size efficiency.
+"""Tests for response size efficiency.
 
-This module verifies that GHAP tool responses stay within token-efficient byte limits.
-Size limits are based on BUG-030 analysis, which showed GHAP tools returning full records
-on every operation, wasting approximately 50,000 tokens during bulk generation.
+This module verifies that tool responses stay within token-efficient byte limits.
+Size limits are designed to prevent excessive token waste during LLM interactions.
 
-Size Limits Rationale:
+GHAP Size Limits Rationale (SPEC-044, BUG-030):
 - 500 bytes for confirmations (start/update/resolve): UUID (36 chars) + status +
   JSON overhead fits in ~100-200 bytes. 500 bytes provides headroom while catching
   bloat like full entries (~2KB+).
@@ -13,6 +12,15 @@ Size Limits Rationale:
 - 500 bytes for get_active (no entry): Should return minimal empty state.
 - 500 bytes per entry for list: Summaries only (ID, domain, status).
   Each summary should be ~100-200 bytes.
+
+Memory Size Limits Rationale (SPEC-045):
+- 500 bytes for store_memory: Store operations need only return confirmation + memory ID.
+  A UUID (36 chars) + status + category + timestamps fits in ~150-200 bytes.
+- 1000 bytes per entry for retrieve_memories: Retrieved memories include content
+  (for search context) but should have bounded content.
+- 500 bytes per entry for list_memories: Metadata only (id, category, importance,
+  created_at). No content needed for browsing/filtering.
+- 300 bytes for delete_memory: Simplest operation - just needs confirmation.
 
 Reference: BUG-030 - GHAP tools wasted ~50k tokens during bulk generation.
 """
@@ -30,6 +38,7 @@ from clams.observation import (
     ObservationPersister,
 )
 from clams.server.tools.ghap import get_ghap_tools
+from clams.server.tools.memory import get_memory_tools
 
 # Size limits in bytes (exclusive - responses must be LESS than these values)
 # See module docstring for rationale
@@ -407,3 +416,211 @@ class TestGHAPResponseEfficiency:
 
         # Verify it's actually an error response
         assert "error" in result, "Expected error response for invalid domain"
+
+
+class TestMemoryResponseEfficiency:
+    """Verify memory tool responses stay within token-efficient limits.
+
+    These tests ensure memory tools don't waste tokens by echoing back
+    full content or including unnecessary fields in responses.
+    """
+
+    @pytest.mark.asyncio
+    async def test_store_memory_response_size(self, mock_services):
+        """store_memory should return confirmation, not echo full content.
+
+        Size limit: < 500 bytes
+
+        Rationale: Store operations need only return confirmation + memory ID.
+        A UUID (36 chars) + status + category + timestamps fits in ~150-200 bytes.
+        500 bytes provides headroom while catching content echo-back bugs
+        where storing 1000+ chars would return 1000+ bytes.
+        """
+        tools = get_memory_tools(mock_services)
+        store_memory = tools["store_memory"]
+
+        # Use large content to detect echo-back bugs
+        large_content = "A" * 1000  # 1KB content
+
+        response = await store_memory(
+            content=large_content,
+            category="fact",
+            importance=0.8,
+            tags=["test"],
+        )
+
+        response_size = len(json.dumps(response))
+        max_size = 500
+
+        assert response_size < max_size, (
+            f"store_memory response too large: {response_size} bytes >= {max_size} bytes. "
+            f"Response should not echo back the full content. "
+            f"Stored 1000 char content but response should be ~150-200 bytes."
+        )
+
+    @pytest.mark.asyncio
+    async def test_store_memory_no_content_echo(self, mock_services):
+        """store_memory response should not include the stored content.
+
+        The content field is only needed on retrieval, not on store confirmation.
+        Including it wastes tokens proportional to content size.
+        """
+        tools = get_memory_tools(mock_services)
+        store_memory = tools["store_memory"]
+
+        test_content = "This is test content that should not be echoed"
+
+        response = await store_memory(
+            content=test_content,
+            category="fact",
+        )
+
+        # Response should not contain the content
+        response_str = json.dumps(response)
+        assert test_content not in response_str, (
+            f"store_memory echoed back content in response. "
+            f"Response should be confirmation only, not include: '{test_content}'"
+        )
+
+    @pytest.mark.asyncio
+    async def test_retrieve_memories_response_size_per_entry(
+        self, mock_services, mock_search_result
+    ):
+        """retrieve_memories entries should stay under size limit.
+
+        Size limit: < 1000 bytes per entry
+
+        Rationale: Retrieved memories include content (for search context) but
+        should have bounded content. 1000 bytes allows ~500 char useful content
+        plus metadata while preventing unbounded bloat.
+        """
+        tools = get_memory_tools(mock_services)
+        retrieve_memories = tools["retrieve_memories"]
+
+        # Create mock result with moderate content
+        mock_result = mock_search_result(
+            id="test-id",
+            payload={
+                "id": "test-id",
+                "content": "Test content " * 20,  # ~260 chars
+                "category": "fact",
+                "importance": 0.8,
+                "tags": ["test"],
+                "created_at": "2025-01-01T00:00:00Z",
+            },
+        )
+        mock_services.vector_store.search.return_value = [mock_result]
+
+        response = await retrieve_memories(query="test", limit=5)
+
+        # Check each result individually
+        for i, result in enumerate(response["results"]):
+            result_size = len(json.dumps(result))
+            max_size = 1000
+
+            assert result_size < max_size, (
+                f"retrieve_memories result[{i}] too large: {result_size} bytes >= {max_size} bytes. "
+                f"Each result should stay under {max_size} bytes."
+            )
+
+    @pytest.mark.asyncio
+    async def test_list_memories_response_size_per_entry(
+        self, mock_services, mock_search_result
+    ):
+        """list_memories entries should return metadata only, under size limit.
+
+        Size limit: < 500 bytes per entry
+
+        Rationale: List operations return metadata only (id, category, importance,
+        created_at). No content needed for browsing/filtering. Each entry should
+        be ~100-200 bytes of pure metadata.
+        """
+        tools = get_memory_tools(mock_services)
+        list_memories = tools["list_memories"]
+
+        # Create mock result - content should NOT be in response
+        mock_result = mock_search_result(
+            id="test-id",
+            payload={
+                "id": "test-id",
+                "content": "This content should not appear in list response " * 10,
+                "category": "fact",
+                "importance": 0.8,
+                "tags": ["test"],
+                "created_at": "2025-01-01T00:00:00Z",
+            },
+        )
+        mock_services.vector_store.scroll.return_value = [mock_result]
+        mock_services.vector_store.count.return_value = 1
+
+        response = await list_memories(limit=10)
+
+        for i, result in enumerate(response["results"]):
+            result_size = len(json.dumps(result))
+            max_size = 500
+
+            assert result_size < max_size, (
+                f"list_memories result[{i}] too large: {result_size} bytes >= {max_size} bytes. "
+                f"List should return metadata only (no content). Each entry ~100-200 bytes."
+            )
+
+    @pytest.mark.asyncio
+    async def test_delete_memory_response_size(self, mock_services):
+        """delete_memory should return minimal confirmation.
+
+        Size limit: < 300 bytes
+
+        Rationale: Simplest operation - just needs {"deleted": true/false}.
+        Actual response is typically ~20 bytes.
+        """
+        tools = get_memory_tools(mock_services)
+        delete_memory = tools["delete_memory"]
+
+        response = await delete_memory(memory_id="test-id")
+
+        response_size = len(json.dumps(response))
+        max_size = 300
+
+        assert response_size < max_size, (
+            f"delete_memory response too large: {response_size} bytes >= {max_size} bytes. "
+            f"Should be simple confirmation like {{'deleted': true}}."
+        )
+
+    @pytest.mark.asyncio
+    async def test_memory_responses_non_empty(self, mock_services):
+        """All memory tool responses should be non-empty (minimum 10 bytes).
+
+        This catches broken endpoints that return empty responses.
+        """
+        tools = get_memory_tools(mock_services)
+        min_size = 10
+
+        # Test store_memory
+        store_response = await tools["store_memory"](
+            content="Test", category="fact"
+        )
+        store_size = len(json.dumps(store_response))
+        assert store_size >= min_size, (
+            f"store_memory response too small: {store_size} bytes < {min_size} bytes"
+        )
+
+        # Test retrieve_memories (empty result is valid, but response structure exists)
+        retrieve_response = await tools["retrieve_memories"](query="test", limit=5)
+        retrieve_size = len(json.dumps(retrieve_response))
+        assert retrieve_size >= min_size, (
+            f"retrieve_memories response too small: {retrieve_size} bytes < {min_size} bytes"
+        )
+
+        # Test list_memories
+        list_response = await tools["list_memories"](limit=10)
+        list_size = len(json.dumps(list_response))
+        assert list_size >= min_size, (
+            f"list_memories response too small: {list_size} bytes < {min_size} bytes"
+        )
+
+        # Test delete_memory
+        delete_response = await tools["delete_memory"](memory_id="test-id")
+        delete_size = len(json.dumps(delete_response))
+        assert delete_size >= min_size, (
+            f"delete_memory response too small: {delete_size} bytes < {min_size} bytes"
+        )

@@ -21,14 +21,16 @@ async def test_store_memory_success(mock_services):
         tags=["test"],
     )
 
-    # Verify result structure
+    # Verify result structure - response contains confirmation only, not content
+    # Content is only needed on retrieval, not on store confirmation
     assert "id" in result
     assert UUID(result["id"])  # Valid UUID
-    assert result["content"] == "Test memory"
+    assert result["status"] == "stored"
     assert result["category"] == "fact"
     assert result["importance"] == 0.8
-    assert result["tags"] == ["test"]
     assert "created_at" in result
+    # Response should NOT include content (token efficiency)
+    assert "content" not in result
 
     # Verify service calls
     mock_services.semantic_embedder.embed.assert_called_once_with("Test memory")
@@ -78,7 +80,7 @@ async def test_store_memory_default_values(mock_services):
     result = await store_memory(content="Test", category="fact")
 
     assert result["importance"] == 0.5  # Default
-    assert result["tags"] == []  # Default
+    # Note: tags are not included in the response (token efficiency)
 
 
 @pytest.mark.asyncio
