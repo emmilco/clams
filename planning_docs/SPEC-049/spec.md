@@ -10,7 +10,7 @@ These contract violations can be introduced silently without any test or CI fail
 
 ## Dependencies
 
-- **SPEC-047** (Hash/Eq Contract Tests for ContextItem) - Creates `tests/test_data_contracts.py`
+- **SPEC-047** (Hash/Eq Contract Tests for ContextItem) - Creates `tests/context/test_data_contracts.py`
 - **SPEC-048** (Hash/Eq Contract Tests for Other Hashable Classes) - Extends test coverage
 
 **Note**: This hook can be implemented and used even before SPEC-047/048 are complete. It will warn on all `__hash__`/`__eq__` implementations until tests are added.
@@ -19,7 +19,7 @@ These contract violations can be introduced silently without any test or CI fail
 
 Create an advisory pre-commit hook that:
 1. Detects new or modified `__hash__` or `__eq__` methods in staged Python files
-2. Warns if no corresponding test exists in `tests/test_data_contracts.py`
+2. Warns if no corresponding test exists in `tests/context/test_data_contracts.py`
 3. Provides guidance on adding contract tests
 
 The hook is advisory (warning, not blocking) to allow development before SPEC-047/048 complete.
@@ -36,14 +36,14 @@ The hook is advisory (warning, not blocking) to allow development before SPEC-04
 
 ### Test Lookup
 
-- [ ] Hook checks if class name appears in `tests/test_data_contracts.py`
+- [ ] Hook checks if class name appears in `tests/context/test_data_contracts.py`
 - [ ] Matching is case-sensitive and looks for the class name as a word boundary
-- [ ] If `tests/test_data_contracts.py` doesn't exist, all classes trigger warnings
+- [ ] If `tests/context/test_data_contracts.py` doesn't exist, all classes trigger warnings
 
 ### Warning Output
 
 - [ ] Warning message includes: file path, class name, which method(s) defined
-- [ ] Warning suggests adding a test to `tests/test_data_contracts.py`
+- [ ] Warning suggests adding a test to `tests/context/test_data_contracts.py`
 - [ ] Warning references BUG-028 for context
 - [ ] Warning format is clear and actionable
 
@@ -121,7 +121,7 @@ Warning message format:
 ```
 WARNING: Class 'MyClass' in src/clams/foo.py defines __hash__/__eq__ but has no contract test.
 
-Add a test to tests/test_data_contracts.py:
+Add a test to tests/context/test_data_contracts.py:
 
     def test_myclass_hash_eq_contract(self):
         obj1 = MyClass(...)
