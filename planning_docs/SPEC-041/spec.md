@@ -1,61 +1,97 @@
-# SPEC-041: Shell/Hooks Gate Check Script
+# SPEC-041: Shell/Hooks Gate Check Script Enhancements
 
 ## Problem Statement
 
-The gate check system currently runs Python checks (pytest, mypy, ruff) unconditionally, even for shell-only or hooks-only changes. This causes:
-1. Wasted CI time running irrelevant checks
-2. Misleading failures when Python checks don't apply
-3. No actual validation of shell script quality
+The shell linter gate script (`.claude/gates/check_linter_shell.sh`) exists and is registered in `registry.json`, but has gaps that limit its effectiveness:
 
-Session evidence shows gates ran Python checks for shell script changes in `clams/hooks/`, missing the opportunity to catch shellcheck warnings.
+1. **No `bash -n` syntax checking** - Only runs shellcheck, missing basic syntax validation
+2. **No severity filtering** - Uses `-x` flag (follow sources) but no severity threshold
+3. **Doesn't check changed files** - Checks all files in configured directories rather than focusing on what changed
+4. **Missing `clams/hooks/` coverage** - Default directories are `.claude/bin/` and `scripts/`, but hooks in `clams/hooks/` aren't checked by default
+
+**Note**: Project type detection and gate routing are handled by SPEC-040's dispatcher system. This spec focuses only on enhancing the shell linter script itself.
 
 **Reference**: R14-C from bug pattern analysis (Theme T12: Workflow/Gate Script Brittleness)
 
 ## Proposed Solution
 
-Create a dedicated shell/hooks gate check script that:
-1. Runs `shellcheck` on changed shell scripts
-2. Validates bash syntax with `bash -n`
-3. Integrates with the gate dispatcher (SPEC-040) for automatic routing
+Enhance the existing `check_linter_shell.sh` script to:
+1. Add `bash -n` syntax checking before shellcheck
+2. Add `-S warning` severity threshold to shellcheck
+3. Support a `--changed-only` flag to focus on modified files
+4. Add `clams/hooks/` to default directories
 
 ## Acceptance Criteria
 
-- [ ] New script `.claude/gates/check_linter_shell.sh` created
-- [ ] Script runs `shellcheck -S warning` on changed `.sh` files
-- [ ] Script runs `bash -n` syntax check on all shell files
-- [ ] Script detects changed files via `git diff main...HEAD --name-only`
-- [ ] Script handles `clams/hooks/*` files (even without `.sh` extension)
-- [ ] Script returns 0 on success, 1 on failure
-- [ ] Script handles case where shellcheck is not installed (warn, not fail)
-- [ ] Script outputs clear results for each file checked
-- [ ] Script is registered in `.claude/gates/registry.json` under `shell` type
-- [ ] Gate dispatcher routes shell-type changes to this script
+### Script Enhancements
+
+- [ ] Script runs `bash -n` syntax check on each shell file before shellcheck
+- [ ] Script uses `shellcheck -x -S warning` (both follow sources AND warning severity)
+- [ ] Script supports `--changed-only` flag that uses `git diff main...HEAD --name-only`
+- [ ] When `--changed-only` is used, only changed files matching shell patterns are checked
+- [ ] Default directories include `clams/hooks/` in addition to `.claude/bin/` and `scripts/`
+- [ ] Script handles files in `clams/hooks/` even without `.sh` extension (check shebang)
+- [ ] Exit codes unchanged: 0=clean, 1=errors, 2=skip (shellcheck unavailable)
+
+### Error Handling
+
+- [ ] If `bash -n` fails, report syntax error and continue to next file
+- [ ] If `--changed-only` finds no shell changes, exit 0 with "No shell changes to check"
+- [ ] If shellcheck unavailable, warn and skip shellcheck (but still run `bash -n`)
 
 ## Implementation Notes
 
-File location: `.claude/gates/check_linter_shell.sh`
+**File to modify**: `.claude/gates/check_linter_shell.sh`
 
-Key behaviors:
-- Get changed files: `git diff main...HEAD --name-only -- '*.sh' 'clams/hooks/*'`
-- Run shellcheck with warning severity: `shellcheck -S warning "$file"`
-- Run bash syntax check: `bash -n "$file"`
-- Graceful degradation if shellcheck unavailable
+**Key changes**:
 
-Shell files to check:
-- Any `*.sh` file in the repository
-- All files in `clams/hooks/` (even without extension)
-- Files in `.claude/bin/` and `.claude/gates/`
+1. Add `bash -n` before shellcheck:
+```bash
+echo "Syntax check: $script"
+if ! bash -n "$script" 2>&1; then
+    echo "  SYNTAX ERROR"
+    PASS=false
+    continue  # Skip shellcheck if syntax is broken
+fi
+```
+
+2. Add severity flag:
+```bash
+if ! shellcheck -x -S warning "$script" 2>&1; then
+```
+
+3. Add `--changed-only` support:
+```bash
+CHANGED_ONLY=false
+if [[ "${1:-}" == "--changed-only" ]]; then
+    CHANGED_ONLY=true
+    shift
+fi
+# ... later ...
+if $CHANGED_ONLY; then
+    SHELL_FILES=$(git diff main...HEAD --name-only -- '*.sh' 'clams/hooks/*' '.claude/bin/*')
+    # Filter to existing files and check those
+fi
+```
+
+4. Update default directories:
+```bash
+SCRIPT_DIRS=".claude/bin/ scripts/ clams/hooks/"
+```
 
 ## Testing Requirements
 
-- Test with intentional shellcheck warnings (verify detection)
-- Test with clean shell scripts (verify pass)
-- Test with shellcheck unavailable (verify graceful warning)
-- Test bash syntax errors are detected
-- Integration test: create hooks-only worktree, run gate check
+All tests should be automated (pytest or shell-based):
+
+- [ ] **Unit test**: Create temp script with syntax error, verify `bash -n` catches it
+- [ ] **Unit test**: Create temp script with shellcheck warning, verify detection with `-S warning`
+- [ ] **Unit test**: Test `--changed-only` with mocked `git diff` output
+- [ ] **Integration test**: In a worktree with hooks-only changes, verify script checks `clams/hooks/`
+- [ ] **Graceful degradation**: Mock shellcheck unavailable, verify `bash -n` still runs
 
 ## Out of Scope
 
-- Project type detection (covered by SPEC-040)
-- Gate routing logic (covered by SPEC-040)
-- Frontend check script (covered by SPEC-042)
+- Project type detection (SPEC-040)
+- Gate routing logic (SPEC-040)
+- Frontend check script (SPEC-042)
+- Changing the overall script architecture
