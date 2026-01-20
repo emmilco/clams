@@ -27,7 +27,7 @@ Create a Python-based CI check script that uses AST parsing to accurately detect
 
 - [ ] Script `.claude/checks/check_hardcoded_paths.py` created
 - [ ] Script is executable and has proper shebang
-- [ ] Script exits 0 if no violations, 1 if violations found
+- [ ] Script exits 0 if no violations, 1 if violations found, 2 on script error
 
 ### Path Detection
 
@@ -68,7 +68,7 @@ Create a Python-based CI check script that uses AST parsing to accurately detect
 ### /tmp/ Detection Nuance
 
 - [ ] `/tmp/` is flagged UNLESS the same file imports `tempfile` or uses `tmp_path` fixture
-- [ ] Check for `import tempfile`, `from tempfile import`, or `tmp_path` in function signatures
+- [ ] Check for `import tempfile`, `from tempfile import`, or `tmp_path` in function/async function signatures
 
 ### Error Handling
 
@@ -89,7 +89,7 @@ from pathlib import Path
 
 PATTERNS = [
     (r'/Users/[^/]+/', 'macOS home directory'),
-    (r'/home/[a-z_][a-z0-9_-]*/[^"\']*', 'Linux home directory'),
+    (r'/home/[a-z_][a-z0-9_-]*/', 'Linux home directory'),
     (r'[Cc]:[/\\][Uu]sers[/\\]', 'Windows user directory'),
 ]
 
@@ -114,7 +114,7 @@ def has_tempfile_usage(tree: ast.AST) -> bool:
         elif isinstance(node, ast.ImportFrom):
             if node.module == 'tempfile':
                 return True
-        elif isinstance(node, ast.FunctionDef):
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             for arg in node.args.args:
                 if arg.arg == 'tmp_path':
                     return True
