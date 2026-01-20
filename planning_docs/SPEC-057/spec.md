@@ -2,104 +2,130 @@
 
 ## Problem Statement
 
-BUG-036 showed `distribute_budget()` raised cryptic `KeyError` on invalid input instead of a helpful error listing valid options. BUG-029 showed `start_ghap` with an active entry returned generic "internal_error" instead of actionable guidance.
+The R4-A validation audit (see `planning_docs/RESEARCH-validation-audit.md`) identified that while most MCP tools have good validation, there are specific gaps that could lead to cryptic errors or silent failures.
 
-While these specific bugs have been fixed, a systematic audit (R4-A) identified that many MCP tools still lack comprehensive input validation with helpful error messages.
+**What's already validated** (no work needed):
+- All GHAP tools - excellent validation including conditional requirements
+- Memory tools - category, importance, limit/offset validation
+- Git tools - date format, limit ranges
+- Learning tools - axis, cluster_id format, text lengths
+- Search tools - axis, domain, outcome, limit
+
+**Actual gaps identified in audit**:
+- `assemble_context` - missing validation for all parameters (Critical - BUG-036 risk)
+- `retrieve_memories` - missing `min_importance` range validation
+- `store_memory`/`list_memories` - missing tags array validation
+- `delete_memory` - missing UUID format validation
+- `search_code` - missing language validation
+- `index_codebase` - missing project format validation
+- `update_ghap` - missing note length validation
+- `distribute_budget` - missing max_tokens validation
 
 **Reference**: R4-E from bug pattern analysis (Theme T5: Missing Input Validation)
 
 ## Proposed Solution
 
-Apply consistent input validation pattern to all MCP tools:
-1. Validate enum parameters against valid values
-2. Validate numeric constraints (min/max)
-3. Return structured errors with valid options listed
-4. Never raise uncaught exceptions for invalid user input
+Add validation to the specific parameters identified as gaps, following the existing validation patterns in the codebase.
 
 ## Acceptance Criteria
 
-- [ ] All MCP tools validate enum parameters with helpful errors
-- [ ] All MCP tools validate numeric constraints (e.g., `limit > 0`, `limit <= max`)
-- [ ] Error responses include:
-  - `error`: Error type (e.g., `"invalid_parameter"`)
-  - `message`: Human-readable message listing valid options
-  - `parameter`: Which parameter was invalid
-- [ ] No uncaught `KeyError`, `ValueError`, or similar for user input
-- [ ] Test coverage for invalid inputs on each tool
+### Critical: assemble_context (`src/clams/server/tools/context.py`)
 
-### Tools to Update
+- [ ] Validate `context_types` against known types: `["values", "experiences"]`
+- [ ] Invalid types return error listing valid options
+- [ ] Validate `limit` range (1-50)
+- [ ] Validate `max_tokens` range (100-10000)
+- [ ] Empty `query` returns empty result gracefully (not error)
 
-Based on R4-A audit, these tools need validation improvements:
+### Memory Tools (`src/clams/server/tools/memory.py`)
 
-**Memory Tools** (`server/tools/memory.py`):
-- [ ] `store_memory`: Validate `category` against valid categories
-- [ ] `retrieve_memories`: Validate `category` if provided
-- [ ] `list_memories`: Validate `category`, `limit` (1-200), `offset` (>= 0)
+- [ ] `retrieve_memories`: Validate `min_importance` in range 0.0-1.0
+- [ ] `store_memory`: Validate `tags` max count (20) and max tag length (50 chars)
+- [ ] `list_memories`: Validate `tags` same as store_memory
+- [ ] `delete_memory`: Validate `memory_id` is valid UUID format
 
-**Code Tools** (`server/tools/code.py`):
-- [ ] `search_code`: Validate `limit` (1-50)
-- [ ] `find_similar_code`: Validate `limit` (1-50), `snippet` length
+### Code Tools (`src/clams/server/tools/code.py`)
 
-**Git Tools** (`server/tools/git.py`):
-- [ ] `search_commits`: Validate `limit` (1-50)
-- [ ] `get_file_history`: Validate `limit` (1-500)
-- [ ] `get_churn_hotspots`: Validate `days` (1-365), `limit` (1-50)
+- [ ] `search_code`: Validate `language` against supported list with helpful error
+- [ ] `index_codebase`: Validate `project` format (alphanumeric, dashes, underscores, max 100 chars)
 
-**Learning Tools** (`server/tools/learning.py`):
-- [ ] `get_clusters`: Validate `axis` against valid axes
-- [ ] `search_experiences`: Validate `axis`, `domain`, `outcome`, `limit`
-- [ ] `validate_value`: Validate `cluster_id` format
-- [ ] `store_value`: Validate `axis`, `cluster_id`, `text` length
+### GHAP Tools (`src/clams/server/tools/ghap.py`)
 
-**Context Tools** (`server/tools/context.py`):
-- [ ] `assemble_context`: Validate `context_types` against valid types
+- [ ] `update_ghap`: Validate `note` max length (2000 chars, consistent with other fields)
+
+### Token Management (`src/clams/context/tokens.py`)
+
+- [ ] `distribute_budget`: Validate `max_tokens` is positive and reasonable (1-100000)
+
+### Error Format
+
+Use the existing error format pattern from the codebase:
+```python
+# For tool-level errors (returned to user)
+return {
+    "error": "validation_error",
+    "message": f"Invalid {param}: {value}. Valid options: {', '.join(valid)}"
+}
+
+# For internal validation (raise exception)
+raise ValidationError(f"Invalid {param}: {value}. Valid options: {', '.join(valid)}")
+```
 
 ## Implementation Notes
 
-Standard validation pattern:
+**Validation helper for arrays** (add to `enums.py` or create `validation.py`):
 ```python
-from clams.server.tools.enums import VALID_CATEGORIES, VALID_AXES
-
-async def tool_impl(category: str | None = None, limit: int = 10) -> dict:
-    # Validate enum parameter
-    if category is not None and category not in VALID_CATEGORIES:
-        return {
-            "error": "invalid_parameter",
-            "parameter": "category",
-            "message": f"Invalid category '{category}'. Valid options: {', '.join(sorted(VALID_CATEGORIES))}",
-        }
-
-    # Validate numeric constraint
-    if limit < 1 or limit > 100:
-        return {
-            "error": "invalid_parameter",
-            "parameter": "limit",
-            "message": f"limit must be between 1 and 100, got {limit}",
-        }
-
-    # Normal processing...
+def validate_tags(tags: list[str] | None, max_count: int = 20, max_length: int = 50) -> None:
+    """Validate tags array."""
+    if tags is None:
+        return
+    if len(tags) > max_count:
+        raise ValidationError(f"Too many tags: {len(tags)}. Maximum: {max_count}")
+    for i, tag in enumerate(tags):
+        if len(tag) > max_length:
+            raise ValidationError(
+                f"Tag {i} too long: {len(tag)} chars. Maximum: {max_length}"
+            )
 ```
 
-Error response format (consistent across all tools):
-```json
-{
-    "error": "invalid_parameter",
-    "parameter": "category",
-    "message": "Invalid category 'invalid'. Valid options: decision, error, event, fact, preference, workflow"
-}
+**UUID validation**:
+```python
+import uuid
+
+def validate_uuid(value: str, param_name: str) -> None:
+    """Validate string is valid UUID format."""
+    try:
+        uuid.UUID(value)
+    except ValueError:
+        raise ValidationError(f"Invalid {param_name}: must be a valid UUID")
+```
+
+**Supported languages for search_code** (check actual implementation):
+```python
+SUPPORTED_LANGUAGES = ["python", "typescript", "javascript", "rust", "go", "java", ...]
 ```
 
 ## Testing Requirements
 
-- Each tool has at least one invalid enum input test
-- Each tool has at least one invalid numeric constraint test
-- Tests verify error messages list valid options
-- Tests verify error includes parameter name
-- No uncaught exceptions from any invalid input
-- Add tests to `tests/server/tools/test_input_validation.py`
+Create new test file `tests/server/tools/test_input_validation.py`:
+
+- [ ] Test: `assemble_context` with invalid context_type returns error listing valid options
+- [ ] Test: `assemble_context` with limit=0 or limit=100 returns range error
+- [ ] Test: `assemble_context` with empty query returns empty result (not error)
+- [ ] Test: `retrieve_memories` with min_importance=1.5 returns range error
+- [ ] Test: `store_memory` with 25 tags returns count error
+- [ ] Test: `store_memory` with 60-char tag returns length error
+- [ ] Test: `delete_memory` with "not-a-uuid" returns format error
+- [ ] Test: `search_code` with language="invalid" returns error listing supported languages
+- [ ] Test: `index_codebase` with project="has spaces!" returns format error
+- [ ] Test: `update_ghap` with 3000-char note returns length error
+- [ ] Test: `distribute_budget` with max_tokens=-1 returns error
+- [ ] All error messages include valid options or acceptable ranges
 
 ## Out of Scope
 
-- Validation of business logic (e.g., "can't start GHAP with active entry" - already done)
-- Schema-level validation (JSON schema already validates types)
+- Validation that already exists (see "What's already validated" above)
+- Changing error message format (use existing patterns)
+- Adding validation to tools not in the audit
 - Performance optimization of validation
+- Schema-level validation (JSON schema already handles basic types)
