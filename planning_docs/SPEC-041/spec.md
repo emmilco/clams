@@ -18,7 +18,7 @@ The shell linter gate script (`.claude/gates/check_linter_shell.sh`) exists and 
 Enhance the existing `check_linter_shell.sh` script to:
 1. Add `bash -n` syntax checking before shellcheck
 2. Add `-S warning` severity threshold to shellcheck
-3. Support a `--changed-only` flag to focus on modified files
+3. Support changed-only mode via environment variable
 4. Add `clams/hooks/` to default directories
 
 ## Acceptance Criteria
@@ -27,17 +27,29 @@ Enhance the existing `check_linter_shell.sh` script to:
 
 - [ ] Script runs `bash -n` syntax check on each shell file before shellcheck
 - [ ] Script uses `shellcheck -x -S warning` (both follow sources AND warning severity)
-- [ ] Script supports `--changed-only` flag that uses `git diff main...HEAD --name-only`
-- [ ] When `--changed-only` is used, only changed files matching shell patterns are checked
+- [ ] Script supports `CHECK_CHANGED_ONLY=1` environment variable to check only changed files
+- [ ] When `CHECK_CHANGED_ONLY=1`, script uses `git diff main...HEAD --name-only` filtered to SCRIPT_DIRS
 - [ ] Default directories include `clams/hooks/` in addition to `.claude/bin/` and `scripts/`
-- [ ] Script handles files in `clams/hooks/` even without `.sh` extension (check shebang)
-- [ ] Exit codes unchanged: 0=clean, 1=errors, 2=skip (shellcheck unavailable)
+- [ ] Shebang detection (existing behavior) continues to work for all directories including `clams/hooks/`
+- [ ] Usage: `check_linter_shell.sh <worktree_path> [task_id]` (unchanged positional args)
+
+### Exit Codes
+
+Exit codes must be deterministic based on actual checks run:
+
+| Condition | Exit Code |
+|-----------|-----------|
+| All checks pass | 0 |
+| Any `bash -n` or shellcheck failure | 1 |
+| Shellcheck unavailable AND no shell files found | 2 (skip) |
+| Shellcheck unavailable BUT shell files exist | Run `bash -n` only, exit 0 if all pass, 1 if any fail |
+| `CHECK_CHANGED_ONLY=1` with no shell changes | 0 with "No shell changes to check" |
 
 ### Error Handling
 
-- [ ] If `bash -n` fails, report syntax error and continue to next file
-- [ ] If `--changed-only` finds no shell changes, exit 0 with "No shell changes to check"
-- [ ] If shellcheck unavailable, warn and skip shellcheck (but still run `bash -n`)
+- [ ] If `bash -n` fails on a file, report syntax error, set PASS=false, continue to next file
+- [ ] If `CHECK_CHANGED_ONLY=1` and `git diff` fails (not a git repo, main doesn't exist, etc.), fall back to checking all files with a warning message
+- [ ] If shellcheck unavailable, warn once and skip shellcheck (but still run `bash -n`)
 
 ## Implementation Notes
 
@@ -45,7 +57,12 @@ Enhance the existing `check_linter_shell.sh` script to:
 
 **Key changes**:
 
-1. Add `bash -n` before shellcheck:
+1. Add environment variable for changed-only mode (avoids positional arg conflicts):
+```bash
+CHECK_CHANGED_ONLY="${CHECK_CHANGED_ONLY:-0}"
+```
+
+2. Add `bash -n` before shellcheck:
 ```bash
 echo "Syntax check: $script"
 if ! bash -n "$script" 2>&1; then
@@ -55,39 +72,54 @@ if ! bash -n "$script" 2>&1; then
 fi
 ```
 
-2. Add severity flag:
+3. Add severity flag:
 ```bash
 if ! shellcheck -x -S warning "$script" 2>&1; then
 ```
 
-3. Add `--changed-only` support:
+4. Changed-only logic with git error handling:
 ```bash
-CHANGED_ONLY=false
-if [[ "${1:-}" == "--changed-only" ]]; then
-    CHANGED_ONLY=true
-    shift
-fi
-# ... later ...
-if $CHANGED_ONLY; then
-    SHELL_FILES=$(git diff main...HEAD --name-only -- '*.sh' 'clams/hooks/*' '.claude/bin/*')
-    # Filter to existing files and check those
+if [[ "$CHECK_CHANGED_ONLY" == "1" ]]; then
+    # Build filter patterns from SCRIPT_DIRS
+    FILTER_PATTERNS=""
+    for dir in $SCRIPT_DIRS; do
+        FILTER_PATTERNS="$FILTER_PATTERNS ${dir%/}/*"
+    done
+
+    # Try git diff, fall back to all files on failure
+    if SHELL_FILES=$(git diff main...HEAD --name-only -- $FILTER_PATTERNS '*.sh' 2>/dev/null); then
+        SHELL_FILES=$(echo "$SHELL_FILES" | grep -E '\.(sh|bash)$|^clams/hooks/' || true)
+        if [[ -z "$SHELL_FILES" ]]; then
+            echo "No shell changes to check"
+            exit 0
+        fi
+    else
+        echo "WARNING: git diff failed, falling back to checking all files"
+        CHECK_CHANGED_ONLY=0
+    fi
 fi
 ```
 
-4. Update default directories:
+5. Update default directories:
 ```bash
-SCRIPT_DIRS=".claude/bin/ scripts/ clams/hooks/"
+if [[ -z "$SCRIPT_DIRS" ]]; then
+    SCRIPT_DIRS=".claude/bin/ scripts/ clams/hooks/"
+fi
 ```
 
 ## Testing Requirements
 
 All tests should be automated (pytest or shell-based):
 
-- [ ] **Unit test**: Create temp script with syntax error, verify `bash -n` catches it
-- [ ] **Unit test**: Create temp script with shellcheck warning, verify detection with `-S warning`
-- [ ] **Unit test**: Test `--changed-only` with mocked `git diff` output
-- [ ] **Integration test**: In a worktree with hooks-only changes, verify script checks `clams/hooks/`
-- [ ] **Graceful degradation**: Mock shellcheck unavailable, verify `bash -n` still runs
+- [ ] **Syntax check**: Create temp script with syntax error, verify `bash -n` catches it
+- [ ] **Shellcheck warning**: Create script with shellcheck warning, verify `-S warning` detects it
+- [ ] **Changed-only mode**: Set `CHECK_CHANGED_ONLY=1`, mock `git diff`, verify filtering
+- [ ] **Git failure fallback**: Set `CHECK_CHANGED_ONLY=1` in non-git dir, verify fallback to all files
+- [ ] **Exit code 0**: All files pass both checks
+- [ ] **Exit code 1**: Any file fails `bash -n` or shellcheck
+- [ ] **Exit code 2**: No shellcheck AND no shell files found
+- [ ] **Shellcheck unavailable**: Mock unavailable, verify `bash -n` still runs and determines exit code
+- [ ] **clams/hooks/ coverage**: Verify files in `clams/hooks/` are checked by default
 
 ## Out of Scope
 
@@ -95,3 +127,4 @@ All tests should be automated (pytest or shell-based):
 - Gate routing logic (SPEC-040)
 - Frontend check script (SPEC-042)
 - Changing the overall script architecture
+- Adding new CLI positional arguments
