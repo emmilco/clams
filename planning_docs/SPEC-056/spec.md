@@ -56,11 +56,13 @@ Document each hook with these specific details:
 ### Environment Variable Documentation
 
 - [ ] Document existing `CLAMS_*` variables (don't rename to `CLAMS_HOOK_*`)
-- [ ] Current variables to document:
+- [ ] Complete list of variables used by hooks:
   - `CLAMS_HTTP_HOST` - Server host (default: 127.0.0.1)
-  - `CLAMS_HTTP_PORT` - Server port (default: 8765)
+  - `CLAMS_HTTP_PORT` - Server port (default: 6334)
+  - `CLAMS_PID_FILE` - Path to server PID file (default: ~/.clams/server.pid)
+  - `CLAMS_STORAGE_PATH` - Path to CLAMS storage directory (default: ~/.clams)
+  - `CLAMS_DIR` - Derived from CLAMS_STORAGE_PATH in hooks
   - `CLAMS_GHAP_CHECK_FREQUENCY` - Tool calls between GHAP reminders
-  - `CLAMS_DIR` - Path to CLAMS installation
 - [ ] Note: config loaded from `~/.clams/config.env` per SPEC-029
 
 ### JSON Output Schema Documentation
@@ -74,7 +76,12 @@ Document each hook with these specific details:
   }
 }
 ```
-- [ ] Note which hooks produce output vs silent completion
+- [ ] Note which hooks produce output vs silent completion:
+  - `session_start.sh` - Produces JSON with orphaned GHAP context
+  - `session_end.sh` - No output (not supported)
+  - `user_prompt_submit.sh` - Produces JSON with assembled context
+  - `ghap_checkin.sh` - Produces JSON with GHAP reminder (or silent if not due)
+  - `outcome_capture.sh` - Produces JSON with capture prompt (or silent if no resolution)
 
 ### Validation Script
 
@@ -105,7 +112,10 @@ These hooks integrate CLAMS with Claude Code's event system.
 | Hook | Event | Purpose |
 |------|-------|---------|
 | session_start.sh | SessionStart | Initialize session, check orphaned GHAPs |
-| ... | ... | ... |
+| session_end.sh | SessionEnd | (Not supported by Claude Code yet) |
+| user_prompt_submit.sh | UserPromptSubmit | Assemble context for prompts |
+| ghap_checkin.sh | PreToolCall | GHAP progress reminders |
+| outcome_capture.sh | PostToolCall | Capture GHAP resolutions |
 
 ## Environment Variables
 
@@ -114,7 +124,10 @@ All hooks read configuration from `~/.clams/config.env`:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | CLAMS_HTTP_HOST | 127.0.0.1 | MCP server host |
-| ... | ... | ... |
+| CLAMS_HTTP_PORT | 6334 | MCP server port |
+| CLAMS_PID_FILE | ~/.clams/server.pid | Server PID file path |
+| CLAMS_STORAGE_PATH | ~/.clams | CLAMS data directory |
+| CLAMS_GHAP_CHECK_FREQUENCY | 10 | Tool calls between GHAP reminders |
 
 ## Hook Details
 
@@ -122,6 +135,7 @@ All hooks read configuration from `~/.clams/config.env`:
 **Event**: SessionStart
 **Blocking**: No (spawns daemon if needed)
 **Output**: JSON with orphaned GHAP context
+**Exit codes**: 0 (success), non-zero (failure, but hook doesn't block)
 ...
 ```
 
@@ -131,11 +145,27 @@ All hooks read configuration from `~/.clams/config.env`:
 # Validate hook configuration
 
 PASS=true
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+echo "=== Hook Configuration Validation ==="
 
 # Check each registered hook exists and is executable
-# Parse .claude/settings.json for hook paths
-# Run bash -n on each
-# Report results
+for hook in session_start.sh user_prompt_submit.sh ghap_checkin.sh outcome_capture.sh; do
+    if [[ ! -f "$SCRIPT_DIR/$hook" ]]; then
+        echo "FAIL: $hook not found"
+        PASS=false
+    elif [[ ! -x "$SCRIPT_DIR/$hook" ]]; then
+        echo "FAIL: $hook not executable"
+        PASS=false
+    elif ! bash -n "$SCRIPT_DIR/$hook" 2>&1; then
+        echo "FAIL: $hook has syntax errors"
+        PASS=false
+    else
+        echo "PASS: $hook"
+    fi
+done
+
+$PASS && exit 0 || exit 1
 ```
 
 ## Testing Requirements
@@ -147,7 +177,7 @@ All tests automated:
 - [ ] Test: validation fails when hook script not executable
 - [ ] Test: validation fails when hook has syntax error
 - [ ] Test: README documents all hooks in `clams/hooks/`
-- [ ] Test: README env vars match actual usage in hook scripts
+- [ ] Test: README env vars match actual usage in hook scripts (grep for CLAMS_* in hooks)
 
 ## Dependencies
 
