@@ -80,16 +80,17 @@ if ! shellcheck -x -S warning "$script" 2>&1; then
 4. Changed-only logic with git error handling:
 ```bash
 if [[ "$CHECK_CHANGED_ONLY" == "1" ]]; then
-    # Build filter patterns from SCRIPT_DIRS
-    FILTER_PATTERNS=""
+    # Build filter arguments from SCRIPT_DIRS
+    FILTER_ARGS=()
     for dir in $SCRIPT_DIRS; do
-        FILTER_PATTERNS="$FILTER_PATTERNS ${dir%/}/*"
+        FILTER_ARGS+=("${dir%/}/*")
     done
 
     # Try git diff, fall back to all files on failure
-    if SHELL_FILES=$(git diff main...HEAD --name-only -- $FILTER_PATTERNS '*.sh' 2>/dev/null); then
-        SHELL_FILES=$(echo "$SHELL_FILES" | grep -E '\.(sh|bash)$|^clams/hooks/' || true)
-        if [[ -z "$SHELL_FILES" ]]; then
+    if CHANGED_FILES=$(git diff main...HEAD --name-only -- "${FILTER_ARGS[@]}" 2>/dev/null); then
+        # Filter to shell files by extension
+        CHANGED_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(sh|bash)$' || true)
+        if [[ -z "$CHANGED_FILES" ]]; then
             echo "No shell changes to check"
             exit 0
         fi
