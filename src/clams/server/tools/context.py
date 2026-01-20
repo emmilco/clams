@@ -13,6 +13,10 @@ from typing import Any
 import structlog
 
 from clams.search.searcher import Searcher
+from clams.server.tools.validation import (
+    validate_context_types,
+    validate_limit_range,
+)
 from clams.values import ValueStore
 
 logger = structlog.get_logger()
@@ -59,8 +63,25 @@ def get_context_tools(
             - item_count: Total items included
             - truncated: Whether content was truncated
         """
-        if context_types is None:
+        # Validate parameters
+        if context_types is not None:
+            validate_context_types(context_types)
+        else:
             context_types = ["values", "experiences"]
+
+        validate_limit_range(limit, min_val=1, max_val=50, param_name="limit")
+        validate_limit_range(
+            max_tokens, min_val=100, max_val=10000, param_name="max_tokens"
+        )
+
+        # Empty query returns empty result gracefully (not error)
+        if not query.strip():
+            return {
+                "markdown": "",
+                "token_count": 0,
+                "item_count": 0,
+                "truncated": False,
+            }
 
         sections: list[str] = []
         total_items = 0

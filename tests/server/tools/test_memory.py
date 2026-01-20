@@ -248,12 +248,13 @@ async def test_delete_memory_success(mock_services):
     tools = get_memory_tools(mock_services)
     delete_memory = tools["delete_memory"]
 
-    result = await delete_memory(memory_id="test-id")
+    test_uuid = "12345678-1234-1234-1234-123456789abc"
+    result = await delete_memory(memory_id=test_uuid)
 
     assert result["deleted"] is True
     mock_services.vector_store.delete.assert_called_once_with(
         collection="memories",
-        id="test-id",
+        id=test_uuid,
     )
 
 
@@ -266,7 +267,8 @@ async def test_delete_memory_not_found(mock_services):
     # Make delete raise an exception
     mock_services.vector_store.delete.side_effect = Exception("Not found")
 
-    result = await delete_memory(memory_id="nonexistent")
+    # SPEC-057: memory_id must be valid UUID format
+    result = await delete_memory(memory_id="00000000-0000-0000-0000-000000000000")
 
     assert result["deleted"] is False
 

@@ -5,6 +5,10 @@ Tests cover:
 - search_code: query, project, language, limit
 - find_similar_code: snippet, project, limit
 
+SPEC-057 additions:
+- search_code: language validation with helpful error
+- index_codebase: project format validation (alphanumeric, dashes, underscores, max 100 chars)
+
 This test module verifies that all validation constraints are enforced
 with informative error messages.
 """
@@ -234,3 +238,161 @@ class TestFindSimilarCodeValidation:
         tool = code_tools["find_similar_code"]
         result = await tool(snippet="test code", limit=50)
         assert "results" in result
+
+
+# ============================================================================
+# SPEC-057: New validation tests
+# ============================================================================
+
+
+class TestSearchCodeLanguageValidation:
+    """SPEC-057: Language validation tests for search_code."""
+
+    @pytest.mark.asyncio
+    async def test_invalid_language(self, code_tools: dict[str, Any]) -> None:
+        """Unsupported language should error."""
+        tool = code_tools["search_code"]
+        with pytest.raises(ValidationError, match="Unsupported language"):
+            await tool(query="test", language="brainfuck")
+
+    @pytest.mark.asyncio
+    async def test_invalid_language_lists_supported(
+        self, code_tools: dict[str, Any]
+    ) -> None:
+        """Error message should list supported languages."""
+        tool = code_tools["search_code"]
+        with pytest.raises(ValidationError) as exc_info:
+            await tool(query="test", language="invalid")
+        assert "python" in str(exc_info.value)
+        assert "typescript" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("language", ["python", "Python", "PYTHON"])
+    async def test_valid_language_case_insensitive(
+        self, code_tools: dict[str, Any], language: str
+    ) -> None:
+        """Language validation should be case-insensitive."""
+        tool = code_tools["search_code"]
+        # Should not raise
+        result = await tool(query="test", language=language)
+        assert "results" in result
+
+    @pytest.mark.asyncio
+    async def test_none_language_accepted(self, code_tools: dict[str, Any]) -> None:
+        """None language should be accepted (no filter)."""
+        tool = code_tools["search_code"]
+        result = await tool(query="test", language=None)
+        assert "results" in result
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "language",
+        [
+            "python",
+            "typescript",
+            "javascript",
+            "rust",
+            "go",
+            "java",
+            "c",
+            "cpp",
+            "csharp",
+            "ruby",
+            "php",
+            "swift",
+            "kotlin",
+            "scala",
+        ],
+    )
+    async def test_all_supported_languages(
+        self, code_tools: dict[str, Any], language: str
+    ) -> None:
+        """All documented languages should be accepted."""
+        tool = code_tools["search_code"]
+        result = await tool(query="test", language=language)
+        assert "results" in result
+
+
+class TestIndexCodebaseProjectValidation:
+    """SPEC-057: Project identifier format validation tests."""
+
+    @pytest.mark.asyncio
+    async def test_project_with_spaces(
+        self, code_tools: dict[str, Any], tmp_path: Any
+    ) -> None:
+        """Project with spaces should error."""
+        tool = code_tools["index_codebase"]
+        with pytest.raises(ValidationError, match="Invalid project identifier"):
+            await tool(directory=str(tmp_path), project="has spaces")
+
+    @pytest.mark.asyncio
+    async def test_project_with_special_chars(
+        self, code_tools: dict[str, Any], tmp_path: Any
+    ) -> None:
+        """Project with special chars should error."""
+        tool = code_tools["index_codebase"]
+        with pytest.raises(ValidationError, match="Invalid project identifier"):
+            await tool(directory=str(tmp_path), project="has@special!")
+
+    @pytest.mark.asyncio
+    async def test_project_too_long(
+        self, code_tools: dict[str, Any], tmp_path: Any
+    ) -> None:
+        """Project > 100 chars should error."""
+        tool = code_tools["index_codebase"]
+        with pytest.raises(ValidationError, match="too long"):
+            await tool(directory=str(tmp_path), project="x" * 101)
+
+    @pytest.mark.asyncio
+    async def test_project_empty(
+        self, code_tools: dict[str, Any], tmp_path: Any
+    ) -> None:
+        """Empty project should error."""
+        tool = code_tools["index_codebase"]
+        with pytest.raises(ValidationError, match="cannot be empty"):
+            await tool(directory=str(tmp_path), project="")
+
+    @pytest.mark.asyncio
+    async def test_project_starts_with_dash(
+        self, code_tools: dict[str, Any], tmp_path: Any
+    ) -> None:
+        """Project starting with dash should error."""
+        tool = code_tools["index_codebase"]
+        with pytest.raises(ValidationError, match="Invalid project identifier"):
+            await tool(directory=str(tmp_path), project="-starts-with-dash")
+
+    @pytest.mark.asyncio
+    async def test_valid_project_identifiers(
+        self, code_tools: dict[str, Any], mock_services: Any, tmp_path: Any
+    ) -> None:
+        """Valid project formats should be accepted."""
+        mock_stats = MagicMock()
+        mock_stats.files_indexed = 0
+        mock_stats.units_indexed = 0
+        mock_stats.files_skipped = 0
+        mock_stats.errors = []
+        mock_stats.duration_ms = 1
+        mock_services.code_indexer.index_directory.return_value = mock_stats
+
+        tool = code_tools["index_codebase"]
+        # All these should be accepted
+        for project in ["my-project", "my_project", "MyProject123", "test", "a"]:
+            result = await tool(directory=str(tmp_path), project=project)
+            assert result["project"] == project
+
+    @pytest.mark.asyncio
+    async def test_project_at_max_length(
+        self, code_tools: dict[str, Any], mock_services: Any, tmp_path: Any
+    ) -> None:
+        """Project at exactly 100 chars should be accepted."""
+        mock_stats = MagicMock()
+        mock_stats.files_indexed = 0
+        mock_stats.units_indexed = 0
+        mock_stats.files_skipped = 0
+        mock_stats.errors = []
+        mock_stats.duration_ms = 1
+        mock_services.code_indexer.index_directory.return_value = mock_stats
+
+        tool = code_tools["index_codebase"]
+        result = await tool(directory=str(tmp_path), project="x" * 100)
+        assert result["project"] == "x" * 100

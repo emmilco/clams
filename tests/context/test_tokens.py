@@ -307,11 +307,14 @@ class TestDistributeBudgetValidation:
         budget = distribute_budget([], 1000)
         assert budget == {}
 
-    def test_zero_budget(self) -> None:
-        """Zero budget should distribute zero to all sources."""
-        budget = distribute_budget(["memories", "code"], 0)
-        assert budget["memories"] == 0
-        assert budget["code"] == 0
+    def test_zero_budget_raises(self) -> None:
+        """SPEC-057: Zero budget should raise ValueError.
+
+        Note: Previous behavior was to distribute zero to all sources.
+        Now max_tokens must be positive (>= 1).
+        """
+        with pytest.raises(ValueError, match="must be positive"):
+            distribute_budget(["memories", "code"], 0)
 
     def test_budget_sums_correctly(self) -> None:
         """Distributed budget should sum to approximately max_tokens."""
@@ -324,3 +327,30 @@ class TestDistributeBudgetValidation:
             # Integer division may lose a few tokens
             assert total <= max_tokens
             assert total >= max_tokens - len(budget)  # At most 1 lost per source
+
+    def test_max_tokens_negative(self) -> None:
+        """SPEC-057: Negative max_tokens should error."""
+        with pytest.raises(ValueError, match="must be positive"):
+            distribute_budget(["memories"], max_tokens=-1)
+
+    def test_max_tokens_zero(self) -> None:
+        """SPEC-057: Zero max_tokens should error."""
+        with pytest.raises(ValueError, match="must be positive"):
+            distribute_budget(["memories"], max_tokens=0)
+
+    def test_max_tokens_too_large(self) -> None:
+        """SPEC-057: max_tokens > 100000 should error."""
+        with pytest.raises(ValueError, match="exceeds maximum"):
+            distribute_budget(["memories"], max_tokens=200000)
+
+    def test_max_tokens_at_upper_boundary(self) -> None:
+        """SPEC-057: max_tokens=100000 should be accepted."""
+        # Should not raise
+        budget = distribute_budget(["memories"], max_tokens=100000)
+        assert budget["memories"] == 100000
+
+    def test_max_tokens_at_lower_boundary(self) -> None:
+        """SPEC-057: max_tokens=1 should be accepted."""
+        # Should not raise
+        budget = distribute_budget(["memories"], max_tokens=1)
+        assert budget["memories"] == 1

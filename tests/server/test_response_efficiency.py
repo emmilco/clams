@@ -499,9 +499,9 @@ class TestMemoryResponseEfficiency:
 
         # Create mock result with moderate content
         mock_result = mock_search_result(
-            id="test-id",
+            id="12345678-1234-1234-1234-123456789abc",
             payload={
-                "id": "test-id",
+                "id": "12345678-1234-1234-1234-123456789abc",
                 "content": "Test content " * 20,  # ~260 chars
                 "category": "fact",
                 "importance": 0.8,
@@ -540,9 +540,9 @@ class TestMemoryResponseEfficiency:
 
         # Create mock result - content should NOT be in response
         mock_result = mock_search_result(
-            id="test-id",
+            id="12345678-1234-1234-1234-123456789abc",
             payload={
-                "id": "test-id",
+                "id": "12345678-1234-1234-1234-123456789abc",
                 "content": "This content should not appear in list response " * 10,
                 "category": "fact",
                 "importance": 0.8,
@@ -576,7 +576,7 @@ class TestMemoryResponseEfficiency:
         tools = get_memory_tools(mock_services)
         delete_memory = tools["delete_memory"]
 
-        response = await delete_memory(memory_id="test-id")
+        response = await delete_memory(memory_id="12345678-1234-1234-1234-123456789abc")
 
         response_size = len(json.dumps(response))
         max_size = 300
@@ -619,7 +619,7 @@ class TestMemoryResponseEfficiency:
         )
 
         # Test delete_memory
-        delete_response = await tools["delete_memory"](memory_id="test-id")
+        delete_response = await tools["delete_memory"](memory_id="12345678-1234-1234-1234-123456789abc")
         delete_size = len(json.dumps(delete_response))
         assert delete_size >= min_size, (
             f"delete_memory response too small: {delete_size} bytes < {min_size} bytes"

@@ -7,6 +7,9 @@ Tests cover:
 - get_active_ghap: (no validation needed)
 - list_ghap_entries: limit, domain, outcome, since
 
+SPEC-057 additions:
+- update_ghap: note max length validation (2000 chars)
+
 This test module verifies that all validation constraints are enforced
 with informative error messages.
 
@@ -360,6 +363,49 @@ class TestUpdateGhapValidation:
         tool = ghap_tools["update_ghap"]
         result = await tool(hypothesis="x" * 1001)
         assert_error_response(result, message_contains="1000 character limit")
+
+    @pytest.mark.asyncio
+    async def test_update_ghap_note_too_long(
+        self, ghap_tools: dict[str, Any]
+    ) -> None:
+        """SPEC-057: Note > 2000 chars should error."""
+        # First start a GHAP
+        start_tool = ghap_tools["start_ghap"]
+        await start_tool(
+            domain="debugging",
+            strategy="systematic-elimination",
+            goal="Test",
+            hypothesis="Test",
+            action="Test",
+            prediction="Test",
+        )
+
+        # Try to update with too-long note
+        tool = ghap_tools["update_ghap"]
+        result = await tool(note="x" * 2001)
+        assert_error_response(result, message_contains="2000")
+
+    @pytest.mark.asyncio
+    async def test_update_ghap_note_at_limit_accepted(
+        self, ghap_tools: dict[str, Any]
+    ) -> None:
+        """SPEC-057: Note of exactly 2000 chars should be accepted."""
+        # First start a GHAP
+        start_tool = ghap_tools["start_ghap"]
+        await start_tool(
+            domain="debugging",
+            strategy="systematic-elimination",
+            goal="Test",
+            hypothesis="Test",
+            action="Test",
+            prediction="Test",
+        )
+
+        # Update with note at limit
+        tool = ghap_tools["update_ghap"]
+        result = await tool(note="x" * 2000)
+        # Should succeed (have success or no error)
+        assert "success" in result or "error" not in result
 
 
 class TestResolveGhapValidation:
