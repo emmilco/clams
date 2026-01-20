@@ -6,6 +6,118 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### SPEC-054: Spec and Proposal Reviewer Checklist Updates (R17-E)
+**Type**: Enhancement
+
+Added bug pattern prevention checklist items to spec-reviewer.md and proposal-reviewer.md, enabling earlier detection of issues during the design phase.
+
+**Changes**:
+- Added "Bug Pattern Prevention" section to `.claude/roles/spec-reviewer.md`:
+  - T3: Initialization requirements stated
+  - T5: Input validation expectations
+  - T7: Test requirements explicit
+- Added "Bug Pattern Prevention" section to `.claude/roles/proposal-reviewer.md`:
+  - T3: Initialization strategy defined
+  - T5: Input validation strategy
+  - T1/T2: Type location decided
+  - T7: Test strategy covers production parity
+- Cross-references to code reviewer checklist for implementation-phase checks
+
+### SPEC-050: Reviewer Checklist Bug Pattern Prevention (R17-A through R17-D)
+**Type**: Enhancement
+
+Added bug pattern prevention checklist items to the code reviewer role, consolidating lessons learned from recurring bugs.
+
+**Changes**:
+- Added "Additional Checklist Items (Bug Pattern Prevention)" section to `.claude/roles/reviewer.md`
+- Added Initialization Patterns (T3) checklist - catches missing `ensure_exists` calls (BUG-016, BUG-043)
+- Added Input Validation (T5) checklist - catches missing input validation (BUG-029, BUG-036)
+- Added Test-Production Parity (T7) checklist - catches test/production divergence (BUG-031, BUG-033, BUG-040)
+- Added Type Consistency (T1, T2) checklist - catches duplicate types and missing inheritance (BUG-040, BUG-041)
+
+### SPEC-047: Hash/Eq Contract Tests for ContextItem (R16-A)
+**Type**: Testing
+
+Added comprehensive tests to verify ContextItem maintains Python's hash/eq contract, preventing silent bugs in set/dict operations.
+
+**Changes**:
+- Added `tests/context/test_data_contracts.py` with 19 tests covering:
+  - Hash/eq contract invariant verification
+  - Edge cases (prefix collisions, unicode, whitespace, empty content)
+  - Set membership and deduplication consistency
+  - Dict key lookup consistency
+  - Property-based testing with hypothesis
+- Tests reference BUG-028 which originally identified the contract violation
+
+### SPEC-046: Token Counting Utility Tests (R15-C)
+**Type**: Testing
+
+Added comprehensive tests for the token estimation utility to verify accuracy and catch edge cases.
+
+**Changes**:
+- Added 20 new tests to `tests/context/test_tokens.py` (32 total)
+- `TestEstimateTokensAccuracy`: Verifies 4-char/token heuristic for English, code, JSON, markdown
+- `TestEstimateTokensEdgeCases`: Covers single chars, Unicode (CJK, emojis), whitespace, long text
+- `TestTruncateToTokensIntegrity`: Verifies budget enforcement and newline boundary handling
+- `TestDistributeBudgetValidation`: Tests error handling and budget distribution
+
+### SPEC-045: Response Size Assertions for Memory Tools (R15-B)
+**Type**: Optimization
+
+Added regression tests for memory tool response sizes and optimized memory.py to reduce token waste.
+
+**Changes**:
+- Added `TestMemoryResponseEfficiency` class in `tests/server/test_response_efficiency.py`
+- 6 tests covering: store_memory, retrieve_memories, list_memories, delete_memory
+- Fixed `store_memory` to return confirmation only (not echo content)
+- Fixed `list_memories` to return metadata only (no content field)
+- Verified size limits: store < 500 bytes, retrieve < 1000 bytes/entry, list < 500 bytes/entry, delete < 300 bytes
+
+### SPEC-044: Response Size Assertions for GHAP Tests (R15-A)
+**Type**: Testing
+
+Added regression tests to verify GHAP tool responses stay within token-efficient size limits.
+
+**Changes**:
+- Added `TestGHAPResponseEfficiency` class in `tests/server/test_response_efficiency.py`
+- 8 tests covering all GHAP tools: start, update, resolve, get_active, list
+- Verified size limits: 500 bytes for simple operations, 2000 bytes for active GHAP with history
+- Added minimum 10-byte checks to catch broken endpoints
+
+### SPEC-030: Cold-Start Testing Protocol
+**Type**: Testing
+
+Added comprehensive cold-start testing infrastructure to catch bugs that only manifest on first use when no collections or data exist.
+
+**Changes**:
+- Added `tests/cold_start/` package with tests for memory, git, GHAP, and values operations
+- Added `cold_start` pytest marker for selective test execution
+- Added `cold_start_qdrant` and `cold_start_db` fixtures in `tests/fixtures/cold_start.py`
+- Tests verify graceful handling of empty collections (no 404 errors, proper empty results)
+- 53 new cold-start tests covering all major MCP tool operations
+
+### SPEC-027: Import Time Measurement Tests
+**Type**: Testing
+
+Added comprehensive tests to measure and enforce import time limits for CLAMS modules, preventing accidental eager loading of heavy ML dependencies.
+
+**Changes**:
+- Added parametrized import time tests for 8 critical modules (clams, clams.server, clams.server.main, clams.server.http, clams.server.config, clams.embedding, clams.storage, clams.search)
+- Added lazy import isolation tests verifying torch, sentence_transformers, and transformers are not loaded by light imports
+- Added actionable error messages with diagnostic commands for import time violations
+- Threshold set to 3.0s to accommodate legitimate web framework imports while catching PyTorch loads (4-6s+)
+
+### SPEC-018: Cold-Start Integration Tests for Vector Store Collections
+**Type**: Testing
+
+Added integration tests that verify all vector store collections can be properly created on first use against a real Qdrant instance.
+
+**Changes**:
+- Added `tests/integration/test_cold_start_collections.py` with 16 integration tests
+- Tests cover all 5 collection types: memories, commits, values, code_units, and GHAP collections
+- Each test verifies: collection deletion, non-existence check, lazy creation, dimension verification (768), and data round-trip
+- Tests fail (not skip) if Qdrant is unavailable, ensuring CI catches infrastructure issues
+
 ### SPEC-009: CLAMS Animated Explainer
 **Type**: Feature
 

@@ -150,6 +150,16 @@ src/clams/
 pytest -vvsx                       # Unit tests
 pytest tests/integration/ -vvsx    # Integration tests (requires Qdrant)
 pytest tests/performance/ -vvsx    # Performance benchmarks
+pytest tests/cold_start/ -vvsx     # Cold-start tests (empty state handling)
+pytest -m cold_start -vvsx         # All cold-start marked tests
 ```
 
+**Test Categories**:
+- **Unit tests**: Core functionality, mocked dependencies
+- **Integration tests**: Real Qdrant instance, collection lifecycle
+- **Cold-start tests**: First-use scenarios, empty collections
+- **Performance tests**: Response latency, token efficiency
+
 **Requirements**: Python 3.12+, Qdrant 1.8.0+ at localhost:6333
+
+**Test Count**: 1700+ tests covering all MCP tools and edge cases
