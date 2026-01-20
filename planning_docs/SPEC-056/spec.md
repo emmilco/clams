@@ -3,8 +3,8 @@
 ## Problem Statement
 
 Claude Code hooks are configured across multiple locations with inconsistent documentation:
-- `.claude/settings.json` - Claude Code hook registration
 - `clams/hooks/*.sh` - Shell integration hooks for MCP/CLAMS
+- `clams/hooks/config.yaml` - Legacy hook configuration (partially duplicates config.env)
 - `.claude/hooks/*.py` - Python linting hooks (different purpose)
 - `~/.clams/config.env` - Runtime configuration (per SPEC-029)
 
@@ -64,6 +64,7 @@ Document each hook with these specific details:
   - `CLAMS_DIR` - Derived from CLAMS_STORAGE_PATH in hooks
   - `CLAMS_GHAP_CHECK_FREQUENCY` - Tool calls between GHAP reminders
 - [ ] Note: config loaded from `~/.clams/config.env` per SPEC-029
+- [ ] Document derived variables (CLAMS_DIR, JOURNAL_DIR, SERVER_URL) computed within hooks
 
 ### JSON Output Schema Documentation
 
@@ -87,17 +88,20 @@ Document each hook with these specific details:
 
 - [ ] Script `clams/hooks/validate_config.sh` created
 - [ ] Validation checks:
-  - All hook scripts referenced in `.claude/settings.json` exist
+  - All hook scripts in `clams/hooks/` exist
   - All hook scripts are executable
   - Hook scripts have valid bash syntax (`bash -n`)
-  - Required environment variables are documented in README
+  - Required dependencies are available (curl, jq, bash)
+  - README.md exists and documents all hooks
+  - Documented env vars are actually used in hook scripts
 - [ ] Script exits 0 if valid, 1 if issues found
-- [ ] Clear output listing each check and result
+- [ ] Clear output listing each check and result with colored pass/fail indicators
 
-### Settings Consistency
+### Legacy Configuration
 
-- [ ] `.claude/settings.json` hook paths match actual files in `clams/hooks/`
-- [ ] Any hooks in `clams/hooks/` but not in settings are documented as "available but not registered"
+- [ ] Document that `config.yaml` is a legacy configuration source
+- [ ] Note that hooks prefer environment variables from `~/.clams/config.env`
+- [ ] Document fallback behavior: env var -> config.env -> config.yaml -> defaults
 
 ## Implementation Notes
 
@@ -178,6 +182,7 @@ All tests automated:
 - [ ] Test: validation fails when hook has syntax error
 - [ ] Test: README documents all hooks in `clams/hooks/`
 - [ ] Test: README env vars match actual usage in hook scripts (grep for CLAMS_* in hooks)
+- [ ] Test: validation detects missing dependencies
 
 ## Dependencies
 
