@@ -329,7 +329,7 @@ class TestRetrieveMemoriesResponseSchema:
 
         # Mock search results
         mock_result = SearchResult(
-            id="test-id",
+            id="12345678-1234-1234-1234-123456789abc",
             score=0.95,
             payload={
                 "content": "Test content",
@@ -409,7 +409,7 @@ class TestDeleteMemoryResponseSchema:
     ) -> None:
         """Success response should contain deleted boolean."""
         tool = memory_tools["delete_memory"]
-        result = await tool(memory_id="test-id")
+        result = await tool(memory_id="12345678-1234-1234-1234-123456789abc")
 
         assert "deleted" in result
         assert isinstance(result["deleted"], bool)
@@ -422,7 +422,8 @@ class TestDeleteMemoryResponseSchema:
         tool = memory_tools["delete_memory"]
         mock_services.vector_store.delete.side_effect = Exception("Not found")
 
-        result = await tool(memory_id="nonexistent")
+        # SPEC-057: memory_id must be valid UUID format
+        result = await tool(memory_id="00000000-0000-0000-0000-000000000000")
 
         assert result["deleted"] is False
 

@@ -6,11 +6,11 @@ import structlog
 from mcp.server import Server
 
 from clams.clustering import ExperienceClusterer
+from clams.server.errors import ValidationError
 from clams.server.tools.enums import validate_axis
 from clams.server.tools.errors import (
     InsufficientDataError,
     NotFoundError,
-    ValidationError,
 )
 from clams.values import ValueStore
 

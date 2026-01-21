@@ -8,6 +8,10 @@ from mcp.server import Server
 
 from clams.server.errors import MCPError, ValidationError
 from clams.server.tools import ServiceContainer
+from clams.server.tools.validation import (
+    validate_language,
+    validate_project_id,
+)
 
 logger = structlog.get_logger()
 
@@ -49,6 +53,9 @@ def get_code_tools(services: ServiceContainer) -> dict[str, Any]:
                 "Code indexing not available. "
                 "CodeIndexer service not initialized (SPEC-002-06 may be incomplete)."
             )
+
+        # Validate project identifier format
+        validate_project_id(project)
 
         try:
             # Validate directory exists
@@ -151,6 +158,9 @@ def get_code_tools(services: ServiceContainer) -> dict[str, Any]:
             raise ValidationError(
                 f"Limit {limit} out of range. Must be between 1 and 50."
             )
+
+        # Validate language if provided
+        validate_language(language)
 
         # Handle empty query
         if not query.strip():

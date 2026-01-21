@@ -68,7 +68,7 @@ def mock_search_result():
     """Create a mock search result."""
 
     def _create(
-        id: str = "test-id",
+        id: str = "12345678-1234-1234-1234-123456789abc",
         score: float = 0.95,
         payload: dict | None = None,
     ):

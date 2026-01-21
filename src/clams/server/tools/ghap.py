@@ -16,6 +16,7 @@ from clams.observation import (
     RootCause,
     Strategy,
 )
+from clams.server.errors import ValidationError
 from clams.server.tools.enums import (
     validate_domain,
     validate_outcome_status,
@@ -25,8 +26,8 @@ from clams.server.tools.enums import (
 from clams.server.tools.errors import (
     MCPError,
     NotFoundError,
-    ValidationError,
 )
+from clams.server.tools.validation import validate_text_length
 
 logger = structlog.get_logger()
 
@@ -181,6 +182,9 @@ def get_ghap_tools(
                         f"Field '{field}' exceeds 1000 character limit "
                         f"({len(value)} chars)"
                     )
+
+            # Validate note length (consistent with other 2000-char fields)
+            validate_text_length(note, max_length=2000, param_name="note")
 
             # Check if there's an active GHAP entry
             current = await collector.get_current()

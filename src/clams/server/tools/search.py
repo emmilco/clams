@@ -6,12 +6,12 @@ import structlog
 from mcp.server import Server
 
 from clams.search.searcher import Searcher
+from clams.server.errors import ValidationError
 from clams.server.tools.enums import (
     validate_axis,
     validate_domain,
     validate_outcome_status,
 )
-from clams.server.tools.errors import ValidationError
 
 logger = structlog.get_logger()
 

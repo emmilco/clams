@@ -203,7 +203,10 @@ class TestDeleteMemoryColdStart:
         tools = get_memory_tools(memory_services)
         delete_memory = tools["delete_memory"]
 
-        result = await delete_memory(memory_id="nonexistent-id-12345")
+        # SPEC-057: memory_id must be valid UUID format
+        result = await delete_memory(
+            memory_id="12345678-1234-1234-1234-123456789abc"  # Valid UUID that doesn't exist
+        )
 
         # Per spec: returns error dict with 'error' key (not exception)
         # Looking at implementation, it returns {"deleted": False}

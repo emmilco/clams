@@ -2,6 +2,7 @@
 
 import pytest
 
+from clams.server.errors import ValidationError
 from clams.server.tools.enums import (
     DOMAINS,
     OUTCOME_STATUS_VALUES,
@@ -14,7 +15,6 @@ from clams.server.tools.enums import (
     validate_root_cause_category,
     validate_strategy,
 )
-from clams.server.tools.errors import ValidationError
 
 
 class TestDomains:
