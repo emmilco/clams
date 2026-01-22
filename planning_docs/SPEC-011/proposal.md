@@ -354,7 +354,24 @@ else
     fi
 fi
 
-# 7. Cross-reference: Root cause matches confirmed hypothesis
+# 7. Scaffold remnant warning (non-blocking per SPEC-011)
+echo ""
+echo "--- Check: Scaffold remnants (warning only) ---"
+# Check for common scaffold patterns in uncommitted changes
+scaffold_patterns='logger\.debug|print\("DEBUG|# SCAFFOLD|# DEBUG|console\.log\("DEBUG'
+
+if cd "$WORKTREE" && git diff HEAD 2>/dev/null | grep -qE "$scaffold_patterns"; then
+    echo "WARNING: Possible scaffold remnants detected in uncommitted changes"
+    echo "  Review and clean up diagnostic code before proceeding to implementation."
+    echo "  Common patterns found:"
+    git diff HEAD 2>/dev/null | grep -E "$scaffold_patterns" | head -5 | sed 's/^/    /'
+    echo ""
+    echo "  (This is a WARNING only - gate will still pass)"
+else
+    echo "OK: No obvious scaffold remnants in uncommitted changes"
+fi
+
+# 8. Cross-reference: Root cause section has content
 echo ""
 echo "--- Check: Root cause consistency ---"
 root_cause_section=$(sed -n '/### Root Cause/,/^##\|^###/p' "$BUG_REPORT" 2>/dev/null || echo "")
@@ -600,16 +617,17 @@ Before running the gate check, verify:
 - [ ] My fix plan names specific files and functions
 - [ ] The fix directly addresses the proven root cause (not symptoms)
 - [ ] I've documented how to verify the fix works
+- [ ] I've removed scaffold code from my working directory (check with `git diff`)
 ```
 
 ## File Summary
 
 | File | Action | Description |
 |------|--------|-------------|
-| `.claude/gates/check_bug_investigation.sh` | Create | New quality gate script for bug investigations |
-| `.claude/bin/claws-gate` | Modify | Add call to new investigation quality check |
-| `.claude/templates/bug-report.md` | Modify | Add requirements callout, examples, checklist |
-| `.claude/roles/bug-investigator.md` | Modify | Add minimum requirements, evidence thresholds, anti-patterns |
+| `.claude/gates/check_bug_investigation.sh` | Create | New quality gate script validating: hypothesis count, CONFIRMED status, evidence citations, scaffold code, captured output, fix plan specificity, scaffold remnant warning |
+| `.claude/bin/claws-gate` | Modify | Add call to new investigation quality check in REPORTED-INVESTIGATED case |
+| `.claude/templates/bug-report.md` | Modify | Add requirements callout, example tables, Reduced Hypothesis Justification section, pre-transition checklist |
+| `.claude/roles/bug-investigator.md` | Modify | Add mandatory requirements section, evidence threshold definitions, expanded anti-patterns with examples, self-review checklist |
 
 ## Testing Strategy
 
