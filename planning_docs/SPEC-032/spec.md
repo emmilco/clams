@@ -56,6 +56,10 @@ Current codebase analysis reveals:
 
 ## Technical Design
 
+### 0. Initialization Requirements
+
+**All utility functions are stateless and require no initialization.** They can be imported and used immediately without any setup, configuration, or resource allocation. This ensures they are safe to use in any context, including during module initialization.
+
 ### 1. Standard Datetime Format
 
 **Canonical Format**: ISO 8601 with explicit UTC timezone
@@ -69,9 +73,15 @@ Current codebase analysis reveals:
 | Aspect | Decision | Rationale |
 |--------|----------|-----------|
 | Format | ISO 8601 | Human-readable, standard, sortable, parseable |
-| Timezone | Always UTC (`+00:00`) | Eliminates ambiguity, consistent worldwide |
+| Timezone | Preserved in output | Allows round-trip without data loss |
 | Precision | Microseconds when available | Preserves full precision |
 | Naive datetimes | Treat as UTC | Prevents implicit local time assumptions |
+| Non-UTC timezone-aware | Preserved as-is | Timezone information is valuable; conversion can be done at display time |
+
+**Timezone Handling**:
+- **Naive datetimes**: Assumed to be UTC, serialized with `+00:00`
+- **UTC timezone-aware**: Serialized as-is with `+00:00`
+- **Non-UTC timezone-aware**: Preserved as-is (e.g., `datetime(2024, 12, 15, 16, 0, tzinfo=timezone(timedelta(hours=5, minutes=30)))` becomes `2024-12-15T16:00:00+05:30`)
 
 **Why not Unix timestamps?**
 - Less readable in logs and database inspection
@@ -92,7 +102,7 @@ from datetime import datetime
 
 # Existing (keep as-is)
 def serialize_datetime(dt: datetime) -> str:
-    """Convert datetime to ISO 8601 string with UTC timezone."""
+    """Convert datetime to ISO 8601 string. Naive datetimes assumed UTC."""
     ...
 
 def deserialize_datetime(value: str | float | int) -> datetime:
@@ -101,7 +111,17 @@ def deserialize_datetime(value: str | float | int) -> datetime:
 
 # New additions
 def is_valid_datetime_format(value: str) -> bool:
-    """Check if string is valid ISO 8601 format without parsing."""
+    """Check if string is valid ISO 8601 format that can be parsed.
+
+    Returns True if the string can be successfully parsed by deserialize_datetime().
+    Accepts any ISO 8601 variant including:
+    - Full format: "2024-12-15T10:30:45+00:00"
+    - With microseconds: "2024-12-15T10:30:45.123456+00:00"
+    - Z suffix: "2024-12-15T10:30:45Z"
+    - Date only: "2024-12-15" (assumes midnight UTC)
+
+    Does NOT require the canonical format with explicit timezone.
+    """
     ...
 
 def serialize_datetime_optional(dt: datetime | None) -> str | None:
@@ -273,7 +293,9 @@ For existing persisted data:
 - [ ] `@validate_numeric_range()` validates numeric param is in specified range
 - [ ] Decorators preserve function signatures for IDE support
 - [ ] Decorators work with async functions
-- [ ] Clear error messages include parameter name and expected format
+- [ ] Clear error messages follow this format:
+  - Datetime: `"Parameter 'since' must be ISO 8601 format (e.g., '2024-12-15T10:30:00+00:00'), got: 'invalid'"`
+  - Numeric range: `"Parameter 'timeout' must be in range [0.1, 300.0], got: 500.0"`
 
 ### AC4: Documentation
 - [ ] Module docstrings explain the design decisions
