@@ -8,7 +8,6 @@ import time
 from pathlib import Path
 
 import pytest
-import torch
 
 from clams.embedding.nomic import NomicEmbedding
 from clams.indexers.indexer import CodeIndexer
@@ -17,10 +16,7 @@ from clams.storage.metadata import MetadataStore
 from clams.storage.qdrant import QdrantVectorStore
 
 
-@pytest.mark.skipif(
-    not torch.backends.mps.is_available(),
-    reason="Only relevant on Apple Silicon with MPS",
-)
+@pytest.mark.requires_mps
 def test_bug_014_embedding_model_uses_cpu_on_mps():
     """Verify embedding model uses CPU (not MPS) to avoid memory leak."""
     embedding_service = NomicEmbedding()

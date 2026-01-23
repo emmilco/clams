@@ -134,30 +134,31 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
 
     for item in items:
         # Check each marker type
+        # All skip reasons use "Platform:" prefix for gate check pattern matching
         if item.get_closest_marker("requires_mps") and not info.mps_available:
             item.add_marker(pytest.mark.skip(
-                reason="Test requires MPS (Apple Silicon GPU)"
+                reason="Platform: requires MPS (Apple Silicon GPU)"
             ))
         if item.get_closest_marker("requires_cuda") and not info.cuda_available:
             item.add_marker(pytest.mark.skip(
-                reason="Test requires CUDA (NVIDIA GPU)"
+                reason="Platform: requires CUDA (NVIDIA GPU)"
             ))
         if item.get_closest_marker("requires_ripgrep") and not info.has_ripgrep:
             item.add_marker(pytest.mark.skip(
-                reason="Test requires ripgrep (rg). Install: brew install ripgrep"
+                reason="Platform: requires ripgrep. Install: brew install ripgrep"
             ))
         if item.get_closest_marker("requires_docker") and not info.docker_running:
             item.add_marker(pytest.mark.skip(
-                reason="Test requires Docker. Start Docker daemon first."
+                reason="Platform: requires Docker daemon. Start Docker first."
             ))
         if item.get_closest_marker("requires_qdrant") and not info.qdrant_available:
             item.add_marker(pytest.mark.skip(
-                reason="Test requires Qdrant. Run: docker-compose up -d"
+                reason="Platform: requires Qdrant. Run: docker compose up -d"
             ))
         if item.get_closest_marker("macos_only") and not info.is_macos:
-            item.add_marker(pytest.mark.skip(reason="Test only runs on macOS"))
+            item.add_marker(pytest.mark.skip(reason="Platform: test only runs on macOS"))
         if item.get_closest_marker("linux_only") and not info.is_linux:
-            item.add_marker(pytest.mark.skip(reason="Test only runs on Linux"))
+            item.add_marker(pytest.mark.skip(reason="Platform: test only runs on Linux"))
 ```
 
 ### 3. Pre-Flight Check Script
@@ -421,10 +422,15 @@ def check_requirements(
 
     Args:
         requirements: List of requirement names (e.g., ["mps", "ripgrep", "qdrant"])
+            Valid names: mps, cuda, ripgrep, docker, qdrant, macos, linux,
+            apple_silicon, nvidia_gpu
         qdrant_url: URL for Qdrant availability check
 
     Returns:
         (all_met, missing_requirements)
+
+    Raises:
+        ValueError: If unknown requirement name provided
     """
     info = get_platform_info(qdrant_url)
 
@@ -440,7 +446,16 @@ def check_requirements(
         "nvidia_gpu": info.has_nvidia_gpu,
     }
 
-    missing = [req for req in requirements if not requirement_checks.get(req, False)]
+    missing = []
+    for req in requirements:
+        if req not in requirement_checks:
+            raise ValueError(
+                f"Unknown requirement '{req}'. "
+                f"Valid: {list(requirement_checks.keys())}"
+            )
+        if not requirement_checks[req]:
+            missing.append(req)
+
     return len(missing) == 0, missing
 
 
@@ -521,7 +536,8 @@ The pytest collection hook auto-skips tests, but skipped tests should NOT fail g
 
 # New: Only fail if skips are NOT due to platform requirements
 # Check skip reasons in test output
-platform_skips=$(grep -c "SKIPPED.*\(MPS\|CUDA\|ripgrep\|Docker\|Qdrant\|macOS\|Linux\)" test_output.log 2>/dev/null || echo "0")
+# All platform markers use consistent "Platform:" prefix in skip reason
+platform_skips=$(grep -c "SKIPPED.*Platform:" test_output.log 2>/dev/null || echo "0")
 other_skips=$((skipped - platform_skips))
 
 if [[ "$other_skips" -gt 0 ]]; then
@@ -542,12 +558,15 @@ fi
 - [ ] `get_platform_info()` correctly detects all capabilities
 - [ ] Detection is cached (only runs once per process)
 - [ ] `check_requirements()` validates multiple requirements at once
+- [ ] `check_requirements()` raises `ValueError` for unknown requirement names
 - [ ] `format_report()` produces human-readable output
 - [ ] Module does NOT import torch at top level (lazy import only when checking backends)
+- [ ] Qdrant URL respects `CLAMS_QDRANT_URL` environment variable if set, defaults to `localhost:6333`
 
 ### Pytest Integration
 - [ ] Custom markers registered: `requires_mps`, `requires_cuda`, `requires_ripgrep`, `requires_docker`, `requires_qdrant`, `macos_only`, `linux_only`
 - [ ] Tests with markers are auto-skipped when requirements not met
+- [ ] Skip messages use "Platform:" prefix for gate check pattern matching
 - [ ] Skip messages include actionable remediation (e.g., "Install: brew install ripgrep")
 - [ ] `platform_info` fixture available at session scope
 
@@ -569,9 +588,11 @@ fi
 - [ ] Clear mapping: which tests need which platform features
 
 ### Regression Tests
+- [ ] `tests/utils/test_platform.py` exists with platform module tests
 - [ ] Test that platform detection works on the current platform
 - [ ] Test that markers correctly skip when requirements not met
 - [ ] Test that `check_requirements()` returns correct results
+- [ ] Test that `check_requirements()` raises `ValueError` for invalid requirements
 - [ ] Test that `format_report()` produces valid output
 
 ## Open Questions
@@ -583,16 +604,19 @@ fi
    - **Recommendation**: No. Skipped tests don't execute, so coverage is naturally limited. Document expected coverage per platform.
 
 3. **Should we auto-detect Qdrant URL from environment?**
-   - **Recommendation**: Yes, use `CLAMS_QDRANT_URL` if set, otherwise default to `localhost:6333`.
+   - **Decision**: Yes, use `CLAMS_QDRANT_URL` if set, otherwise default to `localhost:6333`. This is reflected in AC below.
 
 4. **Should platform check run as pytest plugin or separate script?**
    - **Recommendation**: Both. The pytest collection hook handles test-level skipping, while the shell script provides a pre-flight summary for humans.
 
 ## Migration Plan
 
+**Important**: Phases 1-4 should be completed in a SINGLE PR to avoid a transition period where markers exist but gate checks don't recognize them. Phase 5-6 can follow incrementally.
+
 1. **Phase 1**: Create `src/clams/utils/platform.py` with detection logic
 2. **Phase 2**: Add pytest markers and collection hook to `conftest.py`
 3. **Phase 3**: Create `.claude/gates/check_platform.sh`
 4. **Phase 4**: Update `check_tests.sh` to allow platform skips
-5. **Phase 5**: Migrate existing tests to use new markers
+   - **Deploy together with Phase 1-3** to avoid false gate failures
+5. **Phase 5**: Migrate existing tests to use new markers (can be incremental)
 6. **Phase 6**: Update documentation

@@ -1,0 +1,7 @@
+=== Gate Check: IMPLEMENT-CODE_REVIEW ===
+Task: SPEC-033
+Worktree: /Users/elliotmilco/Documents/GitHub/clams/.worktrees/SPEC-033
+Project type: python
+
+
+--- Gate: Implementation code exists ---

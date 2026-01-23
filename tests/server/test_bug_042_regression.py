@@ -12,6 +12,7 @@ from pathlib import Path
 import pytest
 
 
+@pytest.mark.no_resource_tracking
 def test_bug_042_main_module_no_torch_at_import():
     """Verify main.py doesn't import torch at module level.
 
@@ -91,10 +92,8 @@ sys.exit(0)
     )
 
 
-@pytest.mark.skipif(
-    sys.platform != "darwin",
-    reason="MPS fork safety only affects macOS"
-)
+@pytest.mark.macos_only
+@pytest.mark.no_resource_tracking
 def test_bug_042_daemon_start_does_not_crash():
     """Verify daemon mode starts without MPS fork crash.
 

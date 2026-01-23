@@ -4,6 +4,7 @@ Provides centralized utilities for:
 - datetime: Consistent datetime serialization/deserialization (R11-A)
 - numeric: Type-safe numeric conversions (R11-B)
 - validation: Function parameter validation decorators
+- platform: Platform capability detection (SPEC-033)
 """
 
 from clams.utils.datetime import (
@@ -17,6 +18,12 @@ from clams.utils.numeric import (
     clamp,
     is_positive,
     safe_int,
+)
+from clams.utils.platform import (
+    PlatformInfo,
+    check_requirements,
+    format_report,
+    get_platform_info,
 )
 from clams.utils.validation import (
     validate_datetime_params,
@@ -34,6 +41,11 @@ __all__ = [
     "safe_int",
     "clamp",
     "is_positive",
+    # Platform utilities (SPEC-033)
+    "PlatformInfo",
+    "get_platform_info",
+    "check_requirements",
+    "format_report",
     # Validation decorators
     "validate_datetime_params",
     "validate_numeric_range",
