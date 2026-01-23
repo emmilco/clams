@@ -270,17 +270,24 @@ class TestStoreMemoryResponseSchema:
     async def test_success_response_structure(
         self, memory_tools: dict[str, Any]
     ) -> None:
-        """Success response should contain required fields."""
+        """Success response should contain required fields.
+
+        Note: Response does NOT include content or tags (SPEC-045 token efficiency).
+        Content is only needed on retrieval, not on store confirmation.
+        """
         tool = memory_tools["store_memory"]
         result = await tool(content="Test memory", category="fact")
 
-        # Required fields
+        # Required fields (SPEC-045: content and tags NOT included in response)
         assert "id" in result
-        assert "content" in result
+        assert "status" in result  # New field: confirmation status
+        assert result["status"] == "stored"
         assert "category" in result
         assert "importance" in result
-        assert "tags" in result
         assert "created_at" in result
+        # Verify content is NOT in response (token efficiency)
+        assert "content" not in result
+        assert "tags" not in result
 
         # Category should be valid enum value
         assert result["category"] in VALID_CATEGORIES
@@ -322,7 +329,7 @@ class TestRetrieveMemoriesResponseSchema:
 
         # Mock search results
         mock_result = SearchResult(
-            id="test-id",
+            id="12345678-1234-1234-1234-123456789abc",
             score=0.95,
             payload={
                 "content": "Test content",
@@ -402,7 +409,7 @@ class TestDeleteMemoryResponseSchema:
     ) -> None:
         """Success response should contain deleted boolean."""
         tool = memory_tools["delete_memory"]
-        result = await tool(memory_id="test-id")
+        result = await tool(memory_id="12345678-1234-1234-1234-123456789abc")
 
         assert "deleted" in result
         assert isinstance(result["deleted"], bool)
@@ -415,7 +422,8 @@ class TestDeleteMemoryResponseSchema:
         tool = memory_tools["delete_memory"]
         mock_services.vector_store.delete.side_effect = Exception("Not found")
 
-        result = await tool(memory_id="nonexistent")
+        # SPEC-057: memory_id must be valid UUID format
+        result = await tool(memory_id="00000000-0000-0000-0000-000000000000")
 
         assert result["deleted"] is False
 

@@ -21,14 +21,16 @@ async def test_store_memory_success(mock_services):
         tags=["test"],
     )
 
-    # Verify result structure
+    # Verify result structure - response contains confirmation only, not content
+    # Content is only needed on retrieval, not on store confirmation
     assert "id" in result
     assert UUID(result["id"])  # Valid UUID
-    assert result["content"] == "Test memory"
+    assert result["status"] == "stored"
     assert result["category"] == "fact"
     assert result["importance"] == 0.8
-    assert result["tags"] == ["test"]
     assert "created_at" in result
+    # Response should NOT include content (token efficiency)
+    assert "content" not in result
 
     # Verify service calls
     mock_services.semantic_embedder.embed.assert_called_once_with("Test memory")
@@ -78,7 +80,7 @@ async def test_store_memory_default_values(mock_services):
     result = await store_memory(content="Test", category="fact")
 
     assert result["importance"] == 0.5  # Default
-    assert result["tags"] == []  # Default
+    # Note: tags are not included in the response (token efficiency)
 
 
 @pytest.mark.asyncio
@@ -246,12 +248,13 @@ async def test_delete_memory_success(mock_services):
     tools = get_memory_tools(mock_services)
     delete_memory = tools["delete_memory"]
 
-    result = await delete_memory(memory_id="test-id")
+    test_uuid = "12345678-1234-1234-1234-123456789abc"
+    result = await delete_memory(memory_id=test_uuid)
 
     assert result["deleted"] is True
     mock_services.vector_store.delete.assert_called_once_with(
         collection="memories",
-        id="test-id",
+        id=test_uuid,
     )
 
 
@@ -264,7 +267,8 @@ async def test_delete_memory_not_found(mock_services):
     # Make delete raise an exception
     mock_services.vector_store.delete.side_effect = Exception("Not found")
 
-    result = await delete_memory(memory_id="nonexistent")
+    # SPEC-057: memory_id must be valid UUID format
+    result = await delete_memory(memory_id="00000000-0000-0000-0000-000000000000")
 
     assert result["deleted"] is False
 

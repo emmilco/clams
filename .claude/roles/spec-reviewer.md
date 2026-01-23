@@ -50,6 +50,14 @@ For each item, note whether it passes or needs work:
 - [ ] Terminology is used consistently
 - [ ] Aligns with existing codebase patterns (if applicable)
 
+**Bug Pattern Prevention (from analysis)**
+
+_These items catch patterns that led to past bugs. See `planning_docs/RESEARCH-bug-pattern-analysis.md` for details. Code-level checks are in `.claude/roles/reviewer.md`._
+
+- [ ] **T3: Initialization requirements stated**: Does the spec mention what resources must be initialized? (e.g., "The feature requires a new Qdrant collection, which must be created on first use")
+- [ ] **T5: Input validation expectations**: Does the spec define valid input ranges and expected error behavior for invalid inputs?
+- [ ] **T7: Test requirements explicit**: Does the spec mention testing requirements, including whether test values should match production?
+
 ### Step 3: Document Issues
 
 For each issue found:

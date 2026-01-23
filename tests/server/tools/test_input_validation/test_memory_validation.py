@@ -6,6 +6,11 @@ Tests cover:
 - list_memories: category, tags, limit, offset
 - delete_memory: memory_id
 
+SPEC-057 additions:
+- retrieve_memories: min_importance range validation (0.0-1.0)
+- store_memory/list_memories: tags array validation (count and length)
+- delete_memory: UUID format validation
+
 This test module verifies that all validation constraints are enforced
 with informative error messages.
 """
@@ -293,14 +298,34 @@ class TestDeleteMemoryValidation:
             await tool()
 
     @pytest.mark.asyncio
-    async def test_delete_memory_nonexistent_id_returns_false(
-        self, memory_tools: dict[str, Any], mock_vector_store: Any
+    async def test_delete_memory_invalid_uuid_format(
+        self, memory_tools: dict[str, Any]
     ) -> None:
-        """Test that delete_memory returns deleted=False for nonexistent ID."""
-        mock_vector_store.delete.side_effect = Exception("Not found")
+        """SPEC-057: Non-UUID string should error."""
         tool = memory_tools["delete_memory"]
-        result = await tool(memory_id="nonexistent-id")
-        assert result["deleted"] is False
+        with pytest.raises(ValidationError, match="not a valid UUID"):
+            await tool(memory_id="not-a-uuid")
+
+    @pytest.mark.asyncio
+    async def test_delete_memory_invalid_uuid_shows_value(
+        self, memory_tools: dict[str, Any]
+    ) -> None:
+        """SPEC-057: Error should show the invalid value."""
+        tool = memory_tools["delete_memory"]
+        with pytest.raises(ValidationError) as exc_info:
+            await tool(memory_id="bad-id")
+        assert "bad-id" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_delete_memory_valid_uuid_accepted(
+        self, memory_tools: dict[str, Any]
+    ) -> None:
+        """SPEC-057: Valid UUID format should be accepted."""
+        tool = memory_tools["delete_memory"]
+        # Should not raise ValidationError (may return deleted=False if not found)
+        result = await tool(memory_id="12345678-1234-1234-1234-123456789012")
+        # Just checking it didn't raise ValidationError
+        assert "deleted" in result
 
 
 class TestAllValidCategoriesAccepted:
@@ -326,3 +351,129 @@ class TestAllValidCategoriesAccepted:
         tool = memory_tools["store_memory"]
         result = await tool(content="Test", category=category)
         assert result["category"] == category
+
+
+# ============================================================================
+# SPEC-057: New validation tests
+# ============================================================================
+
+
+class TestRetrieveMemoriesMinImportanceValidation:
+    """SPEC-057: min_importance range validation tests."""
+
+    @pytest.mark.asyncio
+    async def test_min_importance_below_range(
+        self, memory_tools: dict[str, Any]
+    ) -> None:
+        """min_importance=-0.5 should error."""
+        tool = memory_tools["retrieve_memories"]
+        with pytest.raises(ValidationError, match="Min_importance.*out of range"):
+            await tool(query="test", min_importance=-0.5)
+
+    @pytest.mark.asyncio
+    async def test_min_importance_above_range(
+        self, memory_tools: dict[str, Any]
+    ) -> None:
+        """min_importance=1.5 should error."""
+        tool = memory_tools["retrieve_memories"]
+        with pytest.raises(ValidationError, match="Min_importance.*out of range"):
+            await tool(query="test", min_importance=1.5)
+
+    @pytest.mark.asyncio
+    async def test_min_importance_at_boundaries(
+        self, memory_tools: dict[str, Any]
+    ) -> None:
+        """min_importance=0.0 and 1.0 should be accepted."""
+        tool = memory_tools["retrieve_memories"]
+        # Should not raise
+        result_low = await tool(query="test", min_importance=0.0)
+        assert "results" in result_low
+
+        result_high = await tool(query="test", min_importance=1.0)
+        assert "results" in result_high
+
+
+class TestStoreMemoryTagsValidation:
+    """SPEC-057: Tags array validation tests for store_memory."""
+
+    @pytest.mark.asyncio
+    async def test_too_many_tags(self, memory_tools: dict[str, Any]) -> None:
+        """More than 20 tags should error."""
+        tool = memory_tools["store_memory"]
+        with pytest.raises(ValidationError, match="Too many tags"):
+            await tool(
+                content="test",
+                category="fact",
+                tags=["tag"] * 25,
+            )
+
+    @pytest.mark.asyncio
+    async def test_tag_too_long(self, memory_tools: dict[str, Any]) -> None:
+        """Tag longer than 50 chars should error."""
+        tool = memory_tools["store_memory"]
+        with pytest.raises(ValidationError, match="too long"):
+            await tool(
+                content="test",
+                category="fact",
+                tags=["x" * 60],
+            )
+
+    @pytest.mark.asyncio
+    async def test_tags_at_limits_accepted(
+        self, memory_tools: dict[str, Any]
+    ) -> None:
+        """20 tags of 50 chars each should be accepted."""
+        tool = memory_tools["store_memory"]
+        result = await tool(
+            content="test",
+            category="fact",
+            tags=["x" * 50] * 20,
+        )
+        assert "id" in result
+
+    @pytest.mark.asyncio
+    async def test_empty_tags_accepted(self, memory_tools: dict[str, Any]) -> None:
+        """Empty tags list should be accepted."""
+        tool = memory_tools["store_memory"]
+        result = await tool(
+            content="test",
+            category="fact",
+            tags=[],
+        )
+        assert "id" in result
+
+    @pytest.mark.asyncio
+    async def test_none_tags_accepted(self, memory_tools: dict[str, Any]) -> None:
+        """None tags should be accepted (uses default)."""
+        tool = memory_tools["store_memory"]
+        result = await tool(
+            content="test",
+            category="fact",
+            tags=None,
+        )
+        assert "id" in result
+
+
+class TestListMemoriesTagsValidation:
+    """SPEC-057: Tags array validation tests for list_memories."""
+
+    @pytest.mark.asyncio
+    async def test_too_many_tags(self, memory_tools: dict[str, Any]) -> None:
+        """More than 20 tags should error."""
+        tool = memory_tools["list_memories"]
+        with pytest.raises(ValidationError, match="Too many tags"):
+            await tool(tags=["tag"] * 25)
+
+    @pytest.mark.asyncio
+    async def test_tag_too_long(self, memory_tools: dict[str, Any]) -> None:
+        """Tag longer than 50 chars should error."""
+        tool = memory_tools["list_memories"]
+        with pytest.raises(ValidationError, match="too long"):
+            await tool(tags=["x" * 60])
+
+    @pytest.mark.asyncio
+    async def test_valid_tags_accepted(self, memory_tools: dict[str, Any]) -> None:
+        """Valid tags should be accepted."""
+        tool = memory_tools["list_memories"]
+        result = await tool(tags=["tag1", "tag2"])
+        assert "results" in result

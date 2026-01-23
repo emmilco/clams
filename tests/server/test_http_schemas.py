@@ -50,15 +50,19 @@ def mock_tool_registry() -> dict[str, Any]:
         content: str,
         category: str,
         importance: float = 0.5,
-        tags: list[str] | None = None,
+        tags: list[str] | None = None,  # noqa: ARG001 - unused but kept for API
     ) -> dict[str, Any]:
-        """Store memory tool with required and optional args."""
+        """Store memory tool with required and optional args.
+
+        Note: Response does NOT include content or tags (SPEC-045 token efficiency).
+        Content is only needed on retrieval, not on store confirmation.
+        """
         return {
-            "memory_id": "test-123",
-            "content": content,
+            "id": "test-123",
+            "status": "stored",
             "category": category,
             "importance": importance,
-            "tags": tags or [],
+            "created_at": "2025-01-01T00:00:00Z",
         }
 
     async def mock_search(query: str, limit: int = 10) -> list[dict[str, Any]]:
@@ -147,11 +151,12 @@ class TestRequestSchema:
 
         assert response.status_code == 200
         result = response.json()
-        assert result["memory_id"] == "test-123"
-        assert result["content"] == "Test content"
+        # Response contains confirmation only, not content (SPEC-045 token efficiency)
+        assert result["id"] == "test-123"
+        assert result["status"] == "stored"
         assert result["category"] == "fact"
         assert result["importance"] == 0.8
-        assert result["tags"] == ["test", "schema"]
+        assert "created_at" in result
 
     def test_request_with_default_arguments(self, http_client: TestClient) -> None:
         """Request with only required arguments should use defaults."""
@@ -169,7 +174,7 @@ class TestRequestSchema:
         assert response.status_code == 200
         result = response.json()
         assert result["importance"] == 0.5  # Default value
-        assert result["tags"] == []  # Default value
+        # Note: tags no longer in response (SPEC-045 token efficiency)
 
     def test_missing_params_field(self, http_client: TestClient) -> None:
         """Request without params field should return 400."""

@@ -1,6 +1,6 @@
 """Domain and strategy enums with validation helpers."""
 
-from clams.server.tools.errors import ValidationError
+from clams.server.errors import ValidationError
 
 # Domain values
 DOMAINS = [

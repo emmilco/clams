@@ -3,13 +3,18 @@
 Tests cover:
 - assemble_context: query, context_types, limit, max_tokens
 
-Note: Context tools have minimal validation requirements.
-Most inputs have sensible defaults.
+SPEC-057 additions:
+- Invalid context_type should error, not silently ignore
+- Limit range validation (1-50)
+- Max_tokens range validation (100-10000)
+- Empty query returns empty result gracefully
 """
 
 from typing import Any
 
 import pytest
+
+from clams.server.errors import ValidationError
 
 
 class TestAssembleContextValidation:
@@ -72,16 +77,24 @@ class TestAssembleContextValidation:
     async def test_assemble_context_invalid_context_type(
         self, context_tools: dict[str, Any]
     ) -> None:
-        """Test that assemble_context handles invalid context_type.
+        """Test that assemble_context rejects invalid context_type.
 
-        Note: The current implementation simply ignores unknown context types
-        rather than raising a validation error.
+        SPEC-057: Invalid context_type should error, not silently ignore.
         """
         tool = context_tools["assemble_context"]
-        result = await tool(query="test", context_types=["invalid"])
-        assert "markdown" in result
-        # Invalid type is ignored, so no items returned
-        assert result["item_count"] == 0
+        with pytest.raises(ValidationError, match="Invalid context types"):
+            await tool(query="test", context_types=["invalid"])
+
+    @pytest.mark.asyncio
+    async def test_assemble_context_invalid_context_type_lists_valid_options(
+        self, context_tools: dict[str, Any]
+    ) -> None:
+        """Test that error message lists valid options."""
+        tool = context_tools["assemble_context"]
+        with pytest.raises(ValidationError) as exc_info:
+            await tool(query="test", context_types=["wrong"])
+        assert "values" in str(exc_info.value)
+        assert "experiences" in str(exc_info.value)
 
     @pytest.mark.asyncio
     async def test_assemble_context_custom_limit(
@@ -103,6 +116,108 @@ class TestAssembleContextValidation:
         assert "truncated" in result
 
 
+class TestAssembleContextLimitValidation:
+    """SPEC-057: Limit range validation tests."""
+
+    @pytest.mark.asyncio
+    async def test_limit_below_range(self, context_tools: dict[str, Any]) -> None:
+        """limit=0 should error."""
+        tool = context_tools["assemble_context"]
+        with pytest.raises(ValidationError, match="Limit.*out of range"):
+            await tool(query="test", limit=0)
+
+    @pytest.mark.asyncio
+    async def test_limit_above_range(self, context_tools: dict[str, Any]) -> None:
+        """limit=100 should error (max is 50)."""
+        tool = context_tools["assemble_context"]
+        with pytest.raises(ValidationError, match="Limit.*out of range"):
+            await tool(query="test", limit=100)
+
+    @pytest.mark.asyncio
+    async def test_limit_at_boundary_lower(
+        self, context_tools: dict[str, Any]
+    ) -> None:
+        """limit=1 should be accepted."""
+        tool = context_tools["assemble_context"]
+        result = await tool(query="test", limit=1)
+        assert "markdown" in result
+
+    @pytest.mark.asyncio
+    async def test_limit_at_boundary_upper(
+        self, context_tools: dict[str, Any]
+    ) -> None:
+        """limit=50 should be accepted."""
+        tool = context_tools["assemble_context"]
+        result = await tool(query="test", limit=50)
+        assert "markdown" in result
+
+
+class TestAssembleContextMaxTokensValidation:
+    """SPEC-057: max_tokens range validation tests."""
+
+    @pytest.mark.asyncio
+    async def test_max_tokens_below_range(
+        self, context_tools: dict[str, Any]
+    ) -> None:
+        """max_tokens=50 should error (min is 100)."""
+        tool = context_tools["assemble_context"]
+        with pytest.raises(ValidationError, match="Max_tokens.*out of range"):
+            await tool(query="test", max_tokens=50)
+
+    @pytest.mark.asyncio
+    async def test_max_tokens_above_range(
+        self, context_tools: dict[str, Any]
+    ) -> None:
+        """max_tokens=20000 should error (max is 10000)."""
+        tool = context_tools["assemble_context"]
+        with pytest.raises(ValidationError, match="Max_tokens.*out of range"):
+            await tool(query="test", max_tokens=20000)
+
+    @pytest.mark.asyncio
+    async def test_max_tokens_at_boundary_lower(
+        self, context_tools: dict[str, Any]
+    ) -> None:
+        """max_tokens=100 should be accepted."""
+        tool = context_tools["assemble_context"]
+        result = await tool(query="test", max_tokens=100)
+        assert "markdown" in result
+
+    @pytest.mark.asyncio
+    async def test_max_tokens_at_boundary_upper(
+        self, context_tools: dict[str, Any]
+    ) -> None:
+        """max_tokens=10000 should be accepted."""
+        tool = context_tools["assemble_context"]
+        result = await tool(query="test", max_tokens=10000)
+        assert "markdown" in result
+
+
+class TestAssembleContextEmptyQuery:
+    """SPEC-057: Empty query handling tests."""
+
+    @pytest.mark.asyncio
+    async def test_empty_query_returns_empty_result(
+        self, context_tools: dict[str, Any]
+    ) -> None:
+        """Empty query should return empty result, not error."""
+        tool = context_tools["assemble_context"]
+        result = await tool(query="")
+        assert result["item_count"] == 0
+        assert result["markdown"] == ""
+        assert result["token_count"] == 0
+        assert result["truncated"] is False
+
+    @pytest.mark.asyncio
+    async def test_whitespace_query_returns_empty_result(
+        self, context_tools: dict[str, Any]
+    ) -> None:
+        """Whitespace-only query should return empty result, not error."""
+        tool = context_tools["assemble_context"]
+        result = await tool(query="   ")
+        assert result["item_count"] == 0
+        assert result["markdown"] == ""
+
+
 class TestAssembleContextIntegration:
     """Integration tests for assemble_context validation behavior."""
 
@@ -112,8 +227,8 @@ class TestAssembleContextIntegration:
     ) -> None:
         """Test that assemble_context returns truncated flag correctly."""
         tool = context_tools["assemble_context"]
-        # With very low max_tokens, should indicate truncation
-        result = await tool(query="test", max_tokens=1)
+        # With valid max_tokens in range, check truncated flag
+        result = await tool(query="test", max_tokens=100)
         assert "truncated" in result
         # Truncated is True if token_count > max_tokens
 

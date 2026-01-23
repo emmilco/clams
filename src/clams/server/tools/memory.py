@@ -10,6 +10,11 @@ from mcp.server import Server
 
 from clams.server.errors import MCPError, ValidationError
 from clams.server.tools import ServiceContainer
+from clams.server.tools.validation import (
+    validate_importance_range,
+    validate_tags,
+    validate_uuid,
+)
 
 logger = structlog.get_logger()
 
@@ -102,6 +107,9 @@ def get_memory_tools(services: ServiceContainer) -> dict[str, ToolFunc]:
                 f"Must be between 0.0 and 1.0."
             )
 
+        # Validate tags array
+        validate_tags(tags, max_count=20, max_length=50)
+
         tags = tags or []
 
         try:
@@ -131,7 +139,15 @@ def get_memory_tools(services: ServiceContainer) -> dict[str, ToolFunc]:
 
             logger.info("memory.stored", memory_id=memory_id, category=category)
 
-            return payload
+            # Return confirmation without content (token-efficient)
+            # Content is only needed on retrieval, not store confirmation
+            return {
+                "id": memory_id,
+                "status": "stored",
+                "category": category,
+                "importance": importance,
+                "created_at": created_at.isoformat(),
+            }
 
         except Exception as e:
             logger.error("memory.store_failed", error=str(e), exc_info=True)
@@ -161,6 +177,9 @@ def get_memory_tools(services: ServiceContainer) -> dict[str, ToolFunc]:
             raise ValidationError(
                 f"Limit {limit} out of range. Must be between 1 and 100."
             )
+
+        # Validate min_importance range
+        validate_importance_range(min_importance, "min_importance")
 
         # Handle empty query
         if not query.strip():
@@ -231,6 +250,9 @@ def get_memory_tools(services: ServiceContainer) -> dict[str, ToolFunc]:
                 f"Limit {limit} out of range. Must be between 1 and 200."
             )
 
+        # Validate tags array
+        validate_tags(tags, max_count=20, max_length=50)
+
         try:
             # Build filters
             filters: dict[str, Any] = {}
@@ -265,7 +287,18 @@ def get_memory_tools(services: ServiceContainer) -> dict[str, ToolFunc]:
                 reverse=True,
             )
 
-            formatted = [r.payload for r in sorted_results]
+            # Return metadata only (no content) for token efficiency
+            # List is for browsing/filtering, not semantic search context
+            formatted = [
+                {
+                    "id": r.id,  # Use SearchResult.id, not payload
+                    "category": r.payload.get("category", "unknown"),
+                    "importance": r.payload.get("importance", 0.5),
+                    "tags": r.payload.get("tags", []),
+                    "created_at": r.payload.get("created_at", ""),
+                }
+                for r in sorted_results
+            ]
 
             logger.info("memory.listed", count=len(formatted), total=total)
 
@@ -282,6 +315,9 @@ def get_memory_tools(services: ServiceContainer) -> dict[str, ToolFunc]:
     async def delete_memory(memory_id: str) -> dict[str, bool]:
         """Delete a memory by ID."""
         logger.info("memory.delete", memory_id=memory_id)
+
+        # Validate UUID format
+        validate_uuid(memory_id, "memory_id")
 
         try:
             await services.vector_store.delete(

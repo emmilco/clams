@@ -1,0 +1,15 @@
+# Allowlist for hardcoded paths check
+#
+# Format:
+#   filepath           - Allow entire file
+#   filepath:lineno    - Allow specific line
+#
+# Examples:
+#   tests/fixtures/sample_paths.py
+#   src/config.py:42
+#
+# Lines starting with # are comments
+# Blank lines are ignored
+
+# Test file for the hardcoded paths check itself (contains intentional examples)
+tests/checks/test_check_hardcoded_paths.py

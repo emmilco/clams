@@ -78,7 +78,7 @@ cmd_health() {
     merge_lock=$(sqlite3 "$DB_PATH" "SELECT value FROM system_counters WHERE name = 'merge_lock';" 2>/dev/null || echo "0")
 
     local blocked_count
-    blocked_count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM tasks WHERE blocked_by IS NOT NULL AND blocked_by != '';")
+    blocked_count=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM tasks WHERE blocked_by IS NOT NULL AND blocked_by <> '';")
 
     local active_workers
     active_workers=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM workers WHERE status = 'active';")
@@ -209,7 +209,7 @@ cmd_worktrees() {
     sqlite3 -header -column "$DB_PATH" <<EOF
 SELECT id, task_type, phase, title, worktree_path
 FROM tasks
-WHERE worktree_path IS NOT NULL AND worktree_path != ''
+WHERE worktree_path IS NOT NULL AND worktree_path <> ''
 ORDER BY updated_at DESC;
 EOF
 }

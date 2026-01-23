@@ -80,6 +80,7 @@ def distribute_budget(
 
     Raises:
         ValueError: If any context_type is not in SOURCE_WEIGHTS
+        ValueError: If max_tokens is not positive or exceeds maximum
 
     Example:
         >>> distribute_budget(["memories", "code", "experiences"], 1000)
@@ -94,6 +95,13 @@ def distribute_budget(
         raise ValueError(
             f"Invalid context types: {invalid}. Valid: {list(SOURCE_WEIGHTS.keys())}"
         )
+
+    # Validate max_tokens
+    if max_tokens < 1:
+        raise ValueError(f"max_tokens must be positive, got {max_tokens}")
+    if max_tokens > 100000:
+        raise ValueError(f"max_tokens {max_tokens} exceeds maximum of 100000")
+
     total_weight = sum(SOURCE_WEIGHTS[t] for t in context_types)
     return {
         source: int((SOURCE_WEIGHTS[source] / total_weight) * max_tokens)
