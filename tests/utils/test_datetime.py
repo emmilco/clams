@@ -8,7 +8,13 @@ from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
 
-from clams.utils.datetime import deserialize_datetime, serialize_datetime
+from clams.utils.datetime import (
+    deserialize_datetime,
+    deserialize_datetime_optional,
+    is_valid_datetime_format,
+    serialize_datetime,
+    serialize_datetime_optional,
+)
 
 
 class TestSerializeDatetime:
@@ -289,3 +295,130 @@ class TestEdgeCases:
         """Whitespace-only string raises ValueError."""
         with pytest.raises(ValueError, match="Cannot parse ISO datetime string"):
             deserialize_datetime("   ")
+
+
+class TestIsValidDatetimeFormat:
+    """Tests for is_valid_datetime_format function."""
+
+    def test_valid_iso_with_timezone(self) -> None:
+        """Valid ISO 8601 with timezone returns True."""
+        assert is_valid_datetime_format("2024-12-15T10:30:00+00:00") is True
+
+    def test_valid_iso_without_timezone(self) -> None:
+        """Valid ISO 8601 without timezone returns True."""
+        assert is_valid_datetime_format("2024-12-15T10:30:00") is True
+
+    def test_valid_date_only(self) -> None:
+        """Date-only format returns True."""
+        assert is_valid_datetime_format("2024-12-15") is True
+
+    def test_valid_with_microseconds(self) -> None:
+        """ISO 8601 with microseconds returns True."""
+        assert is_valid_datetime_format("2024-12-15T10:30:00.123456+00:00") is True
+
+    def test_valid_z_suffix(self) -> None:
+        """ISO 8601 with Z suffix returns True (Python 3.11+)."""
+        # Python 3.11+ supports Z suffix
+        assert is_valid_datetime_format("2024-12-15T10:30:00Z") is True
+
+    def test_invalid_string(self) -> None:
+        """Invalid string returns False."""
+        assert is_valid_datetime_format("invalid") is False
+
+    def test_empty_string(self) -> None:
+        """Empty string returns False."""
+        assert is_valid_datetime_format("") is False
+
+    def test_whitespace_string(self) -> None:
+        """Whitespace string returns False."""
+        assert is_valid_datetime_format("   ") is False
+
+    def test_invalid_month(self) -> None:
+        """Invalid month returns False."""
+        assert is_valid_datetime_format("2024-13-15") is False
+
+    def test_invalid_day(self) -> None:
+        """Invalid day returns False."""
+        assert is_valid_datetime_format("2024-12-45") is False
+
+    def test_non_string_type(self) -> None:
+        """Non-string type returns False."""
+        assert is_valid_datetime_format(12345) is False  # type: ignore[arg-type]
+        assert is_valid_datetime_format(None) is False  # type: ignore[arg-type]
+        assert is_valid_datetime_format(["2024-12-15"]) is False  # type: ignore[arg-type]
+
+
+class TestSerializeDatetimeOptional:
+    """Tests for serialize_datetime_optional function."""
+
+    def test_none_returns_none(self) -> None:
+        """None input returns None output."""
+        assert serialize_datetime_optional(None) is None
+
+    def test_datetime_returns_string(self) -> None:
+        """Datetime input returns ISO string."""
+        dt = datetime(2024, 12, 15, 10, 30, 0, tzinfo=UTC)
+        result = serialize_datetime_optional(dt)
+        assert result == "2024-12-15T10:30:00+00:00"
+
+    def test_naive_datetime_returns_utc_string(self) -> None:
+        """Naive datetime returns UTC string."""
+        dt = datetime(2024, 12, 15, 10, 30, 0)
+        result = serialize_datetime_optional(dt)
+        assert result == "2024-12-15T10:30:00+00:00"
+
+    def test_datetime_with_microseconds(self) -> None:
+        """Datetime with microseconds returns proper string."""
+        dt = datetime(2024, 12, 15, 10, 30, 0, 123456, tzinfo=UTC)
+        result = serialize_datetime_optional(dt)
+        assert result == "2024-12-15T10:30:00.123456+00:00"
+
+
+class TestDeserializeDatetimeOptional:
+    """Tests for deserialize_datetime_optional function."""
+
+    def test_none_returns_none(self) -> None:
+        """None input returns None output."""
+        assert deserialize_datetime_optional(None) is None
+
+    def test_string_returns_datetime(self) -> None:
+        """ISO string returns datetime."""
+        result = deserialize_datetime_optional("2024-12-15T10:30:00+00:00")
+        assert result == datetime(2024, 12, 15, 10, 30, 0, tzinfo=UTC)
+
+    def test_timestamp_returns_datetime(self) -> None:
+        """Unix timestamp returns datetime."""
+        # 2024-12-14T10:30:00 UTC
+        result = deserialize_datetime_optional(1734172200)
+        assert result is not None
+        assert result.tzinfo == UTC
+        assert result.year == 2024
+
+    def test_invalid_raises(self) -> None:
+        """Invalid value raises ValueError."""
+        with pytest.raises(ValueError):
+            deserialize_datetime_optional("invalid")
+
+    def test_invalid_type_raises(self) -> None:
+        """Invalid type raises TypeError."""
+        with pytest.raises(TypeError):
+            deserialize_datetime_optional([1, 2, 3])  # type: ignore[arg-type]
+
+
+class TestOptionalRoundTrip:
+    """Tests for optional function round-trip consistency."""
+
+    def test_round_trip_with_datetime(self) -> None:
+        """Datetime survives optional round-trip."""
+        original = datetime(2024, 12, 15, 10, 30, 0, tzinfo=UTC)
+        serialized = serialize_datetime_optional(original)
+        assert serialized is not None
+        deserialized = deserialize_datetime_optional(serialized)
+        assert deserialized == original
+
+    def test_round_trip_with_none(self) -> None:
+        """None survives optional round-trip."""
+        serialized = serialize_datetime_optional(None)
+        assert serialized is None
+        deserialized = deserialize_datetime_optional(serialized)
+        assert deserialized is None
