@@ -123,25 +123,32 @@ def generate_ghap_entries(profile: GHAPDataProfile) -> list[GHAPEntry]:
 
 ### 2. Embedding Generators
 
-Generate embeddings with controlled characteristics:
+Generate embeddings with controlled characteristics using profile dataclasses:
 
 ```python
-def generate_clusterable_embeddings(
-    n_points: int,
-    n_clusters: int,
-    cluster_spread: float,  # Intra-cluster variance
-    noise_ratio: float,
-    embedding_dim: int = 768,
-) -> np.ndarray:
-    """Generate embeddings with realistic cluster structure."""
-    ...
+@dataclass(frozen=True)
+class EmbeddingProfile:
+    """Defines characteristics of embedding clusters to generate."""
+    n_points: int = 50
+    n_clusters: int = 3
+    cluster_spread: float = 0.3  # Intra-cluster variance (cosine distance)
+    noise_ratio: float = 0.2
+    embedding_dim: int = 768
+    inter_cluster_distance: float = 0.5  # Minimum distance between centroids
 
-def generate_theme_embeddings(
-    theme_centers: list[np.ndarray],
-    points_per_theme: list[int],
-    spread: float = 0.3,
-) -> np.ndarray:
-    """Generate embeddings around theme centers with given spread."""
+
+class GeneratedEmbeddings(NamedTuple):
+    """Result from embedding generation."""
+    embeddings: npt.NDArray[np.float32]
+    labels: npt.NDArray[np.int64]  # True cluster labels (-1 for noise)
+    centroids: npt.NDArray[np.float32]  # Cluster centroids
+
+
+def generate_clusterable_embeddings(
+    profile: EmbeddingProfile,
+    seed: int = 42,
+) -> GeneratedEmbeddings:
+    """Generate embeddings with realistic cluster structure."""
     ...
 ```
 
@@ -244,7 +251,8 @@ When appropriate, use anonymized snapshots of production data:
    - [ ] Generators can create edge-case scenarios (boundary conditions)
 
 3. **Validation Test Suite**
-   - [ ] Tests use production-like profiles, not minimal data
+   - [ ] NEW validation tests added in `tests/validation/` directory (do not modify existing unit tests)
+   - [ ] Validation tests use production-like profiles, not minimal data
    - [ ] Tests verify algorithm behavior at expected data scales
    - [ ] Tests document why specific profiles were chosen
 
@@ -260,7 +268,11 @@ When appropriate, use anonymized snapshots of production data:
 
 6. **Performance Baselines**
    - [ ] Benchmark tests establish acceptable performance with production-like data
-   - [ ] Tests fail if operations exceed reasonable time bounds
+   - [ ] Tests fail if operations exceed these time bounds:
+     - Data generation: <5s for any profile
+     - Clustering operations: <10s for datasets up to 200 points
+     - Search operations: <1s for result sets up to 100 items
+     - Memory operations: <2s for corpus up to 500 memories
    - [ ] Results logged to `tests/performance/benchmark_results.json`
 
 7. **Documentation**
@@ -277,10 +289,44 @@ When appropriate, use anonymized snapshots of production data:
 
 ## Implementation Notes
 
+### Initialization Requirements
+
+- Profile dataclasses and generators can be imported directly from `tests.fixtures.data_profiles` and `tests.fixtures.generators`
+- Validation test fixtures are defined in `tests/validation/conftest.py`
+- `tests/performance/benchmark_results.json` will be created automatically on first benchmark run if it doesn't exist
+- No special initialization required for generators; they are stateless functions with deterministic output given a seed
+
+### Test Organization
+
 - Tests should be deterministic (use fixed random seeds)
 - Tests should be reasonably fast (<10s each, <60s total for suite)
-- Consider marking production-data tests separately if they are slower
+- Mark validation tests with `@pytest.mark.validation` for selective execution
 - Use pytest parametrization to test multiple profiles efficiently
+
+### File Structure
+
+Generators are organized in a subpackage for modularity:
+
+```
+tests/fixtures/
+  data_profiles.py          # Profile dataclasses and preset profiles
+  generators/
+    __init__.py             # Package exports
+    embeddings.py           # Clusterable embedding generators
+    ghap.py                 # GHAP entry generators
+    temporal.py             # Temporal pattern generators
+    memories.py             # Memory corpus generators
+    commits.py              # Git commit generators (for temporal tests)
+```
+
+### Incremental Implementation
+
+This spec covers significant breadth. If implementing incrementally:
+1. **Priority 1**: Data profiles and GHAP/clustering generators (addresses BUG-031 directly)
+2. **Priority 2**: Clustering validation scenarios (1-3)
+3. **Priority 3**: Search/pagination scenarios (4-5)
+4. **Priority 4**: Memory and temporal scenarios (6-9)
+5. **Priority 5**: Documentation and benchmarks
 
 ## References
 
