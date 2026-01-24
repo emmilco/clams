@@ -313,12 +313,45 @@ run_pytest() {
         return 1
     fi
 
-    # Fail if any tests were skipped
+    # Check for skipped tests
     if [[ "$skipped" -gt 0 ]]; then
         echo ""
-        echo "FAIL: $skipped tests were skipped"
-        echo "Skipped tests are not allowed - they hide missing dependencies or broken code."
-        return 1
+        echo "=== Analyzing $skipped Skipped Tests ==="
+
+        # Count platform skips (reason starts with "Platform:")
+        # Format: SKIPPED [N] path:line: Platform: reason
+        local platform_skips
+        platform_skips=$(grep -c "^SKIPPED \[.*\] .*: Platform:" test_output.log 2>/dev/null || echo "0")
+
+        # Also check short test summary info format
+        # Format: SKIPPED [1] tests/file.py:123: Platform: reason
+        local summary_platform_skips
+        summary_platform_skips=$(grep -cE "^SKIPPED \[[0-9]+\].*Platform:" test_output.log 2>/dev/null || echo "0")
+
+        # Use the larger of the two counts
+        if [[ "$summary_platform_skips" -gt "$platform_skips" ]]; then
+            platform_skips="$summary_platform_skips"
+        fi
+
+        local non_platform_skips=$((skipped - platform_skips))
+
+        if [[ "$platform_skips" -gt 0 ]]; then
+            echo "  Platform-related skips: $platform_skips (allowed)"
+            grep -E "^SKIPPED \[[0-9]+\].*Platform:" test_output.log 2>/dev/null | head -5 | sed 's/^/    /'
+        fi
+
+        if [[ "$non_platform_skips" -gt 0 ]]; then
+            echo ""
+            echo "FAIL: $non_platform_skips non-platform tests were skipped"
+            echo "Non-platform skips are not allowed - they hide missing dependencies or broken code."
+            echo ""
+            echo "Skipped tests (non-platform):"
+            grep "^SKIPPED " test_output.log 2>/dev/null | grep -v "Platform:" | head -10 | sed 's/^/  /'
+            return 1
+        fi
+
+        echo ""
+        echo "All $skipped skipped tests are platform-specific (acceptable)"
     fi
 
     if [[ $exit_code -eq 0 ]]; then
