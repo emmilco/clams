@@ -1,6 +1,5 @@
 """Tests for GitAnalyzer."""
 
-import shutil
 import tempfile
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -12,12 +11,6 @@ from clams.embedding.mock import MockEmbedding
 from clams.git import GitAnalyzer, GitPythonReader
 from clams.storage.metadata import MetadataStore
 from clams.storage.qdrant import QdrantVectorStore
-
-# Check if ripgrep is available
-HAS_RIPGREP = shutil.which("rg") is not None
-requires_ripgrep = pytest.mark.skipif(
-    not HAS_RIPGREP, reason="ripgrep (rg) not installed"
-)
 
 
 @pytest.fixture
@@ -263,7 +256,7 @@ class TestGitAnalyzer:
         churn = await analyzer.get_change_frequency("nonexistent.py")
         assert churn is None
 
-    @requires_ripgrep
+    @pytest.mark.requires_ripgrep
     async def test_blame_search(self, test_repo, analyzer):
         """Test blame search functionality."""
         repo_path, _ = test_repo
@@ -279,7 +272,7 @@ class TestGitAnalyzer:
             assert result.line_number > 0
             assert result.author == "Test User"
 
-    @requires_ripgrep
+    @pytest.mark.requires_ripgrep
     async def test_blame_search_with_file_pattern(self, test_repo, analyzer):
         """Test blame search with file pattern filter."""
         repo_path, _ = test_repo

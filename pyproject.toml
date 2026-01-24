@@ -87,11 +87,19 @@ ignore_missing_imports = true
 asyncio_mode = "auto"
 testpaths = ["tests"]
 timeout = 60
-addopts = "-m 'not slow'"
+addopts = "-m 'not slow' -rs"
 markers = [
     "slow: marks tests as slow (>15s, excluded by default)",
     "integration: marks tests as integration tests requiring external services",
     "cold_start: tests that verify behavior with no pre-existing data",
+    # Platform requirement markers (SPEC-033)
+    "requires_mps: test requires MPS (Apple Silicon GPU)",
+    "requires_cuda: test requires CUDA (NVIDIA GPU)",
+    "requires_ripgrep: test requires ripgrep (rg) installed",
+    "requires_docker: test requires Docker daemon running",
+    "requires_qdrant: test requires Qdrant service available",
+    "macos_only: test only runs on macOS",
+    "linux_only: test only runs on Linux",
 ]
 
 [dependency-groups]
