@@ -17,7 +17,15 @@ class MockValue:
 
 @dataclass
 class MockExperienceResult:
-    """Mock ExperienceResult dataclass for testing."""
+    """Mock ExperienceResult dataclass for testing.
+
+    IMPORTANT: This mock must have field names matching the production
+    ExperienceResult at clams.search.results.ExperienceResult.
+
+    This is a simplified mock that only includes fields used by tests.
+    Field parity is verified by tests/infrastructure/test_mock_parity.py.
+    See BUG-040 for an example of bugs caused by field name mismatches.
+    """
 
     domain: str
     goal: str
