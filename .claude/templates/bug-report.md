@@ -20,6 +20,16 @@
 
 ## Investigation (filled by Bug Investigator)
 
+> **MINIMUM REQUIREMENTS FOR GATE PASSAGE**
+>
+> Before attempting REPORTED-INVESTIGATED transition, ensure:
+> - [ ] At least 3 hypotheses in differential diagnosis (or 2 with justification)
+> - [ ] Exactly 1 hypothesis marked CONFIRMED
+> - [ ] Each eliminated hypothesis has specific evidence cited
+> - [ ] Evidentiary scaffold contains actual code
+> - [ ] Captured output from scaffold run is included
+> - [ ] Fix plan references specific files and functions
+
 ### Reproduction Confirmed
 
 - [ ] Steps reproduced bug
@@ -33,13 +43,35 @@
 
 ### Differential Diagnosis
 
+> **Requirement**: List at least 3 plausible hypotheses. For trivially simple bugs (e.g., obvious typo),
+> 2 hypotheses are acceptable if accompanied by a "### Reduced Hypothesis Justification" section.
+
 | # | Hypothesis | If True, Would See | If False, Would See | Evidence | Status |
 |---|------------|-------------------|---------------------|----------|--------|
-| 1 | [Hypothesis A] | [Observable X] | [Observable Y] | [What you saw] | [Eliminated/Confirmed/Pending] |
-| 2 | [Hypothesis B] | [Observable Z] | [Observable W] | [What you saw] | [Eliminated/Confirmed/Pending] |
+| 1 | [Hypothesis A] | [Observable X] | [Observable Y] | [What you saw] | [Eliminated/CONFIRMED/Pending] |
+| 2 | [Hypothesis B] | [Observable Z] | [Observable W] | [What you saw] | [Eliminated/CONFIRMED/Pending] |
 | 3 | [Hypothesis C] | ... | ... | ... | ... |
 
+**Example (well-formed differential diagnosis)**:
+
+| # | Hypothesis | If True, Would See | If False, Would See | Evidence | Status |
+|---|------------|-------------------|---------------------|----------|--------|
+| 1 | Race condition in cache invalidation | Intermittent failures with concurrent requests | Consistent failure regardless of concurrency | Tested with 100 concurrent requests: failure rate 0% | Eliminated |
+| 2 | Null pointer when user has no profile | Crash only for users without profile | Crash for all users | Added logging: crash occurs for users WITH profiles too | Eliminated |
+| 3 | Off-by-one in pagination boundary | Fails only on last page | Fails on all pages | Logged page index: fails only when offset = total - 1 | CONFIRMED |
+
+### Reduced Hypothesis Justification
+
+> **Use this section only if you have fewer than 3 hypotheses.**
+> Explain why additional hypotheses are not plausible.
+
+[If the bug is trivially simple (e.g., typo, obvious misconfiguration), explain why
+additional hypotheses are not genuinely plausible.]
+
 ### Evidentiary Scaffold
+
+> **REQUIRED**: You must add diagnostic code, run it, and capture the output.
+> Code inspection alone is not sufficient evidence.
 
 **Logging/assertions added**:
 ```python
@@ -50,12 +82,40 @@ logger.debug(f"State at critical point: {state}")
 
 **Test command**:
 ```bash
-[Command to run with scaffold in place]
+[Command to run with scaffold in place - REQUIRED]
 ```
 
 **Captured output**:
 ```
-[Actual output from scaffold run]
+[Actual output from scaffold run - REQUIRED, cannot be empty]
+```
+
+**Example (well-formed evidentiary scaffold)**:
+
+**Logging/assertions added**:
+```python
+# Location: src/clams/api/pagination.py:45
+# Purpose: Capture pagination state at boundary condition
+logger.debug(f"SCAFFOLD: offset={offset}, limit={limit}, total={total}")
+logger.debug(f"SCAFFOLD: calculated_end={offset + limit}, is_last_page={offset + limit >= total}")
+
+# Location: src/clams/api/pagination.py:52
+# Purpose: Verify which branch is taken
+assert offset < total, f"SCAFFOLD: offset ({offset}) >= total ({total})"
+logger.debug(f"SCAFFOLD: entering item_slice with indices [{offset}:{offset+limit}]")
+```
+
+**Test command**:
+```bash
+DEBUG=1 pytest tests/test_pagination.py::test_last_page -xvs 2>&1 | grep SCAFFOLD
+```
+
+**Captured output**:
+```
+SCAFFOLD: offset=95, limit=10, total=100
+SCAFFOLD: calculated_end=105, is_last_page=True
+SCAFFOLD: entering item_slice with indices [95:105]
+AssertionError: SCAFFOLD: offset (95) >= total (100) - THIS IS WRONG, should be valid
 ```
 
 ### Root Cause (Proven)

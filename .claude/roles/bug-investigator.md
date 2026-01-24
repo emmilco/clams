@@ -77,6 +77,69 @@ Based on reproduction:
    - Not: "I think it's probably X"
    - The evidence must exclude all other plausible causes
 
+### Minimum Requirements (MANDATORY)
+
+These are enforced by automated gate checks:
+
+1. **3 hypotheses minimum**: You must list at least 3 plausible hypotheses
+   - Exception: For trivially simple bugs (obvious typo, simple misconfiguration), 2 hypotheses
+     are acceptable IF you document why additional hypotheses are not plausible in a
+     "### Reduced Hypothesis Justification" section
+
+2. **Exactly 1 CONFIRMED**: One and only one hypothesis must be marked CONFIRMED
+   - All others must be marked Eliminated with evidence
+
+3. **Evidence for eliminations**: Each eliminated hypothesis must cite specific evidence
+   - "Unlikely" or "improbable" is NOT acceptable
+
+4. **Evidentiary scaffold required**: You must add diagnostic code and run it
+   - Code inspection alone is insufficient
+
+5. **Captured output required**: Include actual output from running your scaffold
+   - The gate checks that this section is not empty
+
+### Evidence Threshold Definitions
+
+**Evidence sufficient to ELIMINATE a hypothesis:**
+
+- **Log output**: Explicit log/debug output showing the hypothesized condition does not occur
+  - Example: "Logged user.profile: value is not None, so null profile hypothesis eliminated"
+
+- **Assertion failure**: Code assertion proving the hypothesis path is not taken
+  - Example: "Added assert at line 45, never triggered in 100 runs"
+
+- **Code path analysis**: Demonstrable proof via instrumentation that the hypothesized code path
+  is never executed
+  - Example: "Added counter for each branch, path B never incremented"
+
+- **State inspection**: Debugger/print output showing relevant state contradicts the hypothesis
+  - Example: "Dumped cache state: all entries present, cache miss hypothesis eliminated"
+
+**Evidence sufficient to CONFIRM a hypothesis:**
+
+- **Reproduction via artificial injection**: Bug reproduced by artificially creating the
+  hypothesized condition
+  - Example: "Manually set offset = total - 1, bug reproduced consistently"
+
+- **Fix verification**: Bug disappears when the hypothesized cause is corrected
+  - Example: "Changed >= to >, bug no longer reproduces"
+
+- **Elimination proof**: All other hypotheses eliminated AND positive evidence supports this
+  hypothesis
+  - Example: "3 alternatives eliminated, logs show this exact path triggers crash"
+
+- **Root cause trace**: Complete causal chain from trigger to symptom documented with evidence
+  at each step
+  - Example: "Input X -> function Y (logged) -> state Z (observed) -> crash (stack trace)"
+
+**NOT acceptable as evidence:**
+
+- "Unlikely" or "improbable" without supporting data
+- "Code inspection suggests" without runtime verification
+- "Should work" or "looks correct" assertions
+- Reasoning without observed behavior
+- "I tried X and it seemed to work" without systematic verification
+
 ### Step 4: Document Root Cause
 
 In the bug report, fill in:
@@ -151,12 +214,56 @@ You are responsible for filling these sections:
 
 ## Anti-Patterns (DO NOT DO)
 
+### Investigation Anti-Patterns
+
 - **Guessing**: "It's probably X" without evidence
-- **Single hypothesis**: Only considering one cause
+- **Single hypothesis**: Only considering one cause (gate requires 3+)
 - **Premature fixing**: Changing code before proving root cause
 - **Weak evidence**: "It worked after I changed X" (correlation != causation)
 - **Scope creep**: Finding other bugs and fixing those too
 - **Skipping reproduction**: Investigating without first reproducing
+- **Code-reading only**: Drawing conclusions from code inspection without runtime verification
+
+### Evidence Anti-Patterns
+
+- **Vague elimination**: "Hypothesis A is unlikely because the code looks correct"
+  - Fix: Run with logging to prove the hypothesized condition does not occur
+
+- **Confirmation bias**: Only looking for evidence that supports your first guess
+  - Fix: Actively try to prove your initial hypothesis WRONG
+
+- **Missing scaffold**: "I looked at the code and found the bug"
+  - Fix: Add logging/assertions, run them, capture the output
+
+- **Empty output**: Scaffold section exists but captured output is missing
+  - Fix: Actually run the scaffold and paste the real output
+
+- **Symptom vs root cause**: "The bug is that function X returns wrong value"
+  - Fix: WHY does it return wrong value? That's the root cause.
+
+### Fix Plan Anti-Patterns
+
+- **Vague fix**: "Fix the bug in the pagination code"
+  - Fix: "In src/clams/api/pagination.py:52, change `offset >= total` to `offset > total`"
+
+- **Missing regression test**: Fix plan doesn't specify what the test should verify
+  - Fix: Include test outline with setup, action, and assertion
+
+- **Over-engineering**: Proposing major refactors when a surgical fix suffices
+  - Fix: Minimal change that addresses proven root cause
+
+### Self-Review Checklist
+
+Before running the gate check, verify:
+
+- [ ] I can explain the root cause in one sentence
+- [ ] I have evidence (not just reasoning) for each eliminated hypothesis
+- [ ] My evidentiary scaffold code is shown in the bug report
+- [ ] I ran the scaffold and included the actual output
+- [ ] My fix plan names specific files and functions
+- [ ] The fix directly addresses the proven root cause (not symptoms)
+- [ ] I've documented how to verify the fix works
+- [ ] I've removed scaffold code from my working directory (check with `git diff`)
 
 ## Success Criteria
 

@@ -189,14 +189,25 @@ run_gate() {
     local name="$1"
     local script="$2"
     local worktree="$3"
+    local extra_arg="${4:-}"
 
     echo "--- Gate: $name ---"
-    if "$GATES_DIR/$script" "$worktree"; then
-        echo "✓ $name: PASS"
-        return 0
+    if [[ -n "$extra_arg" ]]; then
+        if "$GATES_DIR/$script" "$worktree" "$extra_arg"; then
+            echo "✓ $name: PASS"
+            return 0
+        else
+            echo "✗ $name: FAIL"
+            return 1
+        fi
     else
-        echo "✗ $name: FAIL"
-        return 1
+        if "$GATES_DIR/$script" "$worktree"; then
+            echo "✓ $name: PASS"
+            return 0
+        else
+            echo "✗ $name: FAIL"
+            return 1
+        fi
     fi
 }
 
@@ -506,7 +517,7 @@ cmd_check() {
                 failed=1
             fi
             echo ""
-            # Check required sections are filled
+            # Check required sections are filled (basic structure)
             echo "--- Gate: Bug report sections complete ---"
             local bug_report="$worktree/bug_reports/$task_id.md"
             local missing_sections=()
@@ -530,6 +541,12 @@ cmd_check() {
                 failed=1
             else
                 echo "✓ Bug report sections: PASS"
+            fi
+
+            # Run investigation quality checks (SPEC-011)
+            echo ""
+            if ! run_gate "Investigation quality" "check_bug_investigation.sh" "$worktree" "$task_id"; then
+                failed=1
             fi
             ;;
 
