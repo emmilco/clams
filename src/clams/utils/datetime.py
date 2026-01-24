@@ -16,7 +16,13 @@ Design decisions:
 
 from datetime import UTC, datetime
 
-__all__ = ["serialize_datetime", "deserialize_datetime"]
+__all__ = [
+    "serialize_datetime",
+    "deserialize_datetime",
+    "serialize_datetime_optional",
+    "deserialize_datetime_optional",
+    "is_valid_datetime_format",
+]
 
 
 def serialize_datetime(dt: datetime) -> str:
@@ -107,3 +113,95 @@ def deserialize_datetime(value: str | float | int) -> datetime:
             f"Cannot deserialize datetime from {type(value).__name__}: {value!r}. "
             f"Expected str (ISO 8601), int, or float (Unix timestamp)."
         )
+
+
+def is_valid_datetime_format(value: str) -> bool:
+    """Check if string is valid ISO 8601 format that can be parsed.
+
+    Non-throwing validation - returns True if deserialize_datetime() would succeed
+    on a string input. Useful for input validation before processing.
+
+    Args:
+        value: String to validate
+
+    Returns:
+        True if the string can be parsed as ISO 8601 by datetime.fromisoformat(),
+        False otherwise
+
+    Examples:
+        >>> is_valid_datetime_format("2024-12-15T10:30:00+00:00")
+        True
+        >>> is_valid_datetime_format("2024-12-15T10:30:00")
+        True
+        >>> is_valid_datetime_format("2024-12-15")  # Date-only is valid
+        True
+        >>> is_valid_datetime_format("invalid")
+        False
+        >>> is_valid_datetime_format("")
+        False
+
+    Note:
+        This function accepts any format that datetime.fromisoformat() accepts,
+        which includes:
+        - Full datetime with timezone: "2024-12-15T10:30:45+00:00"
+        - Full datetime without timezone: "2024-12-15T10:30:45"
+        - With microseconds: "2024-12-15T10:30:45.123456+00:00"
+        - Z suffix (Python 3.11+): "2024-12-15T10:30:45Z"
+        - Date only: "2024-12-15" (assumes midnight)
+    """
+    if not isinstance(value, str):
+        return False
+    try:
+        datetime.fromisoformat(value)
+        return True
+    except ValueError:
+        return False
+
+
+def serialize_datetime_optional(dt: datetime | None) -> str | None:
+    """Serialize optional datetime, returning None for None input.
+
+    Convenience wrapper for nullable datetime fields.
+
+    Args:
+        dt: Datetime to serialize, or None
+
+    Returns:
+        ISO 8601 string if dt is not None, else None
+
+    Examples:
+        >>> from datetime import datetime, UTC
+        >>> serialize_datetime_optional(datetime(2024, 12, 15, 10, 30, tzinfo=UTC))
+        '2024-12-15T10:30:00+00:00'
+        >>> serialize_datetime_optional(None)
+        None
+    """
+    if dt is None:
+        return None
+    return serialize_datetime(dt)
+
+
+def deserialize_datetime_optional(value: str | float | int | None) -> datetime | None:
+    """Deserialize optional datetime, returning None for None input.
+
+    Convenience wrapper for nullable datetime fields.
+
+    Args:
+        value: Value to deserialize (ISO string, Unix timestamp), or None
+
+    Returns:
+        UTC datetime if value is not None, else None
+
+    Raises:
+        ValueError: If value is non-None and cannot be parsed
+        TypeError: If value is non-None and wrong type
+
+    Examples:
+        >>> deserialize_datetime_optional("2024-12-15T10:30:00+00:00")
+        datetime.datetime(2024, 12, 15, 10, 30, tzinfo=datetime.timezone.utc)
+        >>> deserialize_datetime_optional(None)
+        None
+    """
+    if value is None:
+        return None
+    return deserialize_datetime(value)
