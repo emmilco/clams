@@ -87,7 +87,7 @@ ignore_missing_imports = true
 asyncio_mode = "auto"
 testpaths = ["tests"]
 timeout = 60
-addopts = "-m 'not slow'"
+addopts = "-m 'not slow' -rs"
 markers = [
     "slow: marks tests as slow (>15s, excluded by default)",
     "integration: marks tests as integration tests requiring external services",
