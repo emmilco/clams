@@ -907,7 +907,7 @@ class TestMockExperienceResultParity:
         )
 
         assert not differences, (
-            f"MockExperienceResult field mismatches:\n"
+            "MockExperienceResult field mismatches:\n"
             + "\n".join(differences)
             + "\n\nThe mock must have fields matching the production dataclass "
             "to prevent 'works in test, fails in production' bugs. "
