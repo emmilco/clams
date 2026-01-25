@@ -1,8 +1,46 @@
 """Main entry point for the CLAMS server.
 
-IMPORTANT: This module minimizes imports at module level to allow fast
-argument parsing. Heavy imports (PyTorch, embedding models) are deferred
-to _run_server() which is only called after daemon spawning completes.
+Fork/Daemon Constraint
+======================
+
+This server supports ``--daemon`` mode which uses ``os.fork()`` on macOS/Linux.
+PyTorch's MPS backend (macOS GPU) does not support fork after initialization.
+
+**NEVER import these packages at module top level anywhere in the codebase:**
+
+- ``torch`` - initializes GPU backends that don't support fork()
+- ``sentence_transformers`` - imports torch
+- ``transformers`` - imports torch
+- ``nomic`` - imports sentence_transformers
+
+**Correct pattern** (lazy import inside function)::
+
+    def process():
+        import torch  # Safe: imported after fork completes
+        return torch.tensor([1, 2, 3])
+
+**Wrong pattern** (top-level import)::
+
+    import torch  # FORBIDDEN: initializes MPS before fork
+
+    def process():
+        return torch.tensor([1, 2, 3])
+
+**Performance note:** These packages also take 4-6 seconds to import,
+causing hook timeouts if imported eagerly.
+
+**References:**
+
+- BUG-042: Daemon crash on macOS due to MPS fork safety
+- BUG-037: Heavy imports cause hook timeout
+- SPEC-026: Pre-commit hook enforces this constraint automatically
+
+Implementation Note
+-------------------
+
+This module minimizes imports at module level to allow fast argument parsing.
+Heavy imports (PyTorch, embedding models) are deferred to ``_run_server()``
+which is only called after daemon spawning completes.
 """
 
 from __future__ import annotations

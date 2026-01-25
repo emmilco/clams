@@ -1,7 +1,8 @@
 """Embedding service registry for dual embedding models.
 
-IMPORTANT: This module defers importing embedding implementations (MiniLM, Nomic)
-until actually needed to avoid loading PyTorch before daemonization.
+Fork Safety: This module defers importing embedding implementations (MiniLM,
+Nomic) until actually needed. PyTorch must not be loaded before fork() completes
+in daemon mode. See ``src/clams/server/main.py`` docstring for full details.
 """
 
 from __future__ import annotations
@@ -49,7 +50,8 @@ class EmbeddingRegistry:
             EmbeddingService: Code embedder instance (MiniLM by default)
         """
         if self._code_embedder is None:
-            # Lazy import to avoid loading PyTorch before fork
+            # Lazy import: PyTorch must not be loaded before fork()
+            # See src/clams/server/main.py docstring and BUG-042
             from .minilm import MiniLMEmbedding
 
             embedding_settings = EmbeddingSettings(model_name=self._code_model)
@@ -68,7 +70,8 @@ class EmbeddingRegistry:
             EmbeddingService: Semantic embedder instance (Nomic by default)
         """
         if self._semantic_embedder is None:
-            # Lazy import to avoid loading PyTorch before fork
+            # Lazy import: PyTorch must not be loaded before fork()
+            # See src/clams/server/main.py docstring and BUG-042
             from .nomic import NomicEmbedding
 
             embedding_settings = EmbeddingSettings(

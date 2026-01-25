@@ -1,9 +1,21 @@
 """Embedding generation and management.
 
-IMPORTANT: This module avoids importing concrete embedding implementations
-(MiniLM, Nomic) at module level to prevent loading PyTorch before daemonization.
+Fork Safety Note
+----------------
 
-To get embedders, use the registry functions:
+This module does NOT import heavy dependencies (torch, sentence_transformers)
+at the top level. All embedding implementations use lazy imports to avoid:
+
+1. Fork safety issues with MPS backend (BUG-042)
+2. Slow import times causing hook timeouts (BUG-037)
+
+See ``src/clams/server/main.py`` docstring for the full constraint documentation.
+
+Usage
+-----
+
+To get embedders, use the registry functions::
+
     from clams.embedding import (
         initialize_registry, get_code_embedder, get_semantic_embedder
     )
@@ -11,7 +23,8 @@ To get embedders, use the registry functions:
     initialize_registry(code_model, semantic_model)
     embedder = get_code_embedder()  # Loads model lazily
 
-For direct class access (will load PyTorch):
+For direct class access (will load PyTorch immediately)::
+
     from clams.embedding.minilm import MiniLMEmbedding
     from clams.embedding.nomic import NomicEmbedding
 """
