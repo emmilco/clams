@@ -433,10 +433,21 @@ cmd_check() {
             local all_impl_dirs="$impl_dirs $test_dirs"
             code_changes=$(cd "$worktree" && eval "git diff main...HEAD --name-only -- $all_impl_dirs" 2>/dev/null | grep -v '__pycache__' | head -10)
             if [[ -z "$code_changes" ]]; then
+                echo ""
                 echo "✗ Implementation code exists: FAIL"
                 echo ""
-                echo "No changes found in configured implementation directories: $all_impl_dirs"
-                echo "The task appears to have only documentation changes."
+                echo "No implementation code found. Valid directories (from .claude/project.json):"
+                echo ""
+                echo "  Implementation: $(get_impl_dirs)"
+                echo "  Tests:          $(get_test_dirs)"
+                echo ""
+                echo "Excluded directories (docs/config only):"
+                echo "  - planning_docs/"
+                echo "  - bug_reports/"
+                echo "  - docs/"
+                echo "  - CLAUDE.md, README.md, etc."
+                echo ""
+                echo "Your changes appear to be documentation or configuration only."
                 failed=1
             else
                 echo "✓ Implementation code exists: PASS"
@@ -562,9 +573,22 @@ cmd_check() {
             local all_impl_dirs="$impl_dirs $test_dirs"
             code_changes=$(cd "$worktree" && eval "git diff main...HEAD --name-only -- $all_impl_dirs" 2>/dev/null | grep -v '__pycache__' | head -10)
             if [[ -z "$code_changes" ]]; then
+                echo ""
                 echo "✗ Implementation code exists: FAIL"
                 echo ""
-                echo "No changes found in configured directories: $all_impl_dirs"
+                echo "No implementation code found. Valid directories (from .claude/project.json):"
+                echo ""
+                echo "  Implementation: $(get_impl_dirs)"
+                echo "  Tests:          $(get_test_dirs)"
+                echo ""
+                echo "Excluded directories (docs/config only):"
+                echo "  - planning_docs/"
+                echo "  - bug_reports/"
+                echo "  - docs/"
+                echo "  - CLAUDE.md, README.md, etc."
+                echo ""
+                echo "Your changes appear to be documentation or configuration only."
+                echo "Bug fixes must include implementation changes in valid directories."
                 failed=1
             else
                 echo "✓ Implementation code exists: PASS"
