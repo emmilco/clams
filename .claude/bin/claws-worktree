@@ -358,6 +358,18 @@ cmd_merge() {
         exit 1
     fi
 
+    # Get task type and current phase before merge (needed for phase transition)
+    local task_info
+    task_info=$(sqlite3 "$DB_PATH" "SELECT task_type, phase FROM tasks WHERE id = '$task_id';")
+    if [[ -z "$task_info" ]]; then
+        echo "Error: Task not found in database: $task_id" >&2
+        exit 1
+    fi
+    local task_type
+    task_type=$(echo "$task_info" | cut -d'|' -f1)
+    local current_phase
+    current_phase=$(echo "$task_info" | cut -d'|' -f2)
+
     # Check for merge lock (system DEGRADED) - skip for check-only
     if [[ "$check_only" != "true" ]]; then
         local merge_lock
@@ -481,6 +493,19 @@ EOF
     sqlite3 "$DB_PATH" "UPDATE tasks SET worktree_path = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = '$task_id';"
 
     echo "Cleaned up worktree and branch for: $task_id"
+
+    # BUG-066 fix: Auto-transition task phase after successful merge
+    # - Bug tasks: transition to DONE (merge is final step)
+    # - Feature tasks: transition to VERIFY (still need verification on main)
+    local new_phase
+    if [[ "$task_type" == "bug" ]]; then
+        new_phase="DONE"
+    else
+        new_phase="VERIFY"
+    fi
+
+    sqlite3 "$DB_PATH" "UPDATE tasks SET phase = '$new_phase', updated_at = CURRENT_TIMESTAMP WHERE id = '$task_id';"
+    echo "Task phase updated: $current_phase → $new_phase"
 
     # Check batch job triggers
     local merges_since_e2e
