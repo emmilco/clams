@@ -5,6 +5,7 @@ Provides centralized utilities for:
 - numeric: Type-safe numeric conversions (R11-B)
 - validation: Function parameter validation decorators
 - platform: Platform capability detection (SPEC-033)
+- schema: JSON Schema generation from Python Enum classes (SPEC-016)
 """
 
 from clams.utils.datetime import (
@@ -24,6 +25,13 @@ from clams.utils.platform import (
     check_requirements,
     format_report,
     get_platform_info,
+)
+from clams.utils.schema import (
+    enum_schema,
+    enum_schema_from_list,
+    get_enum_diff,
+    get_enum_values,
+    validate_enum_schema,
 )
 from clams.utils.validation import (
     validate_datetime_params,
@@ -46,6 +54,12 @@ __all__ = [
     "get_platform_info",
     "check_requirements",
     "format_report",
+    # Schema utilities (SPEC-016)
+    "get_enum_values",
+    "enum_schema",
+    "validate_enum_schema",
+    "get_enum_diff",
+    "enum_schema_from_list",
     # Validation decorators
     "validate_datetime_params",
     "validate_numeric_range",
