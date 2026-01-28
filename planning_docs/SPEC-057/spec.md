@@ -25,6 +25,7 @@ Located in `clams/server/tools/`:
 - `context.py`: assemble_context
 - `search.py`: search_experiences
 - `session.py`: start_session, get_orphaned_ghap, should_check_in, increment_tool_count, reset_tool_count
+- `__init__.py`: ping (health check, no parameters)
 
 ## Requirements
 
