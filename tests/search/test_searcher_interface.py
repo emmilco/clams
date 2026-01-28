@@ -74,3 +74,27 @@ class TestSearcherMethodSignatures:
         assert inspect.iscoroutinefunction(method), (
             f"Searcher.{method_name} should be async"
         )
+
+    @pytest.mark.parametrize("method_name", EXPECTED_METHODS)
+    def test_method_signatures_match_abc(self, method_name: str) -> None:
+        """Verify method signatures in concrete Searcher match the ABC.
+
+        This regression test ensures parameter names remain synchronized
+        between the abstract interface and concrete implementation.
+        BUG-041 was caused by signature drift between these classes.
+        """
+        abc_method = getattr(SearcherABC, method_name)
+        concrete_method = getattr(Searcher, method_name)
+
+        abc_sig = inspect.signature(abc_method)
+        concrete_sig = inspect.signature(concrete_method)
+
+        # Parameter names should match exactly
+        abc_params = list(abc_sig.parameters.keys())
+        concrete_params = list(concrete_sig.parameters.keys())
+
+        assert abc_params == concrete_params, (
+            f"Method {method_name} parameter names don't match:\n"
+            f"  ABC: {abc_params}\n"
+            f"  Concrete: {concrete_params}"
+        )
