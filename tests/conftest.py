@@ -5,7 +5,6 @@ import threading
 import warnings
 from collections.abc import Generator
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pytest
 
