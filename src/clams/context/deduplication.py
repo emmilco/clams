@@ -2,14 +2,14 @@
 
 import difflib
 
+from clams.config import settings
+
 from .models import ContextItem
 
-# Similarity threshold for fuzzy matching (90%)
-SIMILARITY_THRESHOLD = 0.90
-
-# Performance optimization: only fuzzy-match content under this length
-# Prevents O(n²) fuzzy matching on very large text blocks
-MAX_FUZZY_CONTENT_LENGTH = 1000
+# Module-level aliases for backwards compatibility
+# These now reference the central configuration
+SIMILARITY_THRESHOLD = settings.context.similarity_threshold
+MAX_FUZZY_CONTENT_LENGTH = settings.context.max_fuzzy_content_length
 
 
 def deduplicate_items(items: list[ContextItem]) -> list[ContextItem]:

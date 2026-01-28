@@ -2,17 +2,12 @@
 
 from typing import Any
 
-# Source weights for budget distribution
-SOURCE_WEIGHTS = {
-    "memories": 1,  # Typically short, concise
-    "code": 2,  # Code blocks are verbose
-    "experiences": 3,  # Rich, multi-field GHAP entries
-    "values": 1,  # Single-statement principles
-    "commits": 2,  # Multi-line messages + file lists
-}
+from clams.config import settings
 
-# Maximum fraction of source budget any single item can consume
-MAX_ITEM_FRACTION = 0.25
+# Module-level aliases for backwards compatibility
+# These now reference the central configuration
+SOURCE_WEIGHTS = settings.context.source_weights
+MAX_ITEM_FRACTION = settings.context.max_item_fraction
 
 
 def estimate_tokens(text: str) -> int:

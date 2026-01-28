@@ -19,11 +19,14 @@ from typing import Any
 
 import structlog
 
+from clams.config import settings
+
 logger = structlog.get_logger()
 
-# Session state paths (configurable via environment for testing)
-CLAMS_DIR = Path.home() / ".clams"
-JOURNAL_DIR = CLAMS_DIR / "journal"
+# Module-level aliases for backwards compatibility
+# These now reference the central configuration
+CLAMS_DIR = settings.paths.clams_dir
+JOURNAL_DIR = settings.paths.journal_dir
 SESSION_ID_FILE = JOURNAL_DIR / ".session_id"
 TOOL_COUNT_FILE = JOURNAL_DIR / ".tool_count"
 CURRENT_GHAP_FILE = JOURNAL_DIR / "current_ghap.json"

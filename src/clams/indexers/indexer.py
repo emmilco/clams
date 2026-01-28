@@ -8,6 +8,8 @@ from typing import Any
 
 import structlog
 
+from clams.config import settings
+
 from ..embedding.base import EmbeddingModelError, EmbeddingService
 from ..storage.base import Vector, VectorStore
 from ..storage.metadata import MetadataStore
@@ -21,7 +23,14 @@ class CodeIndexer:
     """Index parsed code units for semantic search."""
 
     COLLECTION_NAME = "code_units"
-    EMBEDDING_BATCH_SIZE = 100
+
+    @property
+    def embedding_batch_size(self) -> int:
+        """Get embedding batch size from configuration."""
+        return settings.indexer.embedding_batch_size
+
+    # Class-level constant for backwards compatibility
+    EMBEDDING_BATCH_SIZE = 100  # Default, use property for actual value
 
     def __init__(
         self,
@@ -158,16 +167,17 @@ class CodeIndexer:
     async def _embed_units(
         self, units: list[SemanticUnit], errors: list[IndexingError]
     ) -> tuple[list[SemanticUnit], list[Vector]]:
-        """Embed units in batches of EMBEDDING_BATCH_SIZE.
+        """Embed units in batches of embedding_batch_size.
 
         Returns tuple of (successfully_embedded_units, embeddings).
         Failed units are logged and added to errors list, not raised.
         """
         successful_units: list[SemanticUnit] = []
         embeddings: list[Vector] = []
+        batch_size = self.embedding_batch_size
 
-        for i in range(0, len(units), self.EMBEDDING_BATCH_SIZE):
-            batch = units[i : i + self.EMBEDDING_BATCH_SIZE]
+        for i in range(0, len(units), batch_size):
+            batch = units[i : i + batch_size]
             texts = [self._prepare_embedding_text(u) for u in batch]
 
             try:

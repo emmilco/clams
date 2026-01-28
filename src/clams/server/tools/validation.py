@@ -9,6 +9,7 @@ import re
 import uuid as uuid_lib
 from collections.abc import Sequence
 
+from clams.config import settings
 from clams.server.errors import ValidationError
 
 # Valid context types for assemble_context
@@ -34,7 +35,9 @@ SUPPORTED_LANGUAGES = [
 
 # Project identifier pattern: alphanumeric, dashes, underscores
 PROJECT_ID_PATTERN = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]*$")
-PROJECT_ID_MAX_LENGTH = 100
+
+# Module-level alias for backwards compatibility
+PROJECT_ID_MAX_LENGTH = settings.tools.project_id_max_length
 
 
 def validate_context_types(context_types: list[str]) -> None:
