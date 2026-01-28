@@ -243,3 +243,41 @@ class TestAssembleContextIntegration:
         assert "token_count" in result
         assert "item_count" in result
         assert "truncated" in result
+
+
+# ============================================================================
+# SPEC-057: New validation tests
+# ============================================================================
+
+
+class TestAssembleContextQueryLengthValidation:
+    """SPEC-057: Query string length validation tests for assemble_context."""
+
+    @pytest.mark.asyncio
+    async def test_query_too_long(self, context_tools: dict[str, Any]) -> None:
+        """Query exceeding 10,000 chars should error."""
+        tool = context_tools["assemble_context"]
+        with pytest.raises(ValidationError, match="too long"):
+            await tool(query="x" * 10_001)
+
+    @pytest.mark.asyncio
+    async def test_query_at_max_length(
+        self, context_tools: dict[str, Any]
+    ) -> None:
+        """Query at exactly 10,000 chars should be accepted."""
+        tool = context_tools["assemble_context"]
+        # Should not raise ValidationError
+        result = await tool(query="x" * 10_000)
+        # Valid query should return result structure
+        assert "markdown" in result
+
+    @pytest.mark.asyncio
+    async def test_query_length_error_shows_limits(
+        self, context_tools: dict[str, Any]
+    ) -> None:
+        """Error should show actual and maximum length."""
+        tool = context_tools["assemble_context"]
+        with pytest.raises(ValidationError) as exc_info:
+            await tool(query="x" * 10_001)
+        assert "10001" in str(exc_info.value)
+        assert "10000" in str(exc_info.value)

@@ -255,3 +255,87 @@ def validate_text_length(
             f"{param_name.capitalize()} too long ({len(text)} chars). "
             f"Maximum: {max_length} characters"
         )
+
+
+def validate_query_string(
+    query: str,
+    max_length: int = 10_000,
+    param_name: str = "query",
+) -> None:
+    """Validate search query string length.
+
+    This validator checks only the maximum length of a query string.
+    Empty query handling is left to the tool (typically returns empty results).
+
+    Args:
+        query: Query string to validate
+        max_length: Maximum allowed length (default 10,000)
+        param_name: Parameter name for error message
+
+    Raises:
+        ValidationError: If query exceeds max length
+    """
+    if len(query) > max_length:
+        raise ValidationError(
+            f"{param_name.capitalize()} too long ({len(query)} chars). "
+            f"Maximum: {max_length} characters"
+        )
+
+
+def validate_optional_project_id(project: str | None) -> None:
+    """Validate optional project identifier.
+
+    Wrapper around validate_project_id for optional parameters.
+
+    Args:
+        project: Project identifier or None
+
+    Raises:
+        ValidationError: If project is provided but invalid
+    """
+    if project is not None:
+        validate_project_id(project)
+
+
+def validate_frequency(
+    frequency: int,
+    min_val: int = 1,
+    max_val: int = 1000,
+    param_name: str = "frequency",
+) -> None:
+    """Validate frequency/interval value.
+
+    Args:
+        frequency: Frequency value to validate
+        min_val: Minimum allowed value (default 1)
+        max_val: Maximum allowed value (default 1000)
+        param_name: Parameter name for error message
+
+    Raises:
+        ValidationError: If frequency is out of range
+    """
+    if not min_val <= frequency <= max_val:
+        raise ValidationError(
+            f"{param_name.capitalize()} {frequency} out of range. "
+            f"Must be between {min_val} and {max_val}."
+        )
+
+
+def validate_author_name(author: str | None, max_length: int = 200) -> None:
+    """Validate optional author name filter.
+
+    Args:
+        author: Author name or None
+        max_length: Maximum allowed length
+
+    Raises:
+        ValidationError: If author is provided but too long
+    """
+    if author is None:
+        return
+
+    if len(author) > max_length:
+        raise ValidationError(
+            f"Author name too long ({len(author)} chars). "
+            f"Maximum: {max_length} characters"
+        )

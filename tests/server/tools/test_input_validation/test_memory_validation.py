@@ -477,3 +477,34 @@ class TestListMemoriesTagsValidation:
         tool = memory_tools["list_memories"]
         result = await tool(tags=["tag1", "tag2"])
         assert "results" in result
+
+
+class TestRetrieveMemoriesQueryLengthValidation:
+    """SPEC-057: Query string length validation tests for retrieve_memories."""
+
+    @pytest.mark.asyncio
+    async def test_query_too_long(self, memory_tools: dict[str, Any]) -> None:
+        """Query exceeding 10,000 chars should error."""
+        tool = memory_tools["retrieve_memories"]
+        with pytest.raises(ValidationError, match="too long"):
+            await tool(query="x" * 10_001)
+
+    @pytest.mark.asyncio
+    async def test_query_at_max_length(self, memory_tools: dict[str, Any]) -> None:
+        """Query at exactly 10,000 chars should be accepted."""
+        tool = memory_tools["retrieve_memories"]
+        # Should not raise ValidationError
+        result = await tool(query="x" * 10_000)
+        # Query is non-empty so it will process (may return empty results)
+        assert "results" in result
+
+    @pytest.mark.asyncio
+    async def test_query_length_error_shows_limits(
+        self, memory_tools: dict[str, Any]
+    ) -> None:
+        """Error should show actual and maximum length."""
+        tool = memory_tools["retrieve_memories"]
+        with pytest.raises(ValidationError) as exc_info:
+            await tool(query="x" * 10_001)
+        assert "10001" in str(exc_info.value)
+        assert "10000" in str(exc_info.value)

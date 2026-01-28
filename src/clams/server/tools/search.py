@@ -12,6 +12,7 @@ from clams.server.tools.enums import (
     validate_domain,
     validate_outcome_status,
 )
+from clams.server.tools.validation import validate_query_string
 
 logger = structlog.get_logger()
 
@@ -59,6 +60,9 @@ def get_search_tools(searcher: Searcher) -> dict[str, Any]:
             List of matching experiences with scores
         """
         try:
+            # Validate query length
+            validate_query_string(query)
+
             # Handle empty query
             if not query or not query.strip():
                 return {

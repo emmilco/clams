@@ -13,6 +13,7 @@ from clams.server.errors import MCPError, ValidationError
 from clams.server.tools import ServiceContainer
 from clams.server.tools.validation import (
     validate_importance_range,
+    validate_query_string,
     validate_tags,
     validate_uuid,
 )
@@ -181,6 +182,9 @@ def get_memory_tools(services: ServiceContainer) -> dict[str, ToolFunc]:
 
         # Validate min_importance range
         validate_importance_range(min_importance, "min_importance")
+
+        # Validate query length
+        validate_query_string(query)
 
         # Handle empty query
         if not query.strip():

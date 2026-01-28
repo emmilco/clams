@@ -11,7 +11,9 @@ from clams.server.errors import MCPError, ValidationError
 from clams.server.tools import ServiceContainer
 from clams.server.tools.validation import (
     validate_language,
+    validate_optional_project_id,
     validate_project_id,
+    validate_query_string,
 )
 
 logger = structlog.get_logger()
@@ -163,6 +165,12 @@ def get_code_tools(services: ServiceContainer) -> dict[str, Any]:
         # Validate language if provided
         validate_language(language)
 
+        # Validate optional project filter
+        validate_optional_project_id(project)
+
+        # Validate query length
+        validate_query_string(query)
+
         # Handle empty query
         if not query.strip():
             return {"results": [], "count": 0}
@@ -244,6 +252,9 @@ def get_code_tools(services: ServiceContainer) -> dict[str, Any]:
             raise ValidationError(
                 f"Limit {limit} out of range. Must be between 1 and 50."
             )
+
+        # Validate optional project filter
+        validate_optional_project_id(project)
 
         # Handle empty snippet
         if not snippet.strip():

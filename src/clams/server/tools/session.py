@@ -19,7 +19,11 @@ from typing import Any
 
 import structlog
 
+<<<<<<< HEAD
 from clams.config import settings
+=======
+from clams.server.tools.validation import validate_frequency
+>>>>>>> de2d011 (SPEC-057: Add validation to remaining MCP tool parameters)
 
 logger = structlog.get_logger()
 
@@ -169,7 +173,11 @@ def get_session_tools(session_manager: SessionManager) -> dict[str, Any]:
 
         Returns:
             Dict with should_check_in boolean
+
+        Raises:
+            ValidationError: If frequency is out of range (1-1000)
         """
+        validate_frequency(frequency)
         should_remind = session_manager._tool_count >= frequency
         return {"should_check_in": should_remind}
 
