@@ -1,131 +1,77 @@
-# SPEC-057: Add Validation to Remaining MCP Tool Parameters
+# SPEC-057: Add Validation to Remaining MCP Tool Parameters (R4-E)
 
-## Problem Statement
+## Overview
 
-The R4-A validation audit (see `planning_docs/RESEARCH-validation-audit.md`) identified that while most MCP tools have good validation, there are specific gaps that could lead to cryptic errors or silent failures.
+Audit all MCP tools and add input validation to any parameters that currently lack proper validation, ensuring consistent error handling across the API.
 
-**What's already validated** (no work needed):
-- All GHAP tools - excellent validation including conditional requirements
-- Memory tools - category, importance, limit/offset validation
-- Git tools - date format, limit ranges
-- Learning tools - axis, cluster_id format, text lengths
-- Search tools - axis, domain, outcome, limit
+## Background
 
-**Actual gaps identified in audit**:
-- `assemble_context` - missing validation for all parameters (Critical - BUG-036 risk)
-- `retrieve_memories` - missing `min_importance` range validation
-- `store_memory`/`list_memories` - missing tags array validation
-- `delete_memory` - missing UUID format validation
-- `search_code` - missing language validation
-- `index_codebase` - missing project format validation
-- `update_ghap` - missing note length validation
-- `distribute_budget` - missing max_tokens validation
+Some MCP tool parameters may accept invalid inputs without proper validation. This creates inconsistent behavior and potential runtime errors. All parameters should be validated with helpful error messages.
 
-**Reference**: R4-E from bug pattern analysis (Theme T5: Missing Input Validation)
+### Existing Infrastructure
 
-## Proposed Solution
+The codebase already has validation infrastructure:
+- `clams/server/errors.py`: Defines `ValidationError` exception
+- `clams/server/tools/validation.py`: Shared validators for common patterns
 
-Add validation to the specific parameters identified as gaps, following the existing validation patterns in the codebase.
+### MCP Tools to Audit
+
+Located in `clams/server/tools/`:
+- `memory.py`: store_memory, retrieve_memories, list_memories, delete_memory
+- `code.py`: index_codebase, search_code, find_similar_code
+- `git.py`: index_commits, search_commits, get_file_history, get_churn_hotspots, get_code_authors
+- `ghap.py`: start_ghap, update_ghap, resolve_ghap, get_active_ghap, list_ghap_entries
+- `learning.py`: get_clusters, get_cluster_members, validate_value, store_value, list_values
+- `context.py`: assemble_context
+- `search.py`: search_experiences
+- `session.py`: start_session, get_orphaned_ghap, should_check_in, increment_tool_count, reset_tool_count
+
+## Requirements
+
+### Functional Requirements
+
+1. Audit each MCP tool and document validation status of all parameters
+2. Add validation for any unvalidated parameters using `ValidationError`
+3. Use shared validators from `validation.py` where applicable
+4. Create new shared validators for patterns used 2+ times
+
+### Non-Functional Requirements
+
+1. Validation fails fast (check before processing)
+2. Error messages include: parameter name, invalid value, valid options/range
+3. Use existing `ValidationError` pattern consistently
+
+## Validation Patterns
+
+New validators use this pattern (matching existing code):
+```python
+from clams.server.errors import ValidationError
+
+def validate_example(value: str, param_name: str = "example") -> None:
+    if not is_valid(value):
+        raise ValidationError(f"{param_name} must be XYZ, got: {value}")
+```
+
+Error messages must include:
+- Parameter name
+- What was expected (valid values/range)
+- What was received (the actual invalid value)
 
 ## Acceptance Criteria
 
-### Critical: assemble_context (`src/clams/server/tools/context.py`)
-
-- [ ] Validate `context_types` against known types: `["values", "experiences"]`
-- [ ] Invalid types return error listing valid options
-- [ ] Validate `limit` range (1-50)
-- [ ] Validate `max_tokens` range (100-10000)
-- [ ] Empty `query` returns empty result gracefully (not error)
-
-### Memory Tools (`src/clams/server/tools/memory.py`)
-
-- [ ] `retrieve_memories`: Validate `min_importance` in range 0.0-1.0
-- [ ] `store_memory`: Validate `tags` max count (20) and max tag length (50 chars)
-- [ ] `list_memories`: Validate `tags` same as store_memory
-- [ ] `delete_memory`: Validate `memory_id` is valid UUID format
-
-### Code Tools (`src/clams/server/tools/code.py`)
-
-- [ ] `search_code`: Validate `language` against supported list with helpful error
-- [ ] `index_codebase`: Validate `project` format (alphanumeric, dashes, underscores, max 100 chars)
-
-### GHAP Tools (`src/clams/server/tools/ghap.py`)
-
-- [ ] `update_ghap`: Validate `note` max length (2000 chars, consistent with other fields)
-
-### Token Management (`src/clams/context/tokens.py`)
-
-- [ ] `distribute_budget`: Validate `max_tokens` is positive and reasonable (1-100000)
-
-### Error Format
-
-Use the existing error format pattern from the codebase:
-```python
-# For tool-level errors (returned to user)
-return {
-    "error": "validation_error",
-    "message": f"Invalid {param}: {value}. Valid options: {', '.join(valid)}"
-}
-
-# For internal validation (raise exception)
-raise ValidationError(f"Invalid {param}: {value}. Valid options: {', '.join(valid)}")
-```
-
-## Implementation Notes
-
-**Validation helper for arrays** (add to `enums.py` or create `validation.py`):
-```python
-def validate_tags(tags: list[str] | None, max_count: int = 20, max_length: int = 50) -> None:
-    """Validate tags array."""
-    if tags is None:
-        return
-    if len(tags) > max_count:
-        raise ValidationError(f"Too many tags: {len(tags)}. Maximum: {max_count}")
-    for i, tag in enumerate(tags):
-        if len(tag) > max_length:
-            raise ValidationError(
-                f"Tag {i} too long: {len(tag)} chars. Maximum: {max_length}"
-            )
-```
-
-**UUID validation**:
-```python
-import uuid
-
-def validate_uuid(value: str, param_name: str) -> None:
-    """Validate string is valid UUID format."""
-    try:
-        uuid.UUID(value)
-    except ValueError:
-        raise ValidationError(f"Invalid {param_name}: must be a valid UUID")
-```
-
-**Supported languages for search_code** (check actual implementation):
-```python
-SUPPORTED_LANGUAGES = ["python", "typescript", "javascript", "rust", "go", "java", ...]
-```
-
-## Testing Requirements
-
-Create new test file `tests/server/tools/test_input_validation.py`:
-
-- [ ] Test: `assemble_context` with invalid context_type returns error listing valid options
-- [ ] Test: `assemble_context` with limit=0 or limit=100 returns range error
-- [ ] Test: `assemble_context` with empty query returns empty result (not error)
-- [ ] Test: `retrieve_memories` with min_importance=1.5 returns range error
-- [ ] Test: `store_memory` with 25 tags returns count error
-- [ ] Test: `store_memory` with 60-char tag returns length error
-- [ ] Test: `delete_memory` with "not-a-uuid" returns format error
-- [ ] Test: `search_code` with language="invalid" returns error listing supported languages
-- [ ] Test: `index_codebase` with project="has spaces!" returns format error
-- [ ] Test: `update_ghap` with 3000-char note returns length error
-- [ ] Test: `distribute_budget` with max_tokens=-1 returns error
-- [ ] All error messages include valid options or acceptable ranges
+- [ ] Audit document created: `planning_docs/SPEC-057/audit.md` listing each tool/parameter and validation status
+- [ ] All parameters in audit document have validation (existing or new)
+- [ ] New validators added to `clams/server/tools/validation.py` for reusable patterns
+- [ ] All new validation uses `ValidationError` from `clams/server/errors.py`
+- [ ] Error messages follow pattern: "{param} must be {expected}, got: {actual}"
+- [ ] Unit tests added for each new validator
+- [ ] Integration tests verify validation errors returned correctly from tools
+- [ ] All existing tests continue to pass
+- [ ] No breaking changes to valid API calls
 
 ## Out of Scope
 
-- Validation that already exists (see "What's already validated" above)
-- Changing error message format (use existing patterns)
-- Adding validation to tools not in the audit
-- Performance optimization of validation
-- Schema-level validation (JSON schema already handles basic types)
+- Changing existing validation behavior
+- Adding new parameters to tools
+- Schema documentation updates (separate task)
+- Validation of MCP schema types (handled by FastMCP framework)
