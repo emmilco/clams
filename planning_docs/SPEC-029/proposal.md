@@ -1,24 +1,38 @@
 # SPEC-029: Canonical Configuration Module - Technical Proposal
 
-**Author**: Architect Worker W-1765889444-88850
-**Date**: 2025-12-16
-**Status**: Draft
+**Author**: Architect Worker W-1769633608-24681
+**Date**: 2026-01-28
+**Status**: Draft (Revision 2)
 
 ## Problem Statement
 
-Configuration values are scattered across multiple locations in the CLAMS codebase, creating maintenance burden and bugs when values drift apart. Evidence:
+Configuration values are scattered across multiple locations in the CLAMS codebase, creating maintenance burden and making it difficult to:
+
+1. **Discover configuration options**: Developers must search through multiple files to find all tunable parameters
+2. **Override values consistently**: Some constants are hardcoded without environment variable support
+3. **Maintain the codebase**: Scattered constants create implicit dependencies between modules
+
+### Evidence from Past Bugs
 
 - **BUG-033**: Hook scripts used `python -m clams.server.main` while production used `.venv/bin/clams-server`
 - **BUG-037**: Timeout values inconsistent between installation verification and HTTP calls
 - **BUG-023**: Embedding dimension hardcoded as `768` without central definition
 - **BUG-026**: Tool schemas had hardcoded enums that drifted from canonical enums
-- **BUG-061**: Implementation directories hardcoded in multiple scripts
 
-Current configuration exists in at least 4 distinct locations with different access patterns:
-1. `src/clams/server/config.py` - Python `ServerSettings` (pydantic-settings)
-2. `src/clams/storage/base.py` - Python `StorageSettings` (duplicate, different defaults)
-3. `clams/hooks/*.sh` - Shell scripts with hardcoded values
-4. `.claude/project.json` - JSON configuration for directory patterns
+### Scattered Constants per Spec
+
+The spec identifies these scattered constants requiring consolidation:
+
+| Module | Constants | Current Location |
+|--------|-----------|------------------|
+| Context | `MAX_ITEM_FRACTION`, `SOURCE_WEIGHTS` | `context/tokens.py` |
+| Context | `SIMILARITY_THRESHOLD`, `MAX_FUZZY_CONTENT_LENGTH` | `context/deduplication.py` |
+| Tools | `PROJECT_ID_MAX_LENGTH` | `server/tools/validation.py` |
+| Indexers | `EMBEDDING_BATCH_SIZE` | `indexers/indexer.py` (class attribute) |
+| Session | `CLAMS_DIR`, `JOURNAL_DIR` | `server/tools/session.py` |
+| HTTP | `DEFAULT_PID_FILE`, `DEFAULT_LOG_FILE` | `server/http.py` |
+| Code Tools | `max_length = 5_000` | `server/tools/code.py` (inline) |
+| Memory Tools | `max_length = 10_000` | `server/tools/memory.py` (inline) |
 
 ## Proposed Solution
 
@@ -32,13 +46,18 @@ Current configuration exists in at least 4 distinct locations with different acc
                                     │ (highest precedence)
                                     ▼
 ┌───────────────────────────────────────────────────────────────────┐
-│                     ServerSettings                                 │
-│                 (src/clams/server/config.py)                      │
+│                     src/clams/config.py                           │
+│                     (Unified Configuration Entry Point)           │
 │                                                                    │
-│  - All configuration with typed defaults                          │
-│  - Environment override via pydantic-settings                     │
-│  - Docstrings for all fields                                      │
-│  - export_for_shell() method                                      │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐   │
+│  │ ServerSettings  │  │ ContextSettings │  │ IndexerSettings │   │
+│  │ (re-exported)   │  │ (NEW)           │  │ (NEW)           │   │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘   │
+│                                                                    │
+│  ┌─────────────────┐  ┌─────────────────┐                         │
+│  │ ToolSettings    │  │ PathSettings    │  Module singleton:      │
+│  │ (NEW)           │  │ (NEW)           │  `settings = Settings()`│
+│  └─────────────────┘  └─────────────────┘                         │
 └───────────────────────────────────────────────────────────────────┘
           │                                      │
           │ Python import                        │ server startup
@@ -47,420 +66,544 @@ Current configuration exists in at least 4 distinct locations with different acc
 │   Python modules     │              │   ~/.clams/config.env        │
 │   (direct access)    │              │   (shell-sourceable)         │
 │                      │              │                              │
-│ from clams.server    │              │ # Auto-generated on startup  │
-│   import             │              │ CLAMS_HTTP_PORT=6334         │
-│   ServerSettings     │              │ CLAMS_PID_FILE=~/.clams/...  │
-└──────────────────────┘              │ CLAMS_QDRANT_URL=...         │
-                                      └──────────────────────────────┘
-                                                 │
-                                                 │ source
+│ from clams.config    │              │ # Auto-generated on startup  │
+│   import settings    │              │ CLAMS_HTTP_PORT=6334         │
+│                      │              │ CLAMS_CONTEXT__...           │
+│ settings.server.*    │              │ CLAMS_TOOLS__...             │
+│ settings.context.*   │              └──────────────────────────────┘
+│ settings.tools.*     │                         │
+└──────────────────────┘                         │ source
                                                  ▼
                                       ┌──────────────────────────────┐
                                       │   Shell hooks                │
                                       │   session_start.sh           │
                                       │   user_prompt_submit.sh      │
-                                      │   etc.                       │
                                       └──────────────────────────────┘
 ```
 
 ### Key Design Decisions
 
-#### 1. ServerSettings as Single Source of Truth
+#### 1. New Top-Level Config Module with Domain-Specific Settings Classes
 
-Extend the existing `ServerSettings` class rather than creating new infrastructure. This class already:
-- Uses pydantic-settings for typed configuration
-- Supports `CLAMS_*` environment variable overrides
-- Has `export_for_shell()` method for shell script access
-- Is well-tested
+Per the spec requirements, create `src/clams/config.py` that:
+- Re-exports `ServerSettings` from `src/clams/server/config.py`
+- Adds `ContextSettings` for context assembly constants
+- Adds `IndexerSettings` for indexing constants
+- Adds `ToolSettings` for tool parameter limits
+- Adds `PathSettings` for file/directory paths
+- Provides a `Settings` root class composing all sections
+- Exports a module-level `settings` singleton for convenience
 
-**Addition required**: PID file and log file paths, collection names export.
+#### 2. Environment Variable Convention
 
-#### 2. Remove StorageSettings Duplication
+All settings use the `CLAMS_` prefix. Nested settings use double underscore:
+- `CLAMS_HTTP_PORT` (ServerSettings)
+- `CLAMS_CONTEXT__MAX_ITEM_FRACTION` (ContextSettings)
+- `CLAMS_TOOLS__SNIPPET_MAX_LENGTH` (ToolSettings)
+- `CLAMS_INDEXER__EMBEDDING_BATCH_SIZE` (IndexerSettings)
 
-The `StorageSettings` class in `src/clams/storage/base.py` duplicates `ServerSettings` with:
-- Different env prefix (`STORAGE_` vs `CLAMS_`)
-- Different timeout default (30.0 vs 5.0 seconds)
-- Subset of the same fields
+#### 3. Backwards Compatibility
 
-**Solution**: Delete `StorageSettings`, update `QdrantVectorStore` to accept `ServerSettings` or individual parameters.
+- `ServerSettings` is re-exported from `clams.config` for existing imports
+- Module-level aliases at original locations initially point to config values
+- No behavior changes - all defaults match current hardcoded values
 
-#### 3. CollectionName as Canonical Source for Collection Names
+#### 4. ServerSettings Enhancement
 
-The existing `CollectionName` class in `src/clams/search/collections.py` provides:
-- String constants (not Enum) for simple usage
-- Axis mapping for experience collections
-- Clear namespace grouping
+The existing `ServerSettings` already includes `pid_file` and `log_file` fields and the `export_for_shell()` method. No changes needed.
 
-**Decision**: Keep `CollectionName` as the canonical source. `ServerSettings` will import from it for shell export. Collection names don't need environment override.
+#### 5. CollectionName Remains Separate
 
-#### 4. Shell Export Enhancement
+The `CollectionName` class in `src/clams/search/collections.py` provides collection name constants. These are already exported in `export_for_shell()` and don't need environment override.
 
-Enhance `export_for_shell()` to include:
-- PID file and log file paths (new fields)
-- Collection names (imported from `CollectionName`)
-- Path expansion for `~` prefixed paths
+#### 6. StorageSettings Removal (If Still Present)
 
-#### 5. Hooks Source Config File
-
-Update all hook scripts to source `~/.clams/config.env` at startup:
-```bash
-# Source config if available (server writes on startup)
-CONFIG_FILE="${HOME}/.clams/config.env"
-if [ -f "$CONFIG_FILE" ]; then
-    source "$CONFIG_FILE"
-fi
-
-# Fallback to defaults if config not available
-CLAMS_HTTP_PORT="${CLAMS_HTTP_PORT:-6334}"
-```
-
-This provides:
-- Centralized configuration for hooks
-- Graceful degradation if config file doesn't exist
-- Consistent values across all hooks
+If `StorageSettings` exists in `src/clams/storage/base.py`, it should be removed and `QdrantVectorStore` updated to use `ServerSettings` values.
 
 ## Alternative Approaches Considered
 
-### Alternative 1: YAML Configuration File
+### Alternative 1: Single Flat ServerSettings Class
 
-**Approach**: Single `~/.clams/config.yaml` file as source of truth.
-
-**Rejection Rationale**:
-- Adds YAML dependency to Python code
-- Shell scripts would need `yq` or complex parsing
-- Loses pydantic validation benefits
-- More complex than current pydantic-settings approach
-
-### Alternative 2: Environment-Only Configuration
-
-**Approach**: No config file, rely entirely on environment variables.
+**Approach**: Add all settings to `ServerSettings` instead of creating new domain classes.
 
 **Rejection Rationale**:
-- Shell scripts would need extensive environment setup
+- `ServerSettings` would grow too large (30+ settings)
+- Loses logical grouping of related settings
+- Harder to document and maintain
+- Doesn't scale as CLAMS grows
+
+### Alternative 2: YAML/TOML Configuration Files
+
+**Approach**: Single `~/.clams/config.yaml` or `.toml` file as source of truth.
+
+**Rejection Rationale**:
+- Spec explicitly marks external config files as out of scope
+- Adds file parsing dependency
+- Environment variables are standard for container/cloud deployments
+- pydantic-settings already provides excellent env var support
+
+### Alternative 3: Keep Constants Where They Are, Just Document
+
+**Approach**: Don't centralize, just add documentation pointing to each location.
+
+**Rejection Rationale**:
+- Doesn't solve the discoverability problem
+- No environment variable override support for scattered constants
+- Harder to test different configurations
+- Violates DRY principle for path constants appearing in multiple places
+
+### Alternative 4: Environment-Only Configuration
+
+**Approach**: No config classes, rely entirely on environment variables with os.getenv().
+
+**Rejection Rationale**:
 - No validation at startup
+- No type safety
 - Harder to audit current configuration
-- No documentation of available options
-
-### Alternative 3: Central Config File Loaded by Both Python and Shell
-
-**Approach**: JSON config file parsed by Python and shell.
-
-**Rejection Rationale**:
-- JSON parsing in shell is fragile (requires jq)
-- Loses typed defaults from pydantic
-- Complicates the codebase without benefit
-- Current approach (pydantic + shell export) is simpler
-
-### Alternative 4: Keep StorageSettings, Add Translation Layer
-
-**Approach**: Keep both settings classes, add adapter to keep them in sync.
-
-**Rejection Rationale**:
-- More code to maintain
-- Synchronization is error-prone
-- Violates single source of truth principle
-- Already caused BUG-037 (different timeout defaults)
+- No documentation of available options in code
 
 ## File/Module Structure
+
+### New Files
+
+```
+src/clams/config.py              # NEW - Unified configuration entry point
+```
 
 ### Files Modified
 
 ```
-src/clams/server/config.py       # Add pid_file, log_file; enhance export
-src/clams/storage/base.py        # Remove StorageSettings class
-src/clams/storage/qdrant.py      # Update to use ServerSettings or params
-src/clams/storage/__init__.py    # Remove StorageSettings export
-clams/hooks/session_start.sh     # Source config file
-clams/hooks/user_prompt_submit.sh # Source config file
-clams/hooks/ghap_checkin.sh      # Source config file (if needed)
-clams/hooks/session_end.sh       # Source config file (if needed)
-clams/hooks/outcome_capture.sh   # Source config file (if needed)
+src/clams/context/tokens.py      # Import constants from clams.config
+src/clams/context/deduplication.py # Import constants from clams.config
+src/clams/indexers/indexer.py    # Import EMBEDDING_BATCH_SIZE from config
+src/clams/server/tools/validation.py # Import limits from clams.config
+src/clams/server/tools/session.py # Import paths from clams.config
+src/clams/server/tools/code.py   # Import max_length from clams.config
+src/clams/server/tools/memory.py # Import max_length from clams.config
+src/clams/server/http.py         # Import paths from clams.config
+src/clams/storage/qdrant.py      # Use ServerSettings for defaults (if StorageSettings exists)
 ```
 
 ### Files Not Modified
 
 ```
+src/clams/server/config.py       # Keep as-is, re-exported from top-level
 src/clams/search/collections.py  # Already canonical for collection names
-.claude/project.json             # Per-project, separate from system config
 ```
 
 ### New Tests
 
 ```
-tests/server/test_config.py      # Extend existing tests
-tests/infrastructure/test_config_parity.py  # Already exists, update if needed
+tests/unit/test_config.py        # Test new config module and settings classes
+tests/integration/test_config_imports.py  # Test import compatibility
 ```
 
 ## Detailed Implementation
 
-### Phase 1: Add Missing Fields to ServerSettings
+### Phase 1: Create New Config Module
 
-Add to `src/clams/server/config.py`:
-
-```python
-# Server process management
-pid_file: str = Field(
-    default="~/.clams/server.pid",
-    description="Path to server PID file for daemon management",
-)
-
-log_file: str = Field(
-    default="~/.clams/server.log",
-    description="Path to server log file for daemon mode",
-)
-```
-
-### Phase 2: Enhance Shell Export
-
-Update `export_for_shell()` to include:
+Create `src/clams/config.py`:
 
 ```python
-def export_for_shell(self, path: Path | str) -> None:
-    """Export configuration as a shell-sourceable file."""
-    from clams.search.collections import CollectionName
+"""CLAMS Configuration Module.
 
-    if isinstance(path, str):
-        path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
+This module provides centralized configuration for all CLAMS components.
+All settings support environment variable overrides with CLAMS_ prefix.
 
-    lines = [
-        "# CLAMS Configuration (auto-generated)",
-        "# Source this file: source ~/.clams/config.env",
-        "",
-        "# Server configuration",
-        f"CLAMS_SERVER_COMMAND={self.server_command}",
-        f"CLAMS_HTTP_HOST={self.http_host}",
-        f"CLAMS_HTTP_PORT={self.http_port}",
-        f"CLAMS_PID_FILE={Path(self.pid_file).expanduser()}",
-        f"CLAMS_LOG_FILE={Path(self.log_file).expanduser()}",
-        "",
-        "# Storage paths (expanded)",
-        f"CLAMS_STORAGE_PATH={Path(self.storage_path).expanduser()}",
-        f"CLAMS_SQLITE_PATH={Path(self.sqlite_path).expanduser()}",
-        f"CLAMS_JOURNAL_PATH={self.journal_path}",
-        "",
-        "# Timeouts (seconds)",
-        f"CLAMS_VERIFICATION_TIMEOUT={self.verification_timeout}",
-        f"CLAMS_HTTP_CALL_TIMEOUT={self.http_call_timeout}",
-        f"CLAMS_QDRANT_TIMEOUT={self.qdrant_timeout}",
-        "",
-        "# Qdrant configuration",
-        f"CLAMS_QDRANT_URL={self.qdrant_url}",
-        "",
-        "# Collection names",
-        f"CLAMS_COLLECTION_MEMORIES={CollectionName.MEMORIES}",
-        f"CLAMS_COLLECTION_CODE={CollectionName.CODE}",
-        f"CLAMS_COLLECTION_COMMITS={CollectionName.COMMITS}",
-        f"CLAMS_COLLECTION_VALUES={CollectionName.VALUES}",
-        "",
-        "# GHAP configuration",
-        f"CLAMS_GHAP_CHECK_FREQUENCY={self.ghap_check_frequency}",
-        "",
-        "# Clustering configuration",
-        f"CLAMS_HDBSCAN_MIN_CLUSTER_SIZE={self.hdbscan_min_cluster_size}",
-        f"CLAMS_HDBSCAN_MIN_SAMPLES={self.hdbscan_min_samples}",
-        "",
-        "# Logging configuration",
-        f"CLAMS_LOG_LEVEL={self.log_level}",
-        f"CLAMS_LOG_FORMAT={self.log_format}",
-        "",
-    ]
+Usage:
+    from clams.config import settings
 
-    with open(path, "w") as f:
-        f.write("\n".join(lines))
-```
+    # Access server settings
+    print(settings.server.http_port)
 
-### Phase 3: Remove StorageSettings
+    # Access context settings
+    print(settings.context.max_item_fraction)
 
-1. Delete `StorageSettings` class from `src/clams/storage/base.py`
-2. Update `src/clams/storage/__init__.py` to remove the export
-3. Update `QdrantVectorStore.__init__()`:
+    # Access tool settings
+    print(settings.tools.snippet_max_length)
+"""
 
-```python
-def __init__(
-    self,
-    url: str | None = None,
-    api_key: str | None = None,
-    timeout: float | None = None,
-) -> None:
-    """Initialize Qdrant client.
+from pathlib import Path
 
-    Args:
-        url: Qdrant server URL. Defaults to ServerSettings value or
-             ":memory:" for in-memory mode.
-        api_key: Optional API key for authentication
-        timeout: Request timeout in seconds. Defaults to ServerSettings value.
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Re-export for backwards compatibility
+from clams.server.config import ServerSettings
+
+
+class ContextSettings(BaseSettings):
+    """Configuration for context assembly and deduplication."""
+
+    model_config = SettingsConfigDict(env_prefix="CLAMS_CONTEXT__")
+
+    # Token management (from context/tokens.py)
+    max_item_fraction: float = Field(
+        default=0.25,
+        description="Maximum fraction of source budget any single item can consume",
+    )
+
+    # Source weights for budget distribution
+    source_weight_memories: int = Field(default=1)
+    source_weight_code: int = Field(default=2)
+    source_weight_experiences: int = Field(default=3)
+    source_weight_values: int = Field(default=1)
+    source_weight_commits: int = Field(default=2)
+
+    # Deduplication (from context/deduplication.py)
+    similarity_threshold: float = Field(
+        default=0.90,
+        description="Similarity threshold for fuzzy matching (90%)",
+    )
+    max_fuzzy_content_length: int = Field(
+        default=1000,
+        description="Max content length for fuzzy matching (performance optimization)",
+    )
+
+    @property
+    def source_weights(self) -> dict[str, int]:
+        """Get source weights as a dictionary for backwards compatibility."""
+        return {
+            "memories": self.source_weight_memories,
+            "code": self.source_weight_code,
+            "experiences": self.source_weight_experiences,
+            "values": self.source_weight_values,
+            "commits": self.source_weight_commits,
+        }
+
+
+class IndexerSettings(BaseSettings):
+    """Configuration for code and commit indexing."""
+
+    model_config = SettingsConfigDict(env_prefix="CLAMS_INDEXER__")
+
+    embedding_batch_size: int = Field(
+        default=100,
+        description="Number of items to embed in a single batch",
+    )
+
+
+class ToolSettings(BaseSettings):
+    """Configuration for MCP tool parameters."""
+
+    model_config = SettingsConfigDict(env_prefix="CLAMS_TOOLS__")
+
+    # Validation limits (from server/tools/validation.py)
+    project_id_max_length: int = Field(
+        default=100,
+        description="Maximum length for project identifiers",
+    )
+
+    # Content length limits (from server/tools/code.py, memory.py)
+    snippet_max_length: int = Field(
+        default=5_000,
+        description="Maximum length for code snippets in find_similar_code",
+    )
+    memory_content_max_length: int = Field(
+        default=10_000,
+        description="Maximum length for memory content in store_memory",
+    )
+
+
+class PathSettings(BaseSettings):
+    """Configuration for file and directory paths.
+
+    Note: These overlap with some ServerSettings fields but provide
+    Path objects instead of strings for convenience.
     """
-    from clams.server.config import ServerSettings
 
-    settings = ServerSettings()
-    self._url = url or settings.qdrant_url
-    self._api_key = api_key  # No default in ServerSettings (secret)
-    self._timeout = timeout or settings.qdrant_timeout
-    # ... rest unchanged
+    model_config = SettingsConfigDict(env_prefix="CLAMS_PATHS__")
+
+    clams_dir: Path = Field(
+        default=Path.home() / ".clams",
+        description="Base directory for CLAMS data storage",
+    )
+    journal_dir: Path = Field(
+        default=Path.home() / ".clams" / "journal",
+        description="Directory for session journal files",
+    )
+
+
+class Settings(BaseSettings):
+    """Root settings class that composes all configuration sections."""
+
+    model_config = SettingsConfigDict(env_prefix="CLAMS_")
+
+    server: ServerSettings = Field(default_factory=ServerSettings)
+    context: ContextSettings = Field(default_factory=ContextSettings)
+    indexer: IndexerSettings = Field(default_factory=IndexerSettings)
+    tools: ToolSettings = Field(default_factory=ToolSettings)
+    paths: PathSettings = Field(default_factory=PathSettings)
+
+
+# Module-level singleton instance
+settings = Settings()
+
+__all__ = [
+    "Settings",
+    "ServerSettings",
+    "ContextSettings",
+    "IndexerSettings",
+    "ToolSettings",
+    "PathSettings",
+    "settings",
+]
 ```
 
-### Phase 4: Update Hook Scripts
+### Phase 2: Update Consumer Modules
 
-Add to beginning of each hook script that needs configuration:
+For each module with scattered constants, add import and use settings:
 
-```bash
-# Source CLAMS configuration (written by server on startup)
-CLAMS_CONFIG="${HOME}/.clams/config.env"
-if [ -f "$CLAMS_CONFIG" ]; then
-    # shellcheck source=/dev/null
-    source "$CLAMS_CONFIG"
-fi
+**context/tokens.py**:
+```python
+from clams.config import settings
 
-# Fallback defaults if config not available
-# These must match ServerSettings defaults
-CLAMS_HTTP_HOST="${CLAMS_HTTP_HOST:-127.0.0.1}"
-CLAMS_HTTP_PORT="${CLAMS_HTTP_PORT:-6334}"
-CLAMS_PID_FILE="${CLAMS_PID_FILE:-${HOME}/.clams/server.pid}"
-CLAMS_VERIFICATION_TIMEOUT="${CLAMS_VERIFICATION_TIMEOUT:-15}"
+# Keep as module-level aliases for backwards compatibility
+SOURCE_WEIGHTS = settings.context.source_weights
+MAX_ITEM_FRACTION = settings.context.max_item_fraction
 ```
 
-Then use the variables throughout:
-```bash
-# Replace hardcoded values
-SERVER_URL="http://${CLAMS_HTTP_HOST}:${CLAMS_HTTP_PORT}"
-PID_FILE="${CLAMS_PID_FILE}"
+**context/deduplication.py**:
+```python
+from clams.config import settings
+
+SIMILARITY_THRESHOLD = settings.context.similarity_threshold
+MAX_FUZZY_CONTENT_LENGTH = settings.context.max_fuzzy_content_length
+```
+
+**indexers/indexer.py**:
+```python
+from clams.config import settings
+
+class CodeIndexer:
+    COLLECTION_NAME = "code_units"
+
+    @property
+    def embedding_batch_size(self) -> int:
+        return settings.indexer.embedding_batch_size
+```
+
+**server/tools/validation.py**:
+```python
+from clams.config import settings
+
+PROJECT_ID_MAX_LENGTH = settings.tools.project_id_max_length
+```
+
+**server/tools/code.py** and **memory.py**:
+```python
+from clams.config import settings
+
+# In find_similar_code:
+max_length = settings.tools.snippet_max_length
+
+# In store_memory:
+max_length = settings.tools.memory_content_max_length
+```
+
+**server/tools/session.py**:
+```python
+from clams.config import settings
+
+CLAMS_DIR = settings.paths.clams_dir
+JOURNAL_DIR = settings.paths.journal_dir
+```
+
+**server/http.py**:
+```python
+from clams.config import settings
+
+# Replace module-level constants
+def get_pid_file() -> Path:
+    return Path(settings.server.pid_file).expanduser()
+
+def get_log_file() -> Path:
+    return Path(settings.server.log_file).expanduser()
+```
+
+### Phase 3: Update Remaining Imports
+
+Update any code that imports directly from `clams.server.config`:
+
+```python
+# Before
+from clams.server.config import ServerSettings
+
+# After (preferred)
+from clams.config import settings
+# or for backwards compat
+from clams.config import ServerSettings
 ```
 
 ## Test Strategy
 
-### Unit Tests (tests/server/test_config.py)
+### Unit Tests (tests/unit/test_config.py)
 
-1. **Default values**: Verify all fields have expected defaults
-2. **Environment override**: Verify CLAMS_* prefix works for all fields
-3. **Shell export**: Verify export creates valid bash syntax
-4. **Path expansion**: Verify ~ paths are expanded in shell export
-5. **Collection names**: Verify collection names are included in export
-6. **New fields**: Test pid_file and log_file configuration
+1. **Default values**: Verify all settings classes have correct defaults
+2. **Environment override**: Verify env vars override defaults for all classes
+3. **Nested env vars**: Verify `CLAMS_CONTEXT__MAX_ITEM_FRACTION` works
+4. **Type validation**: Verify pydantic validates types correctly
+5. **Backwards compatibility**: Ensure `ServerSettings` re-export works
+6. **Source weights property**: Verify `source_weights` dict computed correctly
 
-### Integration Tests
+### Integration Tests (tests/integration/test_config_imports.py)
 
-1. **Server startup**: Verify server writes config.env on startup
-2. **Hook sourcing**: Verify hooks can source config.env successfully
-3. **Round-trip**: Verify values round-trip through export/source correctly
-
-### Parity Tests (tests/infrastructure/test_config_parity.py)
-
-1. **No hardcoded values in hooks**: Grep hooks for hardcoded port/host/timeout
-2. **StorageSettings removed**: Verify import fails
-3. **Single source of truth**: Verify ServerSettings is only config class
+1. **No circular imports**: Verify `from clams.config import settings` works
+2. **Module aliases**: Verify constants at original locations work
+3. **Settings usage**: Verify all modules can access settings correctly
 
 ### Example Test Cases
 
 ```python
-def test_shell_export_includes_pid_file():
-    """Verify pid_file is exported for shell scripts."""
-    settings = ServerSettings()
-    with tempfile.TemporaryDirectory() as tmpdir:
-        path = Path(tmpdir) / "config.env"
-        settings.export_for_shell(path)
-        content = path.read_text()
-        assert "CLAMS_PID_FILE=" in content
-        # Should be expanded, not contain ~
-        assert "~" not in content.split("CLAMS_PID_FILE=")[1].split("\n")[0]
+import os
+import pytest
+from clams.config import settings, Settings, ContextSettings, ToolSettings
 
-def test_shell_export_includes_collection_names():
-    """Verify collection names are exported."""
-    from clams.search.collections import CollectionName
 
-    settings = ServerSettings()
-    with tempfile.TemporaryDirectory() as tmpdir:
-        path = Path(tmpdir) / "config.env"
-        settings.export_for_shell(path)
-        content = path.read_text()
-        assert f"CLAMS_COLLECTION_MEMORIES={CollectionName.MEMORIES}" in content
-        assert f"CLAMS_COLLECTION_CODE={CollectionName.CODE}" in content
+def test_default_max_item_fraction():
+    """Verify context settings default matches original constant."""
+    assert settings.context.max_item_fraction == 0.25
 
-def test_storage_settings_import_fails():
-    """Verify StorageSettings is no longer available."""
-    with pytest.raises(ImportError):
-        from clams.storage import StorageSettings
 
-def test_hook_sources_config_successfully():
-    """Verify hook can source config file and access variables."""
-    settings = ServerSettings()
-    with tempfile.TemporaryDirectory() as tmpdir:
-        config_path = Path(tmpdir) / "config.env"
-        settings.export_for_shell(config_path)
+def test_default_source_weights():
+    """Verify source weights match original dict."""
+    expected = {
+        "memories": 1,
+        "code": 2,
+        "experiences": 3,
+        "values": 1,
+        "commits": 2,
+    }
+    assert settings.context.source_weights == expected
 
-        # Simulate what hooks do
-        result = subprocess.run(
-            ["bash", "-c", f"""
-                source {config_path}
-                echo "$CLAMS_HTTP_PORT|$CLAMS_PID_FILE"
-            """],
-            capture_output=True,
-            text=True,
-        )
-        assert result.returncode == 0
-        parts = result.stdout.strip().split("|")
-        assert parts[0] == str(settings.http_port)
-        assert "~" not in parts[1]  # Should be expanded
+
+def test_default_similarity_threshold():
+    """Verify deduplication threshold matches original constant."""
+    assert settings.context.similarity_threshold == 0.90
+
+
+def test_default_embedding_batch_size():
+    """Verify indexer batch size matches original class attribute."""
+    assert settings.indexer.embedding_batch_size == 100
+
+
+def test_default_tool_limits():
+    """Verify tool limits match original inline constants."""
+    assert settings.tools.snippet_max_length == 5_000
+    assert settings.tools.memory_content_max_length == 10_000
+    assert settings.tools.project_id_max_length == 100
+
+
+def test_context_env_override(monkeypatch):
+    """Verify environment override for nested settings."""
+    monkeypatch.setenv("CLAMS_CONTEXT__MAX_ITEM_FRACTION", "0.5")
+    fresh_settings = Settings()
+    assert fresh_settings.context.max_item_fraction == 0.5
+
+
+def test_tools_env_override(monkeypatch):
+    """Verify environment override for tool settings."""
+    monkeypatch.setenv("CLAMS_TOOLS__SNIPPET_MAX_LENGTH", "10000")
+    fresh_settings = Settings()
+    assert fresh_settings.tools.snippet_max_length == 10000
+
+
+def test_server_settings_reexport():
+    """Verify ServerSettings is re-exported from clams.config."""
+    from clams.config import ServerSettings
+    from clams.server.config import ServerSettings as OriginalServerSettings
+    assert ServerSettings is OriginalServerSettings
+
+
+def test_no_circular_imports():
+    """Verify config module can be imported cleanly."""
+    import importlib
+    import clams.config
+    importlib.reload(clams.config)  # Should not raise
+
+
+def test_module_level_aliases():
+    """Verify original import locations still work."""
+    # These should be importable (backwards compat)
+    from clams.context.tokens import SOURCE_WEIGHTS, MAX_ITEM_FRACTION
+    from clams.context.deduplication import SIMILARITY_THRESHOLD
+    # Values should match settings
+    assert MAX_ITEM_FRACTION == settings.context.max_item_fraction
 ```
 
 ## Migration/Rollout Plan
 
-### Phase 1: Non-Breaking Additions (Safe to Merge)
+### Phase 1: Create Config Module (Non-Breaking)
 
-1. Add `pid_file` and `log_file` fields to `ServerSettings`
-2. Add collection names to shell export
-3. Add path expansion to shell export
-4. Add new tests for these features
+1. Create `src/clams/config.py` with all new settings classes
+2. Add re-exports from `clams.server.config`
+3. Add tests for new settings classes
+4. **No changes to existing imports yet**
 
-No existing code is modified in a breaking way.
+No existing code is modified.
 
-### Phase 2: Update Hooks (Safe to Merge)
+### Phase 2: Update Consumer Modules (Non-Breaking)
 
-1. Update hooks to source config file
-2. Keep fallback defaults matching ServerSettings
-3. Replace hardcoded values with variables
+For each module with scattered constants:
+1. Add import: `from clams.config import settings`
+2. Add module-level aliases that reference settings
+3. Existing code continues to work via the aliases
 
-Hooks still work without config file (fallback defaults).
+Example for `context/tokens.py`:
+```python
+# Old code (keep working)
+MAX_ITEM_FRACTION = 0.25
 
-### Phase 3: Remove StorageSettings (Breaking)
+# New code
+from clams.config import settings
+MAX_ITEM_FRACTION = settings.context.max_item_fraction
+```
 
-1. Delete `StorageSettings` class
-2. Update `QdrantVectorStore` to import from `ServerSettings`
-3. Update any code that imported `StorageSettings`
+### Phase 3: Update Direct ServerSettings Imports (Optional)
 
-This is a breaking change for any code importing `StorageSettings`.
+Replace direct imports from `clams.server.config`:
+```python
+# Before
+from clams.server.config import ServerSettings
+
+# After
+from clams.config import ServerSettings
+```
+
+This is optional since re-exports maintain compatibility.
 
 ### Rollout Verification
 
 After each phase:
 1. Run full test suite: `pytest -vvsx`
-2. Start server: `.venv/bin/clams-server --http --daemon`
-3. Verify config.env exists: `cat ~/.clams/config.env`
-4. Test hook execution: Create a Claude Code session
-5. Verify no hardcoded values remain: `grep -r "6334\|6333\|localhost" clams/hooks/`
+2. Run type checker: `mypy --strict src/clams/config.py`
+3. Verify imports work: `python -c "from clams.config import settings; print(settings.context.max_item_fraction)"`
+4. Verify environment overrides: `CLAMS_CONTEXT__MAX_ITEM_FRACTION=0.5 python -c "from clams.config import Settings; print(Settings().context.max_item_fraction)"`
 
 ## Risks and Mitigations
 
 | Risk | Probability | Impact | Mitigation |
 |------|-------------|--------|------------|
-| Hooks fail if config.env missing | Low | Medium | Fallback defaults in hooks |
-| QdrantVectorStore breaks | Low | High | Phase 3 is explicit breaking change |
-| Path expansion issues | Low | Medium | Unit tests with mock home dir |
-| Import cycles | Low | High | Lazy import in QdrantVectorStore |
+| Circular imports | Low | High | `config.py` at top level with minimal deps (only pydantic, pathlib) |
+| Breaking existing code | Low | Medium | Re-exports and module-level aliases maintain compatibility |
+| Performance impact | Low | Low | Settings loaded once at import, cached in singleton |
+| Environment variable conflicts | Low | Low | Nested settings use double underscore to avoid collisions |
 
-## Success Criteria
+## Success Criteria (Mapping to Acceptance Criteria)
 
-1. **Single source of truth**: All configuration originates from `ServerSettings`
-2. **No duplicates**: `StorageSettings` is deleted
-3. **Shell parity**: Hooks use exported values, not hardcoded
-4. **Test coverage**: All new/modified code has tests
-5. **Documentation**: All fields have descriptions
+| Acceptance Criterion | How This Proposal Addresses It |
+|---------------------|-------------------------------|
+| `src/clams/config.py` exists and re-exports `ServerSettings` | Created as main module with `__all__` export |
+| New settings classes for `ContextSettings`, `IndexerSettings`, `ToolSettings` | All three classes defined with appropriate fields |
+| All constants migrated to appropriate settings class | Migration strategy defined for each constant |
+| Environment variable support with `CLAMS_` prefix | pydantic-settings with `env_prefix` on all classes |
+| Type annotations on all configuration values | All fields use pydantic `Field` with types |
+| Tests verify configuration values are accessible | Testing strategy with example tests defined |
+| No circular import issues | Design places `config.py` at top level with minimal deps |
+| Existing functionality unchanged | Default values match current hardcoded values |
+| Imports updated throughout codebase | Migration strategy covers all affected modules |
 
 ## References
 
-- BUG-033: Server command mismatch between hooks and tests
-- BUG-037: Timeout value inconsistencies
-- BUG-023: Hardcoded embedding dimension
-- BUG-026: Hardcoded enum arrays in schemas
-- BUG-061: Hardcoded directory patterns
 - Spec: `planning_docs/SPEC-029/spec.md`
+- Past bugs caused by scattered config: BUG-033, BUG-037, BUG-023, BUG-026
