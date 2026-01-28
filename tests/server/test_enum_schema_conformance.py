@@ -1,8 +1,12 @@
 """Schema conformance tests for enum validation.
 
-Verifies that enum values declared in MCP tool definitions match the canonical
-enum definitions in enums.py. This prevents drift between advertised API schema
-and actual validation (BUG-026).
+Verifies that:
+1. Python Enum classes in observation/models.py match validation constants in enums.py
+2. Validation constants match enum values declared in MCP tool definitions (JSON schemas)
+
+This creates a complete chain: Python Enum <-> Validation Constants <-> JSON Schema
+
+Reference: BUG-026 - Advertised enums drifted from actual validation.
 
 Location: tests/server/test_enum_schema_conformance.py
 """
@@ -11,6 +15,7 @@ from typing import Any
 
 import pytest
 
+from clams.observation.models import Domain, OutcomeStatus, Strategy
 from clams.server.tools import _get_all_tool_definitions
 from clams.server.tools.enums import (
     DOMAINS,
@@ -80,7 +85,55 @@ def extract_enum_from_nested_property(
 
 
 # =============================================================================
-# Domain Enum Tests
+# Python Enum to Validation Constants Tests
+# =============================================================================
+
+
+class TestPythonEnumMatchesValidationConstants:
+    """Verify Python Enum classes match validation constants.
+
+    This ensures that the Domain, Strategy, and OutcomeStatus enums defined
+    in clams.observation.models match the validation constants in
+    clams.server.tools.enums. If they drift, the server will accept values
+    that the models cannot represent (or vice versa).
+    """
+
+    def test_domain_enum_matches_domains_constant(self) -> None:
+        """Python Domain enum values should match DOMAINS validation constant."""
+        enum_values = [d.value for d in Domain]
+        assert enum_values == list(DOMAINS), (
+            f"Domain enum/constant mismatch:\n"
+            f"  Domain enum values: {enum_values}\n"
+            f"  DOMAINS constant: {list(DOMAINS)}\n"
+            f"  Missing in enum: {set(DOMAINS) - set(enum_values)}\n"
+            f"  Extra in enum: {set(enum_values) - set(DOMAINS)}"
+        )
+
+    def test_strategy_enum_matches_strategies_constant(self) -> None:
+        """Python Strategy enum values should match STRATEGIES validation constant."""
+        enum_values = [s.value for s in Strategy]
+        assert enum_values == list(STRATEGIES), (
+            f"Strategy enum/constant mismatch:\n"
+            f"  Strategy enum values: {enum_values}\n"
+            f"  STRATEGIES constant: {list(STRATEGIES)}\n"
+            f"  Missing in enum: {set(STRATEGIES) - set(enum_values)}\n"
+            f"  Extra in enum: {set(enum_values) - set(STRATEGIES)}"
+        )
+
+    def test_outcome_status_enum_matches_outcome_status_values_constant(self) -> None:
+        """Python OutcomeStatus enum values should match OUTCOME_STATUS_VALUES constant."""
+        enum_values = [o.value for o in OutcomeStatus]
+        assert enum_values == list(OUTCOME_STATUS_VALUES), (
+            f"OutcomeStatus enum/constant mismatch:\n"
+            f"  OutcomeStatus enum values: {enum_values}\n"
+            f"  OUTCOME_STATUS_VALUES constant: {list(OUTCOME_STATUS_VALUES)}\n"
+            f"  Missing in enum: {set(OUTCOME_STATUS_VALUES) - set(enum_values)}\n"
+            f"  Extra in enum: {set(enum_values) - set(OUTCOME_STATUS_VALUES)}"
+        )
+
+
+# =============================================================================
+# Domain Enum Tests (Validation Constants to JSON Schema)
 # =============================================================================
 
 
