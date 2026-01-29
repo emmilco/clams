@@ -6,6 +6,7 @@ from typing import Any
 import structlog
 from mcp.server import Server
 
+from clams.config import settings
 from clams.server.errors import MCPError, ValidationError
 from clams.server.tools import ServiceContainer
 from clams.server.tools.validation import (
@@ -231,7 +232,7 @@ def get_code_tools(services: ServiceContainer) -> dict[str, Any]:
             )
 
         # Validate snippet length (no silent truncation per spec)
-        max_length = 5_000
+        max_length = settings.tools.snippet_max_length
         if len(snippet) > max_length:
             raise ValidationError(
                 f"Snippet too long ({len(snippet)} chars). "

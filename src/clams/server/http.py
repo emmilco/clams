@@ -34,25 +34,33 @@ from clams.server.tools import ServiceContainer
 
 logger = structlog.get_logger()
 
-# Default paths for daemon management
+# Module-level aliases for backwards compatibility
 DEFAULT_PID_FILE = Path.home() / ".clams" / "server.pid"
 DEFAULT_LOG_FILE = Path.home() / ".clams" / "server.log"
 
 
 def get_pid_file() -> Path:
-    """Get PID file path from environment or default."""
-    env_path = os.environ.get("CLAMS_PID_FILE")
-    if env_path:
-        return Path(env_path)
-    return DEFAULT_PID_FILE
+    """Get PID file path from settings (supports env override via CLAMS_PID_FILE).
+
+    Note: Creates a fresh ServerSettings instance to pick up any environment
+    variable changes since module import.
+    """
+    from clams.config import ServerSettings
+
+    server_settings = ServerSettings()
+    return Path(server_settings.pid_file).expanduser()
 
 
 def get_log_file() -> Path:
-    """Get log file path from environment or default."""
-    env_path = os.environ.get("CLAMS_LOG_FILE")
-    if env_path:
-        return Path(env_path)
-    return DEFAULT_LOG_FILE
+    """Get log file path from settings (supports env override via CLAMS_LOG_FILE).
+
+    Note: Creates a fresh ServerSettings instance to pick up any environment
+    variable changes since module import.
+    """
+    from clams.config import ServerSettings
+
+    server_settings = ServerSettings()
+    return Path(server_settings.log_file).expanduser()
 
 
 class HttpServer:

@@ -8,6 +8,7 @@ from uuid import uuid4
 import structlog
 from mcp.server import Server
 
+from clams.config import settings
 from clams.server.errors import MCPError, ValidationError
 from clams.server.tools import ServiceContainer
 from clams.server.tools.validation import (
@@ -93,7 +94,7 @@ def get_memory_tools(services: ServiceContainer) -> dict[str, ToolFunc]:
             )
 
         # Validate content length (no silent truncation per spec)
-        max_length = 10_000
+        max_length = settings.tools.memory_content_max_length
         if len(content) > max_length:
             raise ValidationError(
                 f"Content too long ({len(content)} chars). "
