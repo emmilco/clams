@@ -16,6 +16,7 @@ from clams.search.searcher import Searcher
 from clams.server.tools.validation import (
     validate_context_types,
     validate_limit_range,
+    validate_query_string,
 )
 from clams.values import ValueStore
 
@@ -73,6 +74,9 @@ def get_context_tools(
         validate_limit_range(
             max_tokens, min_val=100, max_val=10000, param_name="max_tokens"
         )
+
+        # Validate query length
+        validate_query_string(query)
 
         # Empty query returns empty result gracefully (not error)
         if not query.strip():

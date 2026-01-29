@@ -321,3 +321,122 @@ class TestGetCodeAuthorsValidation:
         tool = git_tools["get_code_authors"]
         result = await tool(path="src/main.py")
         assert "results" in result
+
+
+# ============================================================================
+# SPEC-057: New validation tests
+# ============================================================================
+
+
+class TestIndexCommitsLimitMaxValidation:
+    """SPEC-057: index_commits limit upper bound validation tests."""
+
+    @pytest.mark.asyncio
+    async def test_limit_exceeds_maximum(
+        self, git_tools: dict[str, Any]
+    ) -> None:
+        """Limit exceeding 100,000 should error."""
+        tool = git_tools["index_commits"]
+        with pytest.raises(ValidationError, match="exceeds maximum"):
+            await tool(limit=100_001)
+
+    @pytest.mark.asyncio
+    async def test_limit_at_maximum(
+        self, git_tools: dict[str, Any], mock_services: Any
+    ) -> None:
+        """Limit at exactly 100,000 should be accepted."""
+        mock_stats = MagicMock()
+        mock_stats.commits_indexed = 0
+        mock_stats.commits_skipped = 0
+        mock_stats.duration_ms = 1
+        mock_stats.errors = []
+        mock_services.git_analyzer.index_commits.return_value = mock_stats
+
+        tool = git_tools["index_commits"]
+        result = await tool(limit=100_000)
+        assert "commits_indexed" in result
+
+
+class TestSearchCommitsQueryLengthValidation:
+    """SPEC-057: Query string length validation tests for search_commits."""
+
+    @pytest.mark.asyncio
+    async def test_query_too_long(self, git_tools: dict[str, Any]) -> None:
+        """Query exceeding 10,000 chars should error."""
+        tool = git_tools["search_commits"]
+        with pytest.raises(ValidationError, match="too long"):
+            await tool(query="x" * 10_001)
+
+    @pytest.mark.asyncio
+    async def test_query_at_max_length(
+        self, git_tools: dict[str, Any], mock_services: Any
+    ) -> None:
+        """Query at exactly 10,000 chars should be accepted."""
+        mock_services.git_analyzer.search_commits.return_value = []
+        tool = git_tools["search_commits"]
+        # Should not raise ValidationError
+        result = await tool(query="x" * 10_000)
+        assert "results" in result
+
+    @pytest.mark.asyncio
+    async def test_query_length_error_shows_limits(
+        self, git_tools: dict[str, Any]
+    ) -> None:
+        """Error should show actual and maximum length."""
+        tool = git_tools["search_commits"]
+        with pytest.raises(ValidationError) as exc_info:
+            await tool(query="x" * 10_001)
+        assert "10001" in str(exc_info.value)
+        assert "10000" in str(exc_info.value)
+
+
+class TestSearchCommitsAuthorValidation:
+    """SPEC-057: Author name validation tests for search_commits."""
+
+    @pytest.mark.asyncio
+    async def test_author_too_long(self, git_tools: dict[str, Any]) -> None:
+        """Author name exceeding 200 chars should error."""
+        tool = git_tools["search_commits"]
+        with pytest.raises(ValidationError, match="Author name too long"):
+            await tool(query="test", author="x" * 201)
+
+    @pytest.mark.asyncio
+    async def test_author_at_max_length(
+        self, git_tools: dict[str, Any], mock_services: Any
+    ) -> None:
+        """Author name at exactly 200 chars should be accepted."""
+        mock_services.git_analyzer.search_commits.return_value = []
+        tool = git_tools["search_commits"]
+        result = await tool(query="test", author="x" * 200)
+        assert "results" in result
+
+    @pytest.mark.asyncio
+    async def test_none_author_accepted(
+        self, git_tools: dict[str, Any], mock_services: Any
+    ) -> None:
+        """None author should be accepted (no filter)."""
+        mock_services.git_analyzer.search_commits.return_value = []
+        tool = git_tools["search_commits"]
+        result = await tool(query="test", author=None)
+        assert "results" in result
+
+    @pytest.mark.asyncio
+    async def test_valid_author_accepted(
+        self, git_tools: dict[str, Any], mock_services: Any
+    ) -> None:
+        """Valid author name should be accepted."""
+        mock_services.git_analyzer.search_commits.return_value = []
+        tool = git_tools["search_commits"]
+        result = await tool(query="test", author="John Doe")
+        assert "results" in result
+
+    @pytest.mark.asyncio
+    async def test_author_length_error_shows_limits(
+        self, git_tools: dict[str, Any]
+    ) -> None:
+        """Error should show actual and maximum length."""
+        tool = git_tools["search_commits"]
+        with pytest.raises(ValidationError) as exc_info:
+            await tool(query="test", author="x" * 250)
+        assert "250" in str(exc_info.value)
+        assert "200" in str(exc_info.value)

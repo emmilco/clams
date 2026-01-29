@@ -17,12 +17,16 @@ import pytest
 from clams.server.errors import ValidationError
 from clams.server.tools.validation import (
     SUPPORTED_LANGUAGES,
+    validate_author_name,
     validate_context_types,
+    validate_frequency,
     validate_importance_range,
     validate_language,
     validate_limit_range,
+    validate_optional_project_id,
     validate_positive_int,
     validate_project_id,
+    validate_query_string,
     validate_tags,
     validate_text_length,
     validate_uuid,
@@ -406,3 +410,182 @@ class TestValidateTextLength:
         with pytest.raises(ValidationError) as exc_info:
             validate_text_length("x" * 200, max_length=100, param_name="description")
         assert "Description" in str(exc_info.value)
+
+
+class TestValidateQueryString:
+    """Tests for validate_query_string function."""
+
+    def test_valid_short_query(self) -> None:
+        """Short query should pass."""
+        validate_query_string("test query")  # Should not raise
+
+    def test_valid_at_max_length(self) -> None:
+        """Query at exactly max length should pass."""
+        validate_query_string("x" * 10_000)  # Should not raise
+
+    def test_empty_query_allowed(self) -> None:
+        """Empty query should pass (empty handling is tool's job)."""
+        validate_query_string("")  # Should not raise
+
+    def test_whitespace_only_allowed(self) -> None:
+        """Whitespace-only query should pass (empty handling is tool's job)."""
+        validate_query_string("   ")  # Should not raise
+
+    def test_too_long_raises(self) -> None:
+        """Query exceeding max length should raise ValidationError."""
+        with pytest.raises(ValidationError, match="too long"):
+            validate_query_string("x" * 10_001)
+
+    def test_too_long_shows_length(self) -> None:
+        """Error message should show actual length."""
+        with pytest.raises(ValidationError) as exc_info:
+            validate_query_string("x" * 10_001)
+        assert "10001" in str(exc_info.value)
+        assert "10000" in str(exc_info.value)
+
+    def test_custom_max_length(self) -> None:
+        """Custom max_length should be respected."""
+        # Should pass at custom max
+        validate_query_string("x" * 500, max_length=500)
+        # Should fail above custom max
+        with pytest.raises(ValidationError, match="too long"):
+            validate_query_string("x" * 501, max_length=500)
+
+    def test_custom_param_name_in_error(self) -> None:
+        """Custom parameter name should appear in error message."""
+        with pytest.raises(ValidationError) as exc_info:
+            validate_query_string("x" * 100, max_length=50, param_name="search_query")
+        assert "Search_query" in str(exc_info.value)
+
+
+class TestValidateOptionalProjectId:
+    """Tests for validate_optional_project_id function."""
+
+    def test_none_allowed(self) -> None:
+        """None should pass."""
+        validate_optional_project_id(None)  # Should not raise
+
+    def test_valid_project_id(self) -> None:
+        """Valid project ID should pass."""
+        validate_optional_project_id("my-project")  # Should not raise
+
+    def test_valid_project_with_numbers(self) -> None:
+        """Project ID with numbers should pass."""
+        validate_optional_project_id("project123")  # Should not raise
+
+    def test_invalid_project_with_spaces_raises(self) -> None:
+        """Project ID with spaces should raise ValidationError."""
+        with pytest.raises(ValidationError, match="Invalid project identifier"):
+            validate_optional_project_id("has spaces")
+
+    def test_invalid_project_with_special_chars_raises(self) -> None:
+        """Project ID with special characters should raise ValidationError."""
+        with pytest.raises(ValidationError, match="Invalid project identifier"):
+            validate_optional_project_id("has@special!")
+
+    def test_empty_string_raises(self) -> None:
+        """Empty string (not None) should raise ValidationError."""
+        with pytest.raises(ValidationError, match="cannot be empty"):
+            validate_optional_project_id("")
+
+    def test_too_long_raises(self) -> None:
+        """Project ID over 100 chars should raise ValidationError."""
+        with pytest.raises(ValidationError, match="too long"):
+            validate_optional_project_id("x" * 101)
+
+
+class TestValidateFrequency:
+    """Tests for validate_frequency function."""
+
+    def test_valid_default_range(self) -> None:
+        """Value in default range should pass."""
+        validate_frequency(10)  # Should not raise
+        validate_frequency(1)  # Should not raise
+        validate_frequency(1000)  # Should not raise
+
+    def test_valid_middle_value(self) -> None:
+        """Middle value should pass."""
+        validate_frequency(500)  # Should not raise
+
+    def test_zero_raises(self) -> None:
+        """Zero should raise ValidationError."""
+        with pytest.raises(ValidationError, match="out of range"):
+            validate_frequency(0)
+
+    def test_negative_raises(self) -> None:
+        """Negative value should raise ValidationError."""
+        with pytest.raises(ValidationError, match="out of range"):
+            validate_frequency(-1)
+
+    def test_too_large_raises(self) -> None:
+        """Value above max should raise ValidationError."""
+        with pytest.raises(ValidationError, match="out of range"):
+            validate_frequency(1001)
+
+    def test_error_shows_range(self) -> None:
+        """Error message should show the valid range."""
+        with pytest.raises(ValidationError) as exc_info:
+            validate_frequency(0)
+        assert "1" in str(exc_info.value)
+        assert "1000" in str(exc_info.value)
+
+    def test_custom_range(self) -> None:
+        """Custom range should be respected."""
+        # Should pass at custom boundaries
+        validate_frequency(5, min_val=5, max_val=10)
+        validate_frequency(10, min_val=5, max_val=10)
+        # Should fail outside custom range
+        with pytest.raises(ValidationError, match="out of range"):
+            validate_frequency(4, min_val=5, max_val=10)
+        with pytest.raises(ValidationError, match="out of range"):
+            validate_frequency(11, min_val=5, max_val=10)
+
+    def test_custom_param_name_in_error(self) -> None:
+        """Custom parameter name should appear in error message."""
+        with pytest.raises(ValidationError) as exc_info:
+            validate_frequency(0, param_name="interval")
+        assert "Interval" in str(exc_info.value)
+
+
+class TestValidateAuthorName:
+    """Tests for validate_author_name function."""
+
+    def test_none_allowed(self) -> None:
+        """None should pass."""
+        validate_author_name(None)  # Should not raise
+
+    def test_valid_author(self) -> None:
+        """Valid author name should pass."""
+        validate_author_name("John Doe")  # Should not raise
+
+    def test_valid_with_special_chars(self) -> None:
+        """Author name with special characters should pass."""
+        validate_author_name("O'Brien, Jane")  # Should not raise
+
+    def test_valid_at_max_length(self) -> None:
+        """Author name at max length should pass."""
+        validate_author_name("x" * 200)  # Should not raise
+
+    def test_empty_string_allowed(self) -> None:
+        """Empty string is allowed (tool decides behavior)."""
+        validate_author_name("")  # Should not raise
+
+    def test_too_long_raises(self) -> None:
+        """Author name exceeding max length should raise ValidationError."""
+        with pytest.raises(ValidationError, match="too long"):
+            validate_author_name("x" * 201)
+
+    def test_too_long_shows_length(self) -> None:
+        """Error message should show actual length."""
+        with pytest.raises(ValidationError) as exc_info:
+            validate_author_name("x" * 250)
+        assert "250" in str(exc_info.value)
+        assert "200" in str(exc_info.value)
+
+    def test_custom_max_length(self) -> None:
+        """Custom max_length should be respected."""
+        # Should pass at custom max
+        validate_author_name("x" * 50, max_length=50)
+        # Should fail above custom max
+        with pytest.raises(ValidationError, match="too long"):
+            validate_author_name("x" * 51, max_length=50)

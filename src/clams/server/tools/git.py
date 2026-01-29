@@ -8,6 +8,10 @@ from mcp.server import Server
 
 from clams.server.errors import MCPError, ValidationError
 from clams.server.tools import ServiceContainer
+from clams.server.tools.validation import (
+    validate_author_name,
+    validate_query_string,
+)
 
 logger = structlog.get_logger()
 
@@ -61,8 +65,13 @@ def get_git_tools(services: ServiceContainer) -> dict[str, Any]:
                 ) from e
 
         # Validate limit if provided
-        if limit is not None and limit < 1:
-            raise ValidationError(f"Limit must be positive, got {limit}")
+        if limit is not None:
+            if limit < 1:
+                raise ValidationError(f"Limit must be positive, got {limit}")
+            if limit > 100_000:
+                raise ValidationError(
+                    f"Limit {limit} exceeds maximum of 100000"
+                )
 
         try:
             # Delegate to GitAnalyzer
@@ -127,6 +136,12 @@ def get_git_tools(services: ServiceContainer) -> dict[str, Any]:
             raise ValidationError(
                 f"Limit {limit} out of range. Must be between 1 and 50."
             )
+
+        # Validate query length
+        validate_query_string(query)
+
+        # Validate author name if provided
+        validate_author_name(author)
 
         # Parse date if provided
         since_dt = None

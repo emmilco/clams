@@ -179,3 +179,40 @@ class TestAllValidEnumsAccepted:
         result = await tool(query="test", outcome=outcome)
         if "error" in result:
             assert result["error"]["type"] != "validation_error"
+
+
+# ============================================================================
+# SPEC-057: New validation tests
+# ============================================================================
+
+
+class TestSearchExperiencesQueryLengthValidation:
+    """SPEC-057: Query string length validation tests for search_experiences."""
+
+    @pytest.mark.asyncio
+    async def test_query_too_long(self, search_tools: dict[str, Any]) -> None:
+        """Query exceeding 10,000 chars should error."""
+        tool = search_tools["search_experiences"]
+        result = await tool(query="x" * 10_001)
+        assert_error_response(result, message_contains="too long")
+
+    @pytest.mark.asyncio
+    async def test_query_at_max_length(
+        self, search_tools: dict[str, Any], mock_searcher: Any
+    ) -> None:
+        """Query at exactly 10,000 chars should be accepted."""
+        tool = search_tools["search_experiences"]
+        result = await tool(query="x" * 10_000)
+        # Should not fail with validation error
+        if "error" in result:
+            assert "too long" not in result["error"]["message"]
+
+    @pytest.mark.asyncio
+    async def test_query_length_error_shows_limits(
+        self, search_tools: dict[str, Any]
+    ) -> None:
+        """Error should show actual and maximum length."""
+        tool = search_tools["search_experiences"]
+        result = await tool(query="x" * 10_001)
+        assert "10001" in result["error"]["message"]
+        assert "10000" in result["error"]["message"]

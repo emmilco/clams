@@ -396,3 +396,105 @@ class TestIndexCodebaseProjectValidation:
         tool = code_tools["index_codebase"]
         result = await tool(directory=str(tmp_path), project="x" * 100)
         assert result["project"] == "x" * 100
+
+
+class TestSearchCodeQueryLengthValidation:
+    """SPEC-057: Query string length validation tests for search_code."""
+
+    @pytest.mark.asyncio
+    async def test_query_too_long(self, code_tools: dict[str, Any]) -> None:
+        """Query exceeding 10,000 chars should error."""
+        tool = code_tools["search_code"]
+        with pytest.raises(ValidationError, match="too long"):
+            await tool(query="x" * 10_001)
+
+    @pytest.mark.asyncio
+    async def test_query_at_max_length(self, code_tools: dict[str, Any]) -> None:
+        """Query at exactly 10,000 chars should be accepted."""
+        tool = code_tools["search_code"]
+        # Should not raise ValidationError
+        result = await tool(query="x" * 10_000)
+        assert "results" in result
+
+    @pytest.mark.asyncio
+    async def test_query_length_error_shows_limits(
+        self, code_tools: dict[str, Any]
+    ) -> None:
+        """Error should show actual and maximum length."""
+        tool = code_tools["search_code"]
+        with pytest.raises(ValidationError) as exc_info:
+            await tool(query="x" * 10_001)
+        assert "10001" in str(exc_info.value)
+        assert "10000" in str(exc_info.value)
+
+
+class TestSearchCodeOptionalProjectValidation:
+    """SPEC-057: Optional project filter validation tests for search_code."""
+
+    @pytest.mark.asyncio
+    async def test_invalid_project_with_spaces(
+        self, code_tools: dict[str, Any]
+    ) -> None:
+        """Project filter with spaces should error."""
+        tool = code_tools["search_code"]
+        with pytest.raises(ValidationError, match="Invalid project identifier"):
+            await tool(query="test", project="has spaces")
+
+    @pytest.mark.asyncio
+    async def test_invalid_project_with_special_chars(
+        self, code_tools: dict[str, Any]
+    ) -> None:
+        """Project filter with special chars should error."""
+        tool = code_tools["search_code"]
+        with pytest.raises(ValidationError, match="Invalid project identifier"):
+            await tool(query="test", project="has@special!")
+
+    @pytest.mark.asyncio
+    async def test_none_project_accepted(self, code_tools: dict[str, Any]) -> None:
+        """None project should be accepted (no filter)."""
+        tool = code_tools["search_code"]
+        result = await tool(query="test", project=None)
+        assert "results" in result
+
+    @pytest.mark.asyncio
+    async def test_valid_project_accepted(self, code_tools: dict[str, Any]) -> None:
+        """Valid project identifier should be accepted."""
+        tool = code_tools["search_code"]
+        result = await tool(query="test", project="my-project")
+        assert "results" in result
+
+
+class TestFindSimilarCodeOptionalProjectValidation:
+    """SPEC-057: Optional project filter validation tests for find_similar_code."""
+
+    @pytest.mark.asyncio
+    async def test_invalid_project_with_spaces(
+        self, code_tools: dict[str, Any]
+    ) -> None:
+        """Project filter with spaces should error."""
+        tool = code_tools["find_similar_code"]
+        with pytest.raises(ValidationError, match="Invalid project identifier"):
+            await tool(snippet="def foo(): pass", project="has spaces")
+
+    @pytest.mark.asyncio
+    async def test_invalid_project_with_special_chars(
+        self, code_tools: dict[str, Any]
+    ) -> None:
+        """Project filter with special chars should error."""
+        tool = code_tools["find_similar_code"]
+        with pytest.raises(ValidationError, match="Invalid project identifier"):
+            await tool(snippet="def foo(): pass", project="has@special!")
+
+    @pytest.mark.asyncio
+    async def test_none_project_accepted(self, code_tools: dict[str, Any]) -> None:
+        """None project should be accepted (no filter)."""
+        tool = code_tools["find_similar_code"]
+        result = await tool(snippet="def foo(): pass", project=None)
+        assert "results" in result
+
+    @pytest.mark.asyncio
+    async def test_valid_project_accepted(self, code_tools: dict[str, Any]) -> None:
+        """Valid project identifier should be accepted."""
+        tool = code_tools["find_similar_code"]
+        result = await tool(snippet="def foo(): pass", project="my-project")
+        assert "results" in result
