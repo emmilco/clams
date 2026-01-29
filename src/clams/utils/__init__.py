@@ -6,6 +6,7 @@ Provides centralized utilities for:
 - validation: Function parameter validation decorators
 - platform: Platform capability detection (SPEC-033)
 - schema: JSON Schema generation from Python Enum classes (SPEC-016)
+- tokens: Token estimation for budget and size assertions (SPEC-046)
 """
 
 from clams.utils.datetime import (
@@ -32,6 +33,9 @@ from clams.utils.schema import (
     get_enum_diff,
     get_enum_values,
     validate_enum_schema,
+)
+from clams.utils.tokens import (
+    estimate_tokens,
 )
 from clams.utils.validation import (
     validate_datetime_params,
@@ -63,4 +67,6 @@ __all__ = [
     # Validation decorators
     "validate_datetime_params",
     "validate_numeric_range",
+    # Token utilities (SPEC-046)
+    "estimate_tokens",
 ]
