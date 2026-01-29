@@ -9,7 +9,7 @@
 #   SCRIPT_DIRS            Space-separated directories to check
 #
 # Checks shell scripts in configured script_dirs from project.json
-# Falls back to .claude/bin/, scripts/, and clams/hooks/ if not configured.
+# Falls back to .claude/bin/, scripts/, and clams_scripts/hooks/ if not configured.
 #
 # Exit codes:
 #   0 - All checks pass (or no shell changes when CHECK_CHANGED_ONLY=1)
@@ -59,9 +59,9 @@ if [[ -f "$PROJECT_CONFIG" ]] && command -v jq &>/dev/null; then
     SCRIPT_DIRS=$(jq -r '.script_dirs[]? // empty' "$PROJECT_CONFIG" 2>/dev/null | tr '\n' ' ')
 fi
 
-# Fallback to defaults (now includes clams/hooks/)
+# Fallback to defaults (now includes clams_scripts/hooks/)
 if [[ -z "$SCRIPT_DIRS" ]]; then
-    SCRIPT_DIRS=".claude/bin/ scripts/ clams/hooks/"
+    SCRIPT_DIRS=".claude/bin/ scripts/ clams_scripts/hooks/"
 fi
 
 echo "Checking directories: $SCRIPT_DIRS"
