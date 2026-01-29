@@ -233,7 +233,7 @@ class TestServerCommandConfiguration:
         since mcp_client.py is not part of the installed package.
         """
         repo_root = Path(__file__).parent.parent.parent
-        mcp_client_path = repo_root / "clams" / "mcp_client.py"
+        mcp_client_path = repo_root / "clams_scripts" / "mcp_client.py"
         source = mcp_client_path.read_text()
 
         # Verify the function constructs the correct path
