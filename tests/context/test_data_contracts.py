@@ -1,4 +1,4 @@
-"""Tests for ContextItem hash/eq contract.
+"""Tests for hash/eq contracts across the codebase.
 
 Python's hash/eq contract requires:
 - If a == b, then hash(a) == hash(b)
@@ -9,13 +9,80 @@ Violating this contract causes silent bugs in set/dict operations:
 2. Dict key lookups fail silently
 3. Deduplication produces wrong results
 
+## Hashable Classes Audit (2026-01-28)
+
+Classes tested in this file:
+- ContextItem (src/clams/context/models.py) - custom __hash__/__eq__
+
+Classes tested in tests/utils/test_platform_contracts.py:
+- PlatformInfo (src/clams/utils/platform.py) - frozen dataclass
+
+Classes excluded (Enums use identity-based hash/eq, always correct):
+- Domain, Strategy, OutcomeStatus, ConfidenceTier (observation/models.py)
+- UnitType (indexers/base.py)
+
+All other dataclasses are NOT hashable (no frozen=True or __hash__).
+
 Reference: BUG-028 - ContextItem hash/eq contract violation
 """
+
+from typing import Any
 
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from clams.context.models import ContextItem
+
+
+def verify_hash_eq_contract[T](
+    cls: type[T],
+    *args: Any,
+    **kwargs: Any,
+) -> None:
+    """Verify hash/eq contract for any class.
+
+    Creates two instances with the same arguments and verifies:
+    1. They are equal
+    2. They have the same hash (contract requirement)
+    3. Set membership is consistent
+    4. Dict key lookup is consistent
+
+    Args:
+        cls: Class to test
+        *args: Positional arguments for constructor
+        **kwargs: Keyword arguments for constructor
+
+    Raises:
+        AssertionError: If contract is violated
+    """
+    obj1 = cls(*args, **kwargs)
+    obj2 = cls(*args, **kwargs)
+
+    # Basic equality check
+    assert obj1 == obj2, (
+        f"{cls.__name__}: instances with same args must be equal"
+    )
+
+    # Contract: equal objects must have equal hashes
+    assert hash(obj1) == hash(obj2), (
+        f"{cls.__name__} violates hash/eq contract: "
+        f"equal objects have different hashes "
+        f"(hash1={hash(obj1)}, hash2={hash(obj2)})"
+    )
+
+    # Set membership must be consistent
+    s: set[T] = {obj1}
+    assert obj2 in s, (
+        f"{cls.__name__}: equal object not found in set "
+        f"(contract violation)"
+    )
+
+    # Dict key lookup must be consistent
+    d: dict[T, str] = {obj1: "value"}
+    assert d.get(obj2) == "value", (
+        f"{cls.__name__}: equal object cannot find dict entry "
+        f"(contract violation)"
+    )
 
 
 class TestContextItemContract:
