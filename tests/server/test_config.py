@@ -468,7 +468,7 @@ class TestConfigurationParity:
         assert settings.hdbscan_min_samples == 3
 
     @pytest.mark.skipif(
-        not Path("clams/hooks/config.yaml").exists(),
+        not Path("clams_scripts/hooks/config.yaml").exists(),
         reason="Hooks config not found",
     )
     def test_server_command_matches_hooks_config(self) -> None:
@@ -480,7 +480,7 @@ class TestConfigurationParity:
 
         settings = ServerSettings()
 
-        with open("clams/hooks/config.yaml") as f:
+        with open("clams_scripts/hooks/config.yaml") as f:
             hooks_config = yaml.safe_load(f)
 
         # Get server command from hooks config
