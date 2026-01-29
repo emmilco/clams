@@ -349,8 +349,8 @@ class TestClamsHooksDirectory:
             env={**os.environ, "CLAUDE_DIR": str(tmp_path / ".claude")},
         )
 
-        assert "clams/hooks" in result.stdout, (
-            "Default directories should include clams/hooks/. "
+        assert "clams_scripts/hooks" in result.stdout, (
+            "Default directories should include clams_scripts/hooks/. "
             f"Got: {result.stdout}"
         )
 
@@ -372,7 +372,7 @@ class TestClamsHooksDirectory:
         )
 
         assert result.returncode == 1, (
-            f"Expected exit 1 for syntax error in clams/hooks/: {result.stdout}\n"
+            f"Expected exit 1 for syntax error in clams_scripts/hooks/: {result.stdout}\n"
             f"stderr: {result.stderr}"
         )
         assert "SYNTAX ERROR" in result.stdout
