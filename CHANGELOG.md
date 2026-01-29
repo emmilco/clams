@@ -6,6 +6,218 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### SPEC-057: Add Validation to Remaining MCP Tool Parameters
+**Type**: Enhancement
+
+Added comprehensive input validation to MCP tool parameters identified in the R4-A audit.
+
+**Changes**:
+- Added `src/clams/server/tools/validation.py` with reusable validation helpers
+- Added validation to: assemble_context, retrieve_memories, store_memory, list_memories, delete_memory, search_code, index_codebase, update_ghap, distribute_budget
+- All error messages include valid options or acceptable ranges
+- Unified ValidationError usage across all tools
+
+### SPEC-049: Pre-commit Hook for Hash/Eq Contract
+**Type**: Testing
+
+Created an advisory pre-commit hook that warns when classes define __hash__ or __eq__ without corresponding contract tests.
+
+**Changes**:
+- Added `.claude/hooks/check_hash_eq.py` for AST-based detection
+- Detects __hash__, __eq__, and __hash__ = None patterns
+- Checks for tests in `tests/context/test_data_contracts.py`
+- Advisory mode (exits 0) to avoid blocking commits
+- References BUG-028 in warnings for context
+
+### SPEC-048: Hash/Eq Contract Tests for Other Hashable Classes (R16-B)
+**Type**: Testing
+
+Extended hash/eq contract testing beyond ContextItem to cover all hashable classes in the codebase.
+
+**Changes**:
+- Added `verify_hash_eq_contract()` reusable helper function in `tests/context/test_data_contracts.py`
+- Added comprehensive audit documentation header with audit date (2026-01-28)
+- Created `tests/utils/test_platform_contracts.py` with 6 contract tests for PlatformInfo
+- Classes audited: ContextItem (already tested), PlatformInfo (new tests), Enums (excluded - Python guarantees their contract)
+
+### SPEC-043: Update Valid Implementation Directories
+**Type**: Enhancement
+
+Improves error messages in claws-gate when the "Implementation code exists" check fails.
+
+**Changes**:
+- Updated error messages in claws-gate to list valid implementation directories from project.json
+- Added reference to .claude/project.json configuration file in error output
+- Provides helpful guidance for common scenarios (docs-only vs code changes)
+- Updated both feature (IMPLEMENT-CODE_REVIEW) and bug (INVESTIGATED-FIXED) transitions
+
+### SPEC-042: Frontend Gate Check Script
+**Type**: Feature
+
+Adds a dedicated gate check script for frontend (clams-visualizer) changes that gracefully handles non-npm projects.
+
+**Changes**:
+- Added `.claude/gates/check_frontend.sh` for frontend validation
+- Runs `npm run lint` and `npm run typecheck` if configured in package.json
+- Handles missing npm gracefully (exit code 2)
+- Handles non-npm frontend projects gracefully (skip with exit 0)
+- Reads frontend_dirs from project.json for configurable paths
+
+### SPEC-041: Shell/Hooks Gate Check Script Enhancements
+**Type**: Enhancement
+
+Enhanced the shell linter gate script with bash -n syntax checking, severity filtering, and changed-only mode.
+
+**Changes**:
+- Added `bash -n` syntax checking before shellcheck
+- Added `-S warning` severity threshold to shellcheck
+- Added `CHECK_CHANGED_ONLY=1` environment variable for checking only changed files
+- Added `clams_scripts/hooks/` to default script directories
+- Improved exit code handling and error messages
+
+### SPEC-034: Parameter Validation with Production Data
+**Type**: Testing
+
+Added data generators and validation tests that use production-like data profiles to catch parameter tuning issues.
+
+**Changes**:
+- Added `tests/fixtures/data_profiles.py` with profile dataclasses (EmbeddingProfile, GHAPDataProfile, MemoryProfile, CodeProfile, CommitProfile)
+- Added `tests/fixtures/generators/` package with generators for embeddings, GHAP entries, temporal patterns, memories, code units, and commits
+- Added `tests/validation/` test suite covering clustering, search pagination, memory operations, temporal patterns, and HDBSCAN parameter validation
+- 73 validation tests marked with @pytest.mark.validation
+- Addresses BUG-031 (clustering parameters too conservative)
+
+### SPEC-033: Platform-Specific Pre-Checks
+**Type**: Feature
+
+Added centralized platform detection and pytest integration to handle platform-specific test requirements consistently.
+
+**Changes**:
+- Added `src/clams/utils/platform.py` with `PlatformInfo` dataclass, `get_platform_info()`, `check_requirements()`, and `format_report()` functions
+- Added pytest markers: `requires_mps`, `requires_cuda`, `requires_ripgrep`, `requires_docker`, `requires_qdrant`, `macos_only`, `linux_only`
+- Added `pytest_collection_modifyitems` hook to auto-skip tests when platform requirements not met
+- Added `.claude/gates/check_platform.sh` for pre-flight platform capability reporting
+- Modified `check_tests.sh` and `check_tests_python.sh` to distinguish platform skips (allowed) from code skips (fail gate)
+- Migrated existing tests to use new markers instead of inline `skipif` decorators
+- Addresses BUG-042 (MPS fork safety) and BUG-014 (memory leaks)
+
+### SPEC-032: Type-Safe Datetime and Numeric Handling
+**Type**: Feature
+
+Added type-safe utilities for datetime serialization and numeric validation with comprehensive error handling.
+
+**Changes**:
+- Extended `src/clams/utils/datetime.py` with `is_valid_datetime_format()`, `serialize_datetime_optional()`, `deserialize_datetime_optional()`
+- Added `src/clams/utils/numeric.py` with `safe_int()`, `clamp()`, `is_positive()`
+- Added `src/clams/utils/validation.py` with `@validate_datetime_params()` and `@validate_numeric_range()` decorators
+- Added 139 new tests covering edge cases, error messages, and timezone handling
+
+### SPEC-031: Cross-Component Integration Tests
+**Type**: Testing
+
+Added integration tests verifying contracts at component boundaries, catching field mismatches and type incompatibilities.
+
+**Changes**:
+- Added `tests/integration/test_boundary_contracts.py` with 40 tests covering storage, retrieval, context assembly, and embedding service contracts
+- Defined contract specifications: GHAP_PAYLOAD_CONTRACT, MEMORY_PAYLOAD_CONTRACT, etc.
+- Added regression tests for BUG-006, BUG-019, BUG-027, BUG-036, BUG-040, BUG-041
+- Tests verify field names match across storage, retrieval, and assembly layers
+
+### SPEC-028: Document Fork/Daemon Constraint
+**Type**: Documentation
+
+Documents the critical constraint that torch/sentence_transformers must not be imported at module level due to MPS fork() incompatibility.
+
+**Changes**:
+- Added detailed docstring to `src/clams/server/main.py` explaining the fork/daemon constraint
+- Documented why top-level imports of torch/sentence_transformers cause crashes
+- Added references to BUG-037 and BUG-042 for historical context
+- Made the constraint discoverable at the point of enforcement (daemonization)
+
+### SPEC-025: Production Command Verification in Tests
+**Type**: Testing
+
+Ensures integration tests use the same commands as production hooks to prevent "works in test, fails in production" scenarios.
+
+**Changes**:
+- Added `get_server_command()` utility in tests/conftest.py that returns canonical server commands
+- Supports both module invocation and binary entry point styles
+- Updated integration tests to use this utility for consistency with production hooks
+- Added comments documenting command parity requirements
+
+### SPEC-023: Mock Interface Verification Tests
+**Type**: Testing
+
+Added systematic tests to verify mock classes implement the same interface as production counterparts, preventing mock drift bugs.
+
+**Changes**:
+- Added `tests/infrastructure/test_mock_parity.py` with 39 tests covering MockSearcher, MockEmbedder, and MockExperienceResult verification
+- Helper functions: `get_public_methods()`, `compare_signatures()`, `compare_return_types()`
+- Central registries: `get_all_mock_production_pairs()`, `get_all_mock_dataclass_pairs()`
+- Added docstrings to mock classes referencing test_mock_parity.py
+- Prevents BUG-040, BUG-041 class issues (mock field name mismatches)
+
+### SPEC-017: Add Schema Conformance Tests for Enum Validation
+**Type**: Testing
+
+Added tests verifying Python Enum classes stay in sync with validation constants and JSON schemas.
+
+**Changes**:
+- Enhanced `tests/server/test_enum_schema_conformance.py` with Python enum validation tests
+- Tests Domain, Strategy, and OutcomeStatus enums against their constants
+
+### SPEC-016: Create Schema Generation Utility for JSON Schema Enums
+**Type**: Feature
+
+Added utility module for generating and validating JSON schema definitions from Python Enum classes.
+
+**Changes**:
+- Added `src/clams/utils/schema.py` with functions for enum schema generation and validation
+- Added 38 tests in `tests/utils/test_schema.py`
+- Updated `src/clams/utils/__init__.py` to export new functions
+
+### SPEC-015: Add Searcher ABC Inheritance Regression Test
+**Type**: Testing
+
+Added parametrized test to verify method signatures between Searcher ABC and concrete implementation stay synchronized.
+
+**Changes**:
+- Added `test_method_signatures_match_abc` to `tests/search/test_searcher_interface.py`
+- Tests all 5 search methods for parameter name consistency
+
+### SPEC-012: Add End-to-End Trace to Reviewer Checklist
+**Type**: Process
+
+Added mandatory end-to-end trace requirements to the code reviewer checklist to prevent integration bugs from incomplete data flow analysis.
+
+**Changes**:
+- Added Step 3.5 "End-to-End Trace" section to `.claude/roles/reviewer.md` with:
+  - Data flow trace checklist (entry points, transformations, return value usage)
+  - Caller analysis checklist (all callers identified and verified)
+  - Error path trace checklist (exception propagation, cleanup)
+  - Integration point verification checklist
+  - Helper grep commands for finding callers, imports, and exception handlers
+  - Documentation template for trace summary
+- Updated APPROVED report template to include Trace Summary section
+- Added trace-related items to spec-reviewer.md and proposal-reviewer.md Bug Pattern Prevention sections
+
+### SPEC-011: Strengthen Bug Investigation Protocol
+**Type**: Process
+
+Enhanced bug investigation gate checks to require rigorous differential diagnosis with evidence-based hypothesis elimination.
+
+**Changes**:
+- Added `.claude/gates/check_bug_investigation.sh` gate script validating:
+  - At least 3 hypotheses considered
+  - Exactly 1 CONFIRMED hypothesis
+  - Evidence documented for eliminated hypotheses
+  - Evidentiary scaffold code present
+  - Captured output from scaffold
+  - Fix plan references in bug report
+- Updated `.claude/templates/bug-report.md` with requirements callout, example differential diagnosis, and evidentiary scaffold examples
+- Enhanced `.claude/roles/bug-investigator.md` with evidence thresholds, anti-patterns, and self-review checklist
+- Added 13 test cases in `tests/gates/test_check_bug_investigation.py`
+
 ### SPEC-054: Spec and Proposal Reviewer Checklist Updates (R17-E)
 **Type**: Enhancement
 
@@ -467,6 +679,172 @@ Created the foundational project structure for the CLAMS server with Python pack
 ---
 
 ## Bug Fixes
+
+### BUG-071: Session start hook not using configurable port and host
+**Type**: Bug Fix
+
+Fixed test patterns to recognize both direct and indirect configuration patterns in session_start.sh.
+
+**Changes**:
+- Updated test patterns to accept two-step configuration (CLAMS_HTTP_PORT -> SERVER_PORT)
+- Added comprehensive docstrings explaining valid patterns
+- Fixed E2E test failure in test_session_start_uses_configurable_port
+
+### BUG-066: Fix claws-worktree merge to auto-update task phase
+**Type**: Bug Fix
+
+Fixed a bug where `claws-worktree merge` would clear the worktree_path but not update the task phase, causing tasks to remain in stale phases after merge.
+
+**Changes**:
+- Modified `cmd_merge()` to query task_type and current_phase before merge
+- Added auto-transition logic after successful merge:
+  - Bug tasks -> DONE (merge is final step)
+  - Feature tasks -> VERIFY (need verification on main)
+- Added logging of phase transitions for visibility
+
+### BUG-065: Add next-commands to handoff format
+**Type**: Enhancement
+
+Session handoffs now include actionable next commands based on task phases.
+
+**Changes**:
+- Added `next-commands` subcommand to `claws-session`
+- Added `get_next_action()` function that returns correct commands for each task phase
+- Added `describe_next_action()` for human-readable descriptions
+- `claws-status` now displays next commands prominently when resuming from a handoff
+
+### BUG-064: Auto-commit staged changes on wrapup
+**Type**: Bug Fix
+
+Added automatic commit of staged changes in worktrees during session wrapup.
+
+**Changes**:
+- Modified claws-session save to check all active worktrees for staged changes
+- Automatically commits staged changes with descriptive message before wrapup
+- Prevents uncommitted work from blocking operations in next session
+
+### BUG-063: Add pre-merge conflict check
+**Type**: Enhancement
+
+Added conflict detection before attempting worktree merges to catch issues early.
+
+**Changes**:
+- Modified claws-worktree merge to perform a dry-run merge check first
+- Warns if conflicts would occur and lists conflicting files
+- Prevents surprise merge failures by detecting conflicts early
+
+### BUG-062: Auto-detect project type in gate checks
+**Type**: Enhancement
+
+Gate checks now auto-detect project type and run appropriate language-specific tools.
+
+**Changes**:
+- Added `detect_project_type()` function to `claws-common.sh`
+- Detects Python (pyproject.toml), JavaScript (package.json), Rust (Cargo.toml), Go (go.mod)
+- Supports explicit override via `project_type` in `.claude/project.json`
+- Gate checks dispatch appropriate test/lint/typecheck commands based on detected type
+
+### BUG-061: Centralize implementation directory list
+**Type**: Enhancement
+
+Created central project configuration for directory patterns used in gate checks.
+
+**Changes**:
+- Added `.claude/project.json` with `implementation_dirs`, `test_dirs`, `script_dirs`, `doc_dirs`, and `frontend_dirs` arrays
+- Updated `claws-gate` with `get_impl_dirs()`, `get_test_dirs()`, and `get_frontend_dirs()` helper functions
+- Gate checks now read from project.json with sensible fallback defaults
+
+### BUG-060: Detect file overlaps when creating worktree
+**Type**: Enhancement
+
+Added overlap detection to `claws-worktree create` to prevent merge conflicts between parallel tasks.
+
+**Changes**:
+- Added `--check-overlaps` flag to detect potential file conflicts before creating a worktree
+- Added `--force` flag to bypass overlap warnings
+- Added `check_overlaps()` function that scans all worktrees for uncommitted changes and file mentions in planning docs
+- Reports conflicting task IDs with recommendations for resolution
+
+### BUG-059: Add worktree health check command
+**Type**: Enhancement
+
+Added a health check subcommand to claws-worktree for auditing worktree state.
+
+**Changes**:
+- Added `claws-worktree health` command that audits all worktrees
+- Reports stale worktrees (task DONE but worktree not cleaned)
+- Reports uncommitted changes that may block operations
+- Reports worktrees behind main branch
+
+### BUG-058: Auto-sync pip after worktree merge
+**Type**: Enhancement
+
+Added automatic dependency sync after worktree merges to prevent import failures when new dependencies are added.
+
+**Changes**:
+- Modified claws-worktree merge to run `uv sync` after successful merge
+- Dependencies are now automatically installed when a worktree with new deps is merged
+- Added regression test to verify sync runs after merge
+
+### BUG-057: Document worker agent permission model
+**Type**: Documentation
+
+Investigated and documented the permission model for worker agents operating in worktrees.
+
+**Changes**:
+- Documented explicit permission boundaries in CLAUDE.md for worker agents
+- Added guidelines for file/directory restrictions in worker prompts
+- Created framework for future technical enforcement of scope boundaries
+
+### BUG-056: Pre-commit hook for subprocess.run stdin
+**Type**: Enhancement
+
+Added a pre-commit hook that checks for subprocess.run/Popen calls without explicit stdin handling.
+
+**Changes**:
+- Added custom hook to .pre-commit-config.yaml that greps for subprocess calls without stdin=
+- Hook prevents commits with subprocess calls that could hang waiting for input
+- Added regression test to verify the check works
+
+### BUG-055: Mark and exclude slow tests
+**Type**: Enhancement
+
+Configured pytest to support a `@pytest.mark.slow` marker and exclude slow tests from default runs.
+
+**Changes**:
+- Added `slow` marker definition to pyproject.toml
+- Configured default addopts to exclude slow tests with `-m "not slow"`
+- Tests taking >15 seconds can now be marked and excluded from gate checks
+
+### BUG-054: Test isolation fixture for resource leaks
+**Type**: Enhancement
+
+Added a pytest fixture that tracks and cleans up resources (async tasks, threads) created during tests, making resource leaks explicit failures.
+
+**Changes**:
+- Added `resource_tracker` fixture to tests/conftest.py that captures baseline state before each test
+- Fixture compares state after test and attempts cleanup of leaked resources
+- Tests explicitly fail if cleanup was required, preventing silent hangs
+
+### BUG-053: Gate script timeout with force-kill
+**Type**: Bug Fix
+
+Added a post-completion timeout mechanism to the gate script that force-kills pytest processes that hang after tests complete.
+
+**Changes**:
+- Added cleanup timer in claws-gate that starts after tests complete
+- Implemented force-kill if pytest doesn't exit within 30 seconds
+- Gate now fails (rather than passes) when cleanup timeout occurs, since cleanup failure indicates a resource leak
+
+### BUG-052: Add global pytest timeout
+**Type**: Bug Fix
+
+Added pytest-timeout plugin with a 60-second default timeout to prevent tests from hanging indefinitely.
+
+**Changes**:
+- Added `pytest-timeout` to dev dependencies in pyproject.toml
+- Configured `timeout = 60` in pytest.ini_options section
+- Added regression test to verify timeout configuration is active
 
 ### BUG-051: Fix UserPromptSubmit hook output not injected into context
 **Type**: Bug Fix
