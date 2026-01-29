@@ -22,7 +22,7 @@ class TestBug051Regression:
     def hook_path(self) -> Path:
         """Get the path to user_prompt_submit.sh hook."""
         repo_root = Path(__file__).parent.parent.parent
-        hook = repo_root / "clams" / "hooks" / "user_prompt_submit.sh"
+        hook = repo_root / "clams_scripts" / "hooks" / "user_prompt_submit.sh"
         assert hook.exists(), f"Hook not found at {hook}"
         return hook
 
@@ -93,7 +93,7 @@ class TestBug051Regression:
     def test_bug_051_source_contains_correct_schema(self) -> None:
         """Verify the hook source code uses the correct schema pattern."""
         repo_root = Path(__file__).parent.parent.parent
-        hook_path = repo_root / "clams" / "hooks" / "user_prompt_submit.sh"
+        hook_path = repo_root / "clams_scripts" / "hooks" / "user_prompt_submit.sh"
         source = hook_path.read_text()
 
         # Should contain the correct schema structure

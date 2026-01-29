@@ -26,7 +26,7 @@ import pytest
 def hooks_dir() -> Path:
     """Return the path to the hooks directory."""
     # Navigate from tests/hooks/ to clams/hooks/
-    return Path(__file__).parent.parent.parent / "clams" / "hooks"
+    return Path(__file__).parent.parent.parent / "clams_scripts" / "hooks"
 
 
 @pytest.fixture

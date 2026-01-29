@@ -23,7 +23,7 @@ def test_bug_050_session_start_hook_output_schema():
     """
     # Find the hook script
     repo_root = Path(__file__).parent.parent.parent
-    hook_path = repo_root / "clams" / "hooks" / "session_start.sh"
+    hook_path = repo_root / "clams_scripts" / "hooks" / "session_start.sh"
 
     assert hook_path.exists(), f"Hook not found at {hook_path}"
 
@@ -67,7 +67,7 @@ def test_bug_050_session_start_hook_output_schema():
 def test_bug_050_no_legacy_schema_fields():
     """Verify the old incorrect schema fields are NOT present."""
     repo_root = Path(__file__).parent.parent.parent
-    hook_path = repo_root / "clams" / "hooks" / "session_start.sh"
+    hook_path = repo_root / "clams_scripts" / "hooks" / "session_start.sh"
 
     result = subprocess.run(
         [str(hook_path)],
@@ -91,7 +91,7 @@ def test_bug_050_no_legacy_schema_fields():
 def test_bug_050_ghap_instructions_present():
     """Verify GHAP instructions are included in the context."""
     repo_root = Path(__file__).parent.parent.parent
-    hook_path = repo_root / "clams" / "hooks" / "session_start.sh"
+    hook_path = repo_root / "clams_scripts" / "hooks" / "session_start.sh"
 
     result = subprocess.run(
         [str(hook_path)],
