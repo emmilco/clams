@@ -191,7 +191,7 @@ class TestServerCommandConfiguration:
         integration tests invoke the server.
         """
         repo_root = Path(__file__).parent.parent.parent
-        config_path = repo_root / "clams" / "hooks" / "config.yaml"
+        config_path = repo_root / "clams_scripts" / "hooks" / "config.yaml"
 
         with open(config_path) as f:
             config = yaml.safe_load(f)
@@ -261,7 +261,7 @@ class TestServerCommandConfiguration:
         repo_root = Path(__file__).parent.parent.parent
 
         # Read hooks config
-        config_path = repo_root / "clams" / "hooks" / "config.yaml"
+        config_path = repo_root / "clams_scripts" / "hooks" / "config.yaml"
         with open(config_path) as f:
             hook_config = yaml.safe_load(f)
 
@@ -297,7 +297,7 @@ class TestSessionStartHookConfiguration:
         not rely on PATH or assume specific installation locations.
         """
         repo_root = Path(__file__).parent.parent.parent
-        hook_path = repo_root / "clams" / "hooks" / "session_start.sh"
+        hook_path = repo_root / "clams_scripts" / "hooks" / "session_start.sh"
         hook_content = hook_path.read_text()
 
         # Should navigate to repo root from script location
@@ -318,7 +318,7 @@ class TestSessionStartHookConfiguration:
     def test_session_start_has_clams_server_fallback(self) -> None:
         """Verify session_start.sh has fallback to clams-server if in PATH."""
         repo_root = Path(__file__).parent.parent.parent
-        hook_path = repo_root / "clams" / "hooks" / "session_start.sh"
+        hook_path = repo_root / "clams_scripts" / "hooks" / "session_start.sh"
         hook_content = hook_path.read_text()
 
         # Should have fallback: command -v clams-server
@@ -336,7 +336,7 @@ class TestGHAPFrequencyConfiguration:
         prod_frequency = settings.ghap_check_frequency
 
         repo_root = Path(__file__).parent.parent.parent
-        config_path = repo_root / "clams" / "hooks" / "config.yaml"
+        config_path = repo_root / "clams_scripts" / "hooks" / "config.yaml"
 
         with open(config_path) as f:
             config = yaml.safe_load(f)

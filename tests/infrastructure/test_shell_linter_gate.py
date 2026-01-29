@@ -333,7 +333,7 @@ class TestClamsHooksDirectory:
     def test_clams_hooks_in_default_directories(self, tmp_path: Path) -> None:
         """Verify clams/hooks/ is included in default directories."""
         # Create a script in clams/hooks/
-        hooks_dir = tmp_path / "clams" / "hooks"
+        hooks_dir = tmp_path / "clams_scripts" / "hooks"
         hooks_dir.mkdir(parents=True)
         hook = hooks_dir / "test_hook.sh"
         hook.write_text('#!/bin/bash\necho "hook"\n')
@@ -356,7 +356,7 @@ class TestClamsHooksDirectory:
 
     def test_clams_hooks_syntax_error_detected(self, tmp_path: Path) -> None:
         """Verify syntax errors in clams/hooks/ are detected."""
-        hooks_dir = tmp_path / "clams" / "hooks"
+        hooks_dir = tmp_path / "clams_scripts" / "hooks"
         hooks_dir.mkdir(parents=True)
         hook = hooks_dir / "bad_hook.sh"
         hook.write_text('#!/bin/bash\necho "unclosed\n')

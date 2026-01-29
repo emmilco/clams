@@ -144,7 +144,7 @@ class TestShellScriptConfiguration:
         The hook should determine paths relative to the repository root,
         not rely on PATH or hardcoded absolute paths.
         """
-        hook_path = get_repo_root() / "clams" / "hooks" / "session_start.sh"
+        hook_path = get_repo_root() / "clams_scripts" / "hooks" / "session_start.sh"
         content = hook_path.read_text()
 
         # Should determine script location
@@ -168,7 +168,7 @@ class TestShellScriptConfiguration:
         The hook should use .venv/bin/python to ensure the correct
         environment is used, avoiding BUG-033 type issues.
         """
-        hook_path = get_repo_root() / "clams" / "hooks" / "session_start.sh"
+        hook_path = get_repo_root() / "clams_scripts" / "hooks" / "session_start.sh"
         content = hook_path.read_text()
 
         assert ".venv/bin/python" in content or "clams-server" in content, (
@@ -178,7 +178,7 @@ class TestShellScriptConfiguration:
 
     def test_session_start_has_fallback(self) -> None:
         """Verify session_start.sh has fallback if venv unavailable."""
-        hook_path = get_repo_root() / "clams" / "hooks" / "session_start.sh"
+        hook_path = get_repo_root() / "clams_scripts" / "hooks" / "session_start.sh"
         content = hook_path.read_text()
 
         assert "command -v clams-server" in content, (
@@ -199,7 +199,7 @@ class TestShellScriptConfiguration:
         Regression test for BUG-071: Original test pattern was too strict and didn't
         recognize the valid two-step configuration pattern.
         """
-        hook_path = get_repo_root() / "clams" / "hooks" / "session_start.sh"
+        hook_path = get_repo_root() / "clams_scripts" / "hooks" / "session_start.sh"
         content = hook_path.read_text()
 
         settings = ServerSettings()
@@ -242,7 +242,7 @@ class TestShellScriptConfiguration:
         Regression test for BUG-071: Original test pattern was too strict and didn't
         recognize the valid two-step configuration pattern.
         """
-        hook_path = get_repo_root() / "clams" / "hooks" / "session_start.sh"
+        hook_path = get_repo_root() / "clams_scripts" / "hooks" / "session_start.sh"
         content = hook_path.read_text()
 
         settings = ServerSettings()
@@ -283,7 +283,7 @@ class TestHooksConfigYaml:
         to allow for server startup time.
         """
         settings = ServerSettings()
-        config_path = get_repo_root() / "clams" / "hooks" / "config.yaml"
+        config_path = get_repo_root() / "clams_scripts" / "hooks" / "config.yaml"
 
         with open(config_path) as f:
             config = yaml.safe_load(f)
@@ -305,7 +305,7 @@ class TestHooksConfigYaml:
         ServerSettings.ghap_check_frequency.
         """
         settings = ServerSettings()
-        config_path = get_repo_root() / "clams" / "hooks" / "config.yaml"
+        config_path = get_repo_root() / "clams_scripts" / "hooks" / "config.yaml"
 
         with open(config_path) as f:
             config = yaml.safe_load(f)
@@ -328,7 +328,7 @@ class TestHooksConfigYaml:
         ServerSettings.server_command.
         """
         settings = ServerSettings()
-        config_path = get_repo_root() / "clams" / "hooks" / "config.yaml"
+        config_path = get_repo_root() / "clams_scripts" / "hooks" / "config.yaml"
 
         with open(config_path) as f:
             config = yaml.safe_load(f)

@@ -37,7 +37,7 @@ from tests.fixtures.claude_code_schemas import (
 
 # Path to hook scripts
 REPO_ROOT = Path(__file__).parent.parent.parent
-HOOKS_DIR = REPO_ROOT / "clams" / "hooks"
+HOOKS_DIR = REPO_ROOT / "clams_scripts" / "hooks"
 
 
 class TestSessionStartSchema:
