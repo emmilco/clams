@@ -114,7 +114,7 @@ class TestCommandMatchesHooks:
 
         The hook uses: "$REPO_ROOT/.venv/bin/python" -m clams.server.main --http --daemon
         """
-        hook_path = get_repo_root() / "clams" / "hooks" / "session_start.sh"
+        hook_path = get_repo_root() / "clams_scripts" / "hooks" / "session_start.sh"
         hook_content = hook_path.read_text()
 
         # Extract the command pattern from the hook

@@ -19,11 +19,8 @@ from typing import Any
 
 import structlog
 
-<<<<<<< HEAD
 from clams.config import settings
-=======
 from clams.server.tools.validation import validate_frequency
->>>>>>> de2d011 (SPEC-057: Add validation to remaining MCP tool parameters)
 
 logger = structlog.get_logger()
 

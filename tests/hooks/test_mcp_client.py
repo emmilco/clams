@@ -13,9 +13,9 @@ import pytest
 from mcp import ClientSession
 from mcp.types import CallToolResult, TextContent
 
-# Add clams/ to path for importing
-clams_dir = Path(__file__).parent.parent.parent / "clams"
-sys.path.insert(0, str(clams_dir))
+# Add clams_scripts/ to path for importing (renamed from clams/ to avoid namespace conflict)
+clams_scripts_dir = Path(__file__).parent.parent.parent / "clams_scripts"
+sys.path.insert(0, str(clams_scripts_dir))
 
 from mcp_client import MCPClient  # noqa: E402
 
