@@ -7,9 +7,11 @@ This proposal details the implementation of session journaling and the learning 
 1. **Session Journal MCP Tools** - Four new tools for storing, listing, querying, and marking journal entries as reflected
 2. **`/wrapup` Skill** - A skill file that guides Claude through session summarization and journal entry creation
 3. **`/reflection` Skill** - A skill that orchestrates multi-agent analysis of unreflected sessions
-4. **CLI Commands** - Commands for `calm session list` and `calm session show`
+4. **CLI Commands** - Commands for `calm session journal list` and `calm session journal show`
 
 The implementation follows existing CALM patterns: MCP tools are defined in `src/calm/tools/`, CLI commands use Click in `src/calm/cli/`, and database operations use the connection helpers from `src/calm/db/`.
+
+**Note on Skills**: The skill files (`~/.calm/skills/wrapup.md` and `~/.calm/skills/reflection.md`) are markdown documents that Claude Code loads natively when users invoke `/wrapup` or `/reflection`. Claude Code's skill loading mechanism reads skill files from `~/.calm/skills/` based on trigger patterns defined in YAML frontmatter. No custom code is needed to load skills - only the skill file content needs to be created.
 
 ## File Structure
 
@@ -33,9 +35,8 @@ src/calm/
 src/calm/
   tools/__init__.py     # Export get_journal_tools
   server/app.py         # Register journal tools and add tool definitions
-  cli/main.py           # Add session subcommands (list, show)
-  cli/session.py        # Extend with journal-related commands
-  config.py             # Add sessions_dir property (already exists, verify)
+  cli/session.py        # Add 'journal' subgroup with list/show commands
+  config.py             # sessions_dir property already exists (verified)
 ```
 
 ## Implementation Details
@@ -588,12 +589,30 @@ New memories:
 
 ### CLI Commands
 
-Extend `src/calm/cli/session.py` with journal-related commands. The existing `session` group handles orchestration handoffs, so we add journal commands under the same group for consistency.
+Extend `src/calm/cli/session.py` with a `journal` subgroup to avoid conflict with existing `list` and `show` commands that handle orchestration handoffs.
 
-#### `calm session list`
+**Existing Commands** (for orchestration handoffs):
+- `calm session save` - Save handoff from stdin
+- `calm session list` - List recent sessions (handoffs)
+- `calm session show <id>` - Show a session's handoff content
+- `calm session pending` - Show pending handoff
+- `calm session resume <id>` - Mark a session as resumed
+- `calm session next-commands` - Generate next commands for active tasks
+
+**New Commands** (for journal entries, under `journal` subgroup):
+- `calm session journal list` - List journal entries
+- `calm session journal show <id>` - Show a journal entry
+
+#### `calm session journal list`
 
 ```python
-@session.command("list")
+@session.group()
+def journal() -> None:
+    """Session journal management commands."""
+    pass
+
+
+@journal.command("list")
 @click.option("--unreflected", is_flag=True, help="Only show unreflected entries")
 @click.option("--project", "project_name", help="Filter by project name")
 @click.option("--limit", default=20, help="Maximum entries (default: 20)")
@@ -623,10 +642,10 @@ def list_journal(unreflected: bool, project_name: str | None, limit: int) -> Non
         click.echo(f"{entry.id:<36}  {created:<19}  {project:<15}  {summary}{reflected}")
 ```
 
-#### `calm session show`
+#### `calm session journal show`
 
 ```python
-@session.command("show")
+@journal.command("show")
 @click.argument("entry_id")
 @click.option("--log", is_flag=True, help="Include session log content")
 def show_journal(entry_id: str, log: bool) -> None:
@@ -677,10 +696,12 @@ This module handles storing, listing, and managing session journal entries.
 """
 
 import json
+import sqlite3
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, UTC
 from pathlib import Path
+from typing import Any
 
 from calm.config import settings
 from calm.db.connection import get_connection
@@ -887,6 +908,222 @@ def _row_to_entry(row: sqlite3.Row) -> JournalEntry:
     )
 ```
 
+### MCP Tool Entry Point
+
+Create `src/calm/tools/journal.py` with the `get_journal_tools()` function that returns the tool implementations for the MCP dispatcher. This follows the pattern established in `src/calm/tools/memory.py`:
+
+```python
+"""Session journal tools for MCP server."""
+
+from collections.abc import Callable, Coroutine
+from pathlib import Path
+from typing import Any
+
+import structlog
+
+from calm.orchestration.journal import (
+    JournalEntry,
+    get_journal_entry as _get_journal_entry,
+    list_journal_entries as _list_journal_entries,
+    mark_entries_reflected as _mark_entries_reflected,
+    store_journal_entry as _store_journal_entry,
+)
+
+from .errors import MCPError
+from .validation import ValidationError, validate_uuid
+
+logger = structlog.get_logger()
+
+# Type alias for tool functions
+ToolFunc = Callable[..., Coroutine[Any, Any, dict[str, Any]]]
+
+
+def get_journal_tools(
+    db_path: Path | None = None,
+) -> dict[str, ToolFunc]:
+    """Get journal tool implementations for the dispatcher.
+
+    Args:
+        db_path: Optional database path (for testing)
+
+    Returns:
+        Dictionary mapping tool names to their implementations
+    """
+
+    async def store_journal_entry(
+        summary: str,
+        working_directory: str,
+        friction_points: list[str] | None = None,
+        next_steps: list[str] | None = None,
+        session_log_content: str | None = None,
+    ) -> dict[str, Any]:
+        """Store a new session journal entry with optional log capture."""
+        logger.info("journal.store", working_directory=working_directory)
+
+        # Validate inputs
+        if not summary or not summary.strip():
+            raise ValidationError("Summary is required and cannot be empty")
+        if len(summary) > 10000:
+            raise ValidationError(f"Summary too long ({len(summary)} chars). Maximum is 10000.")
+        if not working_directory or not working_directory.strip():
+            raise ValidationError("Working directory is required")
+        if friction_points and len(friction_points) > 50:
+            raise ValidationError("Maximum 50 friction points allowed")
+        if next_steps and len(next_steps) > 50:
+            raise ValidationError("Maximum 50 next steps allowed")
+
+        try:
+            entry_id, session_log_path = _store_journal_entry(
+                summary=summary,
+                working_directory=working_directory,
+                friction_points=friction_points,
+                next_steps=next_steps,
+                session_log_content=session_log_content,
+                db_path=db_path,
+            )
+
+            logger.info("journal.stored", entry_id=entry_id)
+
+            return {
+                "id": entry_id,
+                "session_log_path": session_log_path,
+            }
+
+        except Exception as e:
+            logger.error("journal.store_failed", error=str(e), exc_info=True)
+            raise MCPError(f"Failed to store journal entry: {e}") from e
+
+    async def list_journal_entries(
+        unreflected_only: bool = False,
+        project_name: str | None = None,
+        working_directory: str | None = None,
+        limit: int = 50,
+    ) -> dict[str, Any]:
+        """List session journal entries with optional filters."""
+        logger.info("journal.list", unreflected_only=unreflected_only, limit=limit)
+
+        # Validate limit
+        if not 1 <= limit <= 200:
+            raise ValidationError(f"Limit {limit} out of range. Must be between 1 and 200.")
+
+        try:
+            entries = _list_journal_entries(
+                unreflected_only=unreflected_only,
+                project_name=project_name,
+                working_directory=working_directory,
+                limit=limit,
+                db_path=db_path,
+            )
+
+            formatted = [
+                {
+                    "id": e.id,
+                    "created_at": e.created_at.isoformat(),
+                    "working_directory": e.working_directory,
+                    "project_name": e.project_name,
+                    "summary": e.summary,
+                    "reflected_at": e.reflected_at.isoformat() if e.reflected_at else None,
+                }
+                for e in entries
+            ]
+
+            logger.info("journal.listed", count=len(formatted))
+
+            return {"entries": formatted, "count": len(formatted)}
+
+        except Exception as e:
+            logger.error("journal.list_failed", error=str(e), exc_info=True)
+            raise MCPError(f"Failed to list journal entries: {e}") from e
+
+    async def get_journal_entry(
+        entry_id: str,
+        include_log: bool = False,
+    ) -> dict[str, Any]:
+        """Get full details of a journal entry."""
+        logger.info("journal.get", entry_id=entry_id, include_log=include_log)
+
+        # Validate UUID format
+        validate_uuid(entry_id, "entry_id")
+
+        try:
+            entry = _get_journal_entry(
+                entry_id=entry_id,
+                include_log=include_log,
+                db_path=db_path,
+            )
+
+            if not entry:
+                raise ValidationError(f"Entry {entry_id} not found")
+
+            result: dict[str, Any] = {
+                "id": entry.id,
+                "created_at": entry.created_at.isoformat(),
+                "working_directory": entry.working_directory,
+                "project_name": entry.project_name,
+                "session_log_path": entry.session_log_path,
+                "summary": entry.summary,
+                "friction_points": entry.friction_points,
+                "next_steps": entry.next_steps,
+                "reflected_at": entry.reflected_at.isoformat() if entry.reflected_at else None,
+                "memories_created": entry.memories_created,
+            }
+
+            if include_log and entry.session_log:
+                result["session_log"] = entry.session_log
+
+            logger.info("journal.got", entry_id=entry_id)
+
+            return result
+
+        except ValidationError:
+            raise
+        except Exception as e:
+            logger.error("journal.get_failed", error=str(e), exc_info=True)
+            raise MCPError(f"Failed to get journal entry: {e}") from e
+
+    async def mark_entries_reflected(
+        entry_ids: list[str],
+        memories_created: int | None = None,
+        delete_logs: bool = True,
+    ) -> dict[str, Any]:
+        """Mark entries as reflected and optionally delete their logs."""
+        logger.info("journal.mark_reflected", count=len(entry_ids), delete_logs=delete_logs)
+
+        # Validate inputs
+        if not entry_ids:
+            raise ValidationError("At least one entry ID is required")
+        for entry_id in entry_ids:
+            validate_uuid(entry_id, "entry_id")
+        if memories_created is not None and memories_created < 0:
+            raise ValidationError("memories_created must be >= 0")
+
+        try:
+            marked_count, logs_deleted = _mark_entries_reflected(
+                entry_ids=entry_ids,
+                memories_created=memories_created,
+                delete_logs=delete_logs,
+                db_path=db_path,
+            )
+
+            logger.info("journal.marked_reflected", marked_count=marked_count, logs_deleted=logs_deleted)
+
+            return {
+                "marked_count": marked_count,
+                "logs_deleted": logs_deleted,
+            }
+
+        except Exception as e:
+            logger.error("journal.mark_reflected_failed", error=str(e), exc_info=True)
+            raise MCPError(f"Failed to mark entries reflected: {e}") from e
+
+    return {
+        "store_journal_entry": store_journal_entry,
+        "list_journal_entries": list_journal_entries,
+        "get_journal_entry": get_journal_entry,
+        "mark_entries_reflected": mark_entries_reflected,
+    }
+```
+
 ## Database Operations
 
 All journal operations use the existing `session_journal` table from `src/calm/db/schema.py`:
@@ -1041,17 +1278,17 @@ Create `tests/unit/cli/test_session_journal.py`:
 from click.testing import CliRunner
 from calm.cli.main import cli
 
-def test_session_list_empty(test_db):
-    """Test session list with no entries."""
+def test_session_journal_list_empty(test_db):
+    """Test session journal list with no entries."""
     runner = CliRunner()
-    result = runner.invoke(cli, ["session", "list"])
+    result = runner.invoke(cli, ["session", "journal", "list"])
     assert result.exit_code == 0
     assert "No journal entries" in result.output
 
-def test_session_show_not_found(test_db):
-    """Test session show with invalid ID."""
+def test_session_journal_show_not_found(test_db):
+    """Test session journal show with invalid ID."""
     runner = CliRunner()
-    result = runner.invoke(cli, ["session", "show", "invalid-id"])
+    result = runner.invoke(cli, ["session", "journal", "show", "invalid-id"])
     assert result.exit_code != 0
     assert "not found" in result.output
 ```
@@ -1074,16 +1311,22 @@ Skills are stored in `~/.calm/skills/`. The install script (SPEC-058-06) will co
 
 ## Open Questions / Design Decisions
 
-### 1. CLI Command Naming
+### 1. CLI Command Naming (RESOLVED)
 
-**Decision**: Add journal commands to existing `session` group rather than creating a new `journal` group.
+**Issue**: The existing `session` CLI group already has `list` and `show` commands for orchestration handoffs. Adding journal commands with the same names would create conflicts.
 
-**Rationale**: The spec describes journal entries as "session journal entries" - they represent session-level data. The existing `session save/list/show` commands are for orchestration handoffs, which is conceptually similar but operationally different. We could:
-- Add `--journal` flag to distinguish
-- Rename existing commands to `session handoff list/show`
-- Keep them separate (journal vs handoff subcommands)
+**Decision**: Use a `journal` subgroup under `session`:
+- `calm session journal list` - List journal entries
+- `calm session journal show <id>` - Show journal entry details
 
-**Recommendation**: Use explicit subcommands like `session journal list` vs `session handoff list` if there's conflict, but since the implementations are different, the current approach of separate commands should work.
+This preserves the existing handoff commands:
+- `calm session list` - List orchestration handoffs
+- `calm session show <id>` - Show handoff content
+
+**Rationale**: The subgroup approach is the cleanest solution because:
+1. No breaking changes to existing CLI commands
+2. Clear conceptual separation (handoffs vs journal entries)
+3. Consistent with Click's nested group pattern
 
 ### 2. Agent Model for Reflection
 
@@ -1106,3 +1349,18 @@ Skills are stored in `~/.calm/skills/`. The install script (SPEC-058-06) will co
 The spec describes mapping `$PWD` to Claude's project path format by replacing `/` with `-` and prefixing with `-`. This logic is implemented in the `/wrapup` skill instructions rather than in code, since it's used during the skill execution to locate files.
 
 **Verification needed**: Confirm the exact path mapping Claude Code uses for session logs. The skill instructions may need adjustment based on actual Claude behavior.
+
+### 5. Skill Loading Mechanism (CLARIFIED)
+
+**Issue**: How will the skill files (`~/.calm/skills/wrapup.md` and `reflection.md`) be loaded?
+
+**Clarification**: Skills are loaded by Claude Code's native skill system. When a user types `/wrapup` or `/reflection`, Claude Code:
+1. Searches for skill files in known locations (including `~/.calm/skills/`)
+2. Matches the trigger patterns defined in YAML frontmatter
+3. Loads the skill content into the conversation context
+
+**No custom code is required for skill loading** - Claude Code provides this infrastructure. SPEC-058-04 only needs to:
+1. Create the skill markdown files with proper frontmatter
+2. Place them in `~/.calm/skills/` (either manually during development or via the install script in SPEC-058-06)
+
+**Scope for SPEC-058-04**: This task creates the skill file content but does NOT implement any skill loading code. The skill files are documentation/instructions that Claude Code interprets directly.
