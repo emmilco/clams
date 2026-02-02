@@ -64,6 +64,22 @@ CREATE_JOURNAL_DIRECTORY_INDEX = """
 CREATE INDEX IF NOT EXISTS idx_journal_directory ON session_journal(working_directory);
 """
 
+# Sessions table for orchestration handoffs
+CREATE_SESSIONS_TABLE = """
+CREATE TABLE IF NOT EXISTS sessions (
+    id TEXT PRIMARY KEY,
+    created_at TEXT NOT NULL,
+    handoff_content TEXT,
+    needs_continuation INTEGER DEFAULT 0,
+    resumed_at TEXT
+);
+"""
+
+CREATE_SESSIONS_PENDING_INDEX = """
+CREATE INDEX IF NOT EXISTS idx_sessions_pending
+    ON sessions(needs_continuation, resumed_at);
+"""
+
 # ===================
 # GHAP TABLES
 # ===================
@@ -209,6 +225,40 @@ INSERT OR IGNORE INTO counters (name, value) VALUES ('merges_since_e2e', 0);
 INSERT OR IGNORE INTO counters (name, value) VALUES ('merges_since_docs', 0);
 """
 
+# Phase transitions table for history tracking
+CREATE_PHASE_TRANSITIONS_TABLE = """
+CREATE TABLE IF NOT EXISTS phase_transitions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id TEXT NOT NULL,
+    from_phase TEXT NOT NULL,
+    to_phase TEXT NOT NULL,
+    gate_result TEXT,
+    gate_details TEXT,
+    transitioned_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (task_id) REFERENCES tasks(id)
+);
+"""
+
+CREATE_PHASE_TRANSITIONS_TASK_INDEX = """
+CREATE INDEX IF NOT EXISTS idx_transitions_task ON phase_transitions(task_id);
+"""
+
+# Gate passes table for commit-anchored verification
+CREATE_GATE_PASSES_TABLE = """
+CREATE TABLE IF NOT EXISTS gate_passes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id TEXT NOT NULL,
+    transition TEXT NOT NULL,
+    commit_sha TEXT NOT NULL,
+    passed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(task_id, transition, commit_sha)
+);
+"""
+
+CREATE_GATE_PASSES_TASK_INDEX = """
+CREATE INDEX IF NOT EXISTS idx_gate_passes_task ON gate_passes(task_id, transition);
+"""
+
 # ===================
 # CODE INDEXING TABLES (from clams)
 # ===================
@@ -269,6 +319,7 @@ ALL_TABLES = [
     CREATE_MEMORIES_TABLE,
     # Session tables
     CREATE_SESSION_JOURNAL_TABLE,
+    CREATE_SESSIONS_TABLE,
     # GHAP tables
     CREATE_GHAP_ENTRIES_TABLE,
     # Orchestration tables
@@ -277,6 +328,8 @@ ALL_TABLES = [
     CREATE_REVIEWS_TABLE,
     CREATE_TEST_RUNS_TABLE,
     CREATE_COUNTERS_TABLE,
+    CREATE_PHASE_TRANSITIONS_TABLE,
+    CREATE_GATE_PASSES_TABLE,
     # Code indexing tables
     CREATE_INDEXED_FILES_TABLE,
     CREATE_GIT_INDEX_STATE_TABLE,
@@ -291,6 +344,7 @@ ALL_INDEXES = [
     CREATE_JOURNAL_REFLECTED_INDEX,
     CREATE_JOURNAL_PROJECT_INDEX,
     CREATE_JOURNAL_DIRECTORY_INDEX,
+    CREATE_SESSIONS_PENDING_INDEX,
     # GHAP indexes
     CREATE_GHAP_STATUS_INDEX,
     CREATE_GHAP_PROJECT_INDEX,
@@ -302,6 +356,8 @@ ALL_INDEXES = [
     CREATE_WORKERS_TASK_INDEX,
     CREATE_REVIEWS_TASK_INDEX,
     CREATE_REVIEWS_TYPE_INDEX,
+    CREATE_PHASE_TRANSITIONS_TASK_INDEX,
+    CREATE_GATE_PASSES_TASK_INDEX,
     # Code indexing indexes
     CREATE_INDEXED_FILES_PROJECT_INDEX,
     CREATE_INDEXED_FILES_MODIFIED_INDEX,
