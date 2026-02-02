@@ -124,7 +124,22 @@ The tables were already created in SPEC-058-01:
 - `reviews` - Review results
 - `test_runs` - Test run history
 - `counters` - System counters
-- `sessions` - Session handoff storage (note: separate from `session_journal` which is for memory/reflection in SPEC-058-04)
+
+#### Sessions Table
+
+Need to add this table for orchestration handoffs:
+
+```sql
+CREATE TABLE sessions (
+    id TEXT PRIMARY KEY,              -- UUID, generated at /wrapup time
+    created_at TEXT NOT NULL,         -- when /wrapup was called
+    handoff_content TEXT,             -- the markdown summary
+    needs_continuation BOOLEAN DEFAULT 0,
+    resumed_at TEXT                   -- when next session picked it up (null = unread)
+);
+
+CREATE INDEX idx_sessions_pending ON sessions(needs_continuation, resumed_at);
+```
 
 #### Phase Transitions Table
 
@@ -144,6 +159,25 @@ CREATE TABLE phase_transitions (
 
 CREATE INDEX idx_transitions_task ON phase_transitions(task_id);
 ```
+
+#### Gate Passes Table
+
+Need to add this table for commit-anchored gate verification:
+
+```sql
+CREATE TABLE gate_passes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id TEXT NOT NULL,
+    transition TEXT NOT NULL,
+    commit_sha TEXT NOT NULL,
+    passed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(task_id, transition, commit_sha)
+);
+
+CREATE INDEX idx_gate_passes_task ON gate_passes(task_id, transition);
+```
+
+This table records which transitions passed at which commit, preventing re-running gate checks after code changes.
 
 #### Sessions vs Session Journal
 
