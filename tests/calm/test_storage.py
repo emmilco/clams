@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from calm.storage import MemoryStore, SearchResult, VectorStore
+from calm.storage import MemoryStore
 
 
 class TestMemoryStore:

@@ -8,7 +8,6 @@ import pytest
 from calm.ghap import (
     ConfidenceTier,
     Domain,
-    GHAPEntry,
     ObservationCollector,
     OutcomeStatus,
     Strategy,

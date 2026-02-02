@@ -290,7 +290,7 @@ class QdrantVectorStore(VectorStore):
                 )
 
         # Qdrant accepts Sequence but list is covariant-compatible
-        return qmodels.Filter(must=conditions if conditions else None)
+        return qmodels.Filter(must=conditions if conditions else None)  # type: ignore[arg-type]
 
     async def get_collection_info(self, name: str) -> CollectionInfo | None:
         """Get collection metadata from Qdrant.

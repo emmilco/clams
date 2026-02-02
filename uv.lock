@@ -188,15 +188,18 @@ source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
     { name = "aiosqlite" },
+    { name = "click" },
     { name = "einops" },
     { name = "gitpython" },
     { name = "hdbscan" },
+    { name = "httpx" },
     { name = "mcp" },
     { name = "nomic" },
     { name = "numpy" },
     { name = "pydantic-settings" },
     { name = "qdrant-client" },
     { name = "sentence-transformers" },
+    { name = "starlette" },
     { name = "structlog" },
     { name = "tree-sitter" },
     { name = "tree-sitter-cpp" },
@@ -207,6 +210,7 @@ dependencies = [
     { name = "tree-sitter-sql" },
     { name = "tree-sitter-swift" },
     { name = "tree-sitter-typescript" },
+    { name = "uvicorn" },
 ]
 
 [package.optional-dependencies]
@@ -229,9 +233,11 @@ dev = [
 requires-dist = [
     { name = "aiofiles", specifier = ">=23.0.0" },
     { name = "aiosqlite" },
+    { name = "click", specifier = ">=8.0.0" },
     { name = "einops", specifier = ">=0.8.1" },
     { name = "gitpython" },
     { name = "hdbscan" },
+    { name = "httpx", specifier = ">=0.27.0" },
     { name = "hypothesis", marker = "extra == 'dev'" },
     { name = "mcp" },
     { name = "mypy", marker = "extra == 'dev'" },
@@ -245,6 +251,7 @@ requires-dist = [
     { name = "qdrant-client" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "sentence-transformers" },
+    { name = "starlette", specifier = ">=0.38.0" },
     { name = "structlog" },
     { name = "tree-sitter" },
     { name = "tree-sitter-cpp" },
@@ -255,6 +262,7 @@ requires-dist = [
     { name = "tree-sitter-sql" },
     { name = "tree-sitter-swift" },
     { name = "tree-sitter-typescript" },
+    { name = "uvicorn", specifier = ">=0.30.0" },
 ]
 provides-extras = ["dev"]
 
