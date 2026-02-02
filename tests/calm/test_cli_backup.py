@@ -1,0 +1,147 @@
+"""Tests for CALM backup CLI commands."""
+
+from pathlib import Path
+
+import pytest
+from click.testing import CliRunner
+
+import calm.config
+import calm.orchestration.backups
+from calm.cli.main import cli
+from calm.config import CalmSettings
+from calm.db.schema import init_database
+
+
+@pytest.fixture
+def cli_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Set up CLI environment with temp database."""
+    calm_home = tmp_path / ".calm"
+    calm_home.mkdir()
+
+    db_path = calm_home / "metadata.db"
+    init_database(db_path)
+
+    # Patch settings
+    monkeypatch.setenv("CALM_HOME", str(calm_home))
+    monkeypatch.setenv("CALM_DB_PATH", str(db_path))
+
+    new_settings = CalmSettings(home=calm_home, db_path=db_path)
+    monkeypatch.setattr(calm.config, "settings", new_settings)
+    monkeypatch.setattr(calm.orchestration.backups, "settings", new_settings)
+
+    return db_path
+
+
+class TestBackupCreate:
+    """Tests for calm backup create command."""
+
+    def test_create_backup_with_name(self, cli_env: Path) -> None:
+        """Test creating a named backup."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["backup", "create", "test_backup"])
+
+        assert result.exit_code == 0
+        assert "test_backup" in result.output
+        assert "Created backup" in result.output
+
+    def test_create_backup_auto_name(self, cli_env: Path) -> None:
+        """Test creating a backup with auto-generated name."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["backup", "create"])
+
+        assert result.exit_code == 0
+        assert "Created backup" in result.output
+
+
+class TestBackupList:
+    """Tests for calm backup list command."""
+
+    def test_list_backups_empty(self, cli_env: Path) -> None:
+        """Test listing backups when none exist."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["backup", "list"])
+
+        assert result.exit_code == 0
+        assert "No backups found" in result.output
+
+    def test_list_backups_with_backups(self, cli_env: Path) -> None:
+        """Test listing backups after creating some."""
+        runner = CliRunner()
+
+        # Create backups
+        runner.invoke(cli, ["backup", "create", "backup1"])
+        runner.invoke(cli, ["backup", "create", "backup2"])
+
+        result = runner.invoke(cli, ["backup", "list"])
+
+        assert result.exit_code == 0
+        assert "backup1" in result.output
+        assert "backup2" in result.output
+
+
+class TestBackupRestore:
+    """Tests for calm backup restore command."""
+
+    def test_restore_backup(self, cli_env: Path) -> None:
+        """Test restoring a backup."""
+        runner = CliRunner()
+
+        # Create backup
+        runner.invoke(cli, ["backup", "create", "restore_test"])
+
+        # Restore with confirmation
+        result = runner.invoke(
+            cli, ["backup", "restore", "restore_test"], input="y\n"
+        )
+
+        assert result.exit_code == 0
+        assert "Restored" in result.output
+
+    def test_restore_nonexistent_backup(self, cli_env: Path) -> None:
+        """Test restoring nonexistent backup fails."""
+        runner = CliRunner()
+        result = runner.invoke(
+            cli, ["backup", "restore", "nonexistent"], input="y\n"
+        )
+
+        assert result.exit_code != 0
+        assert "not found" in result.output.lower()
+
+
+class TestBackupAuto:
+    """Tests for calm backup auto command."""
+
+    def test_auto_backup(self, cli_env: Path) -> None:
+        """Test creating an auto-backup."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["backup", "auto"])
+
+        assert result.exit_code == 0
+        assert "auto_" in result.output
+
+
+class TestBackupDelete:
+    """Tests for calm backup delete command."""
+
+    def test_delete_backup(self, cli_env: Path) -> None:
+        """Test deleting a backup."""
+        runner = CliRunner()
+
+        # Create backup
+        runner.invoke(cli, ["backup", "create", "delete_me"])
+
+        # Delete with confirmation
+        result = runner.invoke(cli, ["backup", "delete", "delete_me"], input="y\n")
+
+        assert result.exit_code == 0
+        assert "Deleted" in result.output
+
+    def test_delete_nonexistent_backup(self, cli_env: Path) -> None:
+        """Test deleting nonexistent backup fails."""
+        runner = CliRunner()
+        result = runner.invoke(
+            cli, ["backup", "delete", "nonexistent"], input="y\n"
+        )
+
+        assert result.exit_code != 0
+        assert "not found" in result.output.lower()
