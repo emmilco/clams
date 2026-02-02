@@ -112,3 +112,89 @@ def next_commands() -> None:
     """Generate next commands for active tasks."""
     commands = session_ops.generate_next_commands()
     click.echo(commands)
+
+
+# === Journal Subgroup ===
+# Journal entries are distinct from session handoffs.
+# They capture session summaries, friction points, and logs for
+# the learning reflection loop.
+
+
+@session.group()
+def journal() -> None:
+    """Session journal management commands."""
+    pass
+
+
+@journal.command("list")
+@click.option("--unreflected", is_flag=True, help="Only show unreflected entries")
+@click.option("--project", "project_name", help="Filter by project name")
+@click.option("--limit", default=20, help="Maximum entries (default: 20)")
+def journal_list(unreflected: bool, project_name: str | None, limit: int) -> None:
+    """List session journal entries."""
+    from calm.orchestration.journal import list_journal_entries
+
+    entries = list_journal_entries(
+        unreflected_only=unreflected,
+        project_name=project_name,
+        limit=limit,
+    )
+
+    if not entries:
+        click.echo("No journal entries found.")
+        return
+
+    # Table header
+    click.echo(f"{'ID':<36}  {'Created':<19}  {'Project':<15}  {'Summary'}")
+    click.echo("-" * 100)
+
+    for entry in entries:
+        created = entry.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        project = entry.project_name or "(none)"
+        summary = (
+            (entry.summary[:40] + "...") if len(entry.summary) > 43 else entry.summary
+        )
+        reflected = "" if entry.reflected_at else " [unreflected]"
+        click.echo(
+            f"{entry.id:<36}  {created:<19}  {project:<15}  {summary}{reflected}"
+        )
+
+
+@journal.command("show")
+@click.argument("entry_id")
+@click.option("--log", is_flag=True, help="Include session log content")
+def journal_show(entry_id: str, log: bool) -> None:
+    """Show full details of a journal entry."""
+    from calm.orchestration.journal import get_journal_entry
+
+    entry = get_journal_entry(entry_id, include_log=log)
+
+    if not entry:
+        raise click.ClickException(f"Entry {entry_id} not found")
+
+    click.echo(f"ID: {entry.id}")
+    click.echo(f"Created: {entry.created_at}")
+    click.echo(f"Project: {entry.project_name or '(none)'}")
+    click.echo(f"Working Directory: {entry.working_directory}")
+    click.echo(f"Reflected: {entry.reflected_at or 'No'}")
+    click.echo(f"Memories Created: {entry.memories_created}")
+    click.echo("")
+    click.echo("--- Summary ---")
+    click.echo(entry.summary)
+
+    if entry.friction_points:
+        click.echo("")
+        click.echo("--- Friction Points ---")
+        for point in entry.friction_points:
+            click.echo(f"- {point}")
+
+    if entry.next_steps:
+        click.echo("")
+        click.echo("--- Next Steps ---")
+        for step in entry.next_steps:
+            click.echo(f"- {step}")
+
+    if log and entry.session_log:
+        click.echo("")
+        click.echo("--- Session Log ---")
+        click.echo(entry.session_log)

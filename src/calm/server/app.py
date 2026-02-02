@@ -437,6 +437,110 @@ def _get_all_tool_definitions() -> list[Tool]:
             description="Reset tool counter after reminder.",
             inputSchema={"type": "object", "properties": {}, "required": []},
         ),
+        # === Session Journal Tools ===
+        Tool(
+            name="store_journal_entry",
+            description="Store a new session journal entry with optional log capture.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "summary": {
+                        "type": "string",
+                        "description": "Session summary text (required)",
+                    },
+                    "working_directory": {
+                        "type": "string",
+                        "description": "The working directory of the session (required)",
+                    },
+                    "friction_points": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of friction points encountered",
+                    },
+                    "next_steps": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Recommended next steps",
+                    },
+                    "session_log_content": {
+                        "type": "string",
+                        "description": "Raw session log content to store",
+                    },
+                },
+                "required": ["summary", "working_directory"],
+            },
+        ),
+        Tool(
+            name="list_journal_entries",
+            description="List session journal entries with optional filters.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "unreflected_only": {
+                        "type": "boolean",
+                        "description": "Only return entries where reflected_at is NULL",
+                        "default": False,
+                    },
+                    "project_name": {
+                        "type": "string",
+                        "description": "Filter by project name",
+                    },
+                    "working_directory": {
+                        "type": "string",
+                        "description": "Filter by exact working directory",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum entries to return (default 50)",
+                        "default": 50,
+                    },
+                },
+                "required": [],
+            },
+        ),
+        Tool(
+            name="get_journal_entry",
+            description="Get full details of a journal entry.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "entry_id": {
+                        "type": "string",
+                        "description": "The entry ID",
+                    },
+                    "include_log": {
+                        "type": "boolean",
+                        "description": "Include the full session log content",
+                        "default": False,
+                    },
+                },
+                "required": ["entry_id"],
+            },
+        ),
+        Tool(
+            name="mark_entries_reflected",
+            description="Mark entries as reflected and optionally delete their logs.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "entry_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of entry IDs to mark",
+                    },
+                    "memories_created": {
+                        "type": "integer",
+                        "description": "Number of memories created from this batch",
+                    },
+                    "delete_logs": {
+                        "type": "boolean",
+                        "description": "Delete session log files after marking",
+                        "default": True,
+                    },
+                },
+                "required": ["entry_ids"],
+            },
+        ),
         # === Health Check ===
         Tool(
             name="ping",
@@ -462,6 +566,7 @@ async def create_server() -> tuple[Server, dict[str, Any]]:
         get_context_tools,
         get_ghap_tools,
         get_git_tools,
+        get_journal_tools,
         get_learning_tools,
         get_memory_tools,
         get_session_tools,
@@ -509,6 +614,9 @@ async def create_server() -> tuple[Server, dict[str, Any]]:
     # Session tools
     session_manager = SessionManager()
     tool_registry.update(get_session_tools(session_manager))
+
+    # Journal tools
+    tool_registry.update(get_journal_tools())
 
     # Ping tool
     async def ping() -> dict[str, Any]:
