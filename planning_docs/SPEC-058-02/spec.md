@@ -79,30 +79,36 @@ Most of the memory/GHAP logic already exists in `src/clams/`. The approach:
 | Source (clams) | Destination (calm) | Notes |
 |----------------|-------------------|-------|
 | `storage/qdrant.py` | `storage/qdrant.py` | Vector storage client |
-| `storage/embeddings.py` | `storage/embeddings.py` | Embedding generation |
-| `memory/store.py` | `memory/store.py` | Memory CRUD |
-| `ghap/tracker.py` | `ghap/tracker.py` | GHAP state management |
-| `code/indexer.py` | `code/indexer.py` | Code indexing |
-| `git/commits.py` | `git/commits.py` | Git integration |
+| `embedding/` | `embedding/` | Embedding model wrappers |
+| `server/tools/memory.py` | `tools/memory.py` | Memory tool handlers |
+| `observation/collector.py` | `ghap/collector.py` | GHAP state management |
+| `observation/persister.py` | `ghap/persister.py` | GHAP persistence |
+| `observation/models.py` | `ghap/models.py` | GHAP data models |
+| `indexers/indexer.py` | `indexers/indexer.py` | Code indexing |
+| `indexers/tree_sitter.py` | `indexers/tree_sitter.py` | Tree-sitter parsing |
+| `git/reader.py` | `git/reader.py` | Git log reading |
+| `git/analyzer.py` | `git/analyzer.py` | Git analysis (churn, authors) |
 | `clustering/` | `clustering/` | Experience clustering |
-| `values/` | `values/` | Value store |
-| `context/assembler.py` | `context/assembler.py` | Context building |
-| `tools/*.py` | `tools/*.py` | MCP tool handlers |
+| `values/` | `values/` | Value store (Qdrant-based) |
+| `context/` | `context/` | Context assembly |
+| `search/` | `search/` | Semantic search |
+| `server/tools/*.py` | `tools/*.py` | MCP tool handlers |
 
-### Database Tables
+### Database Tables (SQLite)
 
 The tables were already created in SPEC-058-01:
-- `memories` - Memory storage with category, importance, tags
+- `memories` - Memory storage with category, importance, tags, embedding_id
 - `ghap_entries` - GHAP tracking with full lifecycle
-- `code_files`, `code_chunks` - Code indexing metadata
-- `commits` - Git commit indexing
-- `values` - Validated value statements (already in schema)
+- `code_files`, `code_chunks` - Code indexing metadata (file paths, chunk offsets)
+- `commits` - Git commit indexing (commit hashes, messages)
 - `settings` - Runtime settings storage
 
-### Values and Clustering Storage
+### Values and Clustering Storage (Qdrant)
 
-- **Values**: Stored in the `values` table with `text`, `cluster_id`, `axis`, and `created_at`
-- **Clustering**: Computed at query time from GHAP entry embeddings in Qdrant. No persistent clustering tables - clusters are dynamically calculated using HDBSCAN on the embedded GHAP data when `get_clusters` is called
+**Important**: Values are stored in Qdrant, NOT SQLite.
+
+- **Values**: Stored in the `values` Qdrant collection with embeddings. The payload includes `text`, `cluster_id`, `axis`, and `created_at`. This allows semantic search for similar value statements.
+- **Clustering**: Computed at query time from GHAP entry embeddings in Qdrant. No persistent clustering tables - clusters are dynamically calculated using HDBSCAN on the embedded GHAP data when `get_clusters` is called.
 
 ### Qdrant Collections
 
@@ -117,6 +123,7 @@ The existing clams collections will be reused (same Qdrant instance):
 | `ghap_strategy` | Strategy-focused GHAP text | 768 | Cosine |
 | `ghap_surprise` | Surprise descriptions | 768 | Cosine |
 | `ghap_root_cause` | Root cause descriptions | 768 | Cosine |
+| `values` | Value statement embeddings | 768 | Cosine |
 
 Note: Code chunks use a smaller model (all-MiniLM-L6-v2, 384 dim) optimized for code. Semantic content uses nomic-embed-text-v1.5 (768 dim).
 
