@@ -49,6 +49,7 @@ The current clams package provides memory and learning features through MCP tool
    - `assemble_context` - Build context from memories + experiences
 
 7. **Session Tools** (basic)
+   - `ping` - Health check endpoint
    - `start_session` - Initialize session
    - `get_orphaned_ghap` - Check for orphaned GHAP from previous session
    - `should_check_in` - Check if GHAP reminder is due
@@ -95,6 +96,29 @@ The tables were already created in SPEC-058-01:
 - `ghap_entries` - GHAP tracking with full lifecycle
 - `code_files`, `code_chunks` - Code indexing metadata
 - `commits` - Git commit indexing
+- `values` - Validated value statements (already in schema)
+- `settings` - Runtime settings storage
+
+### Values and Clustering Storage
+
+- **Values**: Stored in the `values` table with `text`, `cluster_id`, `axis`, and `created_at`
+- **Clustering**: Computed at query time from GHAP entry embeddings in Qdrant. No persistent clustering tables - clusters are dynamically calculated using HDBSCAN on the embedded GHAP data when `get_clusters` is called
+
+### Qdrant Collections
+
+The existing clams collections will be reused (same Qdrant instance):
+
+| Collection | Content | Dimension | Metric |
+|------------|---------|-----------|--------|
+| `memories` | Memory content embeddings | 768 | Cosine |
+| `code_chunks` | Code snippet embeddings | 384 | Cosine |
+| `commits` | Commit message embeddings | 768 | Cosine |
+| `ghap_full` | Full GHAP entry text | 768 | Cosine |
+| `ghap_strategy` | Strategy-focused GHAP text | 768 | Cosine |
+| `ghap_surprise` | Surprise descriptions | 768 | Cosine |
+| `ghap_root_cause` | Root cause descriptions | 768 | Cosine |
+
+Note: Code chunks use a smaller model (all-MiniLM-L6-v2, 384 dim) optimized for code. Semantic content uses nomic-embed-text-v1.5 (768 dim).
 
 ### Configuration
 
@@ -111,7 +135,7 @@ Settings in `calm.config`:
 4. [ ] All git tools functional (`index_commits`, `search_commits`, `get_file_history`, `get_churn_hotspots`, `get_code_authors`)
 5. [ ] All learning tools functional (`search_experiences`, `get_clusters`, `get_cluster_members`, `validate_value`, `store_value`, `list_values`)
 6. [ ] `assemble_context` tool functional
-7. [ ] Session helper tools functional (`start_session`, `get_orphaned_ghap`, `should_check_in`, etc.)
+7. [ ] Session helper tools functional (`ping`, `start_session`, `get_orphaned_ghap`, `should_check_in`, etc.)
 8. [ ] All tools registered in calm MCP server
 9. [ ] Tools use calm's `~/.calm/metadata.db` and `~/.calm/` paths
 10. [ ] Existing clams functionality unchanged (runs in parallel)
