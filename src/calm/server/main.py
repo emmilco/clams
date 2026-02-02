@@ -74,7 +74,7 @@ async def _run_server_async(host: str, port: int) -> None:
     logger.info("calm.starting", version=__version__, host=host, port=port)
 
     # Create MCP server
-    mcp_server = create_server()
+    mcp_server, _tool_registry = await create_server()
 
     # Create SSE transport
     sse_transport = SseServerTransport("/sse")

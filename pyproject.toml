@@ -70,6 +70,7 @@ select = ["E", "F", "I", "N", "W", "UP"]
 "generate_*.py" = ["E501"]
 # JSON schema definitions have long string literals that can't be easily wrapped
 "src/clams/server/tools/__init__.py" = ["E501"]
+"src/calm/server/app.py" = ["E501"]
 # Docstrings with long parameter descriptions
 "src/clams/search/searcher.py" = ["E501"]
 # Test files with module-level imports after sys.path manipulation or pytest markers
