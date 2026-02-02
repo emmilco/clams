@@ -86,6 +86,8 @@ Moving to Python allows:
 - Session journaling for `/wrapup` - covered in SPEC-058-04
 - `/reflection` skill - covered in SPEC-058-04
 - Memory/GHAP CLI commands - covered in SPEC-058-02
+- `calm init` - Already implemented in SPEC-058-01
+- `calm migrate` - One-off migration script, not a permanent CLI command (see SPEC-058-07)
 
 ## Technical Approach
 
@@ -122,10 +124,37 @@ The tables were already created in SPEC-058-01:
 - `reviews` - Review results
 - `test_runs` - Test run history
 - `counters` - System counters
+- `sessions` - Session handoff storage (note: separate from `session_journal` which is for memory/reflection in SPEC-058-04)
 
-Need to add:
-- `phase_transitions` - Phase change history
-- `backups` - Backup metadata (or just use filesystem)
+#### Phase Transitions Table
+
+Need to add this table for phase history tracking:
+
+```sql
+CREATE TABLE phase_transitions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id TEXT NOT NULL,
+    from_phase TEXT NOT NULL,
+    to_phase TEXT NOT NULL,
+    gate_result TEXT,  -- 'pass' or 'fail'
+    gate_details TEXT,
+    transitioned_at TEXT NOT NULL,
+    FOREIGN KEY (task_id) REFERENCES tasks(id)
+);
+
+CREATE INDEX idx_transitions_task ON phase_transitions(task_id);
+```
+
+#### Sessions vs Session Journal
+
+- `sessions` table: Stores **orchestration handoffs** (task status snapshots, next commands) - used by this task
+- `session_journal` table: Stores **memory/learning journal entries** (summaries, friction points, session logs) - used by SPEC-058-04
+
+These are distinct purposes: orchestration continuity vs. memory extraction.
+
+#### Backups
+
+Backup metadata will be stored in the filesystem (`~/.calm/backups/`) rather than a database table. Each backup is a timestamped copy of `metadata.db`.
 
 ### Project Path Handling
 
@@ -181,6 +210,7 @@ Uses Click (already a dependency from SPEC-058-01):
 
 - **SPEC-058-01**: Foundation must be complete (DONE)
 - **Git**: For worktree operations
+- **Role files**: `calm worker prompt` and `calm worker context` require role files in `~/.calm/roles/`. These are copied from the repo during installation (SPEC-058-06) or can be manually placed for testing.
 
 ## Migration Path
 
