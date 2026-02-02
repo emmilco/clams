@@ -113,6 +113,22 @@ class CalmSettings(BaseSettings):
         """Directory for session logs."""
         return self.home / "sessions"
 
+    @property
+    def calm_dir(self) -> Path:
+        """Alias for home directory (for compatibility)."""
+        return self.home
+
+    @property
+    def journal_dir(self) -> Path:
+        """Directory for GHAP journal files."""
+        return self.home / "journal"
+
+    # Memory tool settings
+    memory_content_max_length: int = Field(
+        default=10000,
+        description="Maximum length for memory content",
+    )
+
 
 # Module-level singleton
 settings = CalmSettings()

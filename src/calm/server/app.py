@@ -17,7 +17,7 @@ def create_server() -> Server:
     """
     server = Server("calm")
 
-    @server.tool()  # type: ignore[attr-defined, untyped-decorator]
+    @server.tool()  # type: ignore[attr-defined, misc]
     async def ping() -> dict[str, Any]:
         """Health check endpoint.
 
