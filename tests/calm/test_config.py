@@ -40,6 +40,11 @@ class TestCalmSettings:
         settings = CalmSettings()
         assert settings.sessions_dir == settings.home / "sessions"
 
+    def test_skills_dir_property(self) -> None:
+        """Test skills_dir property."""
+        settings = CalmSettings()
+        assert settings.skills_dir == settings.home / "skills"
+
 
 class TestDefaultConfig:
     """Tests for default configuration."""

@@ -123,6 +123,11 @@ class CalmSettings(BaseSettings):
         """Directory for GHAP journal files."""
         return self.home / "journal"
 
+    @property
+    def skills_dir(self) -> Path:
+        """Directory for skill templates."""
+        return self.home / "skills"
+
     # Memory tool settings
     memory_content_max_length: int = Field(
         default=10000,
