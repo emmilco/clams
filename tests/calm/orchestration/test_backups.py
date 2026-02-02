@@ -31,9 +31,8 @@ def backup_setup(
     tmp_path: Path, test_db: Path, monkeypatch: pytest.MonkeyPatch
 ) -> Path:
     """Set up backup environment."""
-    from calm.config import CalmSettings
-
     import calm.orchestration.backups
+    from calm.config import CalmSettings
 
     calm_home = tmp_path / ".calm"
     new_settings = CalmSettings(home=calm_home, db_path=test_db)

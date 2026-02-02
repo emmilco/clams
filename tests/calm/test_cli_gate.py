@@ -7,10 +7,10 @@ from click.testing import CliRunner
 
 import calm.config
 import calm.orchestration.counters
+import calm.orchestration.gates
+import calm.orchestration.reviews
 import calm.orchestration.tasks
 import calm.orchestration.workers
-import calm.orchestration.reviews
-import calm.orchestration.gates
 from calm.cli.main import cli
 from calm.config import CalmSettings
 from calm.db.schema import init_database

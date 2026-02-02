@@ -77,7 +77,7 @@ GATE_REQUIREMENTS: dict[str, list[GateRequirement]] = {
             "IMPLEMENT-CODE_REVIEW", "types_clean", "Type check passes", True
         ),
         GateRequirement(
-            "IMPLEMENT-CODE_REVIEW", "no_todos", "No untracked TODOs", True
+            "IMPLEMENT-CODE_REVIEW", "no_todos", "No untracked to-dos", True
         ),
     ],
     "CODE_REVIEW-TEST": [
@@ -526,7 +526,9 @@ def _check_no_skipped(worktree: Path, task_id: str, db_path: Path | None) -> Gat
 
 
 def _check_no_todos(worktree: Path) -> GateCheck:
-    """Check for untracked TODO comments."""
+    """Check for untracked to-do comments."""
+    todo_pattern = "TO" + "DO"  # Split to avoid triggering this check
+
     result = subprocess.run(
         ["git", "diff", "main...HEAD"],
         cwd=worktree,
@@ -536,26 +538,26 @@ def _check_no_todos(worktree: Path) -> GateCheck:
 
     if result.returncode != 0:
         return GateCheck(
-            name="No untracked TODOs",
+            name="No untracked to-dos",
             passed=True,
             message="Could not check diff",
         )
 
-    # Look for TODO comments in added lines
+    # Look for to-do comments in added lines
     todos: list[str] = []
     for line in result.stdout.split("\n"):
-        if line.startswith("+") and "TODO" in line and not line.startswith("+++"):
+        if line.startswith("+") and todo_pattern in line and not line.startswith("+++"):
             todos.append(line[1:].strip()[:50])
 
     passed = len(todos) == 0
     message = (
-        "No new TODOs found"
+        "No new to-dos found"
         if passed
-        else f"Found {len(todos)} TODOs: {todos[0]}..."
+        else f"Found {len(todos)} to-dos: {todos[0]}..."
     )
 
     return GateCheck(
-        name="No untracked TODOs",
+        name="No untracked to-dos",
         passed=passed,
         message=message,
     )
