@@ -48,11 +48,10 @@ dev = [
 ]
 
 [project.scripts]
-clams-server = "clams.server.main:main"
 calm = "calm.cli.main:cli"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/clams", "src/calm"]
+packages = ["src/calm"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "src/calm/templates" = "calm/templates"
@@ -72,15 +71,7 @@ select = ["E", "F", "I", "N", "W", "UP"]
 # Data generation scripts have long string literals
 "generate_*.py" = ["E501"]
 # JSON schema definitions have long string literals that can't be easily wrapped
-"src/clams/server/tools/__init__.py" = ["E501"]
 "src/calm/server/app.py" = ["E501"]
-# Docstrings with long parameter descriptions
-"src/clams/search/searcher.py" = ["E501"]
-# Test files with module-level imports after sys.path manipulation or pytest markers
-"tests/integration/test_e2e.py" = ["E402"]
-"tests/integration/test_data_flows.py" = ["E402"]
-"tests/integration/test_round_trip.py" = ["E402"]
-"tests/test_bug_006_experience_schema.py" = ["E402"]
 # Test files with long assertions and test data - hard to wrap meaningfully
 "tests/**/*.py" = ["E501"]
 
@@ -92,7 +83,7 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["structlog", "mcp.*", "aiofiles", "hdbscan", "clams.*", "calm.*"]
+module = ["structlog", "mcp.*", "aiofiles", "hdbscan", "calm.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
