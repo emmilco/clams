@@ -104,7 +104,7 @@ class TestAtomicWriteJson:
 
         # Make json.dump fail
         def fail_dump(*args: Any, **kwargs: Any) -> None:
-            raise IOError("Simulated failure")
+            raise OSError("Simulated failure")
 
         monkeypatch.setattr(json, "dump", fail_dump)
 

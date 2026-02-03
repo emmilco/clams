@@ -9,7 +9,6 @@ import pytest
 
 from calm.install.docker import (
     ContainerState,
-    QdrantStatus,
     check_docker_running,
     create_qdrant_container,
     get_qdrant_status,

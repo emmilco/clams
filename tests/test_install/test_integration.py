@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
-from typing import Any
 
 import pytest
 
-from calm.install import InstallOptions, InstallResult, install
+from calm.install import InstallOptions, install
 
 
 class TestFullInstallation:
