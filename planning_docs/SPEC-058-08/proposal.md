@@ -11,15 +11,16 @@ The ordering is designed so that each step produces a state that can be independ
 1. **Remove `src/clams/`** -- the root cause of all downstream cleanup. Everything else depends on this being gone.
 2. **Remove `.claude/roles/`** -- independent of source code, simple directory deletion.
 3. **Remove `.claude/hooks/`** -- independent of source code, simple file deletion.
-4. **Update `pyproject.toml`** -- must happen after `src/clams/` is removed, because the build system will fail if it references a nonexistent package directory.
-5. **Remove clams-only test files** -- must happen after `src/clams/` removal, since these tests will fail with import errors. Removing them restores test collection.
+4. **Update `pyproject.toml`** -- must happen after `src/clams/` is removed, because the build system will fail if it references a nonexistent package directory. Also removes stale ruff per-file-ignores for test files deleted in step 5.
+5. **Remove clams-only test files** -- must happen after `src/clams/` removal, since these tests will fail with import errors. Removing them restores test collection. Includes `tests/utils/` (7 files, all clams-only).
 6. **Update `tests/conftest.py`** -- must happen after step 5, since conftest imports `clams.utils.platform` which no longer exists. The `PlatformInfo` and `get_platform_info` functionality must be either moved to `calm.utils.platform` or inlined into conftest, since it is still needed by the test platform-skip infrastructure.
-7. **Verify** -- run the full test suite, linter, and type checker on the remaining codebase.
+7. **Address `.claude/settings.local.json`** -- spec item 7 requires this, but the file does not exist in the worktree. No action needed.
+8. **Verify** -- run the full test suite, linter, and type checker on the remaining codebase.
 
 ## Step 1: Remove `src/clams/`
 
 ### What
-Delete the entire `src/clams/` directory tree. This contains 74 Python source files across 14 subdirectories (clustering, config, context, embedding, git, indexers, observation, search, server, storage, utils, values, verification, plus `__init__.py`).
+Delete the entire `src/clams/` directory tree. This contains 74 Python source files across 14 subdirectories (clustering, config, context, embedding, git, indexers, observation, search, server, storage, utils, values, verification, plus `__init__.py` and `config.py` at the top level).
 
 ### Files Affected
 - `src/clams/` -- entire directory tree (recursive delete)
@@ -35,10 +36,10 @@ Delete the entire `src/clams/` directory tree. This contains 74 Python source fi
 ## Step 2: Remove `.claude/roles/`
 
 ### What
-Delete all 16 role files plus the `_base.md` template. These files are now managed at `~/.calm/roles/` by the CALM install script (SPEC-058-01).
+Delete all 16 role files. These files are now managed at `~/.calm/roles/` by the CALM install script (SPEC-058-01).
 
 ### Files Affected
-- `.claude/roles/` -- entire directory (17 files: `_base.md`, `ai-dl.md`, `architect.md`, `backend.md`, `bug-investigator.md`, `doc-writer.md`, `e2e-runner.md`, `frontend.md`, `infra.md`, `planning.md`, `product.md`, `proposal-reviewer.md`, `qa.md`, `reviewer.md`, `spec-reviewer.md`, `ux.md`)
+- `.claude/roles/` -- entire directory (16 files: `_base.md`, `ai-dl.md`, `architect.md`, `backend.md`, `bug-investigator.md`, `doc-writer.md`, `e2e-runner.md`, `frontend.md`, `infra.md`, `planning.md`, `product.md`, `proposal-reviewer.md`, `qa.md`, `reviewer.md`, `spec-reviewer.md`, `ux.md`)
 
 ### Verification
 - `ls .claude/roles/` returns "No such file or directory"
@@ -77,7 +78,9 @@ Remove all references to the `clams` package from the build and tool configurati
 
 3. **Remove ruff per-file-ignores for `src/clams/` paths** (lines 75, 78): Delete the entries for `"src/clams/server/tools/__init__.py"` and `"src/clams/search/searcher.py"`.
 
-4. **Remove `clams.*` from mypy overrides** (line 95): Change `module = ["structlog", "mcp.*", "aiofiles", "hdbscan", "clams.*", "calm.*"]` to remove `"clams.*"`.
+4. **Remove stale ruff per-file-ignores for deleted test files** (lines 80-83): Delete the entries for `"tests/integration/test_e2e.py"`, `"tests/integration/test_data_flows.py"`, `"tests/integration/test_round_trip.py"`, and `"tests/test_bug_006_experience_schema.py"`. These test files are removed in Step 5, so their per-file-ignores are stale.
+
+5. **Remove `clams.*` from mypy overrides** (line 95): Change `module = ["structlog", "mcp.*", "aiofiles", "hdbscan", "clams.*", "calm.*"]` to remove `"clams.*"`.
 
 ### Files Affected
 - `pyproject.toml`
@@ -86,6 +89,7 @@ Remove all references to the `clams` package from the build and tool configurati
 - `grep -r "src/clams" pyproject.toml` returns nothing
 - `grep "clams-server" pyproject.toml` returns nothing
 - `grep "clams\.\*" pyproject.toml` returns nothing
+- `grep "test_e2e\|test_data_flows\|test_round_trip\|test_bug_006" pyproject.toml` returns nothing
 - `python -m build --wheel` succeeds (or at minimum, `pip install -e .` succeeds)
 
 ## Step 5: Remove Clams-Only Test Files
@@ -105,6 +109,7 @@ There are 118 test files that import from `clams` but NOT from `calm`. These nee
 - `tests/search/` -- tests `clams.search`
 - `tests/server/` -- tests `clams.server` (NOT `tests/calm/` which tests `calm.server`)
 - `tests/storage/` -- tests `clams.storage`
+- `tests/utils/` -- tests `clams.utils` (7 files, all import exclusively from `clams`)
 - `tests/values/` -- tests `clams.values`
 
 **Test directories/files to delete** (clams-focused integration/infrastructure tests):
@@ -168,7 +173,18 @@ This functionality is still needed by the remaining `calm` tests (some have `@py
 - `grep -r "from clams" tests/conftest.py` returns nothing
 - `pytest --collect-only` succeeds with no import errors
 
-## Step 7: Verify Preserved Files
+## Step 7: Address `.claude/settings.local.json`
+
+### What
+The spec (item 7) requires removing stale allowlist entries from `.claude/settings.local.json`. This file does **not exist** in the worktree (verified by `ls`). No action is needed for this item -- there are no stale entries to remove because the file is absent.
+
+### Files Affected
+- None (file does not exist)
+
+### Verification
+- `ls .claude/settings.local.json` returns "No such file or directory"
+
+## Step 8: Verify Preserved Files
 
 ### What
 Explicitly verify that files marked as "do NOT delete" in the spec are still present.
@@ -196,7 +212,7 @@ Explicitly verify that files marked as "do NOT delete" in the spec are still pre
 
 ### Risk 3: Accidentally deleting preserved files
 **Likelihood**: Low. The spec clearly lists what must be preserved.
-**Mitigation**: Step 7 is an explicit verification step. The implementer should also use `git diff --stat` before committing to review exactly what was deleted.
+**Mitigation**: Step 8 is an explicit verification step. The implementer should also use `git diff --stat` before committing to review exactly what was deleted.
 
 ### Risk 4: conftest.py cold-start fixture removal breaks calm tests
 **Likelihood**: Medium. The cold-start fixtures (`cold_start_db`, `cold_start_env`, etc.) may be used by `tests/calm/` tests.
@@ -219,5 +235,5 @@ Explicitly verify that files marked as "do NOT delete" in the spec are still pre
 2. `ruff check` passes clean
 3. `mypy --strict src/calm/` passes clean
 4. `grep -r "from clams\." src/ tests/` returns zero matches (excluding `tests/test_cutover.py` which legitimately references old module paths in its test logic)
-5. All preserved files confirmed present (Step 7 checklist)
+5. All preserved files confirmed present (Step 8 checklist)
 6. `git diff --stat` shows only deletions and the expected edits to `pyproject.toml`, `conftest.py`, and new `calm/utils/platform.py`
