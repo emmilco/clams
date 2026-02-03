@@ -1,0 +1,17 @@
+# CALM Configuration
+# See https://github.com/anthropics/calm for documentation
+
+# Server settings
+server:
+  host: 127.0.0.1
+  port: 6335
+  log_level: info
+
+# Embedding settings
+embedding:
+  code_model: sentence-transformers/all-MiniLM-L6-v2
+  semantic_model: nomic-ai/nomic-embed-text-v1.5
+
+# Qdrant settings
+qdrant:
+  url: http://localhost:6333
