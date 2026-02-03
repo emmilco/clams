@@ -1,4 +1,4 @@
-"""Platform capability detection for CLAMS.
+"""Platform capability detection for CALM.
 
 Provides centralized detection of platform-specific features including:
 - OS detection (macOS, Linux)
@@ -8,7 +8,7 @@ Provides centralized detection of platform-specific features including:
 - Service availability (Qdrant)
 
 Usage:
-    from clams.utils.platform import get_platform_info, check_requirements
+    from calm.utils.platform import get_platform_info, check_requirements
 
     info = get_platform_info()
     if info.mps_available:
@@ -160,14 +160,14 @@ def get_platform_info(qdrant_url: str | None = None) -> PlatformInfo:
 
     Args:
         qdrant_url: URL for Qdrant availability check. Defaults to
-                    CLAMS_QDRANT_URL env var or "http://localhost:6333"
+                    CALM_QDRANT_URL env var or "http://localhost:6333"
 
     Returns:
         PlatformInfo with all detected capabilities
     """
     # Determine Qdrant URL from environment or default
     if qdrant_url is None:
-        qdrant_url = os.environ.get("CLAMS_QDRANT_URL", "http://localhost:6333")
+        qdrant_url = os.environ.get("CALM_QDRANT_URL", "http://localhost:6333")
 
     os_name = platform.system().lower()
     os_version = platform.platform()

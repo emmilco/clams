@@ -2,87 +2,11 @@
 
 import os
 import threading
-import warnings
 from collections.abc import Generator
-from pathlib import Path
 
 import pytest
 
-from clams.utils.platform import PlatformInfo, get_platform_info
-
-
-def get_server_command(
-    *,
-    http: bool = True,
-    daemon: bool = False,
-    host: str | None = None,
-    port: int | None = None,
-    use_module: bool = False,
-) -> list[str]:
-    """Get canonical server start command for tests.
-
-    IMPORTANT: This function returns commands matching production hook usage.
-
-    Production hooks (session_start.sh) use:
-        "$REPO_ROOT/.venv/bin/python" -m clams.server.main --http --daemon
-
-    For MCP stdio tests, use the default (use_module=False) which returns
-    the equivalent clams-server binary.
-
-    Args:
-        http: Include --http flag (default True)
-        daemon: Include --daemon flag (default False for tests)
-        host: Optional --host value
-        port: Optional --port value
-        use_module: If True, return python -m style command (matches hooks).
-                   If False (default), return clams-server binary command.
-
-    Returns:
-        Command as list suitable for subprocess.run() or StdioServerParameters
-
-    Reference: SPEC-025, BUG-033
-    """
-    repo_root = Path(__file__).parent.parent
-    venv_python = repo_root / ".venv" / "bin" / "python"
-    venv_server = repo_root / ".venv" / "bin" / "clams-server"
-
-    if use_module:
-        # Module invocation style (matches session_start.sh hooks)
-        if venv_python.exists():
-            cmd = [str(venv_python), "-m", "clams.server.main"]
-        else:
-            warnings.warn(
-                f"Venv python not found at {venv_python}. "
-                "Using system python which may differ from production. "
-                "See SPEC-025.",
-                UserWarning,
-                stacklevel=2,
-            )
-            cmd = ["python", "-m", "clams.server.main"]
-    else:
-        # Binary invocation style (equivalent, more common in tests)
-        if venv_server.exists():
-            cmd = [str(venv_server)]
-        else:
-            warnings.warn(
-                f"Venv clams-server not found at {venv_server}. "
-                "Using PATH lookup which may differ from production. "
-                "See SPEC-025.",
-                UserWarning,
-                stacklevel=2,
-            )
-            cmd = ["clams-server"]
-
-    if http:
-        cmd.append("--http")
-    if daemon:
-        cmd.append("--daemon")
-    if host:
-        cmd.extend(["--host", host])
-    if port is not None:
-        cmd.extend(["--port", str(port)])
-
-    return cmd
+from calm.utils.platform import PlatformInfo, get_platform_info
 
 # Suppress HuggingFace tokenizers parallelism warnings in forked processes
 # These warnings are noisy and don't affect test correctness
@@ -90,21 +14,6 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # Enable pytest-asyncio for all tests
 pytest_plugins = ("pytest_asyncio",)
-
-# Import cold-start fixtures to make them available project-wide
-# These fixtures simulate first-use scenarios (no pre-existing data)
-# Reference: BUG-043, BUG-016 - cold start issues
-from tests.fixtures.cold_start import (  # noqa: E402, F401
-    cold_start_db,
-    cold_start_env,
-    cold_start_qdrant,
-    db_state,
-    populated_db,
-    populated_env,
-    populated_qdrant,
-    qdrant_state,
-    storage_env,
-)
 
 
 @pytest.fixture
