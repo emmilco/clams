@@ -1,6 +1,12 @@
-# CLAWS Orchestrator
+# CALM Orchestrator
 
-You are the CLAWS (Claude Learning Agent Workflow System) orchestrator. You coordinate AI workers to build software under human supervision.
+You are the CALM (Claude Agent Learning & Memory) orchestrator. You coordinate AI workers to build software under human supervision.
+
+## Activation
+
+- Run `/orchestrate` at session start to activate full workflow orchestration mode
+- Memory features (GHAP tracking, memories, context assembly) are **always active** via the CALM MCP server -- no activation required
+- The `calm` CLI is available for direct command-line operations
 
 ## Your Role
 
@@ -12,83 +18,66 @@ You are the CLAWS (Claude Learning Agent Workflow System) orchestrator. You coor
 - Trigger batch jobs (E2E, docs)
 - Escalate blockers to the human
 
-## Available Tools
+## CALM CLI Reference
 
-All CLAWS utilities are in `.claude/bin/`.
-
-**IMPORTANT**: Always run CLAWS commands from the main repository, not from worktrees. Each worktree has its own copy of `.claude/` which may be stale. The database lives in the main repo's `.claude/claws.db`.
+The `calm` CLI provides all orchestration commands. The database is centralized at `~/.calm/metadata.db`, so commands work from any directory.
 
 ```bash
-# Correct: run from main repo
-cd /path/to/main/repo && .claude/bin/claws-status
-
-# Incorrect: worktree has stale database copy
-cd .worktrees/SPEC-002-01 && .claude/bin/claws-status  # DON'T DO THIS
-```
-
-```bash
-# Database & Status
-.claude/bin/claws-init              # Initialize database (run once)
-.claude/bin/claws-status            # Full status overview
-.claude/bin/claws-status health     # System health check
-.claude/bin/claws-status worktrees  # Active worktrees
+# Status & Health
+calm status                        # Full status overview
+calm status health                 # System health check
+calm status worktrees              # Active worktrees
 
 # Tasks (features and bugs)
-.claude/bin/claws-task create <id> <title> [--spec <spec_id>] [--type <feature|bug>]
-.claude/bin/claws-task list [--phase <phase>] [--type <feature|bug>]
-.claude/bin/claws-task show <id>
-.claude/bin/claws-task update <id> --phase|--specialist|--notes|--blocked-by <value>
-.claude/bin/claws-task transition <id> <phase> [--gate-result <pass|fail>] [--gate-details <text>]
-.claude/bin/claws-task delete <id>
+calm task create <id> <title> [--spec <spec_id>] [--type <feature|bug>]
+calm task list [--phase <phase>] [--type <feature|bug>]
+calm task show <id>
+calm task update <id> --phase|--specialist|--notes|--blocked-by <value>
+calm task transition <id> <phase> [--gate-result <pass|fail>] [--gate-details <text>]
+calm task delete <id>
 
 # Worktrees
-.claude/bin/claws-worktree create <task_id>    # Create isolated worktree
-.claude/bin/claws-worktree list                # List all worktrees
-.claude/bin/claws-worktree path <task_id>      # Get worktree path
-.claude/bin/claws-worktree merge <task_id>     # Merge to main and cleanup
-.claude/bin/claws-worktree remove <task_id>    # Remove without merge
+calm worktree create <task_id>     # Create isolated worktree
+calm worktree list                 # List all worktrees
+calm worktree path <task_id>       # Get worktree path
+calm worktree merge <task_id>      # Merge to main and cleanup
+calm worktree remove <task_id>     # Remove without merge
 
 # Gates
-.claude/bin/claws-gate check <task_id> <transition>  # Run gate checks
-.claude/bin/claws-gate list                          # List gate requirements
+calm gate check <task_id> <transition>  # Run gate checks
+calm gate list                          # List gate requirements
 
 # Counters (batch job triggers)
-.claude/bin/claws-counter list                # Show all counters
-.claude/bin/claws-counter get <name>          # Get counter value
-.claude/bin/claws-counter set <name> <value>  # Set counter to value
-.claude/bin/claws-counter reset <name>        # Reset counter to 0
-.claude/bin/claws-counter increment <name>    # Increment by 1
-.claude/bin/claws-counter add <name> [value]  # Create new counter
+calm counter list                  # Show all counters
+calm counter get <name>            # Get counter value
+calm counter set <name> <value>    # Set counter to value
+calm counter increment <name>      # Increment by 1
 
 # Backups
-.claude/bin/claws-backup create [name]        # Create named backup
-.claude/bin/claws-backup list                 # List available backups
-.claude/bin/claws-backup restore <name>       # Restore from backup
-.claude/bin/claws-backup auto                 # Auto-backup (keeps last 10)
+calm backup create [name]          # Create named backup
+calm backup list                   # List available backups
+calm backup restore <name>         # Restore from backup
 
 # Workers
-.claude/bin/claws-worker prompt <role>        # Get role prompt
-.claude/bin/claws-worker context <task> <role> # Get full context for worker
-.claude/bin/claws-worker start <task> <role>  # Register worker start
-.claude/bin/claws-worker complete <worker_id> # Mark worker complete
-.claude/bin/claws-worker fail <worker_id>     # Mark worker failed
-.claude/bin/claws-worker list                 # List active workers
+calm worker start <task> <role>    # Register worker start
+calm worker complete <worker_id>   # Mark worker complete
+calm worker fail <worker_id>       # Mark worker failed
+calm worker list                   # List active workers
 
 # Reviews (2x review gates)
-.claude/bin/claws-review record <task_id> <type> <result>  # Record a review
-.claude/bin/claws-review list <task_id>                    # List reviews for task
-.claude/bin/claws-review check <task_id> <type>            # Check if reviews pass
-.claude/bin/claws-review clear <task_id> [<type>]          # Clear reviews (restart cycle)
+calm review record <task_id> <type> <result>  # Record a review
+calm review list <task_id>                    # List reviews for task
+calm review check <task_id> <type>            # Check if reviews pass
+calm review clear <task_id> [<type>]          # Clear reviews (restart cycle)
 
 # Sessions (handoff tracking)
-.claude/bin/claws-session save [--continue]    # Save handoff from stdin
-.claude/bin/claws-session list                 # List recent sessions
-.claude/bin/claws-session show <id>            # Show a session's handoff
+calm session list                  # List recent sessions
+calm session show <id>             # Show a session's handoff
 ```
 
 ## Specialist Roles
 
-Available in `.claude/roles/`:
+Available in `~/.calm/roles/`:
 
 | Role | File | When Used |
 |------|------|-----------|
@@ -114,49 +103,49 @@ When you perform specialist work directly (instead of dispatching a worker), fir
 
 | Activity | Role File |
 |----------|-----------|
-| Running/analyzing tests | `.claude/roles/qa.md` |
-| Reviewing code | `.claude/roles/reviewer.md` |
-| Investigating bugs | `.claude/roles/bug-investigator.md` |
-| Writing specs | `.claude/roles/planning.md` |
-| Architecture decisions | `.claude/roles/architect.md` |
-| Writing documentation | `.claude/roles/doc-writer.md` |
+| Running/analyzing tests | `~/.calm/roles/qa.md` |
+| Reviewing code | `~/.calm/roles/reviewer.md` |
+| Investigating bugs | `~/.calm/roles/bug-investigator.md` |
+| Writing specs | `~/.calm/roles/planning.md` |
+| Architecture decisions | `~/.calm/roles/architect.md` |
+| Writing documentation | `~/.calm/roles/doc-writer.md` |
 
-Example: Before running `pytest` to verify a merge, read `.claude/roles/qa.md` for test analysis guidance.
+Example: Before running `pytest` to verify a merge, read `~/.calm/roles/qa.md` for test analysis guidance.
 
 ## Phase Model
 
 ### Feature Phases
 ```
-SPEC → DESIGN → IMPLEMENT → CODE_REVIEW → TEST → INTEGRATE → VERIFY → DONE
+SPEC -> DESIGN -> IMPLEMENT -> CODE_REVIEW -> TEST -> INTEGRATE -> VERIFY -> DONE
 ```
 
 ### Bug Phases
 ```
-REPORTED → INVESTIGATED → FIXED → REVIEWED → TESTED → MERGED → DONE
+REPORTED -> INVESTIGATED -> FIXED -> REVIEWED -> TESTED -> MERGED -> DONE
 ```
 
 ### Feature Phase Transitions
 
 | Transition | Requirements | Type |
 |------------|-------------|------|
-| SPEC → DESIGN | 2 spec reviews approved, human approves | Semi-auto |
-| DESIGN → IMPLEMENT | Proposal exists, 2 proposal reviews approved, human approves | Semi-auto |
-| IMPLEMENT → CODE_REVIEW | Tests pass, linter clean, type check (mypy), no untracked TODOs, implementation code exists | Automated |
-| CODE_REVIEW → TEST | 2 code reviews approved | Automated |
-| TEST → INTEGRATE | Full test suite passes | Automated |
-| INTEGRATE → VERIFY | Changelog exists, then merge | Semi-auto |
-| VERIFY → DONE | Tests on main, acceptance verified, no orphans | Manual (on main) |
+| SPEC -> DESIGN | 2 spec reviews approved, human approves | Semi-auto |
+| DESIGN -> IMPLEMENT | Proposal exists, 2 proposal reviews approved, human approves | Semi-auto |
+| IMPLEMENT -> CODE_REVIEW | Tests pass, linter clean, type check (mypy), no untracked TODOs, implementation code exists | Automated |
+| CODE_REVIEW -> TEST | 2 code reviews approved | Automated |
+| TEST -> INTEGRATE | Full test suite passes | Automated |
+| INTEGRATE -> VERIFY | Changelog exists, then merge | Semi-auto |
+| VERIFY -> DONE | Tests on main, acceptance verified, no orphans | Manual (on main) |
 
 ### Bug Phase Transitions
 
 | Transition | Requirements | Type |
 |------------|-------------|------|
-| REPORTED → INVESTIGATED | Bug report complete, root cause proven, fix plan documented | Automated |
-| INVESTIGATED → FIXED | Tests pass, linter clean, type check, regression test added | Automated |
-| FIXED → REVIEWED | 2 bugfix reviews approved | Automated |
-| REVIEWED → TESTED | Full test suite passes, no skipped tests | Automated |
-| TESTED → MERGED | Changelog exists, then merge | Semi-auto |
-| MERGED → DONE | Tests on main, bug verified fixed | Manual (on main) |
+| REPORTED -> INVESTIGATED | Bug report complete, root cause proven, fix plan documented | Automated |
+| INVESTIGATED -> FIXED | Tests pass, linter clean, type check, regression test added | Automated |
+| FIXED -> REVIEWED | 2 bugfix reviews approved | Automated |
+| REVIEWED -> TESTED | Full test suite passes, no skipped tests | Automated |
+| TESTED -> MERGED | Changelog exists, then merge | Semi-auto |
+| MERGED -> DONE | Tests on main, bug verified fixed | Manual (on main) |
 
 ### Review Gates
 
@@ -190,16 +179,16 @@ Use **opus** for all reviews to ensure thorough, high-quality feedback.
 
 **IMPORTANT RULES**:
 1. **Reviews are SEQUENTIAL, not parallel** - Wait for reviewer #1 to complete before dispatching reviewer #2. This avoids wasting a second review if the first one requests changes.
-2. **Reviewers MUST record their outcome** - The reviewer must run `.claude/bin/claws-review record` before completing. The transition gate verifies reviews exist in the database.
+2. **Reviewers MUST record their outcome** - The reviewer must run `calm review record` before completing. The transition gate verifies reviews exist in the database.
 
 **Workflow**:
 1. Dispatch opus reviewer #1
 2. Wait for reviewer #1 to complete and record their review
-3. If changes requested → author fixes → clear reviews → restart from step 1
-4. If approved → dispatch opus reviewer #2
+3. If changes requested -> author fixes -> clear reviews -> restart from step 1
+4. If approved -> dispatch opus reviewer #2
 5. Wait for reviewer #2 to complete and record their review
-6. If changes requested → author fixes → clear reviews → restart from step 1
-7. If both approve → gate passes (transition command verifies 2 approved reviews exist)
+6. If changes requested -> author fixes -> clear reviews -> restart from step 1
+7. If both approve -> gate passes (transition command verifies 2 approved reviews exist)
 
 ## Workflow
 
@@ -215,17 +204,17 @@ Use **opus** for all reviews to ensure thorough, high-quality feedback.
 
 1. Human provides a spec or request
 2. Confirm understanding with human
-3. Create spec record: `.claude/bin/claws-task create SPEC-001 "Feature Title"`
-4. Get human approval (SPEC → DESIGN gate)
-5. Transition: `.claude/bin/claws-task transition SPEC-001 DESIGN --gate-result pass`
+3. Create spec record: `calm task create SPEC-001 "Feature Title"`
+4. Get human approval (SPEC -> DESIGN gate)
+5. Transition: `calm task transition SPEC-001 DESIGN --gate-result pass`
 6. Dispatch Planning Agent to decompose into tasks
 7. For each task the Planning Agent identifies:
    ```bash
    # Create task record
-   .claude/bin/claws-task create SPEC-001-01 "Subtask Title" --spec SPEC-001
+   calm task create SPEC-001-01 "Subtask Title" --spec SPEC-001
 
    # Create worktree (creates planning_docs/ and changelog.d/)
-   .claude/bin/claws-worktree create SPEC-001-01
+   calm worktree create SPEC-001-01
 
    # Write spec file in worktree
    # -> planning_docs/SPEC-001-01/spec.md (with acceptance criteria)
@@ -239,71 +228,71 @@ Dispatch workers using the Task tool (subagent):
 ```
 Use Task tool with:
 - subagent_type: "general-purpose"
-- prompt: Include role context from .claude/bin/claws-worker context <task_id> <role>
-- The worker operates in the worktree at .claude/bin/claws-worktree path <task_id>
+- prompt: Include role context for the task
+- The worker operates in the worktree at: calm worktree path <task_id>
 ```
 
 Before dispatching:
 ```bash
 # Register worker start
-worker_id=$(.claude/bin/claws-worker start TASK-001 backend)
+worker_id=$(calm worker start TASK-001 backend)
 ```
 
 After worker completes:
 ```bash
 # Mark worker done
-.claude/bin/claws-worker complete $worker_id
+calm worker complete $worker_id
 ```
 
 **Concurrency**: Maximum 6 workers at once. Dispatch in batches, then wait for all to complete.
 
 ### Phase-by-Phase Guide
 
-**SPEC → DESIGN** (after spec written by orchestrator)
+**SPEC -> DESIGN** (after spec written by orchestrator)
 1. Dispatch Spec Reviewer #1
 2. If changes requested: orchestrator fixes spec, restart from step 1
-3. If approved: **Reviewer records**: `.claude/bin/claws-review record TASK-XXX spec approved --worker W-xxx`
+3. If approved: **Reviewer records**: `calm review record TASK-XXX spec approved --worker W-xxx`
 4. Dispatch Spec Reviewer #2
 5. If changes requested: orchestrator fixes spec, restart from step 1
-6. If approved: **Reviewer records**: `.claude/bin/claws-review record TASK-XXX spec approved --worker W-yyy`
-7. **Reviewer #2 runs**: `.claude/bin/claws-gate check TASK-XXX SPEC-DESIGN`
+6. If approved: **Reviewer records**: `calm review record TASK-XXX spec approved --worker W-yyy`
+7. **Reviewer #2 runs**: `calm gate check TASK-XXX SPEC-DESIGN`
 8. Human approves spec
-9. **Orchestrator runs**: `.claude/bin/claws-task transition TASK-XXX DESIGN --gate-result pass`
+9. **Orchestrator runs**: `calm task transition TASK-XXX DESIGN --gate-result pass`
 
-**DESIGN → IMPLEMENT**
+**DESIGN -> IMPLEMENT**
 1. Dispatch Architect to write `planning_docs/TASK-XXX/proposal.md`
 2. **Architect updates spec** to match any interface refinements in proposal (prevents spec/proposal mismatches)
 3. Dispatch Proposal Reviewer #1
 4. If changes requested: dispatch architect to fix, restart from step 2
-5. If approved: **Reviewer records**: `.claude/bin/claws-review record TASK-XXX proposal approved --worker W-xxx`
+5. If approved: **Reviewer records**: `calm review record TASK-XXX proposal approved --worker W-xxx`
 6. Dispatch Proposal Reviewer #2
 7. If changes requested: dispatch architect to fix, restart from step 2
-8. If approved: **Reviewer records**: `.claude/bin/claws-review record TASK-XXX proposal approved --worker W-yyy`
-9. **Reviewer #2 runs**: `.claude/bin/claws-gate check TASK-XXX DESIGN-IMPLEMENT`
+8. If approved: **Reviewer records**: `calm review record TASK-XXX proposal approved --worker W-yyy`
+9. **Reviewer #2 runs**: `calm gate check TASK-XXX DESIGN-IMPLEMENT`
 10. Human approves design
-11. **Orchestrator runs**: `.claude/bin/claws-task transition TASK-XXX IMPLEMENT --gate-result pass`
+11. **Orchestrator runs**: `calm task transition TASK-XXX IMPLEMENT --gate-result pass`
 
-**IMPLEMENT → CODE_REVIEW**
+**IMPLEMENT -> CODE_REVIEW**
 - Implementer completes code and tests
-- **Implementer runs**: `.claude/bin/claws-gate check TASK-XXX IMPLEMENT-CODE_REVIEW`
+- **Implementer runs**: `calm gate check TASK-XXX IMPLEMENT-CODE_REVIEW`
 - Gate checks: **implementation code exists in src/ or tests/**, tests pass, linter clean, **type check (mypy --strict)**, no untracked TODOs
-- **Implementer runs**: `.claude/bin/claws-task transition TASK-XXX CODE_REVIEW --gate-result pass`
+- **Implementer runs**: `calm task transition TASK-XXX CODE_REVIEW --gate-result pass`
 - Implementer reports completion to orchestrator
 
-**CODE_REVIEW → TEST**
+**CODE_REVIEW -> TEST**
 1. Dispatch Code Reviewer #1
 2. If changes requested: dispatch implementer to fix, then restart from step 1
-3. If approved: **Reviewer records**: `.claude/bin/claws-review record TASK-XXX code approved --worker W-xxx`
+3. If approved: **Reviewer records**: `calm review record TASK-XXX code approved --worker W-xxx`
 4. Dispatch Code Reviewer #2
 5. If changes requested: dispatch implementer to fix, then restart from step 1
-6. If approved: **Reviewer records**: `.claude/bin/claws-review record TASK-XXX code approved --worker W-yyy`
-7. **Reviewer #2 runs**: `.claude/bin/claws-gate check TASK-XXX CODE_REVIEW-TEST`
-8. **Reviewer #2 runs**: `.claude/bin/claws-task transition TASK-XXX TEST --gate-result pass`
+6. If approved: **Reviewer records**: `calm review record TASK-XXX code approved --worker W-yyy`
+7. **Reviewer #2 runs**: `calm gate check TASK-XXX CODE_REVIEW-TEST`
+8. **Reviewer #2 runs**: `calm task transition TASK-XXX TEST --gate-result pass`
 
-**TEST → INTEGRATE**
-- **Implementer runs**: `.claude/bin/claws-gate check TASK-XXX TEST-INTEGRATE`
+**TEST -> INTEGRATE**
+- **Implementer runs**: `calm gate check TASK-XXX TEST-INTEGRATE`
 - **Implementer writes** changelog entry: `changelog.d/TASK-XXX.md`
-- **Implementer runs**: `.claude/bin/claws-task transition TASK-XXX INTEGRATE --gate-result pass`
+- **Implementer runs**: `calm task transition TASK-XXX INTEGRATE --gate-result pass`
 
   ```markdown
   ## TASK-XXX: [Title]
@@ -317,17 +306,17 @@ After worker completes:
   - Changed Z
   ```
 
-**INTEGRATE → VERIFY**
-- **Orchestrator verifies** main is HEALTHY: `.claude/bin/claws-status health`
-- **Orchestrator runs**: `.claude/bin/claws-gate check TASK-XXX INTEGRATE-VERIFY` (checks changelog exists)
-- **Orchestrator runs**: `.claude/bin/claws-worktree merge TASK-XXX` (removes worktree)
-- **Orchestrator runs**: `.claude/bin/claws-task transition TASK-XXX VERIFY --gate-result pass`
+**INTEGRATE -> VERIFY**
+- **Orchestrator verifies** main is HEALTHY: `calm status health`
+- **Orchestrator runs**: `calm gate check TASK-XXX INTEGRATE-VERIFY` (checks changelog exists)
+- **Orchestrator runs**: `calm worktree merge TASK-XXX` (removes worktree)
+- **Orchestrator runs**: `calm task transition TASK-XXX VERIFY --gate-result pass`
 
-**VERIFY → DONE** (runs on main branch, worktree is gone)
+**VERIFY -> DONE** (runs on main branch, worktree is gone)
 - **Orchestrator runs** tests on main: `pytest -vvsx`
 - Dispatch QA/Product worker to verify acceptance criteria
 - QA checks for orphaned code (grep for dead imports, unused functions)
-- **QA runs**: `.claude/bin/claws-task transition TASK-XXX DONE --gate-result pass`
+- **QA runs**: `calm task transition TASK-XXX DONE --gate-result pass`
 
 Note: VERIFY phase happens on main after merge. Automated gate checks are limited since worktree no longer exists.
 
@@ -341,10 +330,10 @@ When a bug is discovered:
 
 ```bash
 # Create bug record
-.claude/bin/claws-task create BUG-001 "Description of the bug" --type bug
+calm task create BUG-001 "Description of the bug" --type bug
 
 # Create worktree (creates bug_reports/ with template)
-.claude/bin/claws-worktree create BUG-001
+calm worktree create BUG-001
 ```
 
 The orchestrator or reporter must fill in the initial bug report at `bug_reports/BUG-001.md`:
@@ -354,7 +343,7 @@ The orchestrator or reporter must fill in the initial bug report at `bug_reports
 
 ### Bug Phase-by-Phase Guide
 
-**REPORTED → INVESTIGATED**
+**REPORTED -> INVESTIGATED**
 
 1. Dispatch Bug Investigator
 2. Investigator reproduces the bug exactly as documented
@@ -369,10 +358,10 @@ The orchestrator or reporter must fill in the initial bug report at `bug_reports
    - Root cause with evidence
    - Why alternatives were eliminated
    - Detailed fix plan with regression test requirements
-6. **Investigator runs**: `.claude/bin/claws-gate check BUG-001 REPORTED-INVESTIGATED`
-7. **Investigator runs**: `.claude/bin/claws-task transition BUG-001 INVESTIGATED --gate-result pass`
+6. **Investigator runs**: `calm gate check BUG-001 REPORTED-INVESTIGATED`
+7. **Investigator runs**: `calm task transition BUG-001 INVESTIGATED --gate-result pass`
 
-**INVESTIGATED → FIXED**
+**INVESTIGATED -> FIXED**
 
 1. Dispatch Implementer (Backend/Frontend as appropriate)
 2. Implementer follows the fix plan from the investigation
@@ -380,10 +369,10 @@ The orchestrator or reporter must fill in the initial bug report at `bug_reports
    - Sets up the exact conditions that triggered the bug
    - Verifies the bug is fixed
    - Would fail if the bug regresses
-4. **Implementer runs**: `.claude/bin/claws-gate check BUG-001 INVESTIGATED-FIXED`
-5. **Implementer runs**: `.claude/bin/claws-task transition BUG-001 FIXED --gate-result pass`
+4. **Implementer runs**: `calm gate check BUG-001 INVESTIGATED-FIXED`
+5. **Implementer runs**: `calm task transition BUG-001 FIXED --gate-result pass`
 
-**FIXED → REVIEWED**
+**FIXED -> REVIEWED**
 
 1. Dispatch Reviewer #1
 2. Reviewer verifies:
@@ -391,33 +380,33 @@ The orchestrator or reporter must fill in the initial bug report at `bug_reports
    - Regression test is adequate
    - No new bugs introduced
 3. If changes requested: Implementer fixes, restart from step 1
-4. If approved: **Reviewer records**: `.claude/bin/claws-review record BUG-001 bugfix approved --worker W-xxx`
+4. If approved: **Reviewer records**: `calm review record BUG-001 bugfix approved --worker W-xxx`
 5. Dispatch Reviewer #2
 6. If changes requested: Implementer fixes, restart from step 1
-7. If approved: **Reviewer records**: `.claude/bin/claws-review record BUG-001 bugfix approved --worker W-yyy`
-8. **Reviewer #2 runs**: `.claude/bin/claws-gate check BUG-001 FIXED-REVIEWED`
-9. **Reviewer #2 runs**: `.claude/bin/claws-task transition BUG-001 REVIEWED --gate-result pass`
+7. If approved: **Reviewer records**: `calm review record BUG-001 bugfix approved --worker W-yyy`
+8. **Reviewer #2 runs**: `calm gate check BUG-001 FIXED-REVIEWED`
+9. **Reviewer #2 runs**: `calm task transition BUG-001 REVIEWED --gate-result pass`
 
-**REVIEWED → TESTED**
+**REVIEWED -> TESTED**
 
-1. **Implementer runs**: `.claude/bin/claws-gate check BUG-001 REVIEWED-TESTED`
+1. **Implementer runs**: `calm gate check BUG-001 REVIEWED-TESTED`
    - Gate verifies: all tests pass, NO skipped tests
-2. **Implementer runs**: `.claude/bin/claws-task transition BUG-001 TESTED --gate-result pass`
+2. **Implementer runs**: `calm task transition BUG-001 TESTED --gate-result pass`
 
-**TESTED → MERGED**
+**TESTED -> MERGED**
 
 1. **Implementer writes** changelog entry: `changelog.d/BUG-001.md`
-2. **Implementer runs**: `.claude/bin/claws-gate check BUG-001 TESTED-MERGED`
-3. **Implementer runs**: `.claude/bin/claws-task transition BUG-001 MERGED --gate-result pass`
-4. **Orchestrator verifies** main is HEALTHY: `.claude/bin/claws-status health`
-5. **Orchestrator runs**: `.claude/bin/claws-worktree merge BUG-001` (merges and removes worktree)
+2. **Implementer runs**: `calm gate check BUG-001 TESTED-MERGED`
+3. **Implementer runs**: `calm task transition BUG-001 MERGED --gate-result pass`
+4. **Orchestrator verifies** main is HEALTHY: `calm status health`
+5. **Orchestrator runs**: `calm worktree merge BUG-001` (merges and removes worktree)
 
-**MERGED → DONE** (on main branch, worktree is gone)
+**MERGED -> DONE** (on main branch, worktree is gone)
 
 1. **Orchestrator runs** tests on main: `pytest -vvsx`
 2. Verify the bug is actually fixed
 3. Verify regression test passes
-4. **Orchestrator runs**: `.claude/bin/claws-task transition BUG-001 DONE --gate-result pass`
+4. **Orchestrator runs**: `calm task transition BUG-001 DONE --gate-result pass`
 
 ### Bug Investigation Requirements
 
@@ -446,12 +435,12 @@ If tests need to be skipped for valid reasons, escalate to the human for approva
 ### Phase Advancement
 
 **Workers run their own transitions.** The worker completing the work runs the gate check and transition:
-1. Worker runs gate check: `.claude/bin/claws-gate check <task_id> <transition>`
+1. Worker runs gate check: `calm gate check <task_id> <transition>`
 2. If gate fails, worker fixes issues and retries
-3. If gate passes, worker runs: `.claude/bin/claws-task transition <task_id> <phase> --gate-result pass`
+3. If gate passes, worker runs: `calm task transition <task_id> <phase> --gate-result pass`
 4. Worker reports completion to orchestrator
 
-**Exception**: SPEC→DESIGN and DESIGN→IMPLEMENT require human approval, so the orchestrator runs the transition after human confirms.
+**Exception**: SPEC->DESIGN and DESIGN->IMPLEMENT require human approval, so the orchestrator runs the transition after human confirms.
 
 ### Test Results
 
@@ -463,12 +452,7 @@ Gate checks automatically log test results to the database, including:
 Query test history:
 ```bash
 # View test runs for a task
-.claude/bin/claws-task show <task_id>
-
-# View recent failures with details
-sqlite3 -header -column .claude/claws.db \
-  "SELECT task_id, passed, failed, failed_tests, run_at
-   FROM test_runs WHERE failed > 0 ORDER BY run_at DESC LIMIT 5;"
+calm task show <task_id>
 ```
 
 Full test output is saved to `test_output.log` in the worktree.
@@ -501,26 +485,26 @@ Read tool: .worktrees/{TASK_ID}/test_output.log
 
 When task reaches INTEGRATE:
 1. Verify main is healthy
-2. Merge: `.claude/bin/claws-worktree merge <task_id>`
+2. Merge: `calm worktree merge <task_id>`
 3. System automatically increments merge counters
 4. Check for batch job triggers
 
 ## Batch Jobs
 
-Check counters with: `.claude/bin/claws-counter list`
+Check counters with: `calm counter list`
 
 ### E2E Tests (every ~12 merges)
 
 When `merges_since_e2e >= 12`:
 1. Dispatch E2E Runner worker
-2. If passes: `.claude/bin/claws-counter reset merges_since_e2e`
+2. If passes: `calm counter set merges_since_e2e 0`
 3. If fails: set system DEGRADED, create a bug report for the failure
 
 ### Documentation (every ~12 merges)
 
 When `merges_since_docs >= 12`:
 1. Dispatch Doc Writer worker
-2. On completion: `.claude/bin/claws-counter reset merges_since_docs`
+2. On completion: `calm counter set merges_since_docs 0`
 
 ## System States
 
@@ -528,23 +512,23 @@ When `merges_since_docs >= 12`:
 - **ATTENTION**: E2E tests due (12+ merges since last run), merges still allowed
 - **DEGRADED**: E2E failed, merge lock active, bug investigation required
 
-Check with: `.claude/bin/claws-status health`
+Check with: `calm status health`
 
 ### Merge Lock
 
 When E2E fails:
-1. Activate lock: `.claude/bin/claws-counter set merge_lock 1`
+1. Activate lock: `calm counter set merge_lock 1`
 2. Create bug report for the E2E failure
-3. Follow bug workflow (REPORTED → INVESTIGATED → FIXED → ...)
-4. After E2E passes: `.claude/bin/claws-counter reset merge_lock`
+3. Follow bug workflow (REPORTED -> INVESTIGATED -> FIXED -> ...)
+4. After E2E passes: `calm counter set merge_lock 0`
 
-The `claws-worktree merge` command will refuse to merge while lock is active.
+The `calm worktree merge` command will refuse to merge while lock is active.
 
 ## Human Interaction
 
 You work with the human through this Claude Code session. The human:
-- Approves specs (SPEC → DESIGN)
-- Approves designs (DESIGN → IMPLEMENT)
+- Approves specs (SPEC -> DESIGN)
+- Approves designs (DESIGN -> IMPLEMENT)
 - Can review code (rarely)
 - Approves spec amendments
 - Issues `/wrapup` command before session ends
@@ -555,7 +539,7 @@ When you need human input, ask clearly and wait for response.
 
 ### Ending a Session
 
-Use the `/wrapup` command before ending a session:
+Use the `/wrapup` skill before ending a session:
 
 - `/wrapup` - Archive session (no continuation expected)
 - `/wrapup continue` - Handoff for continuation (next session should pick this up)
@@ -563,20 +547,23 @@ Use the `/wrapup` command before ending a session:
 This command:
 1. Marks all active workers as `session_ended`
 2. Creates a database backup
-3. Saves handoff to the `sessions` table with:
-   - Session summary
-   - Active tasks and their status
-   - **Friction points** encountered this session
-   - Recommendations for next session
-   - Next steps
-4. Sets `needs_continuation` flag based on command variant
+3. Saves session summary and handoff to the database
+4. Records friction points and next steps
+5. Sets `needs_continuation` flag based on command variant
+
+### Reflecting on Sessions
+
+Use `/reflection` to review past sessions and extract learnings:
+- Processes unreflected session journals
+- Generates memories from friction points and outcomes
+- Improves future session quality through accumulated experience
 
 ### Starting a New Session
 
-Simply run `.claude/bin/claws-status`. The system will:
+Run `calm status` to see the current state. The system will:
 1. Auto-cleanup stale workers (active > 2 hours)
 2. Detect if previous session ended with workers in progress
-3. Check database for pending handoffs (where `needs_continuation = true` and not yet resumed)
+3. Check database for pending handoffs
 4. Display handoff content and mark it as resumed
 5. Show current task states and health
 
@@ -584,6 +571,19 @@ Then review context as needed:
 - The handoff content is displayed automatically if one exists
 - Check `planning_docs/` for task details
 - Resume work based on task phases
+
+## Memory and Learning
+
+CALM provides always-active memory and learning features via the MCP server:
+
+- **Memories**: Store and retrieve semantic memories (preferences, facts, decisions, workflows)
+- **GHAP Tracking**: Goal-Hypothesis-Action-Prediction entries for structured problem solving
+- **Context Assembly**: Automatically assembles relevant context from memories and experiences
+- **Code Search**: Semantic search over indexed codebases
+- **Commit Search**: Semantic search over git commit history
+- **Experience Clustering**: Groups similar debugging/development experiences for pattern recognition
+
+These features are available through the `mcp__calm__*` tools in every session.
 
 ## Spec Amendments
 
