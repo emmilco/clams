@@ -23,6 +23,7 @@ from calm.cli.backup import backup  # noqa: E402
 from calm.cli.counter import counter  # noqa: E402
 from calm.cli.gate import gate  # noqa: E402
 from calm.cli.init_cmd import init  # noqa: E402
+from calm.cli.install_cmd import install_cmd  # noqa: E402
 from calm.cli.review import review  # noqa: E402
 from calm.cli.server import server  # noqa: E402
 from calm.cli.session import session  # noqa: E402
@@ -34,6 +35,7 @@ from calm.cli.worker import worker  # noqa: E402
 from calm.cli.worktree import worktree  # noqa: E402
 
 cli.add_command(init)
+cli.add_command(install_cmd, name="install")
 cli.add_command(server)
 cli.add_command(status)
 
