@@ -89,7 +89,7 @@ Target: `~/.calm/metadata.db`
 | `id` | `id` | Direct copy |
 | `specialist_type` | `role` | **Renamed** |
 | `current_task_id` | `task_id` | **Renamed** |
-| `status` | `status` | Map `'idle'` → `'completed'` (idle workers are effectively done) |
+| `status` | `status` | Map `'idle'` → `'completed'`, `'stale'` → `'session_ended'`. Other values (`'active'`, `'completed'`, `'failed'`, `'session_ended'`) copy directly. |
 | `started_at` | `started_at` | Direct copy |
 | `ended_at` | `ended_at` | Direct copy |
 | *(not present)* | `project_path` | Set to absolute path of current git repo root |
