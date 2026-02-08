@@ -3,6 +3,7 @@
 This module handles gate checks for phase transitions.
 """
 
+import os
 import subprocess
 import time
 from collections.abc import Callable
@@ -140,6 +141,20 @@ GATE_REQUIREMENTS: dict[str, list[GateRequirement]] = {
 }
 
 
+def _worktree_env(worktree: Path) -> dict[str, str]:
+    """Build an environment dict that prioritises the worktree's src/ directory.
+
+    PEP 660 editable installs use a .pth file that hardcodes one src/ path.
+    When gate-check subprocesses (pytest, mypy) run inside a worktree, they
+    would otherwise import from the main repo instead of the worktree's code.
+    Prepending PYTHONPATH ensures the worktree's src/ wins. (BUG-075)
+    """
+    env = os.environ.copy()
+    worktree_src = str(worktree / "src")
+    env["PYTHONPATH"] = worktree_src + os.pathsep + env.get("PYTHONPATH", "")
+    return env
+
+
 def _check_tests_pass(worktree: Path, task_id: str, db_path: Path | None) -> GateCheck:
     """Run test suite and check if all tests pass."""
     start = time.time()
@@ -150,6 +165,7 @@ def _check_tests_pass(worktree: Path, task_id: str, db_path: Path | None) -> Gat
         capture_output=True,
         text=True,
         timeout=300,  # 5 minute timeout
+        env=_worktree_env(worktree),
     )
 
     duration = time.time() - start
@@ -253,6 +269,7 @@ def _check_types_clean(worktree: Path) -> GateCheck:
         cwd=worktree,
         capture_output=True,
         text=True,
+        env=_worktree_env(worktree),
     )
 
     duration = time.time() - start
@@ -486,11 +503,14 @@ def _check_fix_plan(worktree: Path, task_id: str) -> GateCheck:
 
 def _check_no_skipped(worktree: Path, task_id: str, db_path: Path | None) -> GateCheck:
     """Check that there are no skipped tests."""
+    env = _worktree_env(worktree)
+
     result = subprocess.run(
         ["pytest", "--collect-only", "-q"],
         cwd=worktree,
         capture_output=True,
         text=True,
+        env=env,
     )
 
     # Run actual tests to check for skipped
@@ -499,6 +519,7 @@ def _check_no_skipped(worktree: Path, task_id: str, db_path: Path | None) -> Gat
         cwd=worktree,
         capture_output=True,
         text=True,
+        env=env,
     )
 
     output = result.stdout
