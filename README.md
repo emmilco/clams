@@ -99,6 +99,8 @@ CALM installs globally, working across all Claude Code sessions:
   - `sessions/` - Session logs for reflection
   - `roles/` - Specialist role definitions
   - `workflows/` - Orchestration workflow instructions
+  - `skills/` - Claude Code skill wrappers
+  - `journal/` - Session journal storage
 - **Qdrant**: Docker container on `localhost:6333`
 
 ### Uninstallation
@@ -146,7 +148,7 @@ This activates:
 - **Workers**: Dispatch specialist agents for implementation
 - **Reviews**: 2x review requirement before advancing
 
-See [GETTING_STARTED.md](GETTING_STARTED.md) for detailed usage.
+See `CLAUDE.md` for detailed workflow instructions.
 
 ## CLI Reference
 
@@ -204,6 +206,8 @@ Run `calm --help` or `calm <command> --help` for full documentation.
 │   ├── backend.md
 │   ├── reviewer.md
 │   └── ...
+├── skills/                  # Claude Code skill wrappers
+├── journal/                 # Session journal storage
 └── sessions/
     └── <timestamp>.jsonl    # Session logs for reflection
 ```
@@ -212,14 +216,23 @@ Run `calm --help` or `calm <command> --help` for full documentation.
 
 ```
 src/calm/
-├── cli/           # Click-based CLI commands
-├── server/        # MCP server and tools
-├── embedding/     # Embedding service implementations
-├── storage/       # Vector and metadata stores
-├── indexers/      # Code parsing and git analysis
-├── observation/   # GHAP state machine
-├── clustering/    # Experience clustering
-└── context/       # Context assembly
+├── cli/            # Click-based CLI commands
+├── clustering/     # HDBSCAN experience clustering
+├── context/        # Context assembly and token budgeting
+├── db/             # SQLite metadata store
+├── embedding/      # Embedding service implementations
+├── ghap/           # GHAP state machine and persistence
+├── git/            # Git history analysis
+├── hooks/          # Claude Code hook scripts
+├── indexers/       # Tree-sitter code parsing
+├── install/        # Installation and setup
+├── orchestration/  # Task, worktree, worker, gate management
+├── search/         # Unified semantic search
+├── server/         # MCP server
+├── storage/        # Vector store (Qdrant and in-memory)
+├── tools/          # MCP tool definitions
+├── utils/          # Shared utilities
+└── values/         # Value store and validation
 ```
 
 ## Development
