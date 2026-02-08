@@ -19,6 +19,8 @@ def init() -> None:
     - ~/.calm/workflows/ (workflow definitions)
     - ~/.calm/roles/ (role files)
     - ~/.calm/sessions/ (session logs)
+    - ~/.calm/skills/ (skill definitions)
+    - ~/.calm/journal/ (session journals)
 
     This command is idempotent - safe to run multiple times.
     """
@@ -30,6 +32,8 @@ def init() -> None:
         settings.workflows_dir,
         settings.roles_dir,
         settings.sessions_dir,
+        settings.skills_dir,
+        settings.journal_dir,
     ]
 
     for directory in directories:
