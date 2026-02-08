@@ -46,6 +46,8 @@ class TestInitCommand:
         assert (calm_home / "workflows").exists()
         assert (calm_home / "roles").exists()
         assert (calm_home / "sessions").exists()
+        assert (calm_home / "skills").exists()
+        assert (calm_home / "journal").exists()
 
     def test_creates_database(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
