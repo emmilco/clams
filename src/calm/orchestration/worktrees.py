@@ -3,6 +3,7 @@
 This module handles creation, management, and merging of git worktrees.
 """
 
+import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -143,6 +144,15 @@ def remove_worktree(
     """
     main_repo = Path(detect_main_repo())
     worktree_path = main_repo / ".worktrees" / task_id
+
+    # If our cwd is inside the worktree, move to main repo first to
+    # avoid leaving the process (and any parent shell) in a deleted dir.
+    try:
+        cwd = Path.cwd()
+        if cwd == worktree_path or worktree_path in cwd.parents:
+            os.chdir(main_repo)
+    except OSError:
+        os.chdir(main_repo)
 
     # Remove worktree
     result = subprocess.run(
@@ -312,6 +322,16 @@ def merge_worktree(
                 cwd=main_repo,
                 capture_output=True,
             )
+
+    # If our cwd is inside the worktree, move to main repo first to
+    # avoid leaving the process (and any parent shell) in a deleted dir.
+    try:
+        cwd = Path.cwd()
+        if cwd == worktree_path or worktree_path in cwd.parents:
+            os.chdir(main_repo)
+    except OSError:
+        # cwd already invalid (deleted by a prior operation)
+        os.chdir(main_repo)
 
     # Remove worktree
     subprocess.run(
