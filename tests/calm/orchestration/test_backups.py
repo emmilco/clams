@@ -11,7 +11,6 @@ from qdrant_client.http.models import SnapshotDescription
 
 from calm.db.schema import init_database
 from calm.orchestration.backups import (
-    ALL_COLLECTIONS,
     QDRANT_SNAPSHOT_SUFFIX,
     auto_backup,
     create_backup,
