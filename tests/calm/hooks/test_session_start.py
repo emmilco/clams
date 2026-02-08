@@ -102,7 +102,8 @@ class TestFormatOutput:
         output = format_output(orphan=None, tasks=[], server_available=True)
         assert "CALM (Claude Agent Learning & Management) is available." in output
         assert "Always active: /wrapup, /reflection, memory tools" in output
-        assert "Run /orchestrate" in output
+        assert "/orchestrate" in output
+        assert "Ask the user" in output
 
     def test_no_tasks_server_starting(self) -> None:
         """Test output when server is starting."""

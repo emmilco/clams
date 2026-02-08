@@ -170,14 +170,23 @@ def format_output(
         lines.append("")
 
     lines.append("Always active: /wrapup, /reflection, memory tools")
+    lines.append("")
 
-    # Task summary
+    # Task summary and orchestration prompt
     if tasks:
         task_summary = ", ".join(f"{t[0]} {t[1]}" for t in tasks[:3])
         lines.append(f"This project: {len(tasks)} active task(s) ({task_summary})")
-        lines.append("Run /orchestrate to manage tasks and enable full workflow.")
+        lines.append(
+            "IMPORTANT: You MUST explicitly ask the user whether they want to "
+            "resume orchestration mode before proceeding with any other work. "
+            "If yes, run /orchestrate."
+        )
     else:
-        lines.append("Run /orchestrate to enable task tracking and workflow tools.")
+        lines.append(
+            "IMPORTANT: You MUST explicitly ask the user whether they want to "
+            "enable orchestration mode for task tracking and workflow management "
+            "before proceeding with any other work. If yes, run /orchestrate."
+        )
 
     return "\n".join(lines)
 
