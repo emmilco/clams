@@ -8,7 +8,7 @@
 # Returns 0 if all pass, 1 otherwise.
 #
 # Environment variables:
-#   CLAWS_CLEANUP_TIMEOUT: Seconds to wait for pytest cleanup after tests complete
+#   CALM_CLEANUP_TIMEOUT: Seconds to wait for pytest cleanup after tests complete
 #                          (default: 30). If the process doesn't exit within this
 #                          time, it's force-killed and the gate FAILS.
 #
@@ -18,14 +18,14 @@
 set -euo pipefail
 
 # Cleanup timeout in seconds (configurable via environment)
-CLEANUP_TIMEOUT="${CLAWS_CLEANUP_TIMEOUT:-30}"
+CLEANUP_TIMEOUT="${CALM_CLEANUP_TIMEOUT:-30}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$(dirname "$SCRIPT_DIR")/bin"
 
-# Use claws-common.sh to resolve to main repo database
-if [[ -f "$BIN_DIR/claws-common.sh" ]]; then
-    source "$BIN_DIR/claws-common.sh"
+# Use calm-common.sh to resolve to main repo database
+if [[ -f "$BIN_DIR/calm-common.sh" ]]; then
+    source "$BIN_DIR/calm-common.sh"
 else
     # Fallback for standalone execution
     CLAUDE_DIR="$(dirname "$SCRIPT_DIR")"
@@ -33,7 +33,7 @@ else
     MAIN_REPO=$(cd "$_LOCAL_REPO" && git worktree list --porcelain 2>/dev/null | head -1 | sed 's/worktree //')
     MAIN_REPO="${MAIN_REPO:-$_LOCAL_REPO}"
     CLAUDE_DIR="$MAIN_REPO/.claude"
-    DB_PATH="$CLAUDE_DIR/claws.db"
+    DB_PATH="$CLAUDE_DIR/calm.db"
 fi
 
 WORKTREE="${1:-.}"
@@ -398,7 +398,7 @@ run_pytest() {
         echo "  2. Add proper cleanup/teardown in test fixtures"
         echo "  3. Ensure all async operations are properly awaited"
         echo ""
-        echo "Set CLAWS_CLEANUP_TIMEOUT=<seconds> to adjust timeout (default: 30)"
+        echo "Set CALM_CLEANUP_TIMEOUT=<seconds> to adjust timeout (default: 30)"
 
         # Log cleanup timeout specifically in database
         log_test_results "$total" "$passed" "0" "1" "$skipped" "$duration" '[{"test":"cleanup","error":"Process hung during cleanup for '"$CLEANUP_TIMEOUT"'s after tests completed"}]'

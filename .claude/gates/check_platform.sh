@@ -28,7 +28,7 @@ fi
 export PYTHONPATH="${WORKTREE}/src:${PYTHONPATH:-}"
 
 $PYTHON -c "
-from clams.utils.platform import get_platform_info, format_report
+from calm.utils.platform import get_platform_info, format_report
 
 info = get_platform_info()
 print(format_report(info))

@@ -1,1 +1,1 @@
-"""Test suite for CLAMS."""
+"""Test suite for CALM."""

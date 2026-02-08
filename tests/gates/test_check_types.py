@@ -16,7 +16,7 @@ def test_check_types_completes_standalone() -> None:
 
     This test explicitly clears TOKENIZERS_PARALLELISM from the environment
     to verify the script handles it correctly on its own (either via inline
-    setting or by sourcing clams-common.sh).
+    setting or by sourcing calm-common.sh).
     """
     gate_script = Path(__file__).parent.parent.parent / ".claude" / "gates" / "check_types.sh"
     worktree = Path(__file__).parent.parent.parent

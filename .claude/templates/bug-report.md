@@ -94,12 +94,12 @@ logger.debug(f"State at critical point: {state}")
 
 **Logging/assertions added**:
 ```python
-# Location: src/clams/api/pagination.py:45
+# Location: src/calm/api/pagination.py:45
 # Purpose: Capture pagination state at boundary condition
 logger.debug(f"SCAFFOLD: offset={offset}, limit={limit}, total={total}")
 logger.debug(f"SCAFFOLD: calculated_end={offset + limit}, is_last_page={offset + limit >= total}")
 
-# Location: src/clams/api/pagination.py:52
+# Location: src/calm/api/pagination.py:52
 # Purpose: Verify which branch is taken
 assert offset < total, f"SCAFFOLD: offset ({offset}) >= total ({total})"
 logger.debug(f"SCAFFOLD: entering item_slice with indices [{offset}:{offset+limit}]")

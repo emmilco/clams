@@ -131,6 +131,7 @@ async def _ensure_code_collection(
 def get_code_tools(
     vector_store: VectorStore,
     code_embedder: EmbeddingService,
+    code_indexer: Any = None,
 ) -> dict[str, ToolFunc]:
     """Get code tool implementations for the dispatcher.
 
@@ -149,17 +150,13 @@ def get_code_tools(
     ) -> dict[str, Any]:
         """Index a directory of source code for semantic search.
 
-        This is a placeholder that returns a not-implemented response.
-        Full indexing functionality requires tree-sitter parsing which
-        is not yet ported to CALM.
-
         Args:
             directory: Absolute path to directory
             project: Project identifier
             recursive: Recurse subdirectories (default True)
 
         Returns:
-            Status indicating feature is not yet available
+            Indexing statistics
         """
         logger.info("code.index", directory=directory, project=project)
 
@@ -173,17 +170,28 @@ def get_code_tools(
         if not dir_path.is_dir():
             raise ValidationError(f"Not a directory: {directory}")
 
-        # For now, return a placeholder response
-        # Full implementation requires porting tree-sitter parsing
+        if code_indexer is None:
+            return {
+                "status": "not_available",
+                "message": "Code indexer not initialized. Restart server with real services.",
+            }
+
+        stats = await code_indexer.index_directory(
+            path=str(dir_path),
+            project=project,
+            recursive=recursive,
+            exclude_patterns=DEFAULT_EXCLUSIONS,
+        )
+
         return {
-            "status": "not_implemented",
-            "message": (
-                "Code indexing is not yet available in CALM. "
-                "This feature requires tree-sitter parsing which will be "
-                "ported in a future release."
-            ),
+            "status": "success",
             "project": project,
             "directory": str(dir_path),
+            "files_indexed": stats.files_indexed,
+            "units_indexed": stats.units_indexed,
+            "files_skipped": stats.files_skipped,
+            "errors": len(stats.errors),
+            "duration_ms": stats.duration_ms,
         }
 
     async def search_code(

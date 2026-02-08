@@ -260,7 +260,7 @@ CREATE INDEX IF NOT EXISTS idx_gate_passes_task ON gate_passes(task_id, transiti
 """
 
 # ===================
-# CODE INDEXING TABLES (from clams)
+# CODE INDEXING TABLES
 # ===================
 
 CREATE_INDEXED_FILES_TABLE = """

@@ -1,14 +1,30 @@
-# CLAMS - Claude Learning and Memory System
+# CALM - Claude Agent Learning & Management
 
-A Model Context Protocol (MCP) server for semantic memory, code indexing, and experience-based learning.
+A unified system for memory, learning, and workflow orchestration for Claude Code agents.
+
+## What is CALM?
+
+CALM provides Claude Code with:
+
+- **Memory**: Persistent semantic memories that improve over time
+- **Learning**: Structured capture of experiences via the GHAP (Goal-Hypothesis-Action-Prediction) loop
+- **Orchestration**: Task tracking, phase gates, and workflow management (opt-in)
+
+CALM operates in two modes:
+
+| Mode | Activation | Features |
+|------|------------|----------|
+| **Memory** | Always on | Memory storage/retrieval, GHAP tracking, `/wrapup`, `/reflection`, context assembly |
+| **Orchestration** | `/orchestrate` per session | + Tasks, phases, gates, worktrees, workers, reviews |
 
 ## Features
 
-- **Memory Management**: Store and retrieve semantic memories with categories
-- **Code Indexing**: Index and search Python/TypeScript code with TreeSitter
+- **Semantic Memory**: Store and retrieve memories with categories (facts, preferences, decisions, workflows)
+- **Code Indexing**: Index and search Python/TypeScript/Rust/Java code with TreeSitter
 - **Git Analysis**: Analyze commit history, find churn hotspots, identify code authors
-- **GHAP Learning**: Goal-Hypothesis-Action-Prediction cycle with experience clustering
-- **Context Assembly**: Generate rich context from memories, code, and experiences
+- **GHAP Learning**: Track hypotheses, compare predictions to outcomes, cluster experiences
+- **Context Assembly**: Automatically inject relevant memories and experiences into sessions
+- **Workflow Orchestration**: Full software development lifecycle management with phase gates
 
 ## Installation
 
@@ -22,18 +38,13 @@ A Model Context Protocol (MCP) server for semantic memory, code indexing, and ex
 - **Docker** - For running Qdrant vector database
   - [Docker Desktop](https://docs.docker.com/get-docker/) (macOS/Windows)
   - Or Docker Engine (Linux)
-- **jq** - Command-line JSON processor
-  ```bash
-  brew install jq  # macOS
-  sudo apt-get install jq  # Ubuntu/Debian
-  ```
 
 ### Quick Start
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/clams.git
-   cd clams
+   git clone https://github.com/yourusername/calm.git
+   cd calm
    ```
 
 2. **Run the installer**:
@@ -44,14 +55,17 @@ A Model Context Protocol (MCP) server for semantic memory, code indexing, and ex
    This will:
    - Install Python dependencies
    - Start Qdrant in Docker
-   - Register CLAMS as a global MCP server
+   - Register CALM as a global MCP server
    - Configure hooks for automatic context injection
-   - Initialize storage at `~/.clams/`
+   - Initialize storage at `~/.calm/`
 
 3. **Verify installation**:
-   Open a new Claude Code session and run:
+   Open a new Claude Code session. You should see:
    ```
-   Use the mcp__clams__ping tool
+   CALM (Claude Agent Learning & Management) is available.
+
+   Always active: /wrapup, /reflection, memory tools
+   Run /orchestrate to enable task tracking and workflow tools.
    ```
 
 ### Installation Options
@@ -63,85 +77,156 @@ A Model Context Protocol (MCP) server for semantic memory, code indexing, and ex
 # Skip Qdrant setup (use existing instance)
 ./scripts/install.sh --skip-qdrant
 
+# Skip confirmation prompts
+./scripts/install.sh -y
+
 # Show help
 ./scripts/install.sh --help
 ```
 
 ### What Gets Configured
 
-CLAMS installs globally, working across all Claude Code sessions:
+CALM installs globally, working across all Claude Code sessions:
 
 - **MCP Server**: Added to `~/.claude.json`
-  - Binary: `<repo>/.venv/bin/clams`
 - **Hooks**: Registered in `~/.claude/settings.json`
-  - SessionStart: Inject context at session start
-  - UserPromptSubmit: Retrieve relevant memories before each prompt
-  - PreToolUse: Check GHAP status during tool execution
-  - PostToolUse: Auto-capture test results as experiences
-- **Storage**: `~/.clams/` stores all data
-  - `metadata.db` - SQLite metadata store
-  - `journal/` - Session journal and GHAP tracking
+  - SessionStart: Announce CALM availability and project tasks
+  - UserPromptSubmit: Inject relevant memories before each prompt
+  - PreToolUse: GHAP check-in reminders
+  - PostToolUse: Capture test outcomes as experiences
+- **Storage**: `~/.calm/` stores all data
+  - `metadata.db` - SQLite database for memories, sessions, tasks
+  - `sessions/` - Session logs for reflection
+  - `roles/` - Specialist role definitions
+  - `workflows/` - Orchestration workflow instructions
 - **Qdrant**: Docker container on `localhost:6333`
-
-### Troubleshooting
-
-**Port 6333 already in use**:
-```bash
-# Option 1: Stop existing Qdrant
-docker stop $(docker ps -q --filter ancestor=qdrant/qdrant)
-
-# Option 2: Use existing Qdrant
-./scripts/install.sh --skip-qdrant
-```
-
-**Python version too old**:
-```bash
-python3 --version  # Must be 3.12+
-# Upgrade from https://www.python.org/downloads/
-```
-
-**Docker not running**:
-```bash
-# macOS: Open Docker Desktop
-# Linux: sudo systemctl start docker
-```
 
 ### Uninstallation
 
 ```bash
-# Remove CLAMS but keep data
+# Remove CALM but keep data
 ./scripts/uninstall.sh
 
-# Full removal including ~/.clams/
+# Full removal including ~/.calm/
 ./scripts/uninstall.sh --remove-data
-
-# Skip confirmation prompts
-./scripts/uninstall.sh --remove-data --force
 ```
 
-This removes CLAMS from Claude Code configuration but does NOT delete the repository. To fully remove:
+## Usage
+
+### Memory Mode (Always Active)
+
+Memory features work automatically in every Claude Code session:
+
+**Session Wrapup** - End sessions cleanly with `/wrapup`:
+```
+/wrapup           # Archive session
+/wrapup continue  # Handoff for continuation
+```
+
+**Reflection** - Extract learnings from past sessions with `/reflection`:
+- Analyzes unreflected session logs
+- Proposes memories using multi-agent analysis
+- Batch approval UI for storing durable insights
+
+**Context Injection** - Automatic memory retrieval:
+- Relevant memories are injected at the start of each prompt
+- GHAP experiences inform similar debugging scenarios
+
+### Orchestration Mode (Opt-In)
+
+Enable full workflow orchestration for a session:
+```
+/orchestrate
+```
+
+This activates:
+- **Task Management**: Create, track, and transition tasks through phases
+- **Phase Gates**: Automated checks before phase transitions
+- **Worktrees**: Isolated git worktrees for each task
+- **Workers**: Dispatch specialist agents for implementation
+- **Reviews**: 2x review requirement before advancing
+
+See [GETTING_STARTED.md](GETTING_STARTED.md) for detailed usage.
+
+## CLI Reference
+
+The `calm` CLI provides all orchestration commands:
+
 ```bash
-./scripts/uninstall.sh --remove-data --force
-rm -rf ~/path/to/clams  # Delete repository
+# System status
+calm status              # Full status overview
+calm init                # First-time setup
+
+# Task management
+calm task create SPEC-001 "Feature title"
+calm task list
+calm task show SPEC-001
+calm task transition SPEC-001 DESIGN --gate-result pass
+
+# Gate checks
+calm gate check SPEC-001 IMPLEMENT-CODE_REVIEW
+calm gate list
+
+# Worktrees
+calm worktree create SPEC-001
+calm worktree list
+calm worktree merge SPEC-001
+
+# Server
+calm server start
+calm server stop
+calm server status
 ```
 
-## Available Tools
+Run `calm --help` or `calm <command> --help` for full documentation.
 
-See `src/clams/server/tools/` for all MCP tools:
-- `memory.py` - store_memory, retrieve_memories, list_memories, delete_memory
-- `code.py` - index_codebase, search_code, find_similar_code
-- `git.py` - index_commits, search_commits, get_file_history, get_churn_hotspots, get_code_authors
-- `ghap.py` - start_ghap, update_ghap, resolve_ghap, get_active_ghap, list_ghap_entries
-- `learning.py` - get_clusters, get_cluster_members, validate_value, store_value, list_values
-- `search.py` - search_experiences
-- `session.py` - start_session, get_orphaned_ghap, should_check_in, increment_tool_count, reset_tool_count
-- `context.py` - assemble_context
+## Architecture
+
+### Core Components
+
+- **Embedding**: sentence-transformers with Nomic Embed (semantic) and MiniLM (code)
+- **Vector Store**: Qdrant for semantic search
+- **Metadata Store**: SQLite for structured data
+- **Parsing**: TreeSitter for code analysis
+- **Clustering**: HDBSCAN for experience grouping
+- **MCP Server**: Exposes tools to Claude Code
+
+### Directory Structure
+
+```
+~/.calm/
+├── config.yaml              # User preferences
+├── metadata.db              # SQLite database
+├── workflows/
+│   └── default.md           # Orchestration instructions
+├── roles/
+│   ├── architect.md
+│   ├── backend.md
+│   ├── reviewer.md
+│   └── ...
+└── sessions/
+    └── <timestamp>.jsonl    # Session logs for reflection
+```
+
+### Source Layout
+
+```
+src/calm/
+├── cli/           # Click-based CLI commands
+├── server/        # MCP server and tools
+├── embedding/     # Embedding service implementations
+├── storage/       # Vector and metadata stores
+├── indexers/      # Code parsing and git analysis
+├── observation/   # GHAP state machine
+├── clustering/    # Experience clustering
+└── context/       # Context assembly
+```
 
 ## Development
 
 ```bash
 # Install dev dependencies
-uv pip install -e ".[dev]"
+uv sync
 
 # Run tests
 pytest -vvsx
@@ -150,24 +235,50 @@ pytest -vvsx
 ruff check src tests
 
 # Run type checker
-mypy src
+mypy --strict src
 ```
 
-## Architecture
+### Test Categories
 
-Core components:
-- **Embedding**: sentence-transformers with Nomic Embed (semantic) and MiniLM (code)
-- **Vector Store**: Qdrant for semantic search
-- **Metadata Store**: SQLite for structured data
-- **Parsing**: TreeSitter for code analysis
-- **Clustering**: HDBSCAN for experience grouping
-- **HTTP Daemon**: Starlette-based server for hook integration
+- **Unit tests**: Core functionality with mocked dependencies
+- **Integration tests**: Real Qdrant instance (`tests/integration/`)
+- **Cold-start tests**: Empty state scenarios (`-m cold_start`)
+- **Performance tests**: Latency benchmarks (`tests/performance/`)
 
-See source code for detailed implementation.
+## Troubleshooting
+
+**Port 6333 already in use**:
+```bash
+# Stop existing Qdrant
+docker stop $(docker ps -q --filter ancestor=qdrant/qdrant)
+
+# Or use existing instance
+./scripts/install.sh --skip-qdrant
+```
+
+**Python version too old**:
+```bash
+python3 --version  # Must be 3.12+
+```
+
+**Docker not running**:
+```bash
+# macOS: Open Docker Desktop
+# Linux: sudo systemctl start docker
+```
+
+**CALM not recognized in Claude Code**:
+```bash
+# Verify MCP server is registered
+cat ~/.claude.json | grep calm
+
+# Restart Claude Code after installation
+```
 
 ## Animated Explainer
 
-An interactive visualization of how CLAMS works is available in `clams-visualizer/`. Open `index.html` in a browser to view a 90-second animated explainer covering:
-- The GHAP (Goal-Hypothesis-Action-Prediction) learning loop
-- Embedding and clustering pipeline
-- Context injection into Claude Code sessions
+An interactive visualization of how CALM works is available in `calm-visualizer/`. Open `index.html` in a browser to view a 90-second animated explainer covering the GHAP learning loop and context injection.
+
+## License
+
+MIT

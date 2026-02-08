@@ -81,6 +81,8 @@ async def _ensure_values_collection(
 def get_learning_tools(
     vector_store: VectorStore,
     semantic_embedder: EmbeddingService,
+    experience_clusterer: Any = None,
+    value_store: Any = None,
 ) -> dict[str, ToolFunc]:
     """Get learning tool implementations for the dispatcher.
 
@@ -236,15 +238,43 @@ def get_learning_tools(
             # Validate axis
             validate_axis(axis)
 
-            # Clustering is not yet implemented in CALM
-            # Return a placeholder response
+            if experience_clusterer is None or value_store is None:
+                return {
+                    "status": "not_available",
+                    "message": (
+                        "Clustering not initialized."
+                        " Restart server with real services."
+                    ),
+                    "axis": axis,
+                }
+
+            try:
+                clusters = await value_store.get_clusters(axis)
+            except ValueError as e:
+                return {
+                    "status": "error",
+                    "message": str(e),
+                    "axis": axis,
+                }
+
+            formatted = [
+                {
+                    "cluster_id": c.cluster_id,
+                    "axis": c.axis,
+                    "label": c.label,
+                    "size": c.size,
+                    "avg_weight": c.avg_weight,
+                    "member_count": len(c.member_ids),
+                }
+                for c in clusters
+            ]
+
+            noise_count = sum(1 for c in clusters if c.label == -1)
+
             return {
-                "status": "not_implemented",
-                "message": (
-                    "Clustering is not yet available in CALM. "
-                    "This feature requires the clustering module which will be "
-                    "ported in a future release."
-                ),
+                "clusters": formatted,
+                "count": len(formatted),
+                "noise_count": noise_count,
                 "axis": axis,
             }
 
@@ -414,22 +444,45 @@ def get_learning_tools(
             axis = parts[0]
             validate_axis(axis)
 
-            # Validation not yet fully implemented
-            # Return a basic response
-            logger.info(
-                "learning.value_validated",
-                cluster_id=cluster_id,
-                valid=True,
-            )
+            if value_store is None:
+                return {
+                    "status": "not_available",
+                    "message": (
+                        "Value store not initialized."
+                        " Restart server with real services."
+                    ),
+                }
 
-            return {
-                "valid": True,
+            try:
+                validation = await value_store.validate_value_candidate(
+                    text, cluster_id
+                )
+            except ValueError as e:
+                return {
+                    "valid": False,
+                    "cluster_id": cluster_id,
+                    "reason": str(e),
+                }
+
+            result: dict[str, Any] = {
+                "valid": validation.valid,
                 "cluster_id": cluster_id,
-                "message": (
-                    "Full value validation is not yet available in CALM. "
-                    "This is a placeholder response."
-                ),
             }
+
+            if validation.valid:
+                result["similarity"] = validation.similarity
+            else:
+                result["reason"] = validation.reason
+
+            if validation.candidate_distance is not None:
+                result["metrics"] = {
+                    "candidate_distance": validation.candidate_distance,
+                    "mean_distance": validation.mean_distance,
+                    "std_distance": validation.std_distance,
+                    "threshold": validation.threshold,
+                }
+
+            return result
 
         except ValidationError as e:
             logger.warning("learning.error", error=str(e))

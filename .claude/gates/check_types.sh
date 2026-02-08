@@ -9,11 +9,11 @@
 
 set -euo pipefail
 
-# Source claws-common.sh for shared configuration (sets TOKENIZERS_PARALLELISM, etc.)
+# Source calm-common.sh for shared configuration (sets TOKENIZERS_PARALLELISM, etc.)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$(dirname "$SCRIPT_DIR")/bin"
-if [[ -f "$BIN_DIR/claws-common.sh" ]]; then
-    source "$BIN_DIR/claws-common.sh"
+if [[ -f "$BIN_DIR/calm-common.sh" ]]; then
+    source "$BIN_DIR/calm-common.sh"
 fi
 
 WORKTREE="${1:-.}"

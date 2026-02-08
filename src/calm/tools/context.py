@@ -20,7 +20,7 @@ logger = structlog.get_logger()
 ToolFunc = Callable[..., Coroutine[Any, Any, dict[str, Any]]]
 
 # Valid context types
-VALID_CONTEXT_TYPES = ["values", "experiences"]
+VALID_CONTEXT_TYPES = ["values", "experiences", "memories", "code", "commits"]
 
 
 def validate_context_types(context_types: list[str]) -> None:
@@ -67,6 +67,7 @@ def validate_limit_range(
 def get_context_tools(
     vector_store: VectorStore,
     semantic_embedder: EmbeddingService,
+    context_assembler: Any = None,
 ) -> dict[str, ToolFunc]:
     """Get context assembly tool implementations.
 
@@ -124,6 +125,26 @@ def get_context_tools(
                 "item_count": 0,
                 "truncated": False,
             }
+
+        # If context assembler is available, delegate to it
+        if context_assembler is not None:
+            try:
+                result = await context_assembler.assemble_context(
+                    query=query,
+                    context_types=context_types,
+                    limit=limit,
+                    max_tokens=max_tokens,
+                )
+                return {
+                    "markdown": result.markdown,
+                    "token_count": result.token_count,
+                    "item_count": len(result.items),
+                    "truncated": result.budget_exceeded,
+                    "sources_used": result.sources_used,
+                }
+            except Exception as e:
+                logger.warning("context.assembler_failed", error=str(e))
+                # Fall through to inline implementation
 
         sections: list[str] = []
         total_items = 0

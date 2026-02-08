@@ -59,7 +59,7 @@ def test_merge_hooks_preserves_existing() -> None:
 
     new_hooks = {
         "SessionStart": [
-            {"matcher": "startup", "hooks": [{"type": "command", "command": "/clams/hook.sh"}]}
+            {"matcher": "startup", "hooks": [{"type": "command", "command": "/calm/hook.sh"}]}
         ]
     }
 
@@ -68,7 +68,7 @@ def test_merge_hooks_preserves_existing() -> None:
     assert changed
     assert len(result["hooks"]["SessionStart"]) == 2
     assert result["hooks"]["SessionStart"][0]["hooks"][0]["command"] == "/other/hook.sh"
-    assert result["hooks"]["SessionStart"][1]["hooks"][0]["command"] == "/clams/hook.sh"
+    assert result["hooks"]["SessionStart"][1]["hooks"][0]["command"] == "/calm/hook.sh"
 
 
 def test_merge_hooks_new_event() -> None:
@@ -93,14 +93,14 @@ def test_merge_hooks_updates_existing() -> None:
     config = {
         "hooks": {
             "SessionStart": [
-                {"hooks": [{"type": "command", "command": "/clams/hook.sh"}]}
+                {"hooks": [{"type": "command", "command": "/calm/hook.sh"}]}
             ]
         }
     }
 
     new_hooks = {
         "SessionStart": [
-            {"matcher": "startup", "hooks": [{"type": "command", "command": "/clams/hook.sh"}]}
+            {"matcher": "startup", "hooks": [{"type": "command", "command": "/calm/hook.sh"}]}
         ]
     }
 
@@ -116,14 +116,14 @@ def test_merge_hooks_no_change() -> None:
     config = {
         "hooks": {
             "SessionStart": [
-                {"matcher": "startup", "hooks": [{"type": "command", "command": "/clams/hook.sh"}]}
+                {"matcher": "startup", "hooks": [{"type": "command", "command": "/calm/hook.sh"}]}
             ]
         }
     }
 
     new_hooks = {
         "SessionStart": [
-            {"matcher": "startup", "hooks": [{"type": "command", "command": "/clams/hook.sh"}]}
+            {"matcher": "startup", "hooks": [{"type": "command", "command": "/calm/hook.sh"}]}
         ]
     }
 
@@ -136,15 +136,15 @@ def test_remove_mcp_server() -> None:
     """Test removing an MCP server."""
     config = {
         "mcpServers": {
-            "clams": {"type": "stdio", "command": "/path"},
+            "calm": {"type": "stdio", "command": "/path"},
             "other": {"type": "stdio", "command": "/other"}
         }
     }
 
-    result, changed = remove_mcp_server(config, "clams")
+    result, changed = remove_mcp_server(config, "calm")
 
     assert changed
-    assert "clams" not in result["mcpServers"]
+    assert "calm" not in result["mcpServers"]
     assert "other" in result["mcpServers"]
 
 
@@ -152,7 +152,7 @@ def test_remove_mcp_server_not_found() -> None:
     """Test removing a server that doesn't exist."""
     config = {"mcpServers": {"other": {"type": "stdio", "command": "/other"}}}
 
-    result, changed = remove_mcp_server(config, "clams")
+    result, changed = remove_mcp_server(config, "calm")
 
     assert not changed
     assert "other" in result["mcpServers"]
@@ -163,13 +163,13 @@ def test_remove_hooks() -> None:
     config = {
         "hooks": {
             "SessionStart": [
-                {"hooks": [{"type": "command", "command": "/clams/hook.sh"}]},
+                {"hooks": [{"type": "command", "command": "/calm/hook.sh"}]},
                 {"hooks": [{"type": "command", "command": "/other/hook.sh"}]}
             ]
         }
     }
 
-    result, changed = remove_hooks(config, ["/clams/hook.sh"])
+    result, changed = remove_hooks(config, ["/calm/hook.sh"])
 
     assert changed
     assert len(result["hooks"]["SessionStart"]) == 1
@@ -181,14 +181,14 @@ def test_remove_hooks_multiple_commands() -> None:
     config = {
         "hooks": {
             "SessionStart": [
-                {"hooks": [{"type": "command", "command": "/clams/hook1.sh"}]},
-                {"hooks": [{"type": "command", "command": "/clams/hook2.sh"}]},
+                {"hooks": [{"type": "command", "command": "/calm/hook1.sh"}]},
+                {"hooks": [{"type": "command", "command": "/calm/hook2.sh"}]},
                 {"hooks": [{"type": "command", "command": "/other/hook.sh"}]}
             ]
         }
     }
 
-    result, changed = remove_hooks(config, ["/clams/hook1.sh", "/clams/hook2.sh"])
+    result, changed = remove_hooks(config, ["/calm/hook1.sh", "/calm/hook2.sh"])
 
     assert changed
     assert len(result["hooks"]["SessionStart"]) == 1
@@ -205,7 +205,7 @@ def test_remove_hooks_not_found() -> None:
         }
     }
 
-    result, changed = remove_hooks(config, ["/clams/hook.sh"])
+    result, changed = remove_hooks(config, ["/calm/hook.sh"])
 
     assert not changed
     assert len(result["hooks"]["SessionStart"]) == 1

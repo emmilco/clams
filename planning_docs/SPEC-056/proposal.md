@@ -4,9 +4,9 @@
 
 Claude Code hooks are configured across multiple locations with no unified documentation:
 
-1. **Integration hooks** (`clams/hooks/*.sh`) - Connect CLAMS to Claude Code events via shell scripts
+1. **Integration hooks** (`clams_scripts/hooks/*.sh`) - Connect CLAMS to Claude Code events via shell scripts
 2. **Linting hooks** (`.claude/hooks/*.py`) - Code quality checks (different purpose, out of scope)
-3. **Configuration** (`clams/hooks/config.yaml`) - Local YAML config with redundant settings
+3. **Configuration** (`clams_scripts/hooks/config.yaml`) - Local YAML config with redundant settings
 4. **Runtime config** (`~/.clams/config.env`) - Per SPEC-029, the canonical configuration source
 
 The fragmentation causes:
@@ -21,7 +21,7 @@ Create two deliverables:
 
 ### 1. README.md Documentation
 
-A comprehensive README at `clams/hooks/README.md` documenting all integration hooks with:
+A comprehensive README at `clams_scripts/hooks/README.md` documenting all integration hooks with:
 - Quick reference table
 - Environment variable documentation
 - Detailed per-hook documentation
@@ -30,7 +30,7 @@ A comprehensive README at `clams/hooks/README.md` documenting all integration ho
 
 ### 2. Validation Script
 
-A bash script at `clams/hooks/validate_config.sh` that verifies:
+A bash script at `clams_scripts/hooks/validate_config.sh` that verifies:
 - Hook scripts exist and are executable
 - Hook scripts have valid bash syntax
 - Required dependencies are available (curl, jq)
@@ -301,8 +301,8 @@ All hooks follow Claude Code's hook output schema:
 
 ### Hook not triggering
 1. Check hook is registered in Claude Code settings
-2. Verify script is executable: `chmod +x clams/hooks/*.sh`
-3. Test manually: `./clams/hooks/session_start.sh`
+2. Verify script is executable: `chmod +x clams_scripts/hooks/*.sh`
+3. Test manually: `./clams_scripts/hooks/session_start.sh`
 
 ### Server not starting
 1. Check PID file: `cat ~/.clams/server.pid`
@@ -327,7 +327,7 @@ All hooks follow Claude Code's hook output schema:
 
 ```bash
 #!/usr/bin/env bash
-# clams/hooks/validate_config.sh
+# clams_scripts/hooks/validate_config.sh
 # Validate hook configuration consistency
 #
 # Usage: ./validate_config.sh
@@ -483,8 +483,8 @@ fi
 
 | File | Purpose |
 |------|---------|
-| `clams/hooks/README.md` | Comprehensive hook documentation |
-| `clams/hooks/validate_config.sh` | Configuration validation script |
+| `clams_scripts/hooks/README.md` | Comprehensive hook documentation |
+| `clams_scripts/hooks/validate_config.sh` | Configuration validation script |
 
 ### Testing Strategy
 
@@ -494,7 +494,7 @@ Tests should verify:
    - Hook script is removed
    - Hook script is not executable
    - Hook script has syntax error
-3. README documents all hooks in `clams/hooks/`
+3. README documents all hooks in `clams_scripts/hooks/`
 4. README env vars match actual usage (grep CLAMS_* in hooks)
 
 ### Dependencies

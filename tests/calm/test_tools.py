@@ -30,8 +30,8 @@ class TestCodeTools:
             directory="/tmp", project="test-project"
         )
 
-        assert result["status"] == "not_implemented"
-        assert "test-project" in result["project"]
+        assert result["status"] == "not_available"
+        assert "message" in result
 
     @pytest.mark.asyncio
     async def test_search_code_empty_query(
@@ -93,72 +93,71 @@ class TestGitTools:
     async def test_index_commits_placeholder(
         self, setup: tuple[MemoryStore, MockEmbeddingService]
     ) -> None:
-        """Test index_commits returns placeholder response."""
+        """Test index_commits raises error when git_analyzer not available."""
         from calm.tools.git import get_git_tools
+        from calm.tools.errors import MCPError
 
         store, embedder = setup
         tools = get_git_tools(store, embedder)
 
-        result = await tools["index_commits"]()
-
-        assert result["status"] == "not_implemented"
+        with pytest.raises(MCPError, match="Git commit indexing not available"):
+            await tools["index_commits"]()
 
     @pytest.mark.asyncio
     async def test_search_commits_empty_query(
         self, setup: tuple[MemoryStore, MockEmbeddingService]
     ) -> None:
-        """Test search_commits handles empty query."""
+        """Test search_commits raises error when git_analyzer not available."""
         from calm.tools.git import get_git_tools
+        from calm.tools.errors import MCPError
 
         store, embedder = setup
         tools = get_git_tools(store, embedder)
 
-        result = await tools["search_commits"](query="")
-
-        assert result["results"] == []
-        assert result["count"] == 0
+        with pytest.raises(MCPError, match="Git commit search not available"):
+            await tools["search_commits"](query="")
 
     @pytest.mark.asyncio
     async def test_get_file_history_placeholder(
         self, setup: tuple[MemoryStore, MockEmbeddingService]
     ) -> None:
-        """Test get_file_history returns placeholder response."""
+        """Test get_file_history raises error when git_analyzer not available."""
         from calm.tools.git import get_git_tools
+        from calm.tools.errors import MCPError
 
         store, embedder = setup
         tools = get_git_tools(store, embedder)
 
-        result = await tools["get_file_history"](path="test.py")
-
-        assert result["status"] == "not_implemented"
+        with pytest.raises(MCPError, match="Git file history not available"):
+            await tools["get_file_history"](path="test.py")
 
     @pytest.mark.asyncio
     async def test_get_churn_hotspots_placeholder(
         self, setup: tuple[MemoryStore, MockEmbeddingService]
     ) -> None:
-        """Test get_churn_hotspots returns placeholder response."""
+        """Test get_churn_hotspots raises error when git_analyzer not available."""
         from calm.tools.git import get_git_tools
+        from calm.tools.errors import MCPError
 
         store, embedder = setup
         tools = get_git_tools(store, embedder)
 
-        result = await tools["get_churn_hotspots"]()
-
-        assert result["status"] == "not_implemented"
+        with pytest.raises(MCPError, match="Git churn analysis not available"):
+            await tools["get_churn_hotspots"]()
 
     @pytest.mark.asyncio
     async def test_get_code_authors_placeholder(
         self, setup: tuple[MemoryStore, MockEmbeddingService]
     ) -> None:
-        """Test get_code_authors returns placeholder response."""
+        """Test get_code_authors raises error when git_analyzer not available."""
         from calm.tools.git import get_git_tools
+        from calm.tools.errors import MCPError
 
         store, embedder = setup
         tools = get_git_tools(store, embedder)
 
-        result = await tools["get_code_authors"](path="test.py")
-
-        assert result["status"] == "not_implemented"
+        with pytest.raises(MCPError, match="Git author analysis not available"):
+            await tools["get_code_authors"](path="test.py")
 
 
 class TestLearningTools:
@@ -213,7 +212,7 @@ class TestLearningTools:
 
         result = await tools["get_clusters"](axis="full")
 
-        assert result["status"] == "not_implemented"
+        assert result["status"] == "not_available"
 
     @pytest.mark.asyncio
     async def test_validate_value_empty_text(

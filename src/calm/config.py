@@ -6,8 +6,53 @@ All settings support environment variable overrides with CALM_ prefix.
 
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class IndexerSettings(BaseModel):
+    """Settings for code indexing."""
+
+    embedding_batch_size: int = Field(
+        default=100,
+        description="Number of embeddings to generate per batch",
+    )
+
+
+class ContextSettings(BaseModel):
+    """Settings for context assembly."""
+
+    source_weights: dict[str, int] = Field(
+        default={
+            "memories": 1,
+            "code": 2,
+            "experiences": 3,
+            "values": 1,
+            "commits": 2,
+        },
+        description="Token budget weights per source type",
+    )
+    similarity_threshold: float = Field(
+        default=0.90,
+        description="Minimum similarity for fuzzy deduplication",
+    )
+    max_item_fraction: float = Field(
+        default=0.25,
+        description="Max fraction of source budget for a single item",
+    )
+    max_fuzzy_content_length: int = Field(
+        default=1000,
+        description="Max content length for fuzzy deduplication",
+    )
+
+
+class ToolSettings(BaseModel):
+    """Settings for tool constraints."""
+
+    snippet_max_length: int = Field(
+        default=5000,
+        description="Maximum code snippet length for find_similar_code",
+    )
 
 # Default paths
 CALM_HOME = Path.home() / ".calm"
@@ -133,6 +178,11 @@ class CalmSettings(BaseSettings):
         default=10000,
         description="Maximum length for memory content",
     )
+
+    # Nested settings
+    indexer: IndexerSettings = Field(default_factory=IndexerSettings)
+    context: ContextSettings = Field(default_factory=ContextSettings)
+    tool: ToolSettings = Field(default_factory=ToolSettings)
 
 
 # Module-level singleton

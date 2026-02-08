@@ -550,17 +550,19 @@ def _get_all_tool_definitions() -> list[Tool]:
     ]
 
 
-async def create_server() -> tuple[Server, dict[str, Any]]:
+async def create_server(use_mock: bool = False) -> tuple[Server, dict[str, Any]]:
     """Create the CALM MCP server with all tools registered.
+
+    Args:
+        use_mock: If True, use MockEmbeddingService + MemoryStore (for tests).
+                  If False, use real Qdrant + embedding models.
 
     Returns:
         Tuple of (Server, tool_registry). tool_registry maps tool names
         to their async implementation functions.
     """
     from calm import __version__
-    from calm.embedding import MockEmbeddingService
     from calm.ghap import ObservationCollector, ObservationPersister
-    from calm.storage import MemoryStore
     from calm.tools import (
         get_code_tools,
         get_context_tools,
@@ -573,15 +575,95 @@ async def create_server() -> tuple[Server, dict[str, Any]]:
     )
     from calm.tools.session import SessionManager
 
-    server = Server("calm")
+    server = Server("calm", version=__version__)
 
-    # Initialize services
-    # Use in-memory storage for now (Qdrant integration can come later)
-    vector_store = MemoryStore()
+    # Service instances that may be set when using real services
+    git_analyzer = None
+    code_indexer = None
+    experience_clusterer = None
+    value_store_instance = None
+    context_assembler = None
 
-    # Use mock embedder for now (real embedders can be added later)
-    semantic_embedder = MockEmbeddingService(dimension=384)
-    code_embedder = MockEmbeddingService(dimension=384)
+    if use_mock:
+        from calm.embedding import MockEmbeddingService
+        from calm.storage import MemoryStore
+
+        vector_store = MemoryStore()
+        semantic_embedder = MockEmbeddingService(dimension=384)
+        code_embedder = MockEmbeddingService(dimension=384)
+    else:
+        # Lazy imports for fork safety (PyTorch must not load before fork)
+        import os
+
+        from calm.clustering import Clusterer, ExperienceClusterer
+        from calm.context import ContextAssembler
+        from calm.embedding.registry import EmbeddingRegistry
+        from calm.indexers import CodeIndexer, TreeSitterParser
+        from calm.search.searcher import Searcher
+        from calm.storage.metadata import MetadataStore
+        from calm.storage.qdrant import QdrantVectorStore
+        from calm.values import ValueStore
+
+        # Real vector store (Qdrant)
+        vector_store = QdrantVectorStore(url=settings.qdrant_url)
+
+        # Real embedders (loaded lazily on first embed() call)
+        registry = EmbeddingRegistry(
+            code_model=settings.code_model,
+            semantic_model=settings.semantic_model,
+        )
+        semantic_embedder = registry.get_semantic_embedder()
+        code_embedder = registry.get_code_embedder()
+
+        # Metadata store (central SQLite DB)
+        metadata_store = MetadataStore(settings.db_path)
+        await metadata_store.initialize()
+
+        # Code indexer (tree-sitter parser + batch embedding)
+        parser = TreeSitterParser()
+        code_indexer = CodeIndexer(
+            parser=parser,
+            embedding_service=code_embedder,
+            vector_store=vector_store,
+            metadata_store=metadata_store,
+        )
+
+        # Git analyzer (graceful fallback if not in a git repo)
+        try:
+            from calm.git import GitAnalyzer, GitPythonReader
+
+            cwd = os.getcwd()
+            git_reader = GitPythonReader(cwd)
+            git_analyzer = GitAnalyzer(
+                git_reader=git_reader,
+                embedding_service=semantic_embedder,
+                vector_store=vector_store,
+                metadata_store=metadata_store,
+            )
+            logger.info("git_analyzer.initialized", repo_path=cwd)
+        except Exception as e:
+            logger.warning("git_analyzer.skipped", error=str(e))
+
+        # Clustering
+        clusterer = Clusterer()
+        experience_clusterer = ExperienceClusterer(
+            vector_store=vector_store,
+            clusterer=clusterer,
+        )
+
+        # Value store
+        value_store_instance = ValueStore(
+            embedding_service=semantic_embedder,
+            vector_store=vector_store,
+            clusterer=experience_clusterer,
+        )
+
+        # Search + context assembly
+        searcher = Searcher(
+            embedding_service=semantic_embedder,
+            vector_store=vector_store,
+        )
+        context_assembler = ContextAssembler(searcher=searcher)
 
     # Build tool registry
     tool_registry: dict[str, Any] = {}
@@ -590,10 +672,14 @@ async def create_server() -> tuple[Server, dict[str, Any]]:
     tool_registry.update(get_memory_tools(vector_store, semantic_embedder))
 
     # Code tools
-    tool_registry.update(get_code_tools(vector_store, code_embedder))
+    tool_registry.update(
+        get_code_tools(vector_store, code_embedder, code_indexer=code_indexer)
+    )
 
     # Git tools
-    tool_registry.update(get_git_tools(vector_store, semantic_embedder))
+    tool_registry.update(
+        get_git_tools(vector_store, semantic_embedder, git_analyzer=git_analyzer)
+    )
 
     # GHAP tools
     journal_dir = Path(settings.journal_dir)
@@ -606,10 +692,23 @@ async def create_server() -> tuple[Server, dict[str, Any]]:
     tool_registry.update(get_ghap_tools(observation_collector, observation_persister))
 
     # Learning tools
-    tool_registry.update(get_learning_tools(vector_store, semantic_embedder))
+    tool_registry.update(
+        get_learning_tools(
+            vector_store,
+            semantic_embedder,
+            experience_clusterer=experience_clusterer,
+            value_store=value_store_instance,
+        )
+    )
 
     # Context tools
-    tool_registry.update(get_context_tools(vector_store, semantic_embedder))
+    tool_registry.update(
+        get_context_tools(
+            vector_store,
+            semantic_embedder,
+            context_assembler=context_assembler,
+        )
+    )
 
     # Session tools
     session_manager = SessionManager()

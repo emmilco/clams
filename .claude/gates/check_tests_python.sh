@@ -11,21 +11,21 @@
 #
 # Features:
 #   - Runs pytest with cleanup timeout monitoring
-#   - Logs results to test_runs table in CLAWS database
+#   - Logs results to test_runs table in CALM database
 #   - Enforces no skipped tests policy
 #   - Detects collection errors (import/syntax failures)
 
 set -euo pipefail
 
 # Cleanup timeout in seconds (configurable via environment)
-CLEANUP_TIMEOUT="${CLAWS_CLEANUP_TIMEOUT:-30}"
+CLEANUP_TIMEOUT="${CALM_CLEANUP_TIMEOUT:-30}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$(dirname "$SCRIPT_DIR")/bin"
 
-# Use claws-common.sh to resolve to main repo database
-if [[ -f "$BIN_DIR/claws-common.sh" ]]; then
-    source "$BIN_DIR/claws-common.sh"
+# Use calm-common.sh to resolve to main repo database
+if [[ -f "$BIN_DIR/calm-common.sh" ]]; then
+    source "$BIN_DIR/calm-common.sh"
 else
     # Fallback for standalone execution
     CLAUDE_DIR="$(dirname "$SCRIPT_DIR")"
@@ -33,7 +33,7 @@ else
     MAIN_REPO=$(cd "$_LOCAL_REPO" && git worktree list --porcelain 2>/dev/null | head -1 | sed 's/worktree //')
     MAIN_REPO="${MAIN_REPO:-$_LOCAL_REPO}"
     CLAUDE_DIR="$MAIN_REPO/.claude"
-    DB_PATH="$CLAUDE_DIR/claws.db"
+    DB_PATH="$CLAUDE_DIR/calm.db"
 fi
 
 WORKTREE="${1:-.}"

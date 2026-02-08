@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify CLAMS installation by checking binary and imports."""
+"""Verify CALM installation by checking binary and imports."""
 
 import os
 import subprocess
@@ -16,21 +16,21 @@ def verify_mcp_server(venv_path: Path) -> bool:
     Returns:
         True if binary exists and is executable
     """
-    clams_bin = venv_path / "bin" / "clams-server"
+    calm_bin = venv_path / "bin" / "calm"
 
-    if not clams_bin.exists():
-        print(f"Error: clams-server not found at {clams_bin}")
+    if not calm_bin.exists():
+        print(f"Error: calm not found at {calm_bin}")
         return False
 
-    if not os.access(clams_bin, os.X_OK):
-        print(f"Error: clams-server is not executable: {clams_bin}")
+    if not os.access(calm_bin, os.X_OK):
+        print(f"Error: calm is not executable: {calm_bin}")
         return False
 
     # Verify basic import works using the venv's Python
     venv_python = venv_path / "bin" / "python"
     try:
         result = subprocess.run(
-            [str(venv_python), "-c", "from clams.server.main import main"],
+            [str(venv_python), "-c", "from calm.server.main import main"],
             capture_output=True,
             text=True,
             timeout=30,
@@ -39,7 +39,7 @@ def verify_mcp_server(venv_path: Path) -> bool:
         )
 
         if result.returncode != 0:
-            print("Error: Failed to import clams.server.main")
+            print("Error: Failed to import calm.server.main")
             print(f"stderr: {result.stderr}")
             return False
 
@@ -56,17 +56,17 @@ def verify_mcp_server(venv_path: Path) -> bool:
 
 
 def verify_storage_directory() -> bool:
-    """Verify ~/.clams directory structure."""
-    clams_dir = Path.home() / ".clams"
-    journal_dir = clams_dir / "journal"
-    archive_dir = journal_dir / "archive"
-    session_id = journal_dir / ".session_id"
+    """Verify ~/.calm directory structure."""
+    calm_dir = Path.home() / ".calm"
+    sessions_dir = calm_dir / "sessions"
+    roles_dir = calm_dir / "roles"
+    workflows_dir = calm_dir / "workflows"
 
     checks = [
-        (clams_dir, "directory"),
-        (journal_dir, "directory"),
-        (archive_dir, "directory"),
-        (session_id, "file"),
+        (calm_dir, "directory"),
+        (sessions_dir, "directory"),
+        (roles_dir, "directory"),
+        (workflows_dir, "directory"),
     ]
 
     all_good = True
@@ -90,7 +90,7 @@ def main() -> None:
 
     venv_path = Path(sys.argv[1])
 
-    print("\n=== Verifying CLAMS Installation ===\n")
+    print("\n=== Verifying CALM Installation ===\n")
 
     storage_ok = verify_storage_directory()
     server_ok = verify_mcp_server(venv_path)

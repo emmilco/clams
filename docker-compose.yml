@@ -1,7 +1,7 @@
 services:
   qdrant:
     image: qdrant/qdrant:v1.12.1
-    container_name: clams-qdrant
+    container_name: calm-qdrant
     ports:
       - "6333:6333"
       - "6334:6334"

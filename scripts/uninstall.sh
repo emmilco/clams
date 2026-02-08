@@ -27,18 +27,18 @@ while [[ $# -gt 0 ]]; do
             cat <<EOF
 Usage: uninstall.sh [OPTIONS]
 
-Uninstall CLAMS from Claude Code.
+Uninstall CALM from Claude Code.
 
 OPTIONS:
-    --remove-data    Remove ~/.clams/ directory (requires confirmation)
+    --remove-data    Remove ~/.calm/ directory (requires confirmation)
     --force          Skip confirmation prompts
     --help           Show this help message
 
 DEFAULT BEHAVIOR:
-    - Remove CLAMS from ~/.claude.json
-    - Remove CLAMS hooks from ~/.claude/settings.json
-    - Stop and remove clams-qdrant Docker container
-    - Keep ~/.clams/ data directory (use --remove-data to delete)
+    - Remove CALM from ~/.claude.json
+    - Remove CALM hooks from ~/.claude/settings.json
+    - Stop and remove calm-qdrant Docker container
+    - Keep ~/.calm/ data directory (use --remove-data to delete)
 
 EXAMPLES:
     ./scripts/uninstall.sh                          # Safe uninstall, keep data
@@ -58,15 +58,15 @@ done
 
 echo ""
 echo "=========================================="
-echo "  CLAMS Uninstallation"
+echo "  CALM Uninstallation"
 echo "=========================================="
 echo ""
 
 # Confirmation prompt unless --force
 if [ "$FORCE" = false ]; then
-    echo "This will remove CLAMS from Claude Code configuration."
+    echo "This will remove CALM from Claude Code configuration."
     if [ "$REMOVE_DATA" = true ]; then
-        warning "This will also DELETE ~/.clams/ (all memories, GHAP data, etc.)"
+        warning "This will also DELETE ~/.calm/ (all memories, GHAP data, etc.)"
     fi
     echo ""
     read -p "Continue? (y/N) " -n 1 -r
@@ -77,22 +77,22 @@ if [ "$FORCE" = false ]; then
     fi
 fi
 
-# 1. Stop CLAMS daemon
-info "Stopping CLAMS daemon..."
-clams_bin="$REPO_ROOT/.venv/bin/clams-server"
-if [ -x "$clams_bin" ]; then
-    if "$clams_bin" --stop 2>/dev/null; then
-        success "CLAMS daemon stopped"
+# 1. Stop CALM daemon
+info "Stopping CALM daemon..."
+calm_bin="$REPO_ROOT/.venv/bin/calm"
+if [ -x "$calm_bin" ]; then
+    if "$calm_bin" server stop 2>/dev/null; then
+        success "CALM daemon stopped"
     else
-        info "CLAMS daemon was not running"
+        info "CALM daemon was not running"
     fi
 else
     # Try stopping manually via PID file
-    daemon_pid_file="$HOME/.clams/server.pid"
+    daemon_pid_file="$HOME/.calm/server.pid"
     if [ -f "$daemon_pid_file" ]; then
         daemon_pid=$(cat "$daemon_pid_file")
         if kill "$daemon_pid" 2>/dev/null; then
-            success "CLAMS daemon stopped (PID: $daemon_pid)"
+            success "CALM daemon stopped (PID: $daemon_pid)"
             rm -f "$daemon_pid_file"
         fi
     fi
@@ -101,14 +101,14 @@ fi
 # 2. Remove MCP server from ~/.claude.json
 info "Removing MCP server configuration..."
 if [ -f "$HOME/.claude.json" ]; then
-    server_data='{"name": "clams"}'
+    server_data='{"name": "calm"}'
     if python3 "$REPO_ROOT/scripts/json_merge.py" \
         remove-server \
         --config-file "$HOME/.claude.json" \
         --data "$server_data"; then
         success "Removed from ~/.claude.json"
     else
-        info "CLAMS was not in ~/.claude.json (already removed)"
+        info "CALM was not in ~/.claude.json (already removed)"
     fi
 else
     info "~/.claude.json not found (skipping)"
@@ -118,12 +118,12 @@ fi
 info "Removing hook registrations..."
 if [ -f "$HOME/.claude/settings.json" ]; then
     hooks_data=$(jq -n \
-        --arg session_start "$REPO_ROOT/clams/hooks/session_start.sh" \
-        --arg user_prompt "$REPO_ROOT/clams/hooks/user_prompt_submit.sh" \
-        --arg ghap_checkin "$REPO_ROOT/clams/hooks/ghap_checkin.sh" \
-        --arg outcome "$REPO_ROOT/clams/hooks/outcome_capture.sh" \
+        --arg session_start "python -m calm.hooks.session_start" \
+        --arg user_prompt "python -m calm.hooks.user_prompt_submit" \
+        --arg pre_tool "python -m calm.hooks.pre_tool_use" \
+        --arg post_tool "python -m calm.hooks.post_tool_use" \
         '{
-            commands: [$session_start, $user_prompt, $ghap_checkin, $outcome]
+            commands: [$session_start, $user_prompt, $pre_tool, $post_tool]
         }') || {
         echo "Error: Failed to build hooks data JSON"
         exit 1
@@ -135,7 +135,7 @@ if [ -f "$HOME/.claude/settings.json" ]; then
         --data "$hooks_data"; then
         success "Removed from ~/.claude/settings.json"
     else
-        info "CLAMS hooks were not in ~/.claude/settings.json (already removed)"
+        info "CALM hooks were not in ~/.claude/settings.json (already removed)"
     fi
 else
     info "~/.claude/settings.json not found (skipping)"
@@ -143,66 +143,66 @@ fi
 
 # 3. Stop and remove Docker container
 info "Stopping Qdrant container..."
-if docker ps -a --format '{{.Names}}' | grep -q '^clams-qdrant$'; then
-    docker stop clams-qdrant &> /dev/null || true
-    docker rm clams-qdrant &> /dev/null || true
-    success "Removed clams-qdrant container"
+if docker ps -a --format '{{.Names}}' | grep -q '^calm-qdrant$'; then
+    docker stop calm-qdrant &> /dev/null || true
+    docker rm calm-qdrant &> /dev/null || true
+    success "Removed calm-qdrant container"
 else
-    info "clams-qdrant container not found (skipping)"
+    info "calm-qdrant container not found (skipping)"
 fi
 
 # 4. Remove Docker volume (contains Qdrant data)
-if docker volume ls --format '{{.Name}}' | grep -q '^clams_qdrant_storage$'; then
+if docker volume ls --format '{{.Name}}' | grep -q '^calm_qdrant_storage$'; then
     if [ "$FORCE" = false ]; then
         echo ""
         read -p "Remove Qdrant data volume? (y/N) " -n 1 -r
         echo ""
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-            docker volume rm clams_qdrant_storage &> /dev/null || true
+            docker volume rm calm_qdrant_storage &> /dev/null || true
             success "Removed Qdrant data volume"
         else
-            info "Kept Qdrant data volume (can be removed manually with: docker volume rm clams_qdrant_storage)"
+            info "Kept Qdrant data volume (can be removed manually with: docker volume rm calm_qdrant_storage)"
         fi
     else
-        docker volume rm clams_qdrant_storage &> /dev/null || true
+        docker volume rm calm_qdrant_storage &> /dev/null || true
         success "Removed Qdrant data volume"
     fi
 fi
 
-# 5. Remove ~/.clams/ if requested
+# 5. Remove ~/.calm/ if requested
 if [ "$REMOVE_DATA" = true ]; then
-    if [ -d "$HOME/.clams" ]; then
-        info "Removing ~/.clams/ data directory..."
-        rm -rf "$HOME/.clams"
-        success "Removed ~/.clams/"
+    if [ -d "$HOME/.calm" ]; then
+        info "Removing ~/.calm/ data directory..."
+        rm -rf "$HOME/.calm"
+        success "Removed ~/.calm/"
     else
-        info "~/.clams/ not found (skipping)"
+        info "~/.calm/ not found (skipping)"
     fi
 else
-    info "Kept ~/.clams/ data directory (use --remove-data to delete)"
+    info "Kept ~/.calm/ data directory (use --remove-data to delete)"
 fi
 
 echo ""
 echo "=========================================="
-success "CLAMS uninstalled"
+success "CALM uninstalled"
 echo "=========================================="
 echo ""
 echo "What was removed:"
-echo "  - CLAMS daemon process"
+echo "  - CALM daemon process"
 echo "  - MCP server from ~/.claude.json"
 echo "  - Hooks from ~/.claude/settings.json"
-echo "  - clams-qdrant Docker container"
+echo "  - calm-qdrant Docker container"
 if [ "$REMOVE_DATA" = true ]; then
-    echo "  - ~/.clams/ data directory"
+    echo "  - ~/.calm/ data directory"
 fi
 echo ""
 echo "What was NOT removed:"
 echo "  - This repository ($REPO_ROOT)"
 echo "  - Python virtual environment (.venv)"
 if [ "$REMOVE_DATA" = false ]; then
-    echo "  - ~/.clams/ data directory"
+    echo "  - ~/.calm/ data directory"
 fi
 echo ""
-echo "To fully remove CLAMS:"
+echo "To fully remove CALM:"
 echo "  rm -rf $REPO_ROOT"
 echo ""

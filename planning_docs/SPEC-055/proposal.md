@@ -40,7 +40,7 @@ The AST approach:
 
 ```
 .claude/checks/
-    check_hardcoded_paths.py      # Main script (executable)
+    check_hardcoded_paths.py      # Main script (executable, with shebang)
     path_allowlist.txt            # Optional allowlist (created if needed)
 
 tests/checks/
@@ -350,20 +350,24 @@ def scan_file(
 
 ### 8. Output Format
 
-Violations are reported in a standard format:
+Violations are reported grouped by file for readability:
 
 ```
 === Checking for hardcoded paths ===
 
 src/example.py:15: macOS home directory
   String: "/Users/john/project/config.json"
+src/example.py:42: Linux home directory
+  String: "/home/developer/data"
 
-src/other.py:42: hardcoded /tmp/ path (use tempfile or tmp_path fixture)
+src/other.py:10: hardcoded /tmp/ path (use tempfile or tmp_path fixture)
   String: "/tmp/cache/data.json"
 
 === Summary ===
-Found 2 hardcoded path(s) in 2 file(s)
+Found 3 hardcoded path(s) in 2 file(s)
 ```
+
+Note: Violations from the same file are grouped together (not interleaved with other files).
 
 ### 9. Exit Codes
 
@@ -371,7 +375,34 @@ Found 2 hardcoded path(s) in 2 file(s)
 |------|---------|
 | 0 | No violations found |
 | 1 | Violations found |
-| 2 | Script error (e.g., invalid arguments) |
+| 2 | Script error (e.g., invalid arguments, unexpected exception) |
+
+### 10. Script Structure
+
+The script starts with a proper shebang and has top-level error handling:
+
+```python
+#!/usr/bin/env python3
+"""Check for hardcoded paths in Python source files."""
+
+import sys
+# ... other imports ...
+
+def main() -> int:
+    """Main entry point."""
+    try:
+        # ... argument parsing and scanning logic ...
+        return 0 if not violations else 1
+    except KeyboardInterrupt:
+        print("\nInterrupted.", file=sys.stderr)
+        return 2
+    except Exception as e:
+        print(f"ERROR: Unexpected error: {e}", file=sys.stderr)
+        return 2
+
+if __name__ == "__main__":
+    sys.exit(main())
+```
 
 ## CI Integration
 

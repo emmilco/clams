@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# check_frontend.sh: Validate frontend (clams-visualizer) changes
+# check_frontend.sh: Validate frontend (calm-visualizer) changes
 #
 # Usage: check_frontend.sh <worktree_path> [task_id]
 #
@@ -20,8 +20,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$(dirname "$SCRIPT_DIR")/bin"
 
-if [[ -f "$BIN_DIR/claws-common.sh" ]]; then
-    source "$BIN_DIR/claws-common.sh"
+if [[ -f "$BIN_DIR/calm-common.sh" ]]; then
+    source "$BIN_DIR/calm-common.sh"
 fi
 
 WORKTREE="${1:-.}"
@@ -29,7 +29,7 @@ TASK_ID="${2:-$(basename "$WORKTREE")}"
 
 # Read frontend_dirs from project.json or use default
 PROJECT_CONFIG="$CLAUDE_DIR/project.json"
-FRONTEND_DIRS="clams-visualizer/"
+FRONTEND_DIRS="calm-visualizer/"
 
 if [[ -f "$PROJECT_CONFIG" ]] && command -v jq &>/dev/null; then
     DIRS=$(jq -r '.frontend_dirs[]? // empty' "$PROJECT_CONFIG" 2>/dev/null | tr '\n' ' ')

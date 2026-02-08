@@ -1,6 +1,6 @@
 # Session Wrapup
 
-You are ending a CLAMS session. Complete the following steps:
+You are ending a CALM session. Complete the following steps:
 
 ## Arguments
 
@@ -13,19 +13,20 @@ Check if the user specified `continue` - this determines whether the next sessio
 
 Run this to mark all active workers as session_ended:
 ```bash
-sqlite3 .claude/claws.db "UPDATE workers SET status = 'session_ended', ended_at = datetime('now') WHERE status = 'active';"
+calm worker list  # Check for active workers first
+# Workers are marked as session_ended automatically by the wrapup skill
 ```
 
 ## 2. Create Database Backup
 
 ```bash
-.claude/bin/claws-backup auto
+calm backup create auto
 ```
 
 ## 3. Get Current State
 
 ```bash
-.claude/bin/claws-status
+calm status
 ```
 
 ## 4. Identify Friction Points
@@ -39,11 +40,11 @@ Reflect on this session and identify the **top 3-5 friction points**:
 
 ## 5. Save Handoff to Database
 
-Use `claws-session save` to store the handoff. This command reads from stdin and handles encoding automatically.
+Use `calm session save` to store the handoff. This command reads from stdin and handles encoding automatically.
 
 **For `/wrapup` (no continuation expected):**
 ```bash
-cat <<'EOF' | .claude/bin/claws-session save
+cat <<'EOF' | calm session save
 # Session Handoff - [DATE]
 
 ## Session Summary
@@ -75,7 +76,7 @@ EOF
 
 **For `/wrapup continue` (continuation expected):**
 ```bash
-cat <<'EOF' | .claude/bin/claws-session save --continue
+cat <<'EOF' | calm session save --continue
 # Session Handoff - [DATE]
 ...
 EOF

@@ -10,7 +10,7 @@ class TestBug037Regression:
     def test_verify_install_timeout_is_sufficient(self) -> None:
         """Verify verify_install.py uses a timeout >= 15 seconds.
 
-        The import of clams.server.main pulls in sentence-transformers/PyTorch
+        The import of calm.server.main pulls in sentence-transformers/PyTorch
         which takes 4-6 seconds. A timeout of 5 seconds caused false failures.
         The timeout should be at least 15 seconds to provide adequate headroom.
         """

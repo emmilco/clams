@@ -330,7 +330,7 @@ debug output here
 ### Root Cause
 Null pointer when profile is None
 ## Fix Plan
-1. In `src/clams/api/users.py:get_profile()`, add null check
+1. In `src/calm/api/users.py:get_profile()`, add null check
 2. Add test in `tests/test_users.py`
 """)
         code, output = run_gate(worktree_dir, "BUG-001")
@@ -415,7 +415,7 @@ Server crashes when user.profile is None
 
 ### Initial Hypothesis
 
-The bug is likely in src/clams/api/users.py:get_profile() where we don't check for None.
+The bug is likely in src/calm/api/users.py:get_profile() where we don't check for None.
 
 ### Differential Diagnosis
 
@@ -428,11 +428,11 @@ The bug is likely in src/clams/api/users.py:get_profile() where we don't check f
 ### Evidentiary Scaffold
 
 ```python
-# Location: src/clams/api/users.py:45
+# Location: src/calm/api/users.py:45
 # Purpose: Log profile state before access
 logger.debug(f"SCAFFOLD: profile={user.profile}")
 
-# Location: src/clams/api/users.py:48
+# Location: src/calm/api/users.py:48
 # Purpose: Check which branch is taken
 logger.debug(f"SCAFFOLD: entering get_profile, has_profile={user.profile is not None}")
 ```
@@ -465,7 +465,7 @@ Traceback: NullPointerException at users.py:50
 
 ### Code Changes
 
-1. **File**: `src/clams/api/users.py`
+1. **File**: `src/calm/api/users.py`
    **Function**: `get_profile`
    **Change**: Add null check before accessing profile attributes
    **Rationale**: Prevents the NullPointerException when profile is None

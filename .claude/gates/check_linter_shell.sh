@@ -9,7 +9,7 @@
 #   SCRIPT_DIRS            Space-separated directories to check
 #
 # Checks shell scripts in configured script_dirs from project.json
-# Falls back to .claude/bin/, scripts/, and clams_scripts/hooks/ if not configured.
+# Falls back to .claude/bin/, scripts/, and legacy clams_scripts/hooks/ if not configured.
 #
 # Exit codes:
 #   0 - All checks pass (or no shell changes when CHECK_CHANGED_ONLY=1)
@@ -24,8 +24,8 @@ BIN_DIR="$(dirname "$SCRIPT_DIR")/bin"
 # Save CLAUDE_DIR if set by caller (for testing)
 _CALLER_CLAUDE_DIR="${CLAUDE_DIR:-}"
 
-if [[ -f "$BIN_DIR/claws-common.sh" ]]; then
-    source "$BIN_DIR/claws-common.sh"
+if [[ -f "$BIN_DIR/calm-common.sh" ]]; then
+    source "$BIN_DIR/calm-common.sh"
 fi
 
 # Restore caller's CLAUDE_DIR if it was set (allows override for testing)
@@ -59,7 +59,7 @@ if [[ -f "$PROJECT_CONFIG" ]] && command -v jq &>/dev/null; then
     SCRIPT_DIRS=$(jq -r '.script_dirs[]? // empty' "$PROJECT_CONFIG" 2>/dev/null | tr '\n' ' ')
 fi
 
-# Fallback to defaults (now includes clams_scripts/hooks/)
+# Fallback to defaults (includes legacy clams_scripts/hooks/ for backwards compatibility)
 if [[ -z "$SCRIPT_DIRS" ]]; then
     SCRIPT_DIRS=".claude/bin/ scripts/ clams_scripts/hooks/"
 fi

@@ -13,10 +13,10 @@ from pathlib import Path
 
 
 def test_check_tests_has_timeout_variable() -> None:
-    """Verify that check_tests.sh reads CLAWS_CLEANUP_TIMEOUT environment variable.
+    """Verify that check_tests.sh reads CALM_CLEANUP_TIMEOUT environment variable.
 
     The script should have a configurable timeout (default 30s) that can be
-    overridden via CLAWS_CLEANUP_TIMEOUT.
+    overridden via CALM_CLEANUP_TIMEOUT.
     """
     gate_script = Path(__file__).parent.parent.parent / ".claude" / "gates" / "check_tests.sh"
 
@@ -24,8 +24,8 @@ def test_check_tests_has_timeout_variable() -> None:
     script_content = gate_script.read_text()
 
     # Verify the timeout variable is defined
-    assert "CLAWS_CLEANUP_TIMEOUT" in script_content, (
-        "check_tests.sh should read CLAWS_CLEANUP_TIMEOUT environment variable"
+    assert "CALM_CLEANUP_TIMEOUT" in script_content, (
+        "check_tests.sh should read CALM_CLEANUP_TIMEOUT environment variable"
     )
     assert "CLEANUP_TIMEOUT" in script_content, (
         "check_tests.sh should have a CLEANUP_TIMEOUT variable"
@@ -102,7 +102,7 @@ testpaths = ["tests"]
 
         # Run check_tests.sh with a very short timeout
         env = os.environ.copy()
-        env["CLAWS_CLEANUP_TIMEOUT"] = "3"  # 3 second timeout
+        env["CALM_CLEANUP_TIMEOUT"] = "3"  # 3 second timeout
 
         try:
             result = subprocess.run(

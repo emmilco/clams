@@ -68,12 +68,14 @@ async def _ensure_commits_collection(
 def get_git_tools(
     vector_store: VectorStore,
     semantic_embedder: EmbeddingService,
+    git_analyzer: Any = None,
 ) -> dict[str, ToolFunc]:
     """Get git tool implementations for the dispatcher.
 
     Args:
         vector_store: Initialized vector store
         semantic_embedder: Initialized semantic embedding service
+        git_analyzer: Optional git analyzer for commit indexing and analysis
 
     Returns:
         Dictionary mapping tool names to their implementations
@@ -86,19 +88,20 @@ def get_git_tools(
     ) -> dict[str, Any]:
         """Index git commits for semantic search.
 
-        This is a placeholder that returns a not-implemented response.
-        Full indexing functionality requires git integration which
-        is not yet ported to CALM.
-
         Args:
             since: Optional date filter (ISO format YYYY-MM-DD)
             limit: Optional max commits to index (default: all from last 5 years)
             force: Force reindex all commits (default: false, incremental)
 
         Returns:
-            Status indicating feature is not yet available
+            Indexing statistics
         """
         logger.info("git.index_commits", since=since, limit=limit, force=force)
+
+        if git_analyzer is None:
+            raise MCPError(
+                "Git commit indexing not available. GitAnalyzer not initialized."
+            )
 
         # Validate since date if provided
         if since:
@@ -116,15 +119,28 @@ def get_git_tools(
             if limit > 100_000:
                 raise ValidationError(f"Limit {limit} exceeds maximum of 100000")
 
-        # For now, return a placeholder response
-        return {
-            "status": "not_implemented",
-            "message": (
-                "Git commit indexing is not yet available in CALM. "
-                "This feature requires git integration which will be "
-                "ported in a future release."
-            ),
+        stats = await git_analyzer.index_commits(
+            since=since,
+            limit=limit,
+            force=force,
+        )
+
+        result = {
+            "status": "success",
+            "commits_indexed": stats.commits_indexed,
+            "commits_skipped": stats.commits_skipped,
+            "duration_ms": stats.duration_ms,
+            "errors": [
+                {
+                    "sha": err.sha,
+                    "error_type": err.error_type,
+                    "message": err.message,
+                }
+                for err in stats.errors
+            ],
         }
+
+        return result
 
     async def search_commits(
         query: str,
@@ -145,8 +161,10 @@ def get_git_tools(
         """
         logger.info("git.search_commits", query=query[:50], author=author)
 
-        # Ensure collection exists
-        await _ensure_commits_collection(vector_store, semantic_embedder)
+        if git_analyzer is None:
+            raise MCPError(
+                "Git commit search not available. GitAnalyzer not initialized."
+            )
 
         # Validate limit
         if not 1 <= limit <= 50:
@@ -174,60 +192,40 @@ def get_git_tools(
         if not query.strip():
             return {"results": [], "count": 0}
 
-        try:
-            # Generate query embedding
-            query_embedding = await semantic_embedder.embed(query)
+        # Use git_analyzer to search commits
+        results = await git_analyzer.search_commits(
+            query=query,
+            author=author,
+            since=since_dt,
+            limit=limit,
+        )
 
-            # Build filters
-            filters: dict[str, Any] = {}
-            if author:
-                filters["author"] = author
-            if since_dt:
-                filters["committed_at"] = {"$gte": since_dt.timestamp()}
+        # Format results
+        formatted = []
+        for result in results:
+            # Convert timestamp to ISO format if present
+            timestamp = result.commit.timestamp
+            if timestamp:
+                timestamp = timestamp.isoformat()
 
-            # Search
-            results = await vector_store.search(
-                collection="commits",
-                query=query_embedding,
-                limit=limit,
-                filters=filters if filters else None,
+            formatted.append(
+                {
+                    "sha": result.commit.sha,
+                    "message": result.commit.message,
+                    "author": result.commit.author,
+                    "author_email": result.commit.author_email,
+                    "timestamp": timestamp,
+                    "files_changed": result.commit.files_changed,
+                    "file_count": len(result.commit.files_changed),
+                    "insertions": result.commit.insertions,
+                    "deletions": result.commit.deletions,
+                    "score": result.score,
+                }
             )
 
-            # Format results
-            formatted = []
-            for result in results:
-                # Convert timestamp to ISO format if present
-                committed_at = result.payload.get("committed_at")
-                if isinstance(committed_at, (int, float)):
-                    committed_at = datetime.fromtimestamp(committed_at).isoformat()
+        logger.info("git.commits_found", count=len(formatted))
 
-                formatted.append(
-                    {
-                        "sha": result.payload.get("sha", result.id),
-                        "message": result.payload.get("message", ""),
-                        "author": result.payload.get("author", ""),
-                        "author_email": result.payload.get("author_email", ""),
-                        "timestamp": committed_at,
-                        "files_changed": result.payload.get("files_changed", []),
-                        "file_count": len(result.payload.get("files_changed", [])),
-                        "insertions": result.payload.get("insertions", 0),
-                        "deletions": result.payload.get("deletions", 0),
-                        "score": result.score,
-                    }
-                )
-
-            logger.info("git.commits_found", count=len(formatted))
-
-            return {"results": formatted, "count": len(formatted)}
-
-        except Exception as e:
-            error_msg = str(e).lower()
-            if "not found" in error_msg or "404" in str(e):
-                # Collection doesn't exist or is empty
-                logger.info("git.collection_empty")
-                return {"results": [], "count": 0}
-            logger.error("git.search_commits_failed", error=str(e), exc_info=True)
-            raise MCPError(f"Failed to search commits: {e}") from e
+        return {"results": formatted, "count": len(formatted)}
 
     async def get_file_history(
         path: str,
@@ -235,17 +233,19 @@ def get_git_tools(
     ) -> dict[str, Any]:
         """Get commit history for a specific file.
 
-        This is a placeholder that returns a not-implemented response.
-        Full functionality requires git integration.
-
         Args:
             path: File path relative to repo root
             limit: Max commits (1-500, default 100)
 
         Returns:
-            Status indicating feature is not yet available
+            Commit history for the specified file
         """
         logger.info("git.file_history", path=path, limit=limit)
+
+        if git_analyzer is None:
+            raise MCPError(
+                "Git file history not available. GitAnalyzer not initialized."
+            )
 
         # Validate limit
         if not 1 <= limit <= 500:
@@ -253,16 +253,26 @@ def get_git_tools(
                 f"Limit {limit} out of range. Must be between 1 and 500."
             )
 
-        # For now, return a placeholder response
-        return {
-            "status": "not_implemented",
-            "message": (
-                "Git file history is not yet available in CALM. "
-                "This feature requires git integration which will be "
-                "ported in a future release."
-            ),
-            "path": path,
-        }
+        try:
+            commits = await git_analyzer.git_reader.get_file_history(path=path, limit=limit)
+        except FileNotFoundError as e:
+            raise ValidationError(f"File not found in repository: {path}") from e
+
+        formatted = [
+            {
+                "sha": c.sha,
+                "message": c.message,
+                "author": c.author,
+                "author_email": c.author_email,
+                "timestamp": c.committed_at.isoformat() if c.committed_at else None,
+                "files_changed": c.files_changed,
+                "insertions": c.insertions,
+                "deletions": c.deletions,
+            }
+            for c in commits
+        ]
+
+        return {"commits": formatted, "count": len(formatted), "path": path}
 
     async def get_churn_hotspots(
         days: int = 90,
@@ -270,17 +280,19 @@ def get_git_tools(
     ) -> dict[str, Any]:
         """Find files with highest change frequency.
 
-        This is a placeholder that returns a not-implemented response.
-        Full functionality requires git integration.
-
         Args:
             days: Analysis window in days (1-365, default 90)
             limit: Max results (1-50, default 10)
 
         Returns:
-            Status indicating feature is not yet available
+            Files with highest change frequency
         """
         logger.info("git.churn_hotspots", days=days, limit=limit)
+
+        if git_analyzer is None:
+            raise MCPError(
+                "Git churn analysis not available. GitAnalyzer not initialized."
+            )
 
         # Validate parameters
         if not 1 <= days <= 365:
@@ -292,40 +304,54 @@ def get_git_tools(
                 f"Limit {limit} out of range. Must be between 1 and 50."
             )
 
-        # For now, return a placeholder response
-        return {
-            "status": "not_implemented",
-            "message": (
-                "Git churn analysis is not yet available in CALM. "
-                "This feature requires git integration which will be "
-                "ported in a future release."
-            ),
-        }
+        hotspots = await git_analyzer.get_churn_hotspots(days=days, limit=limit)
+
+        formatted = [
+            {
+                "path": h.path,
+                "commit_count": h.commit_count,
+                "total_insertions": h.total_insertions,
+                "total_deletions": h.total_deletions,
+                "authors": h.authors,
+            }
+            for h in hotspots
+        ]
+
+        return {"hotspots": formatted, "count": len(formatted)}
 
     async def get_code_authors(path: str) -> dict[str, Any]:
         """Get author statistics for a file.
-
-        This is a placeholder that returns a not-implemented response.
-        Full functionality requires git integration.
 
         Args:
             path: File path relative to repo root
 
         Returns:
-            Status indicating feature is not yet available
+            Author statistics for the specified file
         """
         logger.info("git.code_authors", path=path)
 
-        # For now, return a placeholder response
-        return {
-            "status": "not_implemented",
-            "message": (
-                "Git author analysis is not yet available in CALM. "
-                "This feature requires git integration which will be "
-                "ported in a future release."
-            ),
-            "path": path,
-        }
+        if git_analyzer is None:
+            raise MCPError(
+                "Git author analysis not available. GitAnalyzer not initialized."
+            )
+
+        try:
+            authors = await git_analyzer.get_file_authors(path=path)
+        except FileNotFoundError as e:
+            raise ValidationError(f"File not found in repository: {path}") from e
+
+        formatted = [
+            {
+                "author": a.author,
+                "email": a.email,
+                "line_count": a.line_count,
+                "percentage": a.percentage,
+                "last_commit": a.last_commit.isoformat() if a.last_commit else None,
+            }
+            for a in authors
+        ]
+
+        return {"authors": formatted, "count": len(formatted), "path": path}
 
     return {
         "index_commits": index_commits,

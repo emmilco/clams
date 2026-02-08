@@ -1,6 +1,6 @@
-# CLAWS Worker Permission Model
+# CALM Worker Permission Model
 
-This document defines the permission model for CLAWS worker agents. It establishes what operations each worker role can perform, how permissions are enforced, and how to handle permission limitations.
+This document defines the permission model for CALM worker agents. It establishes what operations each worker role can perform, how permissions are enforced, and how to handle permission limitations.
 
 ## Quick Reference
 
@@ -57,22 +57,19 @@ Only the orchestrator has this access level:
 |-----------|--------------|------------------|-----------|-----------|
 | `src/` | Yes | No | No | No |
 | `tests/` | Yes | Diagnostic only | No | No |
-| `clams/` | Yes | No | No | No |
-| `clams-visualizer/` | Frontend only | No | No | No |
+| `src/calm/` | Yes | No | No | No |
 | `planning_docs/{TASK_ID}/` | Yes | Yes | Yes | No |
 | `bug_reports/` | No | Yes | No | No |
 | `changelog.d/` | Yes | No | No | No |
 | `docs/` | No | No | Yes (design docs) | No |
-| `.claude/bin/` | No | No | No | No |
-| `.claude/roles/` | No | No | No | No |
+| `~/.calm/roles/` | No | No | No | No |
 
 ### Prohibited for All Workers
 
 These directories are **never** modifiable by workers:
 
-- `.claude/bin/` - Infrastructure scripts
-- `.claude/roles/` - Role definitions
-- `.claude/*.db` - Database files
+- `~/.calm/roles/` - Role definitions
+- `~/.calm/metadata.db` - Database files
 - Main repository files (when in a worktree)
 
 ## Command Allowlists
@@ -92,9 +89,9 @@ pytest
 ruff check
 mypy
 
-# CLAWS commands (from main repo)
-.claude/bin/claws-gate check {TASK_ID} {TRANSITION}
-.claude/bin/claws-task transition {TASK_ID} {PHASE} --gate-result pass
+# CALM commands
+calm gate check {TASK_ID} {TRANSITION}
+calm task transition {TASK_ID} {PHASE} --gate-result pass
 ```
 
 ### Reviewers
@@ -108,8 +105,8 @@ git log
 # Testing (verify only)
 pytest
 
-# CLAWS commands (from main repo)
-.claude/bin/claws-review record {TASK_ID} {TYPE} {RESULT} --worker {WORKER_ID}
+# CALM commands
+calm review record {TASK_ID} {TYPE} {RESULT} --worker {WORKER_ID}
 ```
 
 ### Bug Investigators
@@ -124,9 +121,9 @@ git blame
 # Testing (diagnostic)
 pytest
 
-# CLAWS commands (from main repo)
-.claude/bin/claws-gate check {TASK_ID} REPORTED-INVESTIGATED
-.claude/bin/claws-task transition {TASK_ID} INVESTIGATED --gate-result pass
+# CALM commands
+calm gate check {TASK_ID} REPORTED-INVESTIGATED
+calm task transition {TASK_ID} INVESTIGATED --gate-result pass
 ```
 
 ### Prohibited Commands (All Workers)
@@ -150,7 +147,7 @@ npm/pip install (without approval)
 
 ## MCP Tool Access
 
-**Critical Limitation**: MCP tools (CLAMS memory tools) are NOT available to subagent workers.
+**Critical Limitation**: MCP tools (CALM memory tools) are NOT available to subagent workers.
 
 This is an architectural constraint of Claude Code's Task tool:
 - Parent agent (orchestrator) has MCP tool access
@@ -215,17 +212,17 @@ Your completion report should include:
 
 ### Layer 1: Prompt-Based (Role Files)
 
-Each role file in `.claude/roles/` includes a Permissions section that explicitly states:
+Each role file in `~/.calm/roles/` includes a Permissions section that explicitly states:
 - What the worker CAN do
 - What the worker CANNOT do
 - What to do if blocked
 
-### Layer 2: Worker Context (claws-worker)
+### Layer 2: Worker Context
 
-The `claws-worker context` command outputs permission constraints specific to the task:
+The `calm worker` command outputs permission constraints specific to the task:
 - Worktree path
 - Allowed directories
-- Main repo location (for CLAWS commands)
+- Main repo location (for CALM commands)
 
 ### Layer 3: Self-Verification
 
@@ -251,7 +248,7 @@ Reviewers verify during code review:
 ```yaml
 access_level: WORKTREE_WRITE
 can_write:
-  - src/clams/**
+  - src/calm/**
   - tests/**
   - planning_docs/{TASK_ID}/**
   - changelog.d/{TASK_ID}.md
@@ -260,10 +257,10 @@ can_run:
   - ruff
   - mypy
   - git (add, commit, status, diff, log)
-  - claws-gate check
-  - claws-task transition
+  - calm gate check
+  - calm task transition
 cannot:
-  - Modify .claude/**
+  - Modify ~/.calm/**
   - Access MCP tools
   - Push to remote
 ```
@@ -273,17 +270,17 @@ cannot:
 ```yaml
 access_level: WORKTREE_WRITE
 can_write:
-  - clams-visualizer/**
+  - calm-visualizer/**
   - planning_docs/{TASK_ID}/**
   - changelog.d/{TASK_ID}.md
 can_run:
-  - npm (in clams-visualizer/)
+  - npm (in calm-visualizer/)
   - git (add, commit, status, diff, log)
-  - claws-gate check
-  - claws-task transition
+  - calm gate check
+  - calm task transition
 cannot:
-  - Modify backend code (src/clams/**)
-  - Modify .claude/**
+  - Modify backend code (src/calm/**)
+  - Modify ~/.calm/**
   - Access MCP tools
 ```
 
@@ -295,11 +292,11 @@ can_write: []
 can_run:
   - pytest (verify tests pass)
   - git (status, diff, log)
-  - claws-review record
+  - calm review record
 cannot:
   - Modify any files
-  - Run claws-gate check
-  - Run claws-task transition
+  - Run calm gate check
+  - Run calm task transition
   - Access MCP tools
 ```
 
@@ -314,8 +311,8 @@ can_write:
 can_run:
   - pytest
   - git (status, diff, log, blame)
-  - claws-gate check
-  - claws-task transition
+  - calm gate check
+  - calm task transition
 cannot:
   - Modify src/** (investigate, don't fix)
   - Access MCP tools
@@ -388,7 +385,7 @@ Please run this command and share the output.
 
 ### Issue: MCP tool not found
 
-**Symptom**: Worker tries to use CLAMS tools but they don't appear in available tools.
+**Symptom**: Worker tries to use CALM tools but they don't appear in available tools.
 
 **Cause**: MCP tools only available to parent agent.
 
@@ -398,7 +395,7 @@ Note: I cannot access MCP tools. If this task requires storing memories
 or GHAP entries, please handle that operation after my completion.
 
 Recommended MCP operation:
-Tool: mcp__clams__store_memory
+Tool: mcp__calm__store_memory
 Parameters:
   content: "..."
   category: "..."
@@ -443,3 +440,4 @@ For reviewers:
 | Date | Change | Author |
 |------|--------|--------|
 | 2025-12-14 | Initial permission model design | BUG-057 |
+| 2026-02-05 | Updated for CALM (was CLAWS) | Documentation update |

@@ -1,13 +1,13 @@
 {
   "project_type": "python",
-  "implementation_dirs": ["src/", "clams-visualizer/", ".claude/bin/", ".claude/gates/", ".claude/roles/"],
+  "implementation_dirs": ["src/", "calm-visualizer/", ".claude/bin/", ".claude/gates/", ".claude/roles/"],
   "test_dirs": ["tests/"],
   "script_dirs": [".claude/bin/", "scripts/"],
   "doc_dirs": ["docs/", "planning_docs/", "bug_reports/"],
-  "frontend_dirs": ["clams-visualizer/"],
+  "frontend_dirs": ["calm-visualizer/"],
   "gate_config": {
     "composite_types": {
-      "clams-visualizer": "javascript"
+      "calm-visualizer": "javascript"
     },
     "skip_checks": [],
     "extra_checks": []

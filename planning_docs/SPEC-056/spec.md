@@ -3,8 +3,8 @@
 ## Problem Statement
 
 Claude Code hooks are configured across multiple locations with inconsistent documentation:
-- `clams/hooks/*.sh` - Shell integration hooks for MCP/CLAMS
-- `clams/hooks/config.yaml` - Legacy hook configuration (partially duplicates config.env)
+- `clams_scripts/hooks/*.sh` - Shell integration hooks for MCP/CLAMS
+- `clams_scripts/hooks/config.yaml` - Legacy hook configuration (partially duplicates config.env)
 - `.claude/hooks/*.py` - Python linting hooks (different purpose)
 - `~/.clams/config.env` - Runtime configuration (per SPEC-029)
 
@@ -15,10 +15,12 @@ This fragmentation makes it hard to:
 4. Add new hooks following existing patterns
 
 **Clarification**: There are TWO types of hooks in this project:
-- **Integration hooks** (`clams/hooks/*.sh`): Connect CLAMS to Claude Code events
+- **Integration hooks** (`clams_scripts/hooks/*.sh`): Connect CLAMS to Claude Code events
 - **Linting hooks** (`.claude/hooks/*.py`): Check code quality during development
 
-This spec focuses on documenting the **integration hooks** in `clams/hooks/`.
+This spec focuses on documenting the **integration hooks** in `clams_scripts/hooks/`.
+
+**Note**: README.md and validate_config.sh already exist at `clams_scripts/hooks/`. This spec verifies and updates existing documentation to ensure completeness against these acceptance criteria.
 
 ## Proposed Solution
 
@@ -31,7 +33,7 @@ Create comprehensive documentation and a validation script for the integration h
 
 ### Documentation
 
-- [ ] Central documentation at `clams/hooks/README.md`
+- [ ] Central documentation at `clams_scripts/hooks/README.md`
 - [ ] For each hook, documentation includes:
   - Hook filename and Claude Code event type
   - Purpose and when it triggers
@@ -86,9 +88,9 @@ Document each hook with these specific details:
 
 ### Validation Script
 
-- [ ] Script `clams/hooks/validate_config.sh` created
+- [ ] Script `clams_scripts/hooks/validate_config.sh` exists and passes
 - [ ] Validation checks:
-  - All hook scripts in `clams/hooks/` exist
+  - All hook scripts in `clams_scripts/hooks/` exist
   - All hook scripts are executable
   - Hook scripts have valid bash syntax (`bash -n`)
   - Required dependencies are available (curl, jq, bash)
@@ -105,7 +107,7 @@ Document each hook with these specific details:
 
 ## Implementation Notes
 
-**README structure** (`clams/hooks/README.md`):
+**README structure** (`clams_scripts/hooks/README.md`):
 ```markdown
 # CLAMS Integration Hooks
 
@@ -180,7 +182,7 @@ All tests automated:
 - [ ] Test: validation fails when hook script is missing (mock removal)
 - [ ] Test: validation fails when hook script not executable
 - [ ] Test: validation fails when hook has syntax error
-- [ ] Test: README documents all hooks in `clams/hooks/`
+- [ ] Test: README documents all hooks in `clams_scripts/hooks/`
 - [ ] Test: README env vars match actual usage in hook scripts (grep for CLAMS_* in hooks)
 - [ ] Test: validation detects missing dependencies
 

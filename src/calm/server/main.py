@@ -10,7 +10,7 @@ This server may run as a daemon which uses subprocess spawning.
 To avoid MPS (macOS GPU) issues, heavy imports (PyTorch, embedding models)
 should be deferred until after the server starts.
 
-See clams/server/main.py for detailed documentation on this constraint.
+See calm/server/main.py for detailed documentation on this constraint.
 """
 
 from __future__ import annotations
