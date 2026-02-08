@@ -278,3 +278,144 @@ async def test_dimension_migration():
     finally:
         await metadata_store.close()
         Path(db_path).unlink(missing_ok=True)
+
+
+@pytest.mark.asyncio
+async def test_find_files_excludes_venv_and_common_dirs(indexer):
+    """Regression test for BUG-077: _find_files must not traverse excluded dirs.
+
+    Verifies that os.walk directory pruning prevents descent into .venv,
+    env, .tox, .nox, .worktrees, node_modules, and other common directories
+    that should be excluded by default.
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create a source file that SHOULD be indexed
+        src_dir = Path(tmpdir) / "src"
+        src_dir.mkdir()
+        (src_dir / "main.py").write_text("def main(): pass\n")
+
+        # Create excluded directories with .py files that should NOT be found
+        excluded_dirs = [
+            ".venv/lib/python3.11/site-packages",
+            "venv/lib/site-packages",
+            "env/lib/site-packages",
+            ".tox/py311/lib",
+            ".nox/session/lib",
+            "node_modules/@types",
+            ".git/hooks",
+            "__pycache__",
+            ".worktrees/BUG-001/src",
+            ".pytest_cache",
+            ".mypy_cache",
+            ".ruff_cache",
+            "dist",
+            "build",
+            ".hg",
+            ".svn",
+            ".eggs",
+            "htmlcov",
+            "target",
+        ]
+
+        for dir_path in excluded_dirs:
+            full_path = Path(tmpdir) / dir_path
+            full_path.mkdir(parents=True, exist_ok=True)
+            (full_path / "should_not_index.py").write_text(
+                "def excluded(): pass\n"
+            )
+
+        # Call _find_files WITHOUT explicit exclude_patterns
+        # The indexer should use DEFAULT_EXCLUDED_DIRS for directory pruning
+        files = indexer._find_files(tmpdir, recursive=True, exclude_patterns=None)
+
+        file_names = [Path(f).name for f in files]
+        file_paths_str = "\n".join(files)
+
+        # The source file should be found
+        assert "main.py" in file_names, (
+            f"Expected main.py in results but got: {file_paths_str}"
+        )
+
+        # No files from excluded directories should be found
+        assert "should_not_index.py" not in file_names, (
+            f"Found files from excluded directories: {file_paths_str}"
+        )
+
+        # Verify only the expected file is returned
+        assert len(files) == 1, (
+            f"Expected exactly 1 file but found {len(files)}: {file_paths_str}"
+        )
+
+
+@pytest.mark.asyncio
+async def test_find_files_explicit_exclude_patterns_also_prune_dirs(indexer):
+    """Test that explicit exclude_patterns also trigger directory pruning."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create a source file
+        (Path(tmpdir) / "app.py").write_text("def app(): pass\n")
+
+        # Create a custom directory that is only excluded by explicit pattern
+        custom_dir = Path(tmpdir) / "custom_vendor" / "lib"
+        custom_dir.mkdir(parents=True)
+        (custom_dir / "vendor_lib.py").write_text("def vendor(): pass\n")
+
+        # With a pattern that matches files inside custom_vendor
+        files = indexer._find_files(
+            tmpdir,
+            recursive=True,
+            exclude_patterns=["**/custom_vendor/**"],
+        )
+
+        file_names = [Path(f).name for f in files]
+        assert "app.py" in file_names
+        assert "vendor_lib.py" not in file_names
+
+
+@pytest.mark.asyncio
+async def test_index_directory_default_exclusions(indexer):
+    """Test that index_directory excludes common dirs even without explicit patterns."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create a source file
+        src_dir = Path(tmpdir) / "src"
+        src_dir.mkdir()
+        (src_dir / "real_code.py").write_text("def real(): pass\n")
+
+        # Create .venv with files
+        venv_dir = Path(tmpdir) / ".venv" / "lib" / "site-packages"
+        venv_dir.mkdir(parents=True)
+        (venv_dir / "third_party.py").write_text("def third(): pass\n")
+
+        # Index WITHOUT passing exclude_patterns
+        stats = await indexer.index_directory(
+            str(tmpdir), "test_project", recursive=True
+        )
+
+        # Should index only the real source file
+        assert stats.files_indexed == 1
+
+        # Verify only the right file is indexed
+        indexed_files = await indexer.metadata_store.list_indexed_files(
+            "test_project"
+        )
+        indexed_names = {Path(f.file_path).name for f in indexed_files}
+        assert "real_code.py" in indexed_names
+        assert "third_party.py" not in indexed_names
+
+
+@pytest.mark.asyncio
+async def test_find_files_non_recursive_mode(indexer):
+    """Test that non-recursive mode only finds files in the root directory."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create file in root
+        (Path(tmpdir) / "root_file.py").write_text("def root(): pass\n")
+
+        # Create file in subdirectory
+        sub_dir = Path(tmpdir) / "subdir"
+        sub_dir.mkdir()
+        (sub_dir / "nested_file.py").write_text("def nested(): pass\n")
+
+        files = indexer._find_files(tmpdir, recursive=False, exclude_patterns=None)
+
+        file_names = [Path(f).name for f in files]
+        assert "root_file.py" in file_names
+        assert "nested_file.py" not in file_names
