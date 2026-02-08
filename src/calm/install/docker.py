@@ -12,6 +12,9 @@ from enum import Enum
 
 import httpx
 
+CONTAINER_NAME = "calm-qdrant"
+VOLUME_NAME = "calm_qdrant_data"
+
 
 class ContainerState(str, Enum):
     """Qdrant container state."""
@@ -60,7 +63,7 @@ def get_qdrant_status() -> QdrantStatus:
                 "ps",
                 "-a",
                 "--filter",
-                "name=^qdrant$",
+                f"name=^{CONTAINER_NAME}$",
                 "--format",
                 "{{.ID}}",
             ],
@@ -79,7 +82,7 @@ def get_qdrant_status() -> QdrantStatus:
                 "docker",
                 "ps",
                 "--filter",
-                "name=^qdrant$",
+                f"name=^{CONTAINER_NAME}$",
                 "--format",
                 "{{.ID}}",
             ],
@@ -130,11 +133,11 @@ def create_qdrant_container(dry_run: bool = False) -> tuple[bool, str]:
                 "run",
                 "-d",
                 "--name",
-                "qdrant",
+                CONTAINER_NAME,
                 "-p",
                 "6333:6333",
                 "-v",
-                "qdrant_data:/qdrant/storage",
+                f"{VOLUME_NAME}:/qdrant/storage",
                 "qdrant/qdrant",
             ],
             capture_output=True,
@@ -170,7 +173,7 @@ def start_qdrant_container(dry_run: bool = False) -> tuple[bool, str]:
 
     try:
         result = subprocess.run(
-            ["docker", "start", "qdrant"],
+            ["docker", "start", CONTAINER_NAME],
             capture_output=True,
             text=True,
             timeout=30,

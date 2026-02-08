@@ -8,6 +8,8 @@ from typing import Any
 import pytest
 
 from calm.install.docker import (
+    CONTAINER_NAME,
+    VOLUME_NAME,
     ContainerState,
     check_docker_running,
     create_qdrant_container,
@@ -180,3 +182,85 @@ class TestStartQdrantContainer:
         success, message = start_qdrant_container(dry_run=False)
         assert not success
         assert "Failed" in message
+
+
+class TestContainerNamingConstants:
+    """Regression tests for BUG-068: container/volume name consistency."""
+
+    def test_container_name_is_calm_qdrant(self) -> None:
+        """CONTAINER_NAME must be 'calm-qdrant' to match uninstall.sh."""
+        assert CONTAINER_NAME == "calm-qdrant"
+
+    def test_volume_name_is_calm_qdrant_data(self) -> None:
+        """VOLUME_NAME must be 'calm_qdrant_data' to match uninstall.sh and docker-compose.yml."""
+        assert VOLUME_NAME == "calm_qdrant_data"
+
+    def test_create_uses_container_name(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """create_qdrant_container must pass CONTAINER_NAME to Docker."""
+        captured_args: list[list[str]] = []
+
+        def mock_run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[str]:
+            captured_args.append(list(args[0]))
+            return subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="container_id", stderr=""
+            )
+
+        monkeypatch.setattr(subprocess, "run", mock_run)
+        create_qdrant_container(dry_run=False)
+
+        docker_cmd = captured_args[0]
+        name_idx = docker_cmd.index("--name")
+        assert docker_cmd[name_idx + 1] == CONTAINER_NAME
+
+    def test_create_uses_volume_name(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """create_qdrant_container must pass VOLUME_NAME to Docker."""
+        captured_args: list[list[str]] = []
+
+        def mock_run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[str]:
+            captured_args.append(list(args[0]))
+            return subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="container_id", stderr=""
+            )
+
+        monkeypatch.setattr(subprocess, "run", mock_run)
+        create_qdrant_container(dry_run=False)
+
+        docker_cmd = captured_args[0]
+        volume_idx = docker_cmd.index("-v")
+        assert docker_cmd[volume_idx + 1] == f"{VOLUME_NAME}:/qdrant/storage"
+
+    def test_get_status_filters_by_container_name(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """get_qdrant_status must filter by CONTAINER_NAME."""
+        captured_args: list[list[str]] = []
+
+        def mock_run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[str]:
+            captured_args.append(list(args[0]))
+            return subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="", stderr=""
+            )
+
+        monkeypatch.setattr(subprocess, "run", mock_run)
+        get_qdrant_status()
+
+        # First call is docker info, second is docker ps -a with filter
+        docker_ps_cmd = captured_args[1]
+        filter_idx = docker_ps_cmd.index("--filter")
+        assert docker_ps_cmd[filter_idx + 1] == f"name=^{CONTAINER_NAME}$"
+
+    def test_start_uses_container_name(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """start_qdrant_container must start CONTAINER_NAME."""
+        captured_args: list[list[str]] = []
+
+        def mock_run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[str]:
+            captured_args.append(list(args[0]))
+            return subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="", stderr=""
+            )
+
+        monkeypatch.setattr(subprocess, "run", mock_run)
+        start_qdrant_container(dry_run=False)
+
+        docker_cmd = captured_args[0]
+        assert docker_cmd == ["docker", "start", CONTAINER_NAME]
