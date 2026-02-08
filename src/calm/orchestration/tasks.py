@@ -64,8 +64,11 @@ def _row_to_task(row: sqlite3.Row) -> Task:
         try:
             blocked_by = json.loads(blocked_by_str)
         except json.JSONDecodeError:
-            # Handle malformed data: bare task ID strings stored without JSON serialization
-            blocked_by = [s.strip() for s in blocked_by_str.split(",") if s.strip()]
+            # Handle malformed data: bare task ID strings stored
+            # without JSON serialization
+            blocked_by = [
+                s.strip() for s in blocked_by_str.split(",") if s.strip()
+            ]
 
     return Task(
         id=row["id"],
