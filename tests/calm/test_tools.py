@@ -94,8 +94,8 @@ class TestGitTools:
         self, setup: tuple[MemoryStore, MockEmbeddingService]
     ) -> None:
         """Test index_commits raises error when git_analyzer not available."""
-        from calm.tools.git import get_git_tools
         from calm.tools.errors import MCPError
+        from calm.tools.git import get_git_tools
 
         store, embedder = setup
         tools = get_git_tools(store, embedder)
@@ -108,8 +108,8 @@ class TestGitTools:
         self, setup: tuple[MemoryStore, MockEmbeddingService]
     ) -> None:
         """Test search_commits raises error when git_analyzer not available."""
-        from calm.tools.git import get_git_tools
         from calm.tools.errors import MCPError
+        from calm.tools.git import get_git_tools
 
         store, embedder = setup
         tools = get_git_tools(store, embedder)
@@ -122,8 +122,8 @@ class TestGitTools:
         self, setup: tuple[MemoryStore, MockEmbeddingService]
     ) -> None:
         """Test get_file_history raises error when git_analyzer not available."""
-        from calm.tools.git import get_git_tools
         from calm.tools.errors import MCPError
+        from calm.tools.git import get_git_tools
 
         store, embedder = setup
         tools = get_git_tools(store, embedder)
@@ -136,8 +136,8 @@ class TestGitTools:
         self, setup: tuple[MemoryStore, MockEmbeddingService]
     ) -> None:
         """Test get_churn_hotspots raises error when git_analyzer not available."""
-        from calm.tools.git import get_git_tools
         from calm.tools.errors import MCPError
+        from calm.tools.git import get_git_tools
 
         store, embedder = setup
         tools = get_git_tools(store, embedder)
@@ -150,8 +150,8 @@ class TestGitTools:
         self, setup: tuple[MemoryStore, MockEmbeddingService]
     ) -> None:
         """Test get_code_authors raises error when git_analyzer not available."""
-        from calm.tools.git import get_git_tools
         from calm.tools.errors import MCPError
+        from calm.tools.git import get_git_tools
 
         store, embedder = setup
         tools = get_git_tools(store, embedder)

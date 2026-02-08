@@ -3,15 +3,21 @@
 This module provides the MCP server for CALM with full tool registration.
 """
 
+from __future__ import annotations
+
 import json
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import structlog
 from mcp.server import Server
 from mcp.types import TextContent, Tool
 
 from calm.config import settings
+
+if TYPE_CHECKING:
+    from calm.embedding.base import EmbeddingService
+    from calm.storage.base import VectorStore
 
 logger = structlog.get_logger()
 
@@ -584,6 +590,10 @@ async def create_server(use_mock: bool = False) -> tuple[Server, dict[str, Any]]
     value_store_instance = None
     context_assembler = None
 
+    vector_store: VectorStore
+    semantic_embedder: EmbeddingService
+    code_embedder: EmbeddingService
+
     if use_mock:
         from calm.embedding import MockEmbeddingService
         from calm.storage import MemoryStore
@@ -729,7 +739,7 @@ async def create_server(use_mock: bool = False) -> tuple[Server, dict[str, Any]]
     tool_registry["ping"] = ping
 
     # Register the tool dispatcher - handles ALL tool calls
-    @server.call_tool()  # type: ignore[untyped-decorator]
+    @server.call_tool()  # type: ignore[misc]
     async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[Any]:
         """Dispatch tool calls to the appropriate implementation."""
         if name not in tool_registry:
@@ -756,7 +766,7 @@ async def create_server(use_mock: bool = False) -> tuple[Server, dict[str, Any]]
             return [TextContent(type="text", text=f"Error: {str(e)}")]
 
     # Register list_tools handler - REQUIRED for clients to discover tools
-    @server.list_tools()  # type: ignore[untyped-decorator, no-untyped-call]
+    @server.list_tools()  # type: ignore[misc, no-untyped-call]
     async def handle_list_tools() -> list[Tool]:
         """Return all available tools with their schemas."""
         return _get_all_tool_definitions()
