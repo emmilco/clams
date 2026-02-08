@@ -6,7 +6,7 @@ services:
       - "6333:6333"
       - "6334:6334"
     volumes:
-      - qdrant_storage:/qdrant/storage
+      - calm_qdrant_data:/qdrant/storage
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
@@ -17,5 +17,5 @@ services:
       - QDRANT_LOG_LEVEL=INFO
 
 volumes:
-  qdrant_storage:
+  calm_qdrant_data:
     driver: local

@@ -152,19 +152,19 @@ else
 fi
 
 # 4. Remove Docker volume (contains Qdrant data)
-if docker volume ls --format '{{.Name}}' | grep -q '^calm_qdrant_storage$'; then
+if docker volume ls --format '{{.Name}}' | grep -q '^calm_qdrant_data$'; then
     if [ "$FORCE" = false ]; then
         echo ""
         read -p "Remove Qdrant data volume? (y/N) " -n 1 -r
         echo ""
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-            docker volume rm calm_qdrant_storage &> /dev/null || true
+            docker volume rm calm_qdrant_data &> /dev/null || true
             success "Removed Qdrant data volume"
         else
-            info "Kept Qdrant data volume (can be removed manually with: docker volume rm calm_qdrant_storage)"
+            info "Kept Qdrant data volume (can be removed manually with: docker volume rm calm_qdrant_data)"
         fi
     else
-        docker volume rm calm_qdrant_storage &> /dev/null || true
+        docker volume rm calm_qdrant_data &> /dev/null || true
         success "Removed Qdrant data volume"
     fi
 fi
