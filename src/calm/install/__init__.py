@@ -21,6 +21,7 @@ class InstallStep(str, Enum):
     START_QDRANT = "start_qdrant"
     REGISTER_MCP = "register_mcp_server"
     REGISTER_HOOKS = "register_hooks"
+    REGISTER_SKILLS = "register_skills"
     START_SERVER = "start_server"
     VERIFY = "verify_installation"
 
