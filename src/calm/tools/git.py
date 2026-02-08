@@ -254,7 +254,9 @@ def get_git_tools(
             )
 
         try:
-            commits = await git_analyzer.git_reader.get_file_history(path=path, limit=limit)
+            commits = await git_analyzer.git_reader.get_file_history(
+                path=path, limit=limit
+            )
         except FileNotFoundError as e:
             raise ValidationError(f"File not found in repository: {path}") from e
 

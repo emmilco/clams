@@ -173,7 +173,8 @@ def get_code_tools(
         if code_indexer is None:
             return {
                 "status": "not_available",
-                "message": "Code indexer not initialized. Restart server with real services.",
+                "message": "Code indexer not initialized. "
+                "Restart server with real services.",
             }
 
         stats = await code_indexer.index_directory(

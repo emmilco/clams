@@ -6,7 +6,7 @@ from typing import Any
 
 import numpy as np
 import torch
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer  # type: ignore[import-untyped]
 
 from .base import EmbeddingModelError, EmbeddingService, Vector
 

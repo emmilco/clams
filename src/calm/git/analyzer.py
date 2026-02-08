@@ -210,7 +210,7 @@ class GitAnalyzer:
         return stats
 
     async def _upsert_commit(
-        self, commit: Commit, vector: np.ndarray, repo_path: str
+        self, commit: Commit, vector: np.ndarray[Any, Any], repo_path: str
     ) -> None:
         payload = {
             "id": commit.sha,
