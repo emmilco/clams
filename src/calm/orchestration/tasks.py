@@ -4,6 +4,7 @@ This module provides CRUD operations and transitions for tasks.
 """
 
 import json
+import re
 import sqlite3
 from collections.abc import Generator
 from contextlib import contextmanager
@@ -17,7 +18,7 @@ from calm.orchestration.phases import (
     get_transition_name,
     is_valid_transition,
 )
-from calm.orchestration.project import detect_project_path
+from calm.orchestration.project import detect_main_repo
 
 
 @dataclass
@@ -101,7 +102,7 @@ def create_task(
         ValueError: If task_id already exists or task_type is invalid
     """
     if project_path is None:
-        project_path = detect_project_path()
+        project_path = detect_main_repo()
 
     initial_phase = get_initial_phase(task_type)
     now = datetime.now().isoformat()
@@ -187,7 +188,7 @@ def list_tasks(
         List of tasks matching the filters
     """
     if project_path is None:
-        project_path = detect_project_path()
+        project_path = detect_main_repo()
 
     query = "SELECT * FROM tasks WHERE project_path = ?"
     params: list[str] = [project_path]
@@ -380,6 +381,46 @@ def delete_task(
         # Delete the task
         cursor.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
         conn.commit()
+
+
+def get_next_task_id(
+    prefix: str,
+    db_path: Path | None = None,
+) -> str:
+    """Get the next available task ID for a given prefix.
+
+    Queries the database for the highest numeric suffix with the given
+    prefix (e.g., "BUG" or "SPEC") and returns the next sequential ID.
+
+    Args:
+        prefix: Task ID prefix ("BUG" or "SPEC")
+        db_path: Optional path to database file
+
+    Returns:
+        The next available task ID (e.g., "BUG-072" or "SPEC-059")
+    """
+    pattern = f"{prefix}-%"
+
+    with _get_connection(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT id FROM tasks WHERE id LIKE ?",
+            (pattern,),
+        )
+        rows = cursor.fetchall()
+
+    max_num = 0
+    # Match IDs like PREFIX-NNN (not subtasks like PREFIX-NNN-NN)
+    id_pattern = re.compile(rf"^{re.escape(prefix)}-(\d+)$")
+    for row in rows:
+        match = id_pattern.match(row["id"])
+        if match:
+            num = int(match.group(1))
+            if num > max_num:
+                max_num = num
+
+    next_num = max_num + 1
+    return f"{prefix}-{next_num:03d}"
 
 
 def get_transition_name_for_task(task_id: str, db_path: Path | None = None) -> str:

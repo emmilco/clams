@@ -167,3 +167,12 @@ def delete(task_id: str) -> None:
         click.echo(f"Deleted task {task_id}")
     except ValueError as e:
         raise click.ClickException(str(e))
+
+
+@task.command("next-id")
+@click.argument("prefix", type=click.Choice(["BUG", "SPEC"]))
+def next_id(prefix: str) -> None:
+    """Get the next available task ID for a prefix."""
+    result = task_ops.get_next_task_id(prefix=prefix)
+    click.echo(result)
+
