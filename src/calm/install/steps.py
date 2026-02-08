@@ -291,7 +291,7 @@ def step_verify(
     all_good = True
 
     # Check directories exist
-    dirs_to_check = ["roles", "workflows", "skills", "sessions"]
+    dirs_to_check = ["roles", "workflows", "skills", "sessions", "journal"]
     for dirname in dirs_to_check:
         dir_path = calm_home / dirname
         if dir_path.exists():

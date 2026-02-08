@@ -61,12 +61,16 @@ def verify_storage_directory() -> bool:
     sessions_dir = calm_dir / "sessions"
     roles_dir = calm_dir / "roles"
     workflows_dir = calm_dir / "workflows"
+    skills_dir = calm_dir / "skills"
+    journal_dir = calm_dir / "journal"
 
     checks = [
         (calm_dir, "directory"),
         (sessions_dir, "directory"),
         (roles_dir, "directory"),
         (workflows_dir, "directory"),
+        (skills_dir, "directory"),
+        (journal_dir, "directory"),
     ]
 
     all_good = True
