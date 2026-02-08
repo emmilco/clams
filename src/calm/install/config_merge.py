@@ -11,6 +11,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from calm.config import settings as calm_settings
+
 
 class ConfigError(Exception):
     """Error during config manipulation."""
@@ -90,13 +92,13 @@ def atomic_write_json(path: Path, data: dict[str, Any]) -> None:
 
 def merge_mcp_server(
     config: dict[str, Any],
-    server_command: list[str],
+    sse_url: str,
 ) -> dict[str, Any]:
     """Merge CALM MCP server into config.
 
     Args:
         config: Existing claude.json content
-        server_command: Command to start server (e.g., ["uv", "run", ...])
+        sse_url: SSE endpoint URL (e.g., "http://127.0.0.1:6335/sse")
 
     Returns:
         Updated config dict (original not mutated)
@@ -110,10 +112,10 @@ def merge_mcp_server(
         # Deep copy to avoid mutating original
         result["mcpServers"] = dict(result["mcpServers"])
 
-    # Add/update calm server
+    # Add/update calm server with SSE transport
     result["mcpServers"]["calm"] = {
-        "command": server_command[0],
-        "args": server_command[1:],
+        "type": "sse",
+        "url": sse_url,
     }
 
     return result
@@ -234,16 +236,15 @@ def merge_hooks(
 
 def register_mcp_server(
     claude_json_path: Path,
-    dev_mode: bool = False,
-    dev_directory: Path | None = None,
     dry_run: bool = False,
 ) -> str:
     """Register CALM MCP server in claude.json.
 
+    Builds the SSE URL from calm.config.settings (server_host, server_port)
+    and writes it into the claude.json MCP server registration.
+
     Args:
         claude_json_path: Path to ~/.claude.json
-        dev_mode: Use development directory path
-        dev_directory: Path to development directory (for dev_mode)
         dry_run: If True, don't write changes
 
     Returns:
@@ -252,28 +253,14 @@ def register_mcp_server(
     Raises:
         ConfigError: If registration fails
     """
-    # Build server command
-    if dev_mode:
-        if dev_directory is None:
-            dev_directory = Path.cwd()
-        server_command = [
-            "uv",
-            "run",
-            "--directory",
-            str(dev_directory),
-            "calm",
-            "server",
-            "run",
-        ]
-    else:
-        # Production mode - use installed package
-        server_command = ["calm", "server", "run"]
+    # Build SSE URL from settings
+    sse_url = f"http://{calm_settings.server_host}:{calm_settings.server_port}/sse"
 
     # Read existing config
     config = read_json_config(claude_json_path)
 
     # Merge CALM server
-    updated = merge_mcp_server(config, server_command)
+    updated = merge_mcp_server(config, sse_url)
 
     if dry_run:
         return f"Would update {claude_json_path} with CALM MCP server"

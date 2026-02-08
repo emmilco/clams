@@ -119,15 +119,17 @@ class TestMergeMcpServer:
     """Tests for merge_mcp_server."""
 
     def test_empty_config(self) -> None:
-        """Should create mcpServers section."""
-        result = merge_mcp_server({}, ["uv", "run", "calm"])
+        """Should create mcpServers section with SSE entry."""
+        result = merge_mcp_server({}, "http://127.0.0.1:6335/sse")
         assert "mcpServers" in result
         assert "calm" in result["mcpServers"]
+        assert result["mcpServers"]["calm"]["type"] == "sse"
+        assert result["mcpServers"]["calm"]["url"] == "http://127.0.0.1:6335/sse"
 
     def test_preserves_other_servers(self) -> None:
         """Should preserve existing MCP servers."""
         config = {"mcpServers": {"other": {"command": "other"}}}
-        result = merge_mcp_server(config, ["uv", "run", "calm"])
+        result = merge_mcp_server(config, "http://127.0.0.1:6335/sse")
 
         assert "other" in result["mcpServers"]
         assert "calm" in result["mcpServers"]
@@ -135,28 +137,30 @@ class TestMergeMcpServer:
     def test_preserves_other_keys(self) -> None:
         """Should preserve non-mcpServers keys."""
         config = {"someOtherKey": "value", "mcpServers": {}}
-        result = merge_mcp_server(config, ["uv", "run", "calm"])
+        result = merge_mcp_server(config, "http://127.0.0.1:6335/sse")
 
         assert result["someOtherKey"] == "value"
 
     def test_updates_existing_calm(self) -> None:
-        """Should update existing calm server entry."""
+        """Should update existing calm server entry to SSE."""
         config = {
             "mcpServers": {
                 "calm": {"command": "old", "args": ["old"]}
             }
         }
-        result = merge_mcp_server(config, ["uv", "run", "calm", "server"])
+        result = merge_mcp_server(config, "http://127.0.0.1:9000/sse")
 
-        assert result["mcpServers"]["calm"]["command"] == "uv"
-        assert result["mcpServers"]["calm"]["args"] == ["run", "calm", "server"]
+        assert result["mcpServers"]["calm"]["type"] == "sse"
+        assert result["mcpServers"]["calm"]["url"] == "http://127.0.0.1:9000/sse"
+        assert "command" not in result["mcpServers"]["calm"]
+        assert "args" not in result["mcpServers"]["calm"]
 
     def test_does_not_mutate_original(self) -> None:
         """Should not mutate the original config."""
         config = {"mcpServers": {"other": {"command": "other"}}}
         original_copy = json.loads(json.dumps(config))
 
-        merge_mcp_server(config, ["uv", "run", "calm"])
+        merge_mcp_server(config, "http://127.0.0.1:6335/sse")
 
         assert config == original_copy
 
@@ -230,28 +234,19 @@ class TestRegisterMcpServer:
     """Tests for register_mcp_server."""
 
     def test_creates_file_if_missing(self, tmp_path: Path) -> None:
-        """Should create claude.json if missing."""
+        """Should create claude.json if missing with SSE config."""
         path = tmp_path / ".claude.json"
 
-        register_mcp_server(path, dev_mode=False)
+        register_mcp_server(path)
 
         assert path.exists()
         config = json.loads(path.read_text())
         assert "mcpServers" in config
         assert "calm" in config["mcpServers"]
-
-    def test_dev_mode_includes_directory(self, tmp_path: Path) -> None:
-        """Dev mode should include --directory flag."""
-        path = tmp_path / ".claude.json"
-        dev_dir = tmp_path / "dev"
-        dev_dir.mkdir()
-
-        register_mcp_server(path, dev_mode=True, dev_directory=dev_dir)
-
-        config = json.loads(path.read_text())
-        args = config["mcpServers"]["calm"]["args"]
-        assert "--directory" in args
-        assert str(dev_dir) in args
+        calm_entry = config["mcpServers"]["calm"]
+        assert calm_entry["type"] == "sse"
+        assert "url" in calm_entry
+        assert calm_entry["url"].endswith("/sse")
 
     def test_dry_run_no_changes(self, tmp_path: Path) -> None:
         """Dry run should not create file."""
@@ -261,6 +256,18 @@ class TestRegisterMcpServer:
 
         assert "Would update" in message
         assert not path.exists()
+
+    def test_registered_server_uses_sse_transport(self, tmp_path: Path) -> None:
+        """Registered server must use SSE transport, not command-based."""
+        path = tmp_path / ".claude.json"
+        register_mcp_server(path)
+        config = json.loads(path.read_text())
+        calm_entry = config["mcpServers"]["calm"]
+        assert calm_entry["type"] == "sse"
+        assert "url" in calm_entry
+        assert calm_entry["url"].endswith("/sse")
+        assert "command" not in calm_entry
+        assert "args" not in calm_entry
 
 
 class TestRegisterHooks:

@@ -196,8 +196,6 @@ def step_register_mcp(
     try:
         message = register_mcp_server(
             claude_json_path,
-            dev_mode=options.dev_mode,
-            dev_directory=options.dev_directory,
             dry_run=options.dry_run,
         )
         output(f"  {message}")
