@@ -310,8 +310,8 @@ def get_git_tools(
 
         formatted = [
             {
-                "path": h.path,
-                "commit_count": h.commit_count,
+                "path": h.file_path,
+                "commit_count": h.change_count,
                 "total_insertions": h.total_insertions,
                 "total_deletions": h.total_deletions,
                 "authors": h.authors,
