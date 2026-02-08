@@ -27,11 +27,11 @@ def create(name: str | None) -> None:
         click.echo(f"Path: {result.path}")
         click.echo(f"Size: {size_kb:.1f} KB")
         if result.has_qdrant_snapshot:
-            qdrant_size_kb = (
-                result.qdrant_snapshot_path.stat().st_size / 1024
-                if result.qdrant_snapshot_path
-                else 0
-            )
+            qdrant_size_bytes = sum(
+                f.stat().st_size
+                for f in result.qdrant_snapshot_path.glob("*.snapshot")
+            ) if result.qdrant_snapshot_path else 0
+            qdrant_size_kb = qdrant_size_bytes / 1024
             click.echo(
                 f"Qdrant snapshot: {result.qdrant_snapshot_path} "
                 f"({qdrant_size_kb:.1f} KB)"

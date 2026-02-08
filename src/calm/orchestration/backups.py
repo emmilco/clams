@@ -3,8 +3,8 @@
 This module handles creating, listing, and restoring database backups.
 Supports both SQLite metadata database and Qdrant vector store snapshots.
 
-Qdrant snapshots use the native full-snapshot API to capture all collections
-atomically. If Qdrant is unreachable, backups gracefully degrade to SQLite-only.
+Qdrant snapshots use the per-collection snapshot API to capture each collection
+individually. If Qdrant is unreachable, backups gracefully degrade to SQLite-only.
 """
 
 from __future__ import annotations
@@ -21,11 +21,24 @@ from qdrant_client import AsyncQdrantClient
 from qdrant_client.http.exceptions import ResponseHandlingException, UnexpectedResponse
 
 from calm.config import settings
+from calm.search.collections import CollectionName
 
 logger = logging.getLogger(__name__)
 
-# Suffix for Qdrant snapshot files alongside .db files
-QDRANT_SNAPSHOT_SUFFIX = ".qdrant.snapshot"
+# Suffix for Qdrant snapshot directory alongside .db files
+QDRANT_SNAPSHOT_SUFFIX = ".qdrant"
+
+# All known collection names to snapshot
+ALL_COLLECTIONS: list[str] = [
+    CollectionName.MEMORIES,
+    CollectionName.EXPERIENCES_FULL,
+    CollectionName.EXPERIENCES_STRATEGY,
+    CollectionName.EXPERIENCES_SURPRISE,
+    CollectionName.EXPERIENCES_ROOT_CAUSE,
+    CollectionName.VALUES,
+    CollectionName.COMMITS,
+    "code_units",
+]
 
 
 @dataclass
@@ -48,7 +61,7 @@ def _get_backups_dir() -> Path:
 
 
 def _qdrant_snapshot_path_for(backup_name: str) -> Path:
-    """Get the expected Qdrant snapshot path for a backup name."""
+    """Get the expected Qdrant snapshot directory for a backup name."""
     return _get_backups_dir() / f"{backup_name}{QDRANT_SNAPSHOT_SUFFIX}"
 
 
@@ -56,54 +69,90 @@ async def create_qdrant_snapshot(
     qdrant_url: str,
     backup_name: str,
 ) -> Path | None:
-    """Create a Qdrant full snapshot and download it locally.
+    """Create per-collection Qdrant snapshots and download them locally.
 
-    Creates a full snapshot of all Qdrant collections and downloads the
-    snapshot file to the backups directory.
+    Iterates over all known collections, creates a snapshot for each one
+    that exists, and downloads the snapshot files to a subdirectory in
+    the backups directory.
 
     Args:
         qdrant_url: URL of the Qdrant server (e.g. http://localhost:6333)
-        backup_name: Name to use for the local snapshot file
+        backup_name: Name to use for the local snapshot directory
 
     Returns:
-        Path to the downloaded snapshot file, or None if Qdrant is unreachable
+        Path to the snapshot directory, or None if Qdrant is unreachable
     """
     client: AsyncQdrantClient | None = None
     try:
         client = AsyncQdrantClient(url=qdrant_url, timeout=30)
 
-        # Create a full snapshot (all collections atomically)
-        snapshot_info = await client.create_full_snapshot(wait=True)
-        if snapshot_info is None:
-            logger.warning("Qdrant create_full_snapshot returned None")
+        # Get existing collections to skip ones that have not been created
+        collections_response = await client.get_collections()
+        existing_names = {c.name for c in collections_response.collections}
+
+        dest_dir = _qdrant_snapshot_path_for(backup_name)
+        dest_dir.mkdir(parents=True, exist_ok=True)
+
+        snapshot_count = 0
+        for collection_name in ALL_COLLECTIONS:
+            if collection_name not in existing_names:
+                logger.debug(
+                    "Collection '%s' does not exist, skipping", collection_name
+                )
+                continue
+
+            # Create per-collection snapshot
+            snapshot_info = await client.create_snapshot(
+                collection_name=collection_name, wait=True
+            )
+            if snapshot_info is None:
+                logger.warning(
+                    "Qdrant create_snapshot returned None for '%s'",
+                    collection_name,
+                )
+                continue
+
+            snapshot_name = snapshot_info.name
+
+            # Download the snapshot file via HTTP
+            download_url = (
+                f"{qdrant_url}/collections/{collection_name}"
+                f"/snapshots/{snapshot_name}"
+            )
+            dest_path = dest_dir / f"{collection_name}.snapshot"
+
+            async with httpx.AsyncClient(timeout=300.0) as http_client:
+                response = await http_client.get(download_url)
+                response.raise_for_status()
+                dest_path.write_bytes(response.content)
+
+            # Clean up server-side snapshot to avoid accumulation
+            try:
+                await client.delete_snapshot(
+                    collection_name=collection_name,
+                    snapshot_name=snapshot_name,
+                )
+            except Exception:
+                logger.debug(
+                    "Could not delete server-side snapshot %s for %s",
+                    snapshot_name,
+                    collection_name,
+                )
+
+            snapshot_count += 1
+
+        if snapshot_count == 0:
+            # No collections existed; clean up empty directory
+            dest_dir.rmdir()
+            logger.info("No Qdrant collections found to snapshot")
             return None
 
-        snapshot_name = snapshot_info.name
-
-        # Download the snapshot file via HTTP
-        dest_path = _qdrant_snapshot_path_for(backup_name)
-        download_url = f"{qdrant_url}/snapshots/{snapshot_name}"
-
-        async with httpx.AsyncClient(timeout=300.0) as http_client:
-            response = await http_client.get(download_url)
-            response.raise_for_status()
-            dest_path.write_bytes(response.content)
-
-        # Clean up the server-side snapshot to avoid accumulation
-        try:
-            await client.delete_full_snapshot(snapshot_name)
-        except Exception:
-            # Non-critical: server-side cleanup failure is OK
-            logger.debug(
-                "Could not delete server-side snapshot %s", snapshot_name
-            )
-
         logger.info(
-            "Qdrant snapshot saved: %s (%d bytes)",
-            dest_path,
-            dest_path.stat().st_size,
+            "Qdrant snapshots saved: %s (%d collections)",
+            dest_dir,
+            snapshot_count,
         )
-        return dest_path
+        return dest_dir
 
     except (
         ResponseHandlingException,
@@ -126,37 +175,60 @@ async def restore_qdrant_snapshot(
     qdrant_url: str,
     backup_name: str,
 ) -> bool:
-    """Restore Qdrant data from a previously saved snapshot.
+    """Restore Qdrant data from previously saved per-collection snapshots.
 
-    Uploads the full snapshot file to Qdrant's snapshot recovery endpoint.
+    For each snapshot file in the backup directory, uploads it to the
+    corresponding collection per-collection snapshot upload endpoint.
 
     Args:
         qdrant_url: URL of the Qdrant server
         backup_name: Name of the backup to restore from
 
     Returns:
-        True if restored successfully, False if no snapshot file found
-        or Qdrant is unreachable
+        True if at least one collection was restored successfully,
+        False if no snapshot directory found or Qdrant is unreachable
     """
-    snapshot_path = _qdrant_snapshot_path_for(backup_name)
-    if not snapshot_path.exists():
-        logger.info("No Qdrant snapshot file for backup '%s'", backup_name)
+    snapshot_dir = _qdrant_snapshot_path_for(backup_name)
+    if not snapshot_dir.exists() or not snapshot_dir.is_dir():
+        logger.info("No Qdrant snapshot directory for backup '%s'", backup_name)
         return False
 
     try:
-        upload_url = f"{qdrant_url}/snapshots/upload"
-        snapshot_data = snapshot_path.read_bytes()
+        restored_count = 0
+        for snapshot_file in sorted(snapshot_dir.glob("*.snapshot")):
+            # Derive collection name from filename
+            # e.g. "memories.snapshot" -> "memories"
+            collection_name = snapshot_file.stem
 
-        async with httpx.AsyncClient(timeout=300.0) as http_client:
-            response = await http_client.post(
-                upload_url,
-                content=snapshot_data,
-                headers={"Content-Type": "application/octet-stream"},
+            upload_url = (
+                f"{qdrant_url}/collections/{collection_name}/snapshots/upload"
             )
-            response.raise_for_status()
 
-        logger.info("Qdrant snapshot restored from %s", snapshot_path)
-        return True
+            async with httpx.AsyncClient(timeout=300.0) as http_client:
+                snapshot_data = snapshot_file.read_bytes()
+                response = await http_client.post(
+                    upload_url,
+                    content=snapshot_data,
+                    headers={"Content-Type": "multipart/form-data"},
+                )
+                response.raise_for_status()
+
+            logger.info(
+                "Restored collection '%s' from %s",
+                collection_name,
+                snapshot_file,
+            )
+            restored_count += 1
+
+        if restored_count > 0:
+            logger.info(
+                "Qdrant restore complete: %d collections from %s",
+                restored_count,
+                snapshot_dir,
+            )
+            return True
+
+        return False
 
     except (
         httpx.ConnectError,
@@ -253,7 +325,7 @@ def list_backups() -> list[Backup]:
     for backup_file in backups_dir.glob("*.db"):
         stat = backup_file.stat()
         qdrant_path = _qdrant_snapshot_path_for(backup_file.stem)
-        has_qdrant = qdrant_path.exists()
+        has_qdrant = qdrant_path.exists() and qdrant_path.is_dir()
         backups.append(
             Backup(
                 name=backup_file.stem,
@@ -340,7 +412,7 @@ def auto_backup(
     """Create an auto-backup and rotate old ones.
 
     Keeps the last max_backups auto-backups. Both SQLite and Qdrant
-    snapshot files are rotated together.
+    snapshot directories are rotated together.
 
     Args:
         max_backups: Maximum number of auto-backups to keep
@@ -362,13 +434,13 @@ def auto_backup(
         reverse=True,
     )
 
-    # Remove old auto-backups (both SQLite and Qdrant snapshot files)
+    # Remove old auto-backups (both SQLite and Qdrant snapshot directories)
     for old_backup in auto_backups[max_backups:]:
         old_backup.unlink()
-        # Also remove corresponding Qdrant snapshot if it exists
-        qdrant_file = _qdrant_snapshot_path_for(old_backup.stem)
-        if qdrant_file.exists():
-            qdrant_file.unlink()
+        # Also remove corresponding Qdrant snapshot directory if it exists
+        qdrant_dir = _qdrant_snapshot_path_for(old_backup.stem)
+        if qdrant_dir.exists() and qdrant_dir.is_dir():
+            shutil.rmtree(qdrant_dir)
 
     return backup
 
@@ -376,7 +448,7 @@ def auto_backup(
 def delete_backup(name: str) -> None:
     """Delete a backup.
 
-    Removes both the SQLite backup file and the Qdrant snapshot file
+    Removes both the SQLite backup file and the Qdrant snapshot directory
     if it exists.
 
     Args:
@@ -393,7 +465,7 @@ def delete_backup(name: str) -> None:
 
     backup_path.unlink()
 
-    # Also remove Qdrant snapshot if it exists
+    # Also remove Qdrant snapshot directory if it exists
     qdrant_path = _qdrant_snapshot_path_for(name)
-    if qdrant_path.exists():
-        qdrant_path.unlink()
+    if qdrant_path.exists() and qdrant_path.is_dir():
+        shutil.rmtree(qdrant_path)

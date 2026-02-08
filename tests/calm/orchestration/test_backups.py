@@ -11,6 +11,7 @@ from qdrant_client.http.models import SnapshotDescription
 
 from calm.db.schema import init_database
 from calm.orchestration.backups import (
+    ALL_COLLECTIONS,
     QDRANT_SNAPSHOT_SUFFIX,
     auto_backup,
     create_backup,
@@ -86,15 +87,18 @@ def backup_setup_with_qdrant(
     new_settings = CalmSettings(home=calm_home, db_path=test_db)
     monkeypatch.setattr(calm.orchestration.backups, "settings", new_settings)
 
-    # Mock create_qdrant_snapshot to create a fake snapshot file
+    # Mock create_qdrant_snapshot to create a fake snapshot directory
     async def mock_create_qdrant_snapshot(
         qdrant_url: str, backup_name: str
     ) -> Path | None:
         backups_dir = calm_home / "backups"
         backups_dir.mkdir(parents=True, exist_ok=True)
-        snapshot_path = backups_dir / f"{backup_name}{QDRANT_SNAPSHOT_SUFFIX}"
-        snapshot_path.write_bytes(b"fake-qdrant-snapshot-data")
-        return snapshot_path
+        snapshot_dir = backups_dir / f"{backup_name}{QDRANT_SNAPSHOT_SUFFIX}"
+        snapshot_dir.mkdir(parents=True, exist_ok=True)
+        # Create a couple of fake per-collection snapshot files
+        (snapshot_dir / "memories.snapshot").write_bytes(b"fake-memories-data")
+        (snapshot_dir / "ghap_full.snapshot").write_bytes(b"fake-ghap-data")
+        return snapshot_dir
 
     monkeypatch.setattr(
         calm.orchestration.backups,
@@ -102,12 +106,12 @@ def backup_setup_with_qdrant(
         mock_create_qdrant_snapshot,
     )
 
-    # Mock restore_qdrant_snapshot to return True
+    # Mock restore_qdrant_snapshot to return True if snapshot dir exists
     async def mock_restore_qdrant_snapshot(
         qdrant_url: str, backup_name: str
     ) -> bool:
-        snapshot_path = calm_home / "backups" / f"{backup_name}{QDRANT_SNAPSHOT_SUFFIX}"
-        return snapshot_path.exists()
+        snapshot_dir = calm_home / "backups" / f"{backup_name}{QDRANT_SNAPSHOT_SUFFIX}"
+        return snapshot_dir.exists() and snapshot_dir.is_dir()
 
     monkeypatch.setattr(
         calm.orchestration.backups,
@@ -237,7 +241,7 @@ class TestDeleteBackup:
 
 
 # ============================================================================
-# Regression tests for BUG-078: Qdrant snapshot backup support
+# Regression tests for BUG-078: Qdrant per-collection snapshot support
 # ============================================================================
 
 
@@ -247,12 +251,13 @@ class TestQdrantSnapshotCreate:
     def test_backup_includes_qdrant_snapshot(
         self, backup_setup_with_qdrant: Path
     ) -> None:
-        """BUG-078: Verify backup creates both SQLite and Qdrant snapshot."""
+        """BUG-078: Verify backup creates both SQLite and Qdrant snapshot dir."""
         backup = create_backup(name="with_qdrant", db_path=backup_setup_with_qdrant)
 
         assert backup.has_qdrant_snapshot is True
         assert backup.qdrant_snapshot_path is not None
         assert backup.qdrant_snapshot_path.exists()
+        assert backup.qdrant_snapshot_path.is_dir()
         assert backup.path.exists()  # SQLite backup still exists
 
     def test_backup_without_qdrant_still_succeeds(
@@ -289,10 +294,10 @@ class TestQdrantSnapshotGracefulDegradation:
 
         assert result is None
 
-    def test_restore_qdrant_snapshot_handles_missing_file(
+    def test_restore_qdrant_snapshot_handles_missing_dir(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """BUG-078: restore_qdrant_snapshot returns False when no snapshot."""
+        """BUG-078: restore_qdrant_snapshot returns False when no snapshot dir."""
         import calm.orchestration.backups
         from calm.config import CalmSettings
 
@@ -319,11 +324,12 @@ class TestQdrantSnapshotGracefulDegradation:
         new_settings = CalmSettings(home=calm_home)
         monkeypatch.setattr(calm.orchestration.backups, "settings", new_settings)
 
-        # Create a fake snapshot file so the function tries to upload
+        # Create a fake snapshot directory with a snapshot file
         backups_dir = calm_home / "backups"
         backups_dir.mkdir(parents=True, exist_ok=True)
-        snapshot_file = backups_dir / f"conn_error{QDRANT_SNAPSHOT_SUFFIX}"
-        snapshot_file.write_bytes(b"fake-data")
+        snapshot_dir = backups_dir / f"conn_error{QDRANT_SNAPSHOT_SUFFIX}"
+        snapshot_dir.mkdir()
+        (snapshot_dir / "memories.snapshot").write_bytes(b"fake-data")
 
         result = asyncio.run(
             restore_qdrant_snapshot("http://127.0.0.1:59999", "conn_error")
@@ -366,7 +372,7 @@ class TestQdrantSnapshotAutoRotation:
     def test_auto_backup_rotates_qdrant_snapshots(
         self, backup_setup_with_qdrant: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """BUG-078: Verify old Qdrant snapshots are cleaned up during rotation."""
+        """BUG-078: Verify old Qdrant snapshot dirs are cleaned up during rotation."""
         import time
 
         # Create more auto-backups than max_backups
@@ -381,14 +387,17 @@ class TestQdrantSnapshotAutoRotation:
         # Should have at most 3 auto-backups
         assert len(auto_backups) <= 3
 
-        # Count Qdrant snapshot files in backups dir
+        # Count Qdrant snapshot directories in backups dir
         import calm.orchestration.backups
 
         backups_dir = calm.orchestration.backups.settings.home / "backups"
-        qdrant_files = list(backups_dir.glob(f"auto_*{QDRANT_SNAPSHOT_SUFFIX}"))
+        qdrant_dirs = [
+            d for d in backups_dir.iterdir()
+            if d.is_dir() and d.name.startswith("auto_") and d.name.endswith(QDRANT_SNAPSHOT_SUFFIX)
+        ]
 
-        # Qdrant snapshot count should match auto-backup count
-        assert len(qdrant_files) <= 3
+        # Qdrant snapshot dir count should match auto-backup count
+        assert len(qdrant_dirs) <= 3
 
     def test_auto_backup_with_qdrant_has_snapshot(
         self, backup_setup_with_qdrant: Path
@@ -399,6 +408,7 @@ class TestQdrantSnapshotAutoRotation:
         assert backup.has_qdrant_snapshot is True
         assert backup.qdrant_snapshot_path is not None
         assert backup.qdrant_snapshot_path.exists()
+        assert backup.qdrant_snapshot_path.is_dir()
 
 
 class TestQdrantSnapshotList:
@@ -449,13 +459,14 @@ class TestQdrantSnapshotList:
         )
         create_backup(name="without_qdrant", db_path=test_db)
 
-        # Second backup: with Qdrant
+        # Second backup: with Qdrant (directory-based)
         async def mock_with_qdrant(url: str, name: str) -> Path | None:
             backups_dir = calm_home / "backups"
             backups_dir.mkdir(parents=True, exist_ok=True)
-            path = backups_dir / f"{name}{QDRANT_SNAPSHOT_SUFFIX}"
-            path.write_bytes(b"snapshot-data")
-            return path
+            snapshot_dir = backups_dir / f"{name}{QDRANT_SNAPSHOT_SUFFIX}"
+            snapshot_dir.mkdir(parents=True, exist_ok=True)
+            (snapshot_dir / "memories.snapshot").write_bytes(b"snapshot-data")
+            return snapshot_dir
 
         monkeypatch.setattr(
             calm.orchestration.backups, "create_qdrant_snapshot", mock_with_qdrant
@@ -471,12 +482,12 @@ class TestQdrantSnapshotList:
 
 
 class TestQdrantSnapshotDelete:
-    """Regression: delete removes Qdrant snapshot files too."""
+    """Regression: delete removes Qdrant snapshot directories too."""
 
     def test_delete_removes_qdrant_snapshot(
         self, backup_setup_with_qdrant: Path
     ) -> None:
-        """BUG-078: Verify delete removes both SQLite and Qdrant files."""
+        """BUG-078: Verify delete removes both SQLite and Qdrant snapshot dir."""
         backup = create_backup(
             name="delete_both", db_path=backup_setup_with_qdrant
         )
@@ -492,27 +503,39 @@ class TestQdrantSnapshotDelete:
 class TestCreateQdrantSnapshotUnit:
     """Unit tests for create_qdrant_snapshot with mock Qdrant client."""
 
-    def test_create_qdrant_snapshot_success(
+    def test_create_qdrant_snapshot_per_collection(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """BUG-078: create_qdrant_snapshot creates snapshot with mock client."""
+        """BUG-078: create_qdrant_snapshot creates per-collection snapshots."""
         import calm.orchestration.backups
         from calm.config import CalmSettings
 
         calm_home = tmp_path / ".calm"
         calm_home.mkdir()
         new_settings = CalmSettings(home=calm_home)
+
+        import importlib
+        importlib.reload(calm.orchestration.backups)
         monkeypatch.setattr(calm.orchestration.backups, "settings", new_settings)
 
+        # Mock collection listing: only 2 collections exist
+        mock_collection_1 = MagicMock()
+        mock_collection_1.name = "memories"
+        mock_collection_2 = MagicMock()
+        mock_collection_2.name = "ghap_full"
+        mock_collections_response = MagicMock()
+        mock_collections_response.collections = [mock_collection_1, mock_collection_2]
+
         mock_snapshot_desc = SnapshotDescription(
-            name="full-snapshot-2024.snapshot",
+            name="memories-snap-2024.snapshot",
             size=4096,
             creation_time="2024-01-01T00:00:00",
         )
 
         mock_client = AsyncMock()
-        mock_client.create_full_snapshot = AsyncMock(return_value=mock_snapshot_desc)
-        mock_client.delete_full_snapshot = AsyncMock(return_value=True)
+        mock_client.get_collections = AsyncMock(return_value=mock_collections_response)
+        mock_client.create_snapshot = AsyncMock(return_value=mock_snapshot_desc)
+        mock_client.delete_snapshot = AsyncMock(return_value=True)
         mock_client.close = AsyncMock()
 
         mock_http_response = MagicMock()
@@ -523,13 +546,6 @@ class TestCreateQdrantSnapshotUnit:
         mock_http_client.get = AsyncMock(return_value=mock_http_response)
         mock_http_client.__aenter__ = AsyncMock(return_value=mock_http_client)
         mock_http_client.__aexit__ = AsyncMock(return_value=False)
-
-        import importlib
-
-        # Reload to get the real (unpatched) create_qdrant_snapshot
-        importlib.reload(calm.orchestration.backups)
-        # Re-patch settings after reload
-        monkeypatch.setattr(calm.orchestration.backups, "settings", new_settings)
 
         with patch(
             "calm.orchestration.backups.AsyncQdrantClient",
@@ -546,13 +562,25 @@ class TestCreateQdrantSnapshotUnit:
 
         assert result is not None
         assert result.exists()
+        assert result.is_dir()
         assert result.name == f"test_snapshot{QDRANT_SNAPSHOT_SUFFIX}"
-        assert result.read_bytes() == b"snapshot-binary-data"
 
-    def test_create_qdrant_snapshot_returns_none_on_null_result(
+        # Check per-collection snapshot files
+        snapshot_files = sorted(result.glob("*.snapshot"))
+        assert len(snapshot_files) == 2
+        assert snapshot_files[0].name == "ghap_full.snapshot"
+        assert snapshot_files[1].name == "memories.snapshot"
+
+        # Verify create_snapshot was called per-collection
+        assert mock_client.create_snapshot.call_count == 2
+
+        # Verify download happened for each collection
+        assert mock_http_client.get.call_count == 2
+
+    def test_create_qdrant_snapshot_no_collections_returns_none(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """BUG-078: create_qdrant_snapshot handles None from Qdrant."""
+        """BUG-078: create_qdrant_snapshot returns None when no collections exist."""
         import calm.orchestration.backups
         from calm.config import CalmSettings
 
@@ -561,12 +589,15 @@ class TestCreateQdrantSnapshotUnit:
         new_settings = CalmSettings(home=calm_home)
 
         import importlib
-
         importlib.reload(calm.orchestration.backups)
         monkeypatch.setattr(calm.orchestration.backups, "settings", new_settings)
 
+        # Mock empty collection listing
+        mock_collections_response = MagicMock()
+        mock_collections_response.collections = []
+
         mock_client = AsyncMock()
-        mock_client.create_full_snapshot = AsyncMock(return_value=None)
+        mock_client.get_collections = AsyncMock(return_value=mock_collections_response)
         mock_client.close = AsyncMock()
 
         with patch(
@@ -575,8 +606,159 @@ class TestCreateQdrantSnapshotUnit:
         ):
             result = asyncio.run(
                 calm.orchestration.backups.create_qdrant_snapshot(
-                    "http://localhost:6333", "null_test"
+                    "http://localhost:6333", "empty_test"
                 )
             )
 
         assert result is None
+
+    def test_create_qdrant_snapshot_skips_missing_collections(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """BUG-078: Snapshot skips collections that don't exist in Qdrant."""
+        import calm.orchestration.backups
+        from calm.config import CalmSettings
+
+        calm_home = tmp_path / ".calm"
+        calm_home.mkdir()
+        new_settings = CalmSettings(home=calm_home)
+
+        import importlib
+        importlib.reload(calm.orchestration.backups)
+        monkeypatch.setattr(calm.orchestration.backups, "settings", new_settings)
+
+        # Only 1 collection exists out of 8
+        mock_collection = MagicMock()
+        mock_collection.name = "memories"
+        mock_collections_response = MagicMock()
+        mock_collections_response.collections = [mock_collection]
+
+        mock_snapshot_desc = SnapshotDescription(
+            name="memories-snap.snapshot",
+            size=1024,
+            creation_time="2024-01-01T00:00:00",
+        )
+
+        mock_client = AsyncMock()
+        mock_client.get_collections = AsyncMock(return_value=mock_collections_response)
+        mock_client.create_snapshot = AsyncMock(return_value=mock_snapshot_desc)
+        mock_client.delete_snapshot = AsyncMock(return_value=True)
+        mock_client.close = AsyncMock()
+
+        mock_http_response = MagicMock()
+        mock_http_response.content = b"data"
+        mock_http_response.raise_for_status = MagicMock()
+
+        mock_http_client = AsyncMock()
+        mock_http_client.get = AsyncMock(return_value=mock_http_response)
+        mock_http_client.__aenter__ = AsyncMock(return_value=mock_http_client)
+        mock_http_client.__aexit__ = AsyncMock(return_value=False)
+
+        with patch(
+            "calm.orchestration.backups.AsyncQdrantClient",
+            return_value=mock_client,
+        ), patch(
+            "calm.orchestration.backups.httpx.AsyncClient",
+            return_value=mock_http_client,
+        ):
+            result = asyncio.run(
+                calm.orchestration.backups.create_qdrant_snapshot(
+                    "http://localhost:6333", "partial_test"
+                )
+            )
+
+        assert result is not None
+        assert result.is_dir()
+
+        # Only 1 snapshot file created (for memories)
+        snapshot_files = list(result.glob("*.snapshot"))
+        assert len(snapshot_files) == 1
+        assert snapshot_files[0].name == "memories.snapshot"
+
+        # create_snapshot called only once
+        assert mock_client.create_snapshot.call_count == 1
+
+
+class TestRestoreQdrantSnapshotUnit:
+    """Unit tests for restore_qdrant_snapshot using per-collection upload."""
+
+    def test_restore_calls_per_collection_upload(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """BUG-078: restore uses POST /collections/{name}/snapshots/upload."""
+        import calm.orchestration.backups
+        from calm.config import CalmSettings
+
+        calm_home = tmp_path / ".calm"
+        calm_home.mkdir()
+        new_settings = CalmSettings(home=calm_home)
+
+        import importlib
+        importlib.reload(calm.orchestration.backups)
+        monkeypatch.setattr(calm.orchestration.backups, "settings", new_settings)
+
+        # Create a fake snapshot directory with 2 collection snapshots
+        backups_dir = calm_home / "backups"
+        backups_dir.mkdir(parents=True, exist_ok=True)
+        snapshot_dir = backups_dir / f"test_restore{QDRANT_SNAPSHOT_SUFFIX}"
+        snapshot_dir.mkdir()
+        (snapshot_dir / "memories.snapshot").write_bytes(b"memories-data")
+        (snapshot_dir / "ghap_full.snapshot").write_bytes(b"ghap-data")
+
+        mock_http_response = MagicMock()
+        mock_http_response.raise_for_status = MagicMock()
+
+        mock_http_client = AsyncMock()
+        mock_http_client.post = AsyncMock(return_value=mock_http_response)
+        mock_http_client.__aenter__ = AsyncMock(return_value=mock_http_client)
+        mock_http_client.__aexit__ = AsyncMock(return_value=False)
+
+        with patch(
+            "calm.orchestration.backups.httpx.AsyncClient",
+            return_value=mock_http_client,
+        ):
+            result = asyncio.run(
+                calm.orchestration.backups.restore_qdrant_snapshot(
+                    "http://localhost:6333", "test_restore"
+                )
+            )
+
+        assert result is True
+
+        # Verify POST was called for each collection
+        assert mock_http_client.post.call_count == 2
+
+        # Check the URLs used
+        post_calls = mock_http_client.post.call_args_list
+        urls = [call.args[0] for call in post_calls]
+        assert "http://localhost:6333/collections/ghap_full/snapshots/upload" in urls
+        assert "http://localhost:6333/collections/memories/snapshots/upload" in urls
+
+    def test_restore_empty_snapshot_dir_returns_false(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """BUG-078: restore returns False if snapshot dir has no files."""
+        import calm.orchestration.backups
+        from calm.config import CalmSettings
+
+        calm_home = tmp_path / ".calm"
+        calm_home.mkdir()
+        new_settings = CalmSettings(home=calm_home)
+
+        import importlib
+        importlib.reload(calm.orchestration.backups)
+        monkeypatch.setattr(calm.orchestration.backups, "settings", new_settings)
+
+        # Create an empty snapshot directory
+        backups_dir = calm_home / "backups"
+        backups_dir.mkdir(parents=True, exist_ok=True)
+        snapshot_dir = backups_dir / f"empty_restore{QDRANT_SNAPSHOT_SUFFIX}"
+        snapshot_dir.mkdir()
+
+        result = asyncio.run(
+            calm.orchestration.backups.restore_qdrant_snapshot(
+                "http://localhost:6333", "empty_restore"
+            )
+        )
+
+        assert result is False

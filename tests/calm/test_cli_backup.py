@@ -76,15 +76,16 @@ def cli_env_with_qdrant(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path
     monkeypatch.setattr(calm.config, "settings", new_settings)
     monkeypatch.setattr(calm.orchestration.backups, "settings", new_settings)
 
-    # Mock create_qdrant_snapshot to create a fake snapshot file
+    # Mock create_qdrant_snapshot to create a fake snapshot directory
     async def mock_create_qdrant_snapshot(
         qdrant_url: str, backup_name: str
     ) -> Path | None:
         backups_dir = calm_home / "backups"
         backups_dir.mkdir(parents=True, exist_ok=True)
-        snapshot_path = backups_dir / f"{backup_name}{QDRANT_SNAPSHOT_SUFFIX}"
-        snapshot_path.write_bytes(b"fake-qdrant-snapshot-data")
-        return snapshot_path
+        snapshot_dir = backups_dir / f"{backup_name}{QDRANT_SNAPSHOT_SUFFIX}"
+        snapshot_dir.mkdir(parents=True, exist_ok=True)
+        (snapshot_dir / "memories.snapshot").write_bytes(b"fake-data")
+        return snapshot_dir
 
     monkeypatch.setattr(
         calm.orchestration.backups,
@@ -92,12 +93,12 @@ def cli_env_with_qdrant(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path
         mock_create_qdrant_snapshot,
     )
 
-    # Mock restore_qdrant_snapshot to return True
+    # Mock restore_qdrant_snapshot to return True if snapshot dir exists
     async def mock_restore_qdrant_snapshot(
         qdrant_url: str, backup_name: str
     ) -> bool:
-        snapshot_path = calm_home / "backups" / f"{backup_name}{QDRANT_SNAPSHOT_SUFFIX}"
-        return snapshot_path.exists()
+        snapshot_dir = calm_home / "backups" / f"{backup_name}{QDRANT_SNAPSHOT_SUFFIX}"
+        return snapshot_dir.exists() and snapshot_dir.is_dir()
 
     monkeypatch.setattr(
         calm.orchestration.backups,
