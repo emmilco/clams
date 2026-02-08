@@ -1,6 +1,7 @@
 """Tests for CALM orchestration tasks module."""
 
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -8,6 +9,7 @@ from calm.db.schema import init_database
 from calm.orchestration.tasks import (
     create_task,
     delete_task,
+    get_next_task_id,
     get_task,
     list_tasks,
     transition_task,
@@ -289,3 +291,190 @@ class TestDeleteTask:
         """Test deleting nonexistent task raises error."""
         with pytest.raises(ValueError, match="not found"):
             delete_task("NONEXISTENT", db_path=test_db)
+
+
+class TestListTasksIncludeDone:
+    """Regression tests for include_done filtering."""
+
+    def test_exclude_done_by_default(self, test_db: Path) -> None:
+        """Test that DONE tasks are excluded by default."""
+        # Create a task and transition it to DONE
+        create_task(
+            task_id="SPEC-001",
+            title="Done Task",
+            project_path="/test/project",
+            db_path=test_db,
+        )
+        # Manually set phase to DONE via update
+        from calm.orchestration.tasks import update_task
+
+        update_task("SPEC-001", phase="DONE", db_path=test_db)
+
+        # Create an active task
+        create_task(
+            task_id="SPEC-002",
+            title="Active Task",
+            project_path="/test/project",
+            db_path=test_db,
+        )
+
+        tasks = list_tasks(project_path="/test/project", db_path=test_db)
+        assert len(tasks) == 1
+        assert tasks[0].id == "SPEC-002"
+
+    def test_include_done_returns_all(self, test_db: Path) -> None:
+        """Test that include_done=True returns DONE tasks too."""
+        create_task(
+            task_id="SPEC-001",
+            title="Done Task",
+            project_path="/test/project",
+            db_path=test_db,
+        )
+        from calm.orchestration.tasks import update_task
+
+        update_task("SPEC-001", phase="DONE", db_path=test_db)
+
+        create_task(
+            task_id="SPEC-002",
+            title="Active Task",
+            project_path="/test/project",
+            db_path=test_db,
+        )
+
+        tasks = list_tasks(
+            project_path="/test/project",
+            include_done=True,
+            db_path=test_db,
+        )
+        assert len(tasks) == 2
+        ids = {t.id for t in tasks}
+        assert ids == {"SPEC-001", "SPEC-002"}
+
+
+class TestListTasksWorktreeProjectPath:
+    """Regression tests for worktree project path resolution.
+
+    When running from a worktree, detect_main_repo() should return the
+    main repo path so that tasks stored under that path are found.
+    """
+
+    def test_list_tasks_uses_main_repo_path(self, test_db: Path) -> None:
+        """Test that list_tasks auto-detects main repo path, not worktree path."""
+        main_repo = "/test/project"
+        create_task(
+            task_id="BUG-001",
+            title="Test Bug",
+            task_type="bug",
+            project_path=main_repo,
+            db_path=test_db,
+        )
+
+        # Simulate calling from a worktree: detect_main_repo returns main path
+        with patch(
+            "calm.orchestration.tasks.detect_main_repo", return_value=main_repo
+        ):
+            tasks = list_tasks(db_path=test_db)
+
+        assert len(tasks) == 1
+        assert tasks[0].id == "BUG-001"
+
+    def test_list_tasks_worktree_path_returns_empty(self, test_db: Path) -> None:
+        """Test that using worktree path (not main repo) returns no results."""
+        main_repo = "/test/project"
+        worktree_path = "/test/project/.worktrees/BUG-001"
+
+        create_task(
+            task_id="BUG-001",
+            title="Test Bug",
+            task_type="bug",
+            project_path=main_repo,
+            db_path=test_db,
+        )
+
+        # Explicitly pass worktree path -- should find nothing
+        tasks = list_tasks(project_path=worktree_path, db_path=test_db)
+        assert len(tasks) == 0
+
+    def test_create_task_uses_main_repo_path(self, test_db: Path) -> None:
+        """Test that create_task auto-detects main repo path, not worktree path."""
+        main_repo = "/test/project"
+
+        with patch(
+            "calm.orchestration.tasks.detect_main_repo", return_value=main_repo
+        ):
+            task = create_task(
+                task_id="BUG-002",
+                title="Created from worktree",
+                task_type="bug",
+                db_path=test_db,
+            )
+
+        assert task.project_path == main_repo
+
+
+class TestGetNextTaskId:
+    """Tests for get_next_task_id function."""
+
+    def test_next_id_empty_db(self, test_db: Path) -> None:
+        """Test next ID when no tasks exist returns 001."""
+        result = get_next_task_id("BUG", db_path=test_db)
+        assert result == "BUG-001"
+
+    def test_next_id_with_existing_tasks(self, test_db: Path) -> None:
+        """Test next ID increments from highest existing."""
+        create_task(
+            task_id="BUG-001",
+            title="Bug 1",
+            task_type="bug",
+            project_path="/test/project",
+            db_path=test_db,
+        )
+        create_task(
+            task_id="BUG-005",
+            title="Bug 5",
+            task_type="bug",
+            project_path="/test/project",
+            db_path=test_db,
+        )
+
+        result = get_next_task_id("BUG", db_path=test_db)
+        assert result == "BUG-006"
+
+    def test_next_id_ignores_subtasks(self, test_db: Path) -> None:
+        """Test that subtask IDs like SPEC-001-01 are ignored."""
+        create_task(
+            task_id="SPEC-003",
+            title="Spec 3",
+            project_path="/test/project",
+            db_path=test_db,
+        )
+        create_task(
+            task_id="SPEC-003-01",
+            title="Subtask",
+            spec_id="SPEC-003",
+            project_path="/test/project",
+            db_path=test_db,
+        )
+
+        result = get_next_task_id("SPEC", db_path=test_db)
+        assert result == "SPEC-004"
+
+    def test_next_id_different_prefixes(self, test_db: Path) -> None:
+        """Test that different prefixes are independent."""
+        create_task(
+            task_id="BUG-010",
+            title="Bug",
+            task_type="bug",
+            project_path="/test/project",
+            db_path=test_db,
+        )
+        create_task(
+            task_id="SPEC-002",
+            title="Spec",
+            project_path="/test/project",
+            db_path=test_db,
+        )
+
+        assert get_next_task_id("BUG", db_path=test_db) == "BUG-011"
+        assert get_next_task_id("SPEC", db_path=test_db) == "SPEC-003"
+

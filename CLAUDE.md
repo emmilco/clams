@@ -30,7 +30,8 @@ calm status worktrees              # Active worktrees
 
 # Tasks (features and bugs)
 calm task create <id> <title> [--spec <spec_id>] [--type <feature|bug>]
-calm task list [--phase <phase>] [--type <feature|bug>]
+calm task list [--phase <phase>] [--type <feature|bug>] [--include-done]
+calm task next-id <BUG|SPEC>              # Get next available task ID
 calm task show <id>
 calm task update <id> --phase|--specialist|--notes|--blocked-by <value>
 calm task transition <id> <phase> [--gate-result <pass|fail>] [--gate-details <text>]
