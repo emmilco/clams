@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 
 from calm.git.base import (
+    ChurnRecord,
     Commit,
     CommitSearchResult,
     IndexingError,
@@ -171,6 +172,41 @@ async def test_get_churn_hotspots_limit_validation(mock_services):
 
     with pytest.raises(ValidationError, match="Limit.*out of range"):
         await get_churn_hotspots(limit=51)
+
+
+@pytest.mark.asyncio
+async def test_get_churn_hotspots_formats_churn_records(mock_services):
+    """Regression test for BUG-073: verify correct ChurnRecord attribute access."""
+    mock_services.git_analyzer = Mock()
+    mock_services.git_analyzer.get_churn_hotspots = AsyncMock(
+        return_value=[
+            ChurnRecord(
+                file_path="src/main.py",
+                change_count=15,
+                total_insertions=200,
+                total_deletions=50,
+                authors=["alice", "bob"],
+                author_emails=["alice@test.com", "bob@test.com"],
+                last_changed=datetime(2026, 1, 1),
+            ),
+        ]
+    )
+
+    tools = get_git_tools(
+        mock_services.vector_store,
+        mock_services.semantic_embedder,
+        git_analyzer=mock_services.git_analyzer,
+    )
+    get_churn_hotspots = tools["get_churn_hotspots"]
+    result = await get_churn_hotspots(days=30, limit=10)
+
+    assert result["count"] == 1
+    hotspot = result["hotspots"][0]
+    assert hotspot["path"] == "src/main.py"
+    assert hotspot["commit_count"] == 15
+    assert hotspot["total_insertions"] == 200
+    assert hotspot["total_deletions"] == 50
+    assert hotspot["authors"] == ["alice", "bob"]
 
 
 @pytest.mark.asyncio
