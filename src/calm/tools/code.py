@@ -42,9 +42,14 @@ PROJECT_ID_MAX_LENGTH = 100
 DEFAULT_EXCLUSIONS = [
     "**/.venv/**",
     "**/venv/**",
+    "**/env/**",
     "**/node_modules/**",
     "**/.git/**",
+    "**/.hg/**",
+    "**/.svn/**",
     "**/__pycache__/**",
+    "**/.tox/**",
+    "**/.nox/**",
     "**/dist/**",
     "**/build/**",
     "**/target/**",
@@ -52,6 +57,8 @@ DEFAULT_EXCLUSIONS = [
     "**/.mypy_cache/**",
     "**/.ruff_cache/**",
     "**/htmlcov/**",
+    "**/.eggs/**",
+    "**/.worktrees/**",
     "**/*.egg-info/**",
 ]
 

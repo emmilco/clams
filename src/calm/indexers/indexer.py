@@ -1,5 +1,6 @@
 """Code indexer implementation for semantic code search."""
 
+import os
 import time
 from datetime import datetime
 from fnmatch import fnmatch
@@ -23,6 +24,28 @@ class CodeIndexer:
     """Index parsed code units for semantic search."""
 
     COLLECTION_NAME = "code_units"
+
+    DEFAULT_EXCLUDED_DIRS: set[str] = {
+        ".venv",
+        "venv",
+        "env",
+        "node_modules",
+        ".git",
+        ".hg",
+        ".svn",
+        "__pycache__",
+        ".tox",
+        ".nox",
+        "dist",
+        "build",
+        "target",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".ruff_cache",
+        "htmlcov",
+        ".eggs",
+        ".worktrees",
+    }
 
     @property
     def embedding_batch_size(self) -> int:
@@ -247,30 +270,66 @@ class CodeIndexer:
     def _find_files(
         self, root: str, recursive: bool, exclude_patterns: list[str] | None
     ) -> list[str]:
-        """Find all supported files in directory."""
+        """Find all supported files in directory.
+
+        Uses os.walk with in-place directory pruning to avoid descending
+        into excluded directories (e.g. .venv, node_modules). This prevents
+        the performance cost of enumerating thousands of irrelevant files.
+        """
         supported_exts = set(EXTENSION_MAP.keys())
         files: list[str] = []
 
         root_path = Path(root).expanduser()
-        pattern = "**/*" if recursive else "*"
+        excluded_dirs = self._build_excluded_dirs(exclude_patterns)
 
         try:
-            for path in root_path.glob(pattern):
-                if path.is_symlink():
-                    continue
-                if not path.is_file():
-                    continue
-                if path.suffix not in supported_exts:
-                    continue
-                if self._should_exclude(str(path), exclude_patterns):
-                    continue
-                files.append(str(path))
+            for dirpath, dirnames, filenames in os.walk(
+                str(root_path), followlinks=False
+            ):
+                # Prune excluded directories in-place to prevent descent
+                dirnames[:] = [
+                    d for d in dirnames if d not in excluded_dirs
+                ]
+
+                for filename in filenames:
+                    file_path = Path(dirpath) / filename
+                    if file_path.is_symlink():
+                        continue
+                    if file_path.suffix not in supported_exts:
+                        continue
+                    if self._should_exclude(str(file_path), exclude_patterns):
+                        continue
+                    files.append(str(file_path))
+
+                if not recursive:
+                    break
         except PermissionError as e:
             logger.warning(
                 "directory_permission_error", path=str(root_path), error=str(e)
             )
 
         return files
+
+    def _build_excluded_dirs(
+        self, exclude_patterns: list[str] | None
+    ) -> set[str]:
+        """Build set of directory names to skip during os.walk.
+
+        Combines the class-level DEFAULT_EXCLUDED_DIRS with directory names
+        extracted from the provided exclusion patterns.
+        """
+        excluded = set(self.DEFAULT_EXCLUDED_DIRS)
+
+        if exclude_patterns:
+            for pattern in exclude_patterns:
+                # Extract directory names from glob patterns like
+                # "**/.venv/**" or "**/node_modules/**"
+                parts = Path(pattern).parts
+                for part in parts:
+                    if part not in ("**", "*") and not part.startswith("*."):
+                        excluded.add(part)
+
+        return excluded
 
     def _should_exclude(self, path: str, patterns: list[str] | None) -> bool:
         """Check if path matches any exclusion pattern."""
