@@ -316,3 +316,200 @@ def register_hooks(
     atomic_write_json(settings_path, updated)
 
     return f"Registered CALM hooks in {settings_path}"
+
+
+# --- Claude Code Skill Registration ---
+
+# Skill definitions: (skill_name, directory_name, trigger_keywords, intent_patterns)
+CALM_SKILLS: list[tuple[str, str, list[str], list[str]]] = [
+    (
+        "orchestrate",
+        "orchestrate",
+        [
+            "orchestrate",
+            "/orchestrate",
+            "start orchestration",
+            "activate workflow",
+            "CALM orchestration",
+            "orchestration mode",
+            "activate orchestration",
+        ],
+        [
+            "(start|activate|enter|begin|run).*?orchestrat",
+            "/orchestrate",
+            "(CALM|calm).*?(mode|workflow|orchestrat)",
+        ],
+    ),
+    (
+        "wrapup",
+        "wrapup",
+        [
+            "wrapup",
+            "/wrapup",
+            "wrap up",
+            "end session",
+            "session wrapup",
+            "session handoff",
+        ],
+        [
+            "(end|wrap|close|finish).*?session",
+            "/wrapup",
+            "session.*?(wrapup|wrap up|handoff|end)",
+        ],
+    ),
+    (
+        "reflection",
+        "reflection",
+        [
+            "reflection",
+            "/reflection",
+            "reflect",
+            "review sessions",
+            "extract learnings",
+            "session reflection",
+        ],
+        [
+            "(reflect|review).*?(session|experience|learning)",
+            "/reflection",
+            "extract.*?learning",
+        ],
+    ),
+]
+
+
+def merge_skill_rules(
+    rules: dict[str, Any],
+) -> dict[str, Any]:
+    """Merge CALM skill triggers into skill-rules.json.
+
+    Args:
+        rules: Existing skill-rules.json content
+
+    Returns:
+        Updated rules dict (original not mutated)
+    """
+    result = dict(rules)
+
+    # Ensure skills section exists
+    if "skills" not in result:
+        result["skills"] = {}
+    else:
+        result["skills"] = dict(result["skills"])
+
+    for skill_name, _dir_name, keywords, intent_patterns in CALM_SKILLS:
+        rule_key = f"calm-{skill_name}"
+        result["skills"][rule_key] = {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "high",
+            "description": f"CALM {skill_name} skill",
+            "promptTriggers": {
+                "keywords": keywords,
+                "intentPatterns": intent_patterns,
+            },
+        }
+
+    return result
+
+
+def install_claude_code_skills(
+    claude_skills_dir: Path,
+    force: bool = False,
+    dry_run: bool = False,
+) -> tuple[list[str], list[str], list[str]]:
+    """Install CALM skill wrappers into ~/.claude/skills/.
+
+    Creates thin SKILL.md wrappers that Claude Code can discover,
+    pointing back to the CALM skill system.
+
+    Args:
+        claude_skills_dir: Path to ~/.claude/skills/
+        force: Overwrite existing skill files
+        dry_run: Don't actually write files
+
+    Returns:
+        Tuple of (installed, skipped, errors)
+    """
+    from calm.install.templates import read_template
+
+    installed: list[str] = []
+    skipped: list[str] = []
+    errors: list[str] = []
+
+    for skill_name, dir_name, _keywords, _patterns in CALM_SKILLS:
+        skill_dir = claude_skills_dir / dir_name
+        skill_file = skill_dir / "SKILL.md"
+
+        if skill_file.exists() and not force:
+            skipped.append(f"Skipped (exists): {skill_file}")
+            continue
+
+        if dry_run:
+            if skill_file.exists():
+                installed.append(f"Would overwrite: {skill_file}")
+            else:
+                installed.append(f"Would install: {skill_file}")
+            continue
+
+        try:
+            # Read the template
+            template_path = f"claude_skills/{skill_name}_SKILL.md"
+            content = read_template(template_path)
+
+            # Create directory and write file
+            skill_dir.mkdir(parents=True, exist_ok=True)
+            skill_file.write_text(content, encoding="utf-8")
+            installed.append(f"Installed: {skill_file}")
+        except (FileNotFoundError, OSError) as e:
+            errors.append(f"Error installing {skill_name} skill: {e}")
+
+    return installed, skipped, errors
+
+
+def register_claude_code_skills(
+    claude_skills_dir: Path,
+    skill_rules_path: Path,
+    force: bool = False,
+    dry_run: bool = False,
+) -> str:
+    """Register CALM skills in Claude Code.
+
+    Installs skill wrappers to ~/.claude/skills/ and updates
+    skill-rules.json with trigger patterns.
+
+    Args:
+        claude_skills_dir: Path to ~/.claude/skills/
+        skill_rules_path: Path to ~/.claude/skills/skill-rules.json
+        force: Overwrite existing files
+        dry_run: If True, don't write changes
+
+    Returns:
+        Description of what was done
+
+    Raises:
+        ConfigError: If registration fails
+    """
+    messages: list[str] = []
+
+    # Install skill wrapper files
+    installed, skipped, errors = install_claude_code_skills(
+        claude_skills_dir, force=force, dry_run=dry_run
+    )
+    messages.extend(installed)
+    messages.extend(skipped)
+
+    if errors:
+        raise ConfigError(f"Failed to install skill wrappers: {'; '.join(errors)}")
+
+    # Update skill-rules.json
+    rules = read_json_config(skill_rules_path)
+    updated_rules = merge_skill_rules(rules)
+
+    if dry_run:
+        messages.append(f"Would update {skill_rules_path} with CALM skill triggers")
+    else:
+        atomic_write_json(skill_rules_path, updated_rules)
+        messages.append(f"Updated {skill_rules_path} with CALM skill triggers")
+
+    summary = "; ".join(messages) if messages else "No changes needed"
+    return summary

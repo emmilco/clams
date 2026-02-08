@@ -11,7 +11,11 @@ from typing import TYPE_CHECKING
 
 from calm.config import CALM_HOME, settings
 from calm.install import InstallOptions, InstallResult, InstallStep
-from calm.install.config_merge import register_hooks, register_mcp_server
+from calm.install.config_merge import (
+    register_claude_code_skills,
+    register_hooks,
+    register_mcp_server,
+)
 from calm.install.dependencies import check_all_dependencies
 from calm.install.docker import ensure_qdrant_running
 from calm.install.templates import copy_all_templates, create_directory_structure
@@ -41,7 +45,7 @@ def step_check_dependencies(
     Returns:
         True if dependencies are satisfied, False otherwise
     """
-    output("[1/9] Checking dependencies...")
+    output("[1/10] Checking dependencies...")
 
     checks, all_passed = check_all_dependencies(skip_docker=options.skip_qdrant)
 
@@ -72,7 +76,7 @@ def step_create_directories(
     output: Callable[[str], None],
 ) -> bool:
     """Create CALM directory structure."""
-    output("[2/9] Creating directories...")
+    output("[2/10] Creating directories...")
 
     calm_home = _get_calm_home(options)
     created = create_directory_structure(calm_home, dry_run=options.dry_run)
@@ -93,7 +97,7 @@ def step_copy_templates(
     output: Callable[[str], None],
 ) -> bool:
     """Copy template files."""
-    output("[3/9] Copying templates...")
+    output("[3/10] Copying templates...")
 
     calm_home = _get_calm_home(options)
     copied, skipped, errors = copy_all_templates(
@@ -128,7 +132,7 @@ def step_init_database(
     output: Callable[[str], None],
 ) -> bool:
     """Initialize the database."""
-    output("[4/9] Initializing database...")
+    output("[4/10] Initializing database...")
 
     if options.dry_run:
         output(f"  Would initialize database at {settings.db_path}")
@@ -156,11 +160,11 @@ def step_start_qdrant(
 ) -> bool:
     """Start Qdrant container."""
     if options.skip_qdrant:
-        output("[5/9] Skipping Qdrant setup (--skip-qdrant)")
+        output("[5/10] Skipping Qdrant setup (--skip-qdrant)")
         result.add_skipped(InstallStep.START_QDRANT, "user requested --skip-qdrant")
         return True
 
-    output("[5/9] Setting up Qdrant...")
+    output("[5/10] Setting up Qdrant...")
 
     success, message = ensure_qdrant_running(dry_run=options.dry_run)
 
@@ -185,11 +189,11 @@ def step_register_mcp(
 ) -> bool:
     """Register MCP server in claude.json."""
     if options.skip_mcp:
-        output("[6/9] Skipping MCP registration (--skip-mcp)")
+        output("[6/10] Skipping MCP registration (--skip-mcp)")
         result.add_skipped(InstallStep.REGISTER_MCP, "user requested --skip-mcp")
         return True
 
-    output("[6/9] Registering MCP server...")
+    output("[6/10] Registering MCP server...")
 
     claude_json_path = Path.home() / ".claude.json"
 
@@ -215,11 +219,11 @@ def step_register_hooks(
 ) -> bool:
     """Register hooks in settings.json."""
     if options.skip_hooks:
-        output("[7/9] Skipping hook registration (--skip-hooks)")
+        output("[7/10] Skipping hook registration (--skip-hooks)")
         result.add_skipped(InstallStep.REGISTER_HOOKS, "user requested --skip-hooks")
         return True
 
-    output("[7/9] Registering hooks...")
+    output("[7/10] Registering hooks...")
 
     settings_path = Path.home() / ".claude" / "settings.json"
 
@@ -233,6 +237,39 @@ def step_register_hooks(
         return False
 
 
+def step_register_skills(
+    options: InstallOptions,
+    result: InstallResult,
+    output: Callable[[str], None],
+) -> bool:
+    """Register CALM skills in Claude Code."""
+    if options.skip_hooks:
+        output("[8/10] Skipping skill registration (--skip-hooks)")
+        result.add_skipped(
+            InstallStep.REGISTER_SKILLS, "user requested --skip-hooks"
+        )
+        return True
+
+    output("[8/10] Registering Claude Code skills...")
+
+    claude_skills_dir = Path.home() / ".claude" / "skills"
+    skill_rules_path = claude_skills_dir / "skill-rules.json"
+
+    try:
+        message = register_claude_code_skills(
+            claude_skills_dir,
+            skill_rules_path,
+            force=options.force,
+            dry_run=options.dry_run,
+        )
+        output(f"  {message}")
+        result.add_completed(InstallStep.REGISTER_SKILLS)
+        return True
+    except Exception as e:
+        result.add_error(InstallStep.REGISTER_SKILLS, str(e))
+        return False
+
+
 def step_start_server(
     options: InstallOptions,
     result: InstallResult,
@@ -240,11 +277,11 @@ def step_start_server(
 ) -> bool:
     """Start CALM server daemon."""
     if options.skip_server:
-        output("[8/9] Skipping server startup (--skip-server)")
+        output("[9/10] Skipping server startup (--skip-server)")
         result.add_skipped(InstallStep.START_SERVER, "user requested --skip-server")
         return True
 
-    output("[8/9] Starting CALM server...")
+    output("[9/10] Starting CALM server...")
 
     if options.dry_run:
         output("  Would start CALM server daemon")
@@ -282,7 +319,7 @@ def step_verify(
     output: Callable[[str], None],
 ) -> bool:
     """Verify the installation."""
-    output("[9/9] Verifying installation...")
+    output("[10/10] Verifying installation...")
 
     if options.dry_run:
         output("  Would verify installation")
@@ -357,6 +394,7 @@ def run_installation(options: InstallOptions) -> InstallResult:
         step_start_qdrant,
         step_register_mcp,
         step_register_hooks,
+        step_register_skills,
         step_start_server,
         step_verify,
     ]
