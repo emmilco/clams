@@ -17,8 +17,10 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import contextlib
 import os
 import signal
+from collections.abc import AsyncIterator
 from pathlib import Path
 from types import FrameType
 from typing import Any
@@ -57,13 +59,13 @@ async def _run_server_async(host: str, port: int) -> None:
     """Run the server asynchronously."""
     import structlog
     import uvicorn
-    from mcp.server.sse import SseServerTransport
+    from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
     from starlette.applications import Starlette
     from starlette.middleware import Middleware
     from starlette.middleware.cors import CORSMiddleware
     from starlette.requests import Request
     from starlette.responses import JSONResponse
-    from starlette.routing import Route
+    from starlette.routing import Mount, Route
 
     from calm import __version__
     from calm.config import settings
@@ -76,8 +78,12 @@ async def _run_server_async(host: str, port: int) -> None:
     # Create MCP server
     mcp_server, _tool_registry = await create_server()
 
-    # Create SSE transport
-    sse_transport = SseServerTransport("/sse")
+    # Create Streamable HTTP session manager.
+    # The session manager handles session creation, tracking, and
+    # reconnection via Mcp-Session-Id headers automatically.
+    session_manager = StreamableHTTPSessionManager(
+        app=mcp_server,
+    )
 
     # Health endpoint
     async def health_handler(request: Request) -> JSONResponse:
@@ -87,48 +93,38 @@ async def _run_server_async(host: str, port: int) -> None:
             "version": __version__,
         })
 
-    # SSE app for MCP connections
-    async def sse_app(scope: Any, receive: Any, send: Any) -> None:
-        method = scope.get("method", "GET")
+    # MCP endpoint handler (ASGI app) -- delegates to session manager
+    async def mcp_handler(scope: Any, receive: Any, send: Any) -> None:
+        await session_manager.handle_request(scope, receive, send)
 
-        if method == "GET":
-            logger.info("calm.sse_connection_started")
-            request = Request(scope, receive, send)
-            async with sse_transport.connect_sse(
-                scope, receive, request._send
-            ) as (read_stream, write_stream):
-                await mcp_server.run(
-                    read_stream,
-                    write_stream,
-                    mcp_server.create_initialization_options(),
-                )
-            logger.info("calm.sse_connection_closed")
-        elif method == "POST":
-            await sse_transport.handle_post_message(scope, receive, send)
+    # Lifespan context manager for the Starlette app
+    @contextlib.asynccontextmanager
+    async def lifespan(app: Starlette) -> AsyncIterator[None]:
+        async with session_manager.run():
+            logger.info("calm.session_manager_started")
+            yield
+        logger.info("calm.session_manager_stopped")
 
-    # Create Starlette app
+    # Create Starlette app with routes
     routes = [
         Route("/health", health_handler, methods=["GET"]),
+        Mount("/mcp", app=mcp_handler),
     ]
 
     middleware = [
         Middleware(
             CORSMiddleware,
             allow_origins=["*"],
-            allow_methods=["GET", "POST"],
+            allow_methods=["GET", "POST", "DELETE"],
             allow_headers=["*"],
         )
     ]
 
-    starlette_app = Starlette(routes=routes, middleware=middleware)
-
-    # Wrap to handle /sse
-    async def app(scope: Any, receive: Any, send: Any) -> None:
-        path = scope.get("path", "")
-        if path == "/sse" or path.startswith("/sse?"):
-            await sse_app(scope, receive, send)
-        else:
-            await starlette_app(scope, receive, send)
+    starlette_app = Starlette(
+        routes=routes,
+        middleware=middleware,
+        lifespan=lifespan,
+    )
 
     # Write PID file
     pid_file = Path(settings.pid_file).expanduser()
@@ -139,7 +135,7 @@ async def _run_server_async(host: str, port: int) -> None:
 
     # Configure uvicorn
     config = uvicorn.Config(
-        app,
+        starlette_app,
         host=host,
         port=port,
         log_level="warning",
