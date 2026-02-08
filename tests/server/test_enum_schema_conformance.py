@@ -17,12 +17,12 @@ import pytest
 
 from calm.ghap.models import Domain, OutcomeStatus, Strategy
 from calm.server.app import (
-    _get_all_tool_definitions,
     DOMAINS,
     OUTCOME_STATUS_VALUES,
     ROOT_CAUSE_CATEGORIES,
     STRATEGIES,
     VALID_AXES,
+    _get_all_tool_definitions,
 )
 
 # =============================================================================

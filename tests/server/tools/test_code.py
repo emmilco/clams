@@ -4,9 +4,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from calm.tools.errors import MCPError
-from calm.tools.validation import ValidationError
 from calm.tools.code import get_code_tools
+from calm.tools.validation import ValidationError
 
 
 @pytest.mark.asyncio

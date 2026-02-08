@@ -5,7 +5,6 @@ fixtures in tests/server/tools/conftest.py.
 """
 
 import tempfile
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
@@ -16,6 +15,7 @@ import pytest
 from calm.clustering import ExperienceClusterer
 from calm.clustering.types import ClusterInfo
 from calm.ghap import ObservationCollector, ObservationPersister
+from calm.storage.base import SearchResult
 from calm.tools.code import get_code_tools
 from calm.tools.context import get_context_tools
 from calm.tools.ghap import get_ghap_tools
@@ -23,7 +23,6 @@ from calm.tools.git import get_git_tools
 from calm.tools.learning import get_learning_tools
 from calm.tools.memory import get_memory_tools
 from calm.tools.session import SessionManager, get_session_tools
-from calm.storage.base import SearchResult
 from calm.values import ValueStore
 
 

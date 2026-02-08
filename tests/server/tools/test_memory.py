@@ -4,8 +4,8 @@ from uuid import UUID
 
 import pytest
 
-from calm.tools.validation import ValidationError
 from calm.tools.memory import get_memory_tools
+from calm.tools.validation import ValidationError
 
 
 @pytest.mark.asyncio

@@ -78,7 +78,7 @@ async def test_bug_021_regression_search_experiences_serialization(
     Regression test for BUG-021 where search_experiences returned raw
     dataclass objects that couldn't be JSON serialized, causing internal_error.
     """
-    mock_result = MockExperienceResult(
+    MockExperienceResult(
         id="exp_123",
         ghap_id="ghap_456",
         axis="full",

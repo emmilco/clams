@@ -22,7 +22,6 @@ import pytest
 from calm.clustering import ExperienceClusterer
 from calm.clustering.types import ClusterInfo
 from calm.ghap import ObservationCollector, ObservationPersister
-from calm.tools.context import get_context_tools
 from calm.server.app import (
     DOMAINS,
     OUTCOME_STATUS_VALUES,
@@ -30,11 +29,12 @@ from calm.server.app import (
     STRATEGIES,
     VALID_AXES,
 )
+from calm.storage.base import SearchResult
+from calm.tools.context import get_context_tools
 from calm.tools.ghap import get_ghap_tools
 from calm.tools.learning import get_learning_tools
 from calm.tools.memory import VALID_CATEGORIES, get_memory_tools
 from calm.tools.session import SessionManager, get_session_tools
-from calm.storage.base import SearchResult
 from calm.values import ValueStore
 
 # =============================================================================

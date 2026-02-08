@@ -12,8 +12,8 @@ from calm.git.base import (
     IndexingStats,
 )
 from calm.tools.errors import MCPError
-from calm.tools.validation import ValidationError
 from calm.tools.git import get_git_tools
+from calm.tools.validation import ValidationError
 
 
 @pytest.mark.asyncio

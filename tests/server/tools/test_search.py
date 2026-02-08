@@ -1,7 +1,7 @@
 """Tests for search tools (search_experiences is now in learning tools)."""
 
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 

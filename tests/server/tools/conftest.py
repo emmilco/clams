@@ -1,6 +1,6 @@
 """Shared fixtures for MCP tools tests."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 from unittest.mock import AsyncMock
 

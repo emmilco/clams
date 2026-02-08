@@ -14,13 +14,6 @@ Tests cover all helper functions scattered across calm.tools modules:
 
 import pytest
 
-from calm.tools.validation import (
-    ValidationError,
-    validate_importance_range,
-    validate_query_string,
-    validate_tags,
-    validate_uuid,
-)
 from calm.tools.code import (
     SUPPORTED_LANGUAGES,
     validate_language,
@@ -32,6 +25,13 @@ from calm.tools.context import (
 )
 from calm.tools.git import validate_author_name
 from calm.tools.session import validate_frequency
+from calm.tools.validation import (
+    ValidationError,
+    validate_importance_range,
+    validate_query_string,
+    validate_tags,
+    validate_uuid,
+)
 
 
 class TestValidateContextTypes:

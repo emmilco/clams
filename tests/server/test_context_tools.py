@@ -1,11 +1,9 @@
 """Tests for context assembly tools."""
 
-from dataclasses import dataclass
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from calm.storage.base import SearchResult
 from calm.tools.context import get_context_tools
 
 

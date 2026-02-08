@@ -445,7 +445,8 @@ def test_bug_001_schema_validation_alignment() -> None:
     the strategy values advertised in the schema.
     """
     from calm.server.app import _get_all_tool_definitions
-    from calm.tools.enums import VALID_STRATEGIES as STRATEGIES, validate_strategy
+    from calm.tools.enums import VALID_STRATEGIES as STRATEGIES
+    from calm.tools.enums import validate_strategy
 
     # Get tool definitions
     tools = _get_all_tool_definitions()

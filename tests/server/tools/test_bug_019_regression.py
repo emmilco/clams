@@ -10,8 +10,8 @@ import numpy as np
 import pytest
 
 from calm.embedding.base import EmbeddingService
-from calm.tools.learning import get_learning_tools
 from calm.storage.base import VectorStore
+from calm.tools.learning import get_learning_tools
 from calm.values import ValueStore
 from calm.values.types import ValidationResult
 

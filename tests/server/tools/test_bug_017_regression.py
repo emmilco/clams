@@ -9,8 +9,8 @@ import pytest
 
 from calm.clustering import Clusterer, ExperienceClusterer
 from calm.embedding.base import EmbeddingService, Vector
-from calm.tools.learning import get_learning_tools
 from calm.storage.qdrant import QdrantVectorStore
+from calm.tools.learning import get_learning_tools
 from calm.values import ValueStore
 
 

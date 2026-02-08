@@ -1,12 +1,12 @@
 """Regression test for BUG-026: JSON schema enum values must match validation enums."""
 
-from calm.server.app import _get_all_tool_definitions
 from calm.server.app import (
     DOMAINS,
     OUTCOME_STATUS_VALUES,
     ROOT_CAUSE_CATEGORIES,
     STRATEGIES,
     VALID_AXES,
+    _get_all_tool_definitions,
 )
 
 

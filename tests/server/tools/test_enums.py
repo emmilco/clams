@@ -2,12 +2,19 @@
 
 import pytest
 
-from calm.tools.validation import ValidationError
 from calm.tools.enums import (
     VALID_DOMAINS as DOMAINS,
+)
+from calm.tools.enums import (
     VALID_OUTCOME_STATUSES as OUTCOME_STATUS_VALUES,
+)
+from calm.tools.enums import (
     VALID_ROOT_CAUSE_CATEGORIES as ROOT_CAUSE_CATEGORIES,
+)
+from calm.tools.enums import (
     VALID_STRATEGIES as STRATEGIES,
+)
+from calm.tools.enums import (
     validate_domain,
     validate_outcome_status,
     validate_root_cause_category,
@@ -17,6 +24,7 @@ from calm.tools.learning import (
     VALID_AXES,
     validate_axis,
 )
+from calm.tools.validation import ValidationError
 
 
 class TestDomains:
