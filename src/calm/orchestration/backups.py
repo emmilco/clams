@@ -159,6 +159,7 @@ async def create_qdrant_snapshot(
         UnexpectedResponse,
         httpx.ConnectError,
         httpx.TimeoutException,
+        httpx.HTTPStatusError,
         ConnectionError,
         OSError,
     ) as exc:
@@ -208,8 +209,13 @@ async def restore_qdrant_snapshot(
                 snapshot_data = snapshot_file.read_bytes()
                 response = await http_client.post(
                     upload_url,
-                    content=snapshot_data,
-                    headers={"Content-Type": "multipart/form-data"},
+                    files={
+                        "snapshot": (
+                            snapshot_file.name,
+                            snapshot_data,
+                            "application/octet-stream",
+                        )
+                    },
                 )
                 response.raise_for_status()
 
