@@ -59,7 +59,16 @@ def _get_connection(
 def _row_to_task(row: sqlite3.Row) -> Task:
     """Convert a database row to a Task object."""
     blocked_by_str = row["blocked_by"]
-    blocked_by: list[str] = json.loads(blocked_by_str) if blocked_by_str else []
+    blocked_by: list[str] = []
+    if blocked_by_str:
+        try:
+            blocked_by = json.loads(blocked_by_str)
+        except json.JSONDecodeError:
+            # Handle malformed data: bare task ID strings stored
+            # without JSON serialization
+            blocked_by = [
+                s.strip() for s in blocked_by_str.split(",") if s.strip()
+            ]
 
     return Task(
         id=row["id"],

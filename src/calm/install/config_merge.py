@@ -92,13 +92,13 @@ def atomic_write_json(path: Path, data: dict[str, Any]) -> None:
 
 def merge_mcp_server(
     config: dict[str, Any],
-    sse_url: str,
+    mcp_url: str,
 ) -> dict[str, Any]:
     """Merge CALM MCP server into config.
 
     Args:
         config: Existing claude.json content
-        sse_url: SSE endpoint URL (e.g., "http://127.0.0.1:6335/sse")
+        mcp_url: Streamable HTTP endpoint URL (e.g., "http://127.0.0.1:6335/mcp")
 
     Returns:
         Updated config dict (original not mutated)
@@ -112,10 +112,10 @@ def merge_mcp_server(
         # Deep copy to avoid mutating original
         result["mcpServers"] = dict(result["mcpServers"])
 
-    # Add/update calm server with SSE transport
+    # Add/update calm server with Streamable HTTP transport
     result["mcpServers"]["calm"] = {
-        "type": "sse",
-        "url": sse_url,
+        "type": "http",
+        "url": mcp_url,
     }
 
     return result
@@ -240,8 +240,9 @@ def register_mcp_server(
 ) -> str:
     """Register CALM MCP server in claude.json.
 
-    Builds the SSE URL from calm.config.settings (server_host, server_port)
-    and writes it into the claude.json MCP server registration.
+    Builds the Streamable HTTP URL from calm.config.settings
+    (server_host, server_port) and writes it into the claude.json
+    MCP server registration.
 
     Args:
         claude_json_path: Path to ~/.claude.json
@@ -253,14 +254,14 @@ def register_mcp_server(
     Raises:
         ConfigError: If registration fails
     """
-    # Build SSE URL from settings
-    sse_url = f"http://{calm_settings.server_host}:{calm_settings.server_port}/sse"
+    # Build Streamable HTTP URL from settings
+    mcp_url = f"http://{calm_settings.server_host}:{calm_settings.server_port}/mcp"
 
     # Read existing config
     config = read_json_config(claude_json_path)
 
     # Merge CALM server
-    updated = merge_mcp_server(config, sse_url)
+    updated = merge_mcp_server(config, mcp_url)
 
     if dry_run:
         return f"Would update {claude_json_path} with CALM MCP server"

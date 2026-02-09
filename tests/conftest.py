@@ -1,12 +1,24 @@
 """Pytest configuration and fixtures."""
 
-import os
-import threading
-from collections.abc import Generator
+import sys
+from pathlib import Path
 
-import pytest
+# Ensure this project's src/ takes priority over editable install .pth file.
+# PEP 660 editable installs use a .pth file that hardcodes a single src/ directory.
+# In git worktrees, this causes imports to resolve to the main repo instead of
+# the worktree's own code. By prepending our src/ early, we guarantee that
+# `import calm` loads from the correct directory. (BUG-075)
+_src_dir = str(Path(__file__).resolve().parent.parent / "src")
+if _src_dir not in sys.path:
+    sys.path.insert(0, _src_dir)
 
-from calm.utils.platform import PlatformInfo, get_platform_info
+import os  # noqa: E402
+import threading  # noqa: E402
+from collections.abc import Generator  # noqa: E402
+
+import pytest  # noqa: E402
+
+from calm.utils.platform import PlatformInfo, get_platform_info  # noqa: E402
 
 # Suppress HuggingFace tokenizers parallelism warnings in forked processes
 # These warnings are noisy and don't affect test correctness

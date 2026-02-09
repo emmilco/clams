@@ -119,17 +119,17 @@ class TestMergeMcpServer:
     """Tests for merge_mcp_server."""
 
     def test_empty_config(self) -> None:
-        """Should create mcpServers section with SSE entry."""
-        result = merge_mcp_server({}, "http://127.0.0.1:6335/sse")
+        """Should create mcpServers section with Streamable HTTP entry."""
+        result = merge_mcp_server({}, "http://127.0.0.1:6335/mcp")
         assert "mcpServers" in result
         assert "calm" in result["mcpServers"]
-        assert result["mcpServers"]["calm"]["type"] == "sse"
-        assert result["mcpServers"]["calm"]["url"] == "http://127.0.0.1:6335/sse"
+        assert result["mcpServers"]["calm"]["type"] == "http"
+        assert result["mcpServers"]["calm"]["url"] == "http://127.0.0.1:6335/mcp"
 
     def test_preserves_other_servers(self) -> None:
         """Should preserve existing MCP servers."""
         config = {"mcpServers": {"other": {"command": "other"}}}
-        result = merge_mcp_server(config, "http://127.0.0.1:6335/sse")
+        result = merge_mcp_server(config, "http://127.0.0.1:6335/mcp")
 
         assert "other" in result["mcpServers"]
         assert "calm" in result["mcpServers"]
@@ -137,21 +137,21 @@ class TestMergeMcpServer:
     def test_preserves_other_keys(self) -> None:
         """Should preserve non-mcpServers keys."""
         config = {"someOtherKey": "value", "mcpServers": {}}
-        result = merge_mcp_server(config, "http://127.0.0.1:6335/sse")
+        result = merge_mcp_server(config, "http://127.0.0.1:6335/mcp")
 
         assert result["someOtherKey"] == "value"
 
     def test_updates_existing_calm(self) -> None:
-        """Should update existing calm server entry to SSE."""
+        """Should update existing calm server entry to Streamable HTTP."""
         config = {
             "mcpServers": {
                 "calm": {"command": "old", "args": ["old"]}
             }
         }
-        result = merge_mcp_server(config, "http://127.0.0.1:9000/sse")
+        result = merge_mcp_server(config, "http://127.0.0.1:9000/mcp")
 
-        assert result["mcpServers"]["calm"]["type"] == "sse"
-        assert result["mcpServers"]["calm"]["url"] == "http://127.0.0.1:9000/sse"
+        assert result["mcpServers"]["calm"]["type"] == "http"
+        assert result["mcpServers"]["calm"]["url"] == "http://127.0.0.1:9000/mcp"
         assert "command" not in result["mcpServers"]["calm"]
         assert "args" not in result["mcpServers"]["calm"]
 
@@ -160,7 +160,7 @@ class TestMergeMcpServer:
         config = {"mcpServers": {"other": {"command": "other"}}}
         original_copy = json.loads(json.dumps(config))
 
-        merge_mcp_server(config, "http://127.0.0.1:6335/sse")
+        merge_mcp_server(config, "http://127.0.0.1:6335/mcp")
 
         assert config == original_copy
 
@@ -234,7 +234,7 @@ class TestRegisterMcpServer:
     """Tests for register_mcp_server."""
 
     def test_creates_file_if_missing(self, tmp_path: Path) -> None:
-        """Should create claude.json if missing with SSE config."""
+        """Should create claude.json if missing with Streamable HTTP config."""
         path = tmp_path / ".claude.json"
 
         register_mcp_server(path)
@@ -244,9 +244,9 @@ class TestRegisterMcpServer:
         assert "mcpServers" in config
         assert "calm" in config["mcpServers"]
         calm_entry = config["mcpServers"]["calm"]
-        assert calm_entry["type"] == "sse"
+        assert calm_entry["type"] == "http"
         assert "url" in calm_entry
-        assert calm_entry["url"].endswith("/sse")
+        assert calm_entry["url"].endswith("/mcp")
 
     def test_dry_run_no_changes(self, tmp_path: Path) -> None:
         """Dry run should not create file."""
@@ -257,15 +257,15 @@ class TestRegisterMcpServer:
         assert "Would update" in message
         assert not path.exists()
 
-    def test_registered_server_uses_sse_transport(self, tmp_path: Path) -> None:
-        """Registered server must use SSE transport, not command-based."""
+    def test_registered_server_uses_http_transport(self, tmp_path: Path) -> None:
+        """Registered server must use Streamable HTTP transport, not command-based."""
         path = tmp_path / ".claude.json"
         register_mcp_server(path)
         config = json.loads(path.read_text())
         calm_entry = config["mcpServers"]["calm"]
-        assert calm_entry["type"] == "sse"
+        assert calm_entry["type"] == "http"
         assert "url" in calm_entry
-        assert calm_entry["url"].endswith("/sse")
+        assert calm_entry["url"].endswith("/mcp")
         assert "command" not in calm_entry
         assert "args" not in calm_entry
 

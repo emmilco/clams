@@ -412,6 +412,92 @@ class TestListTasksWorktreeProjectPath:
         assert task.project_path == main_repo
 
 
+class TestRowToTaskBlockedByParsing:
+    """Regression tests for BUG-074: malformed blocked_by values.
+
+    The blocked_by column should contain JSON arrays (e.g., '["SPEC-001"]'),
+    but corrupted data (bare strings without JSON serialization) was written
+    by a path that bypassed json.dumps(). The _row_to_task() function must
+    handle these gracefully instead of crashing with JSONDecodeError.
+    """
+
+    def _insert_task_with_blocked_by(
+        self, db_path: Path, task_id: str, blocked_by_value: str | None
+    ) -> None:
+        """Insert a task with a specific raw blocked_by value via direct SQL."""
+        import sqlite3
+        from datetime import datetime
+
+        conn = sqlite3.connect(db_path)
+        now = datetime.now().isoformat()
+        conn.execute(
+            """
+            INSERT INTO tasks (
+                id, title, task_type, phase, blocked_by,
+                project_path, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (task_id, "Test", "feature", "DONE", blocked_by_value,
+             "/test/project", now, now),
+        )
+        conn.commit()
+        conn.close()
+
+    def test_bare_string_blocked_by(self, test_db: Path) -> None:
+        """Test that a bare string blocked_by (no JSON) is parsed correctly."""
+        self._insert_task_with_blocked_by(test_db, "SPEC-100", "SPEC-058-01")
+
+        tasks = list_tasks(
+            project_path="/test/project", include_done=True, db_path=test_db
+        )
+        task = next(t for t in tasks if t.id == "SPEC-100")
+        assert task.blocked_by == ["SPEC-058-01"]
+
+    def test_comma_separated_blocked_by(self, test_db: Path) -> None:
+        """Test that comma-separated bare strings are parsed correctly."""
+        self._insert_task_with_blocked_by(
+            test_db, "SPEC-101", "SPEC-001, SPEC-002"
+        )
+
+        task = get_task("SPEC-101", project_path="/test/project", db_path=test_db)
+        assert task is not None
+        assert task.blocked_by == ["SPEC-001", "SPEC-002"]
+
+    def test_valid_json_blocked_by(self, test_db: Path) -> None:
+        """Test that valid JSON arrays are still parsed correctly."""
+        self._insert_task_with_blocked_by(
+            test_db, "SPEC-102", '["SPEC-001", "SPEC-002"]'
+        )
+
+        task = get_task("SPEC-102", project_path="/test/project", db_path=test_db)
+        assert task is not None
+        assert task.blocked_by == ["SPEC-001", "SPEC-002"]
+
+    def test_null_blocked_by(self, test_db: Path) -> None:
+        """Test that NULL blocked_by produces an empty list."""
+        self._insert_task_with_blocked_by(test_db, "SPEC-103", None)
+
+        task = get_task("SPEC-103", project_path="/test/project", db_path=test_db)
+        assert task is not None
+        assert task.blocked_by == []
+
+    def test_empty_string_blocked_by(self, test_db: Path) -> None:
+        """Test that empty string blocked_by produces an empty list."""
+        self._insert_task_with_blocked_by(test_db, "SPEC-104", "")
+
+        task = get_task("SPEC-104", project_path="/test/project", db_path=test_db)
+        assert task is not None
+        assert task.blocked_by == []
+
+    def test_empty_json_array_blocked_by(self, test_db: Path) -> None:
+        """Test that empty JSON array produces an empty list."""
+        self._insert_task_with_blocked_by(test_db, "SPEC-105", "[]")
+
+        task = get_task("SPEC-105", project_path="/test/project", db_path=test_db)
+        assert task is not None
+        assert task.blocked_by == []
+
+
 class TestGetNextTaskId:
     """Tests for get_next_task_id function."""
 
