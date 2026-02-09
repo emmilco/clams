@@ -7,6 +7,7 @@ from typing import Any
 import structlog
 
 from calm.embedding.base import EmbeddingService
+from calm.search.collections import CollectionName
 from calm.storage.base import VectorStore
 
 from .errors import MCPError
@@ -120,15 +121,15 @@ async def _ensure_code_collection(
 
     try:
         await vector_store.create_collection(
-            name="code_units",
+            name=CollectionName.CODE,
             dimension=code_embedder.dimension,
             distance="cosine",
         )
-        logger.info("collection_created", name="code_units")
+        logger.info("collection_created", name=CollectionName.CODE)
     except Exception as e:
         error_msg = str(e).lower()
         if "already exists" in error_msg or "409" in str(e):
-            logger.debug("collection_exists", name="code_units")
+            logger.debug("collection_exists", name=CollectionName.CODE)
         else:
             raise
 
@@ -257,7 +258,7 @@ def get_code_tools(
 
             # Search
             results = await vector_store.search(
-                collection="code_units",
+                collection=CollectionName.CODE,
                 query=query_embedding,
                 limit=limit,
                 filters=filters if filters else None,
@@ -336,7 +337,7 @@ def get_code_tools(
 
             # Search
             results = await vector_store.search(
-                collection="code_units",
+                collection=CollectionName.CODE,
                 query=snippet_embedding,
                 limit=limit,
                 filters=filters,
