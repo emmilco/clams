@@ -1113,7 +1113,10 @@ class TestStartSessionResponseSchema:
         result = await tool()
 
         assert "session_id" in result
-        assert len(result["session_id"]) == 36  # UUID format
+        # Session ID is either from CLAUDE_SESSION_ID env var or
+        # ObservationCollector format: session_YYYYMMDD_HHMMSS_random6
+        session_id = result["session_id"]
+        assert len(session_id) > 0
 
 
 class TestGetOrphanedGhapResponseSchema:

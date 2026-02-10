@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from calm.tools.session import SessionManager, get_session_tools
+from calm.tools.session import SessionManager, get_session_id, get_session_tools
 
 
 @pytest.fixture
@@ -22,6 +22,80 @@ def session_manager(temp_session_dirs: tuple[Path, Path]) -> SessionManager:
     """Create session manager with temp paths."""
     clams_dir, journal_dir = temp_session_dirs
     return SessionManager(calm_dir=clams_dir, journal_dir=journal_dir)
+
+
+class TestGetSessionId:
+    """Test module-level get_session_id function."""
+
+    def test_env_var_takes_priority(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        temp_session_dirs: tuple[Path, Path],
+    ) -> None:
+        """CLAUDE_SESSION_ID env var should take priority over file."""
+        _, journal_dir = temp_session_dirs
+        session_id_file = journal_dir / ".session_id"
+        session_id_file.write_text("file-session-id")
+
+        monkeypatch.setenv("CLAUDE_SESSION_ID", "env-session-id")
+        result = get_session_id(session_id_file=session_id_file)
+        assert result == "env-session-id"
+
+    def test_file_fallback_when_no_env_var(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        temp_session_dirs: tuple[Path, Path],
+    ) -> None:
+        """Should fall back to file when env var is not set."""
+        _, journal_dir = temp_session_dirs
+        session_id_file = journal_dir / ".session_id"
+        session_id_file.write_text("file-session-id")
+
+        monkeypatch.delenv("CLAUDE_SESSION_ID", raising=False)
+        result = get_session_id(session_id_file=session_id_file)
+        assert result == "file-session-id"
+
+    def test_returns_none_when_neither_available(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        temp_session_dirs: tuple[Path, Path],
+    ) -> None:
+        """Should return None when neither env var nor file is available."""
+        _, journal_dir = temp_session_dirs
+        session_id_file = journal_dir / ".session_id"
+        # Don't create the file
+
+        monkeypatch.delenv("CLAUDE_SESSION_ID", raising=False)
+        result = get_session_id(session_id_file=session_id_file)
+        assert result is None
+
+    def test_empty_env_var_falls_back_to_file(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        temp_session_dirs: tuple[Path, Path],
+    ) -> None:
+        """Empty CLAUDE_SESSION_ID should fall back to file."""
+        _, journal_dir = temp_session_dirs
+        session_id_file = journal_dir / ".session_id"
+        session_id_file.write_text("file-session-id")
+
+        monkeypatch.setenv("CLAUDE_SESSION_ID", "")
+        result = get_session_id(session_id_file=session_id_file)
+        assert result == "file-session-id"
+
+    def test_empty_file_returns_none(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        temp_session_dirs: tuple[Path, Path],
+    ) -> None:
+        """Empty session ID file should return None."""
+        _, journal_dir = temp_session_dirs
+        session_id_file = journal_dir / ".session_id"
+        session_id_file.write_text("")
+
+        monkeypatch.delenv("CLAUDE_SESSION_ID", raising=False)
+        result = get_session_id(session_id_file=session_id_file)
+        assert result is None
 
 
 class TestSessionManager:
@@ -69,18 +143,35 @@ class TestSessionManager:
 
         assert session_manager.tool_count_file.read_text() == "15"
 
-    def test_get_current_session_id(
-        self, session_manager: SessionManager
+    def test_get_current_session_id_from_file(
+        self,
+        session_manager: SessionManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """get_current_session_id should return session ID from file."""
+        """get_current_session_id should return session ID from file when no env var."""
+        monkeypatch.delenv("CLAUDE_SESSION_ID", raising=False)
         session_manager.session_id_file.write_text("test-session-123")
 
         assert session_manager.get_current_session_id() == "test-session-123"
 
-    def test_get_current_session_id_no_file(
-        self, session_manager: SessionManager
+    def test_get_current_session_id_prefers_env_var(
+        self,
+        session_manager: SessionManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """get_current_session_id should return None if no file."""
+        """get_current_session_id should prefer env var over file."""
+        session_manager.session_id_file.write_text("file-session")
+        monkeypatch.setenv("CLAUDE_SESSION_ID", "env-session")
+
+        assert session_manager.get_current_session_id() == "env-session"
+
+    def test_get_current_session_id_no_file(
+        self,
+        session_manager: SessionManager,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """get_current_session_id should return None if no file and no env var."""
+        monkeypatch.delenv("CLAUDE_SESSION_ID", raising=False)
         assert session_manager.get_current_session_id() is None
 
 
@@ -88,23 +179,48 @@ class TestStartSession:
     """Test start_session tool."""
 
     @pytest.mark.asyncio
-    async def test_creates_session_id(
-        self, session_manager: SessionManager
+    async def test_uses_env_var_when_available(
+        self,
+        session_manager: SessionManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """start_session should create a UUID session ID."""
+        """start_session should use CLAUDE_SESSION_ID env var when set."""
+        monkeypatch.setenv("CLAUDE_SESSION_ID", "claude-env-session-42")
         tools = get_session_tools(session_manager)
         result = await tools["start_session"]()
 
-        assert "session_id" in result
-        # UUID format check (8-4-4-4-12)
-        assert len(result["session_id"]) == 36
-        assert result["session_id"].count("-") == 4
+        assert result["session_id"] == "claude-env-session-42"
+        # Should also write to file for ObservationCollector compatibility
+        assert session_manager.session_id_file.read_text() == "claude-env-session-42"
+
+    @pytest.mark.asyncio
+    async def test_generates_collector_format_without_env_var(
+        self,
+        session_manager: SessionManager,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """start_session should generate session_YYYYMMDD_HHMMSS_random6 format without env var."""
+        monkeypatch.delenv("CLAUDE_SESSION_ID", raising=False)
+        tools = get_session_tools(session_manager)
+        result = await tools["start_session"]()
+
+        session_id = result["session_id"]
+        # Should match ObservationCollector format: session_YYYYMMDD_HHMMSS_random6
+        assert session_id.startswith("session_")
+        parts = session_id.split("_")
+        assert len(parts) == 4  # session, date, time, random
+        assert len(parts[1]) == 8  # YYYYMMDD
+        assert len(parts[2]) == 6  # HHMMSS
+        assert len(parts[3]) == 6  # random hex
 
     @pytest.mark.asyncio
     async def test_writes_session_id_file(
-        self, session_manager: SessionManager
+        self,
+        session_manager: SessionManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """start_session should write session ID to file."""
+        monkeypatch.delenv("CLAUDE_SESSION_ID", raising=False)
         tools = get_session_tools(session_manager)
         result = await tools["start_session"]()
 
@@ -113,9 +229,12 @@ class TestStartSession:
 
     @pytest.mark.asyncio
     async def test_resets_tool_count(
-        self, session_manager: SessionManager
+        self,
+        session_manager: SessionManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """start_session should reset tool count to 0."""
+        monkeypatch.delenv("CLAUDE_SESSION_ID", raising=False)
         session_manager._tool_count = 50
         session_manager._save_tool_count()
 
@@ -127,9 +246,12 @@ class TestStartSession:
 
     @pytest.mark.asyncio
     async def test_returns_timestamp(
-        self, session_manager: SessionManager
+        self,
+        session_manager: SessionManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """start_session should return started_at timestamp."""
+        monkeypatch.delenv("CLAUDE_SESSION_ID", raising=False)
         tools = get_session_tools(session_manager)
         result = await tools["start_session"]()
 
@@ -137,15 +259,44 @@ class TestStartSession:
         # Should be ISO format
         assert "T" in result["started_at"]
 
+    @pytest.mark.asyncio
+    async def test_consistency_env_var_and_file(
+        self,
+        session_manager: SessionManager,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """After start_session with env var, get_current_session_id returns same value."""
+        monkeypatch.setenv("CLAUDE_SESSION_ID", "consistent-session")
+        tools = get_session_tools(session_manager)
+        result = await tools["start_session"]()
+
+        assert result["session_id"] == session_manager.get_current_session_id()
+
+    @pytest.mark.asyncio
+    async def test_consistency_generated_and_file(
+        self,
+        session_manager: SessionManager,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """After start_session without env var, get_current_session_id returns same value."""
+        monkeypatch.delenv("CLAUDE_SESSION_ID", raising=False)
+        tools = get_session_tools(session_manager)
+        result = await tools["start_session"]()
+
+        assert result["session_id"] == session_manager.get_current_session_id()
+
 
 class TestGetOrphanedGhap:
     """Test get_orphaned_ghap tool."""
 
     @pytest.mark.asyncio
     async def test_no_orphan_when_no_ghap_file(
-        self, session_manager: SessionManager
+        self,
+        session_manager: SessionManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """get_orphaned_ghap should return has_orphan=False if no file."""
+        monkeypatch.delenv("CLAUDE_SESSION_ID", raising=False)
         tools = get_session_tools(session_manager)
         result = await tools["get_orphaned_ghap"]()
 
@@ -153,9 +304,12 @@ class TestGetOrphanedGhap:
 
     @pytest.mark.asyncio
     async def test_no_orphan_when_same_session(
-        self, session_manager: SessionManager
+        self,
+        session_manager: SessionManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """get_orphaned_ghap should return has_orphan=False for current session."""
+        monkeypatch.delenv("CLAUDE_SESSION_ID", raising=False)
         # Set up session and GHAP
         session_manager.session_id_file.write_text("current-session")
         session_manager.current_ghap_file.write_text(
@@ -173,9 +327,12 @@ class TestGetOrphanedGhap:
 
     @pytest.mark.asyncio
     async def test_orphan_detected_for_different_session(
-        self, session_manager: SessionManager
+        self,
+        session_manager: SessionManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """get_orphaned_ghap should detect orphan from different session."""
+        monkeypatch.delenv("CLAUDE_SESSION_ID", raising=False)
         # Set up session and orphaned GHAP
         session_manager.session_id_file.write_text("new-session")
         session_manager.current_ghap_file.write_text(
@@ -196,6 +353,33 @@ class TestGetOrphanedGhap:
         assert result["session_id"] == "old-session"
         assert result["goal"] == "Old goal"
         assert result["hypothesis"] == "Old hypothesis"
+
+    @pytest.mark.asyncio
+    async def test_orphan_detected_via_env_var(
+        self,
+        session_manager: SessionManager,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """get_orphaned_ghap should use env var for current session comparison."""
+        monkeypatch.setenv("CLAUDE_SESSION_ID", "env-current-session")
+        # File says one thing, env var says another - env var wins
+        session_manager.session_id_file.write_text("old-session")
+        session_manager.current_ghap_file.write_text(
+            json.dumps({
+                "session_id": "old-session",
+                "goal": "Test goal",
+                "hypothesis": "Test hypothesis",
+                "action": "Test action",
+                "prediction": "Test prediction",
+            })
+        )
+
+        tools = get_session_tools(session_manager)
+        result = await tools["get_orphaned_ghap"]()
+
+        # Should detect orphan because env var != ghap session
+        assert result["has_orphan"] is True
+        assert result["session_id"] == "old-session"
 
 
 class TestShouldCheckIn:
