@@ -187,3 +187,43 @@ class TestVerifyGatePass:
             db_path=test_db,
         )
         assert result is False
+
+class TestGateTestTimeout:
+    """Tests for configurable gate test timeout (BUG-086)."""
+
+    def test_default_timeout_is_600(self) -> None:
+        """Test that the default gate_test_timeout is 600 seconds."""
+        from calm.config import CalmSettings
+
+        fresh_settings = CalmSettings()
+        assert fresh_settings.gate_test_timeout == 600
+
+    def test_timeout_is_configurable_via_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test that gate_test_timeout can be set via environment variable."""
+        from calm.config import CalmSettings
+
+        monkeypatch.setenv("CALM_GATE_TEST_TIMEOUT", "900")
+        fresh_settings = CalmSettings()
+        assert fresh_settings.gate_test_timeout == 900
+
+    def test_gate_check_uses_configured_timeout(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test that _check_tests_pass uses settings.gate_test_timeout."""
+        import inspect
+
+        from calm.orchestration import gates
+
+        # Verify the source code references settings.gate_test_timeout
+        source = inspect.getsource(gates._check_tests_pass)
+        assert "settings.gate_test_timeout" in source
+        # Ensure no hardcoded 300 timeout remains
+        assert "timeout=300" not in source
+
+    def test_no_skipped_check_uses_configured_timeout(self) -> None:
+        """Test that _check_no_skipped uses settings.gate_test_timeout."""
+        import inspect
+
+        from calm.orchestration import gates
+
+        source = inspect.getsource(gates._check_no_skipped)
+        assert "settings.gate_test_timeout" in source
+        assert "timeout=300" not in source
