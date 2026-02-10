@@ -21,6 +21,7 @@ from typing import Any
 from calm.hooks.common import (
     get_db_path,
     get_tool_count_path,
+    log_hook_error,
     read_json_input,
     truncate_output,
     write_output,
@@ -53,7 +54,8 @@ def read_tool_count() -> tuple[int, str]:
             return (0, "")
         data = json.loads(count_path.read_text())
         return (data.get("count", 0), data.get("session_id", ""))
-    except (json.JSONDecodeError, OSError, KeyError):
+    except (json.JSONDecodeError, OSError, KeyError) as exc:
+        log_hook_error("PreToolUse.read_tool_count", exc)
         return (0, "")
 
 
@@ -74,8 +76,8 @@ def write_tool_count(count: int, session_id: str) -> None:
         data = {"count": count, "session_id": session_id}
         tmp_path.write_text(json.dumps(data))
         tmp_path.rename(count_path)
-    except OSError:
-        pass  # Fail silently - counter is not critical
+    except OSError as exc:
+        log_hook_error("PreToolUse.write_tool_count", exc)
 
 
 def get_active_ghap(db_path: Path) -> dict[str, Any] | None:
@@ -112,7 +114,8 @@ def get_active_ghap(db_path: Path) -> dict[str, Any] | None:
                 "action": row["action"],
             }
         return None
-    except (sqlite3.Error, OSError):
+    except (sqlite3.Error, OSError) as exc:
+        log_hook_error("PreToolUse.get_active_ghap", exc)
         return None
 
 
