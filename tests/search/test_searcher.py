@@ -157,7 +157,7 @@ class TestSearchCode:
         await searcher.search_code("test query")
         mock_vector_store.search.assert_called_once()
         call_args = mock_vector_store.search.call_args
-        assert call_args[1]["collection"] == CollectionName.CODE
+        assert call_args[1]["collection"] == CollectionName.CODE_UNITS
 
     async def test_applies_multiple_filters(
         self, searcher: Searcher, mock_vector_store: AsyncMock

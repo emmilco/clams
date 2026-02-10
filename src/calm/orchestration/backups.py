@@ -37,7 +37,7 @@ ALL_COLLECTIONS: list[str] = [
     CollectionName.EXPERIENCES_ROOT_CAUSE,
     CollectionName.VALUES,
     CollectionName.COMMITS,
-    CollectionName.CODE,
+    CollectionName.CODE_UNITS,
 ]
 
 

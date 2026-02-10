@@ -24,7 +24,7 @@ logger = structlog.get_logger(__name__)
 class CodeIndexer:
     """Index parsed code units for semantic search."""
 
-    COLLECTION_NAME = CollectionName.CODE
+    COLLECTION_NAME = CollectionName.CODE_UNITS
 
     DEFAULT_EXCLUDED_DIRS: set[str] = {
         ".venv",

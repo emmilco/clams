@@ -121,15 +121,15 @@ async def _ensure_code_collection(
 
     try:
         await vector_store.create_collection(
-            name=CollectionName.CODE,
+            name=CollectionName.CODE_UNITS,
             dimension=code_embedder.dimension,
             distance="cosine",
         )
-        logger.info("collection_created", name=CollectionName.CODE)
+        logger.info("collection_created", name=CollectionName.CODE_UNITS)
     except Exception as e:
         error_msg = str(e).lower()
         if "already exists" in error_msg or "409" in str(e):
-            logger.debug("collection_exists", name=CollectionName.CODE)
+            logger.debug("collection_exists", name=CollectionName.CODE_UNITS)
         else:
             raise
 
@@ -258,7 +258,7 @@ def get_code_tools(
 
             # Search
             results = await vector_store.search(
-                collection=CollectionName.CODE,
+                collection=CollectionName.CODE_UNITS,
                 query=query_embedding,
                 limit=limit,
                 filters=filters if filters else None,
@@ -337,7 +337,7 @@ def get_code_tools(
 
             # Search
             results = await vector_store.search(
-                collection=CollectionName.CODE,
+                collection=CollectionName.CODE_UNITS,
                 query=snippet_embedding,
                 limit=limit,
                 filters=filters,
