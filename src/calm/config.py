@@ -179,6 +179,12 @@ class CalmSettings(BaseSettings):
         description="Maximum length for memory content",
     )
 
+    # Gate settings
+    gate_test_timeout: int = Field(
+        default=600,
+        description="Timeout in seconds for pytest runs during gate checks",
+    )
+
     # Nested settings
     indexer: IndexerSettings = Field(default_factory=IndexerSettings)
     context: ContextSettings = Field(default_factory=ContextSettings)

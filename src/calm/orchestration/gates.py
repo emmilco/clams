@@ -164,7 +164,7 @@ def _check_tests_pass(worktree: Path, task_id: str, db_path: Path | None) -> Gat
         cwd=worktree,
         capture_output=True,
         text=True,
-        timeout=300,  # 5 minute timeout
+        timeout=settings.gate_test_timeout,
         env=_worktree_env(worktree),
     )
 
@@ -510,6 +510,7 @@ def _check_no_skipped(worktree: Path, task_id: str, db_path: Path | None) -> Gat
         cwd=worktree,
         capture_output=True,
         text=True,
+        timeout=settings.gate_test_timeout,
         env=env,
     )
 
@@ -519,6 +520,7 @@ def _check_no_skipped(worktree: Path, task_id: str, db_path: Path | None) -> Gat
         cwd=worktree,
         capture_output=True,
         text=True,
+        timeout=settings.gate_test_timeout,
         env=env,
     )
 
