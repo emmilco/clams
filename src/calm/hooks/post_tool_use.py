@@ -15,6 +15,7 @@ from typing import Any
 
 from calm.hooks.common import (
     get_db_path,
+    log_hook_error,
     read_json_input,
     truncate_output,
     write_output,
@@ -137,7 +138,8 @@ def get_active_ghap(db_path: Path) -> dict[str, Any] | None:
         if row:
             return {"id": row["id"], "prediction": row["prediction"]}
         return None
-    except (sqlite3.Error, OSError):
+    except (sqlite3.Error, OSError) as exc:
+        log_hook_error("PostToolUse.get_active_ghap", exc)
         return None
 
 

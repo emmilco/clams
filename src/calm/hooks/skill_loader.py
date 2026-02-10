@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from calm.config import settings
+from calm.hooks.common import log_hook_error
 
 if TYPE_CHECKING:
     pass
@@ -84,7 +85,8 @@ def get_tasks_for_project(
                 )
             )
         return tasks
-    except (sqlite3.Error, OSError):
+    except (sqlite3.Error, OSError) as exc:
+        log_hook_error("SkillLoader.get_tasks_for_project", exc)
         return []
 
 

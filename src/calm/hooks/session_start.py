@@ -18,6 +18,7 @@ from pathlib import Path
 from calm.hooks.common import (
     get_db_path,
     is_server_running,
+    log_hook_error,
     read_json_input,
     truncate_output,
     write_output,
@@ -46,7 +47,8 @@ def ensure_server_running() -> bool:
             stderr=subprocess.DEVNULL,
             start_new_session=True,
         )
-    except OSError:
+    except OSError as exc:
+        log_hook_error("SessionStart.ensure_server_running", exc)
         return False
 
     # Wait for server to start (with timeout)
@@ -89,7 +91,8 @@ def get_orphaned_ghap(db_path: Path) -> dict[str, str] | None:
         if row:
             return {"goal": row["goal"], "hypothesis": row["hypothesis"]}
         return None
-    except (sqlite3.Error, OSError):
+    except (sqlite3.Error, OSError) as exc:
+        log_hook_error("SessionStart.get_orphaned_ghap", exc)
         return None
 
 
@@ -125,7 +128,8 @@ def get_active_tasks(
         conn.close()
 
         return [(row["id"], row["phase"]) for row in rows]
-    except (sqlite3.Error, OSError):
+    except (sqlite3.Error, OSError) as exc:
+        log_hook_error("SessionStart.get_active_tasks", exc)
         return []
 
 

@@ -10,8 +10,13 @@ from __future__ import annotations
 import json
 import os
 import sys
+import traceback
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, TypedDict
+
+# Maximum size for hook error log before rotation (1 MB)
+_HOOK_LOG_MAX_BYTES = 1_048_576
 
 
 class HookError(Exception):
@@ -103,6 +108,68 @@ def get_session_id_path() -> Path:
         Path to session ID file (used to detect session changes)
     """
     return get_calm_home() / "session_id"
+
+
+def get_hook_error_log_path() -> Path:
+    """Get path to hook error log file.
+
+    Returns:
+        Path to hook_errors.log in CALM home directory
+    """
+    return get_calm_home() / "hook_errors.log"
+
+
+def log_hook_error(hook_name: str, exc: BaseException) -> None:
+    """Log a hook error to the hook error log file.
+
+    Writes timestamp, hook name, exception type, message, and traceback
+    to ~/.calm/hook_errors.log. Performs log rotation if the file exceeds
+    1 MB (renames to hook_errors.log.1, keeping only 1 backup).
+
+    This function never raises exceptions -- it silently ignores any I/O
+    errors during logging itself.
+
+    Args:
+        hook_name: Name of the hook that encountered the error
+        exc: The exception that was caught
+    """
+    try:
+        log_path = get_hook_error_log_path()
+
+        # Ensure parent directory exists
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Log rotation: if file exceeds max size, rotate
+        if log_path.exists():
+            try:
+                file_size = log_path.stat().st_size
+            except OSError:
+                file_size = 0
+            if file_size >= _HOOK_LOG_MAX_BYTES:
+                backup_path = log_path.with_suffix(".log.1")
+                try:
+                    log_path.rename(backup_path)
+                except OSError:
+                    pass  # If rotation fails, just keep writing
+
+        # Format the log entry
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")  # noqa: UP017
+        exc_type = type(exc).__name__
+        exc_msg = str(exc)
+        tb = traceback.format_exception(type(exc), exc, exc.__traceback__)
+        tb_str = "".join(tb).rstrip()
+
+        entry = (
+            f"[{timestamp}] hook={hook_name} "
+            f"exception={exc_type} message={exc_msg}\n"
+            f"{tb_str}\n\n"
+        )
+
+        # Append to log file
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(entry)
+    except Exception:
+        pass  # Never let logging itself break a hook
 
 
 def read_json_input() -> dict[str, Any]:

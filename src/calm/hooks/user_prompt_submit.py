@@ -14,6 +14,7 @@ from typing import Any
 
 from calm.hooks.common import (
     get_db_path,
+    log_hook_error,
     read_json_input,
     truncate_output,
     write_output,
@@ -61,7 +62,8 @@ def get_relevant_memories(db_path: Path, prompt: str) -> list[dict[str, Any]]:
             {"content": row["content"], "category": row["category"]}
             for row in rows
         ]
-    except (sqlite3.Error, OSError):
+    except (sqlite3.Error, OSError) as exc:
+        log_hook_error("UserPromptSubmit.get_relevant_memories", exc)
         return []
 
 
@@ -108,7 +110,8 @@ def get_relevant_experiences(
             }
             for row in rows
         ]
-    except (sqlite3.Error, OSError):
+    except (sqlite3.Error, OSError) as exc:
+        log_hook_error("UserPromptSubmit.get_relevant_experiences", exc)
         return []
 
 
@@ -177,7 +180,8 @@ def main() -> None:
     try:
         memories = get_relevant_memories(db_path, prompt)
         experiences = get_relevant_experiences(db_path, prompt)
-    except Exception:
+    except Exception as exc:
+        log_hook_error("UserPromptSubmit.main", exc)
         write_output("")
         return
 
