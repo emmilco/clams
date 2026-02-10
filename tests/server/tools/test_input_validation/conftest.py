@@ -22,7 +22,6 @@ from calm.tools.ghap import get_ghap_tools
 from calm.tools.git import get_git_tools
 from calm.tools.learning import get_learning_tools
 from calm.tools.memory import get_memory_tools
-from calm.tools.session import SessionManager, get_session_tools
 from calm.values import ValueStore
 
 
@@ -271,20 +270,6 @@ def search_tools(
     """Get search tools (search_experiences is now in learning tools)."""
     return get_learning_tools(mock_vector_store, mock_semantic_embedder)
 
-
-@pytest.fixture
-def session_manager(temp_journal_path: Path) -> SessionManager:
-    """Create a SessionManager with temp path."""
-    return SessionManager(
-        calm_dir=temp_journal_path,
-        journal_dir=temp_journal_path,
-    )
-
-
-@pytest.fixture
-def session_tools(session_manager: SessionManager) -> dict[str, Any]:
-    """Get session tools with mock services."""
-    return get_session_tools(session_manager)
 
 
 @pytest.fixture

@@ -34,7 +34,6 @@ from calm.tools.context import get_context_tools
 from calm.tools.ghap import get_ghap_tools
 from calm.tools.learning import get_learning_tools
 from calm.tools.memory import VALID_CATEGORIES, get_memory_tools
-from calm.tools.session import SessionManager, get_session_tools
 from calm.values import ValueStore
 
 # =============================================================================
@@ -250,27 +249,6 @@ def learning_tools(
         value_store=value_store,
     )
 
-
-@pytest.fixture
-def temp_session_dirs(tmp_path: Path) -> tuple[Path, Path]:
-    """Create temporary directories for session testing."""
-    clams_dir = tmp_path / ".clams"
-    journal_dir = clams_dir / "journal"
-    journal_dir.mkdir(parents=True)
-    return clams_dir, journal_dir
-
-
-@pytest.fixture
-def session_manager(temp_session_dirs: tuple[Path, Path]) -> SessionManager:
-    """Create session manager with temp paths."""
-    clams_dir, journal_dir = temp_session_dirs
-    return SessionManager(calm_dir=clams_dir, journal_dir=journal_dir)
-
-
-@pytest.fixture
-def session_tools(session_manager: SessionManager) -> dict[str, Any]:
-    """Get session tools."""
-    return get_session_tools(session_manager)
 
 
 @pytest.fixture
@@ -1100,80 +1078,6 @@ class TestSearchExperiencesResponseSchema:
 # Session Tools Response Schema Tests
 # =============================================================================
 
-
-class TestStartSessionResponseSchema:
-    """Test start_session response structure."""
-
-    @pytest.mark.asyncio
-    async def test_success_response_structure(
-        self, session_tools: dict[str, Any]
-    ) -> None:
-        """Success response should contain session_id."""
-        tool = session_tools["start_session"]
-        result = await tool()
-
-        assert "session_id" in result
-        assert len(result["session_id"]) == 36  # UUID format
-
-
-class TestGetOrphanedGhapResponseSchema:
-    """Test get_orphaned_ghap response structure."""
-
-    @pytest.mark.asyncio
-    async def test_success_response_structure(
-        self, session_tools: dict[str, Any]
-    ) -> None:
-        """Success response should contain has_orphan boolean."""
-        tool = session_tools["get_orphaned_ghap"]
-        result = await tool()
-
-        assert "has_orphan" in result
-        assert isinstance(result["has_orphan"], bool)
-
-
-class TestShouldCheckInResponseSchema:
-    """Test should_check_in response structure."""
-
-    @pytest.mark.asyncio
-    async def test_success_response_structure(
-        self, session_tools: dict[str, Any]
-    ) -> None:
-        """Success response should contain should_check_in boolean."""
-        tool = session_tools["should_check_in"]
-        result = await tool()
-
-        assert "should_check_in" in result
-        assert isinstance(result["should_check_in"], bool)
-
-
-class TestIncrementToolCountResponseSchema:
-    """Test increment_tool_count response structure."""
-
-    @pytest.mark.asyncio
-    async def test_success_response_structure(
-        self, session_tools: dict[str, Any]
-    ) -> None:
-        """Success response should contain tool_count integer."""
-        tool = session_tools["increment_tool_count"]
-        result = await tool()
-
-        assert "tool_count" in result
-        assert isinstance(result["tool_count"], int)
-
-
-class TestResetToolCountResponseSchema:
-    """Test reset_tool_count response structure."""
-
-    @pytest.mark.asyncio
-    async def test_success_response_structure(
-        self, session_tools: dict[str, Any]
-    ) -> None:
-        """Success response should contain tool_count=0."""
-        tool = session_tools["reset_tool_count"]
-        result = await tool()
-
-        assert "tool_count" in result
-        assert result["tool_count"] == 0
 
 
 # =============================================================================

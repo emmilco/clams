@@ -7,7 +7,6 @@ from .git import get_git_tools
 from .journal import get_journal_tools
 from .learning import get_learning_tools
 from .memory import get_memory_tools
-from .session import get_session_tools
 
 __all__ = [
     "get_code_tools",
@@ -17,5 +16,4 @@ __all__ = [
     "get_journal_tools",
     "get_learning_tools",
     "get_memory_tools",
-    "get_session_tools",
 ]

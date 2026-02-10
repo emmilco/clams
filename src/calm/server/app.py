@@ -413,36 +413,6 @@ def _get_all_tool_definitions() -> list[Tool]:
                 "required": ["query"],
             },
         ),
-        # === Session Tools ===
-        Tool(
-            name="start_session",
-            description="Initialize a new session.",
-            inputSchema={"type": "object", "properties": {}, "required": []},
-        ),
-        Tool(
-            name="get_orphaned_ghap",
-            description="Check for orphaned GHAP from previous session.",
-            inputSchema={"type": "object", "properties": {}, "required": []},
-        ),
-        Tool(
-            name="should_check_in",
-            description="Check if GHAP reminder is due.",
-            inputSchema={
-                "type": "object",
-                "properties": {"frequency": {"type": "integer", "description": "Tool calls between reminders (default 10)", "default": 10}},
-                "required": [],
-            },
-        ),
-        Tool(
-            name="increment_tool_count",
-            description="Increment the tool counter.",
-            inputSchema={"type": "object", "properties": {}, "required": []},
-        ),
-        Tool(
-            name="reset_tool_count",
-            description="Reset tool counter after reminder.",
-            inputSchema={"type": "object", "properties": {}, "required": []},
-        ),
         # === Session Journal Tools ===
         Tool(
             name="store_journal_entry",
@@ -577,9 +547,7 @@ async def create_server(use_mock: bool = False) -> tuple[Server, dict[str, Any]]
         get_journal_tools,
         get_learning_tools,
         get_memory_tools,
-        get_session_tools,
     )
-    from calm.tools.session import SessionManager
 
     server = Server("calm", version=__version__)
 
@@ -719,10 +687,6 @@ async def create_server(use_mock: bool = False) -> tuple[Server, dict[str, Any]]
             context_assembler=context_assembler,
         )
     )
-
-    # Session tools
-    session_manager = SessionManager()
-    tool_registry.update(get_session_tools(session_manager))
 
     # Journal tools
     tool_registry.update(get_journal_tools())
