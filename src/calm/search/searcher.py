@@ -135,7 +135,7 @@ class Searcher(SearcherABC):
 
         try:
             results = await self._vector_store.search(
-                collection=CollectionName.CODE,
+                collection=CollectionName.CODE_UNITS,
                 query=query_vector,
                 limit=limit,
                 filters=filters,
@@ -143,7 +143,7 @@ class Searcher(SearcherABC):
         except Exception as e:
             if "collection not found" in str(e).lower():
                 raise CollectionNotFoundError(
-                    f"Collection '{CollectionName.CODE}' not found."
+                    f"Collection '{CollectionName.CODE_UNITS}' not found."
                 ) from e
             raise
 

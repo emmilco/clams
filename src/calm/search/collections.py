@@ -11,7 +11,7 @@ class CollectionName:
     """Collection name constants for all vector stores."""
 
     MEMORIES = "memories"
-    CODE = "code_units"
+    CODE_UNITS = "code_units"
     EXPERIENCES_FULL = "ghap_full"
     EXPERIENCES_STRATEGY = "ghap_strategy"
     EXPERIENCES_SURPRISE = "ghap_surprise"
