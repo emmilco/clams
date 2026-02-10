@@ -323,11 +323,9 @@ class TestStoreMemoryResponseSchema:
         """Error response should be a ValidationError."""
         tool = memory_tools["store_memory"]
 
-        with pytest.raises(Exception) as exc_info:
-            await tool(content="Test", category="invalid_category")
-
-        assert "Invalid category" in str(exc_info.value)
-
+        result = await tool(content="Test", category="invalid_category")
+        assert "error" in result
+        assert "Invalid category" in result["error"]["message"]
     @pytest.mark.asyncio
     async def test_all_valid_categories_produce_valid_response(
         self, memory_tools: dict[str, Any]
@@ -389,12 +387,9 @@ class TestRetrieveMemoriesResponseSchema:
         """Error response for invalid category filter."""
         tool = memory_tools["retrieve_memories"]
 
-        with pytest.raises(Exception) as exc_info:
-            await tool(query="test", category="invalid")
-
-        assert "Invalid category" in str(exc_info.value)
-
-
+        result = await tool(query="test", category="invalid")
+        assert "error" in result
+        assert "Invalid category" in result["error"]["message"]
 class TestListMemoriesResponseSchema:
     """Test list_memories response structure."""
 
@@ -418,12 +413,9 @@ class TestListMemoriesResponseSchema:
         """Error response for negative offset."""
         tool = memory_tools["list_memories"]
 
-        with pytest.raises(Exception) as exc_info:
-            await tool(offset=-1)
-
-        assert "Offset" in str(exc_info.value)
-
-
+        result = await tool(offset=-1)
+        assert "error" in result
+        assert "Offset" in result["error"]["message"]
 class TestDeleteMemoryResponseSchema:
     """Test delete_memory response structure."""
 

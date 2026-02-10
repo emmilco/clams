@@ -11,11 +11,10 @@ Note: Session tools have minimal validation requirements as most take no
 parameters or have sensible defaults.
 """
 
+import re
 from typing import Any
 
 import pytest
-
-from calm.tools.validation import ValidationError
 
 
 class TestStartSessionValidation:
@@ -75,10 +74,10 @@ class TestShouldCheckInValidation:
         Frequency must be in range 1-1000.
         """
         tool = session_tools["should_check_in"]
-        with pytest.raises(ValidationError, match="between 1 and 1000"):
-            await tool(frequency=0)
-
-
+        result = await tool(frequency=0)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"between 1 and 1000", result["error"]["message"])
 class TestIncrementToolCountValidation:
     """Validation tests for increment_tool_count tool."""
 
@@ -120,27 +119,30 @@ class TestShouldCheckInFrequencyValidation:
     ) -> None:
         """Frequency < 1 should error."""
         tool = session_tools["should_check_in"]
-        with pytest.raises(ValidationError, match="between 1 and 1000"):
-            await tool(frequency=0)
-
+        result = await tool(frequency=0)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"between 1 and 1000", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_frequency_negative(
         self, session_tools: dict[str, Any]
     ) -> None:
         """Negative frequency should error."""
         tool = session_tools["should_check_in"]
-        with pytest.raises(ValidationError, match="between 1 and 1000"):
-            await tool(frequency=-1)
-
+        result = await tool(frequency=-1)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"between 1 and 1000", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_frequency_above_range(
         self, session_tools: dict[str, Any]
     ) -> None:
         """Frequency > 1000 should error."""
         tool = session_tools["should_check_in"]
-        with pytest.raises(ValidationError, match="between 1 and 1000"):
-            await tool(frequency=1001)
-
+        result = await tool(frequency=1001)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"between 1 and 1000", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_frequency_at_boundary_lower(
         self, session_tools: dict[str, Any]
@@ -165,7 +167,7 @@ class TestShouldCheckInFrequencyValidation:
     ) -> None:
         """Error should show the valid range."""
         tool = session_tools["should_check_in"]
-        with pytest.raises(ValidationError) as exc_info:
-            await tool(frequency=0)
-        assert "1" in str(exc_info.value)
-        assert "1000" in str(exc_info.value)
+        result = await tool(frequency=0)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert "1" in result["error"]["message"]

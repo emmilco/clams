@@ -10,7 +10,6 @@ from calm.embedding.base import EmbeddingService
 from calm.search.collections import CollectionName
 from calm.storage.base import VectorStore
 
-from .errors import MCPError
 from .validation import ValidationError, validate_query_string
 
 logger = structlog.get_logger()
@@ -65,6 +64,11 @@ DEFAULT_EXCLUSIONS = [
 
 # Track whether collection has been ensured
 _code_collection_ensured = False
+
+
+def _error_response(error_type: str, message: str) -> dict[str, Any]:
+    """Create a standardized error response."""
+    return {"error": {"type": error_type, "message": message}}
 
 
 def validate_project_id(project: str) -> None:
@@ -168,40 +172,48 @@ def get_code_tools(
         """
         logger.info("code.index", directory=directory, project=project)
 
-        # Validate parameters
-        validate_project_id(project)
+        try:
+            # Validate parameters
+            validate_project_id(project)
 
-        # Validate directory exists
-        dir_path = Path(directory).expanduser()
-        if not dir_path.exists():
-            raise ValidationError(f"Directory not found: {directory}")
-        if not dir_path.is_dir():
-            raise ValidationError(f"Not a directory: {directory}")
+            # Validate directory exists
+            dir_path = Path(directory).expanduser()
+            if not dir_path.exists():
+                raise ValidationError(f"Directory not found: {directory}")
+            if not dir_path.is_dir():
+                raise ValidationError(f"Not a directory: {directory}")
 
-        if code_indexer is None:
+            if code_indexer is None:
+                return {
+                    "status": "not_available",
+                    "message": "Code indexer not initialized. "
+                    "Restart server with real services.",
+                }
+
+            stats = await code_indexer.index_directory(
+                path=str(dir_path),
+                project=project,
+                recursive=recursive,
+                exclude_patterns=DEFAULT_EXCLUSIONS,
+            )
+
             return {
-                "status": "not_available",
-                "message": "Code indexer not initialized. "
-                "Restart server with real services.",
+                "status": "success",
+                "project": project,
+                "directory": str(dir_path),
+                "files_indexed": stats.files_indexed,
+                "units_indexed": stats.units_indexed,
+                "files_skipped": stats.files_skipped,
+                "errors": len(stats.errors),
+                "duration_ms": stats.duration_ms,
             }
 
-        stats = await code_indexer.index_directory(
-            path=str(dir_path),
-            project=project,
-            recursive=recursive,
-            exclude_patterns=DEFAULT_EXCLUSIONS,
-        )
-
-        return {
-            "status": "success",
-            "project": project,
-            "directory": str(dir_path),
-            "files_indexed": stats.files_indexed,
-            "units_indexed": stats.units_indexed,
-            "files_skipped": stats.files_skipped,
-            "errors": len(stats.errors),
-            "duration_ms": stats.duration_ms,
-        }
+        except ValidationError as e:
+            logger.warning("code.validation_error", error=str(e))
+            return _error_response("validation_error", str(e))
+        except Exception as e:
+            logger.error("code.index_failed", error=str(e), exc_info=True)
+            return _error_response("internal_error", f"Failed to index codebase: {e}")
 
     async def search_code(
         query: str,
@@ -222,30 +234,30 @@ def get_code_tools(
         """
         logger.info("code.search", query=query[:50], project=project)
 
-        # Ensure collection exists
-        await _ensure_code_collection(vector_store, code_embedder)
-
-        # Validate limit
-        if not 1 <= limit <= 50:
-            raise ValidationError(
-                f"Limit {limit} out of range. Must be between 1 and 50."
-            )
-
-        # Validate language if provided
-        validate_language(language)
-
-        # Validate optional project filter
-        if project is not None:
-            validate_project_id(project)
-
-        # Validate query length
-        validate_query_string(query)
-
-        # Handle empty query
-        if not query.strip():
-            return {"results": [], "count": 0}
-
         try:
+            # Ensure collection exists
+            await _ensure_code_collection(vector_store, code_embedder)
+
+            # Validate limit
+            if not 1 <= limit <= 50:
+                raise ValidationError(
+                    f"Limit {limit} out of range. Must be between 1 and 50."
+                )
+
+            # Validate language if provided
+            validate_language(language)
+
+            # Validate optional project filter
+            if project is not None:
+                validate_project_id(project)
+
+            # Validate query length
+            validate_query_string(query)
+
+            # Handle empty query
+            if not query.strip():
+                return {"results": [], "count": 0}
+
             # Generate query embedding
             query_embedding = await code_embedder.embed(query)
 
@@ -277,6 +289,9 @@ def get_code_tools(
 
             return {"results": formatted, "count": len(formatted)}
 
+        except ValidationError as e:
+            logger.warning("code.validation_error", error=str(e))
+            return _error_response("validation_error", str(e))
         except Exception as e:
             error_msg = str(e).lower()
             if "not found" in error_msg or "404" in str(e):
@@ -284,7 +299,7 @@ def get_code_tools(
                 logger.info("code.collection_empty")
                 return {"results": [], "count": 0}
             logger.error("code.search_failed", error=str(e), exc_info=True)
-            raise MCPError(f"Failed to search code: {e}") from e
+            return _error_response("internal_error", f"Failed to search code: {e}")
 
     async def find_similar_code(
         snippet: str,
@@ -303,32 +318,32 @@ def get_code_tools(
         """
         logger.info("code.find_similar", snippet_len=len(snippet))
 
-        # Ensure collection exists
-        await _ensure_code_collection(vector_store, code_embedder)
-
-        # Validate snippet length
-        max_length = 5000
-        if len(snippet) > max_length:
-            raise ValidationError(
-                f"Snippet too long ({len(snippet)} chars). "
-                f"Maximum allowed is {max_length} characters."
-            )
-
-        # Validate limit
-        if not 1 <= limit <= 50:
-            raise ValidationError(
-                f"Limit {limit} out of range. Must be between 1 and 50."
-            )
-
-        # Validate optional project filter
-        if project is not None:
-            validate_project_id(project)
-
-        # Handle empty snippet
-        if not snippet.strip():
-            return {"results": [], "count": 0}
-
         try:
+            # Ensure collection exists
+            await _ensure_code_collection(vector_store, code_embedder)
+
+            # Validate snippet length
+            max_length = 5000
+            if len(snippet) > max_length:
+                raise ValidationError(
+                    f"Snippet too long ({len(snippet)} chars). "
+                    f"Maximum allowed is {max_length} characters."
+                )
+
+            # Validate limit
+            if not 1 <= limit <= 50:
+                raise ValidationError(
+                    f"Limit {limit} out of range. Must be between 1 and 50."
+                )
+
+            # Validate optional project filter
+            if project is not None:
+                validate_project_id(project)
+
+            # Handle empty snippet
+            if not snippet.strip():
+                return {"results": [], "count": 0}
+
             # Generate embedding from snippet
             snippet_embedding = await code_embedder.embed(snippet)
 
@@ -356,6 +371,9 @@ def get_code_tools(
 
             return {"results": formatted, "count": len(formatted)}
 
+        except ValidationError as e:
+            logger.warning("code.validation_error", error=str(e))
+            return _error_response("validation_error", str(e))
         except Exception as e:
             error_msg = str(e).lower()
             if "not found" in error_msg or "404" in str(e):
@@ -363,7 +381,9 @@ def get_code_tools(
                 logger.info("code.collection_empty")
                 return {"results": [], "count": 0}
             logger.error("code.find_similar_failed", error=str(e), exc_info=True)
-            raise MCPError(f"Failed to find similar code: {e}") from e
+            return _error_response(
+                "internal_error", f"Failed to find similar code: {e}"
+            )
 
     return {
         "index_codebase": index_codebase,

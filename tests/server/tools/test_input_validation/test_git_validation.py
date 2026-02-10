@@ -11,12 +11,11 @@ This test module verifies that all validation constraints are enforced
 with informative error messages.
 """
 
+import re
 from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
-
-from calm.tools.validation import ValidationError
 
 
 class TestIndexCommitsValidation:
@@ -28,37 +27,40 @@ class TestIndexCommitsValidation:
     ) -> None:
         """Test that index_commits rejects invalid date format."""
         tool = git_tools["index_commits"]
-        with pytest.raises(ValidationError, match="Invalid date format"):
-            await tool(since="not-a-date")
-
+        result = await tool(since="not-a-date")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Invalid date format", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_index_commits_since_invalid_format_shows_expected(
         self, git_tools: dict[str, Any]
     ) -> None:
         """Test that date format error shows expected format."""
         tool = git_tools["index_commits"]
-        with pytest.raises(ValidationError) as exc_info:
-            await tool(since="not-a-date")
-        assert "YYYY-MM-DD" in str(exc_info.value)
-
+        result = await tool(since="not-a-date")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert "YYYY-MM-DD" in result["error"]["message"]
     @pytest.mark.asyncio
     async def test_index_commits_limit_below_one(
         self, git_tools: dict[str, Any]
     ) -> None:
         """Test that index_commits rejects limit < 1."""
         tool = git_tools["index_commits"]
-        with pytest.raises(ValidationError, match="Limit must be positive"):
-            await tool(limit=0)
-
+        result = await tool(limit=0)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Limit must be positive", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_index_commits_limit_negative(
         self, git_tools: dict[str, Any]
     ) -> None:
         """Test that index_commits rejects negative limit."""
         tool = git_tools["index_commits"]
-        with pytest.raises(ValidationError, match="Limit must be positive"):
-            await tool(limit=-1)
-
+        result = await tool(limit=-1)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Limit must be positive", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_index_commits_valid_since_date(
         self, git_tools: dict[str, Any], mock_git_analyzer: Any
@@ -105,36 +107,40 @@ class TestSearchCommitsValidation:
     ) -> None:
         """Test that search_commits rejects limit < 1."""
         tool = git_tools["search_commits"]
-        with pytest.raises(ValidationError, match="Limit.*out of range"):
-            await tool(query="test", limit=0)
-
+        result = await tool(query="test", limit=0)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Limit.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_search_commits_limit_above_range(
         self, git_tools: dict[str, Any]
     ) -> None:
         """Test that search_commits rejects limit > 50."""
         tool = git_tools["search_commits"]
-        with pytest.raises(ValidationError, match="Limit.*out of range"):
-            await tool(query="test", limit=51)
-
+        result = await tool(query="test", limit=51)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Limit.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_search_commits_limit_negative(
         self, git_tools: dict[str, Any]
     ) -> None:
         """Test that search_commits rejects negative limit."""
         tool = git_tools["search_commits"]
-        with pytest.raises(ValidationError, match="Limit.*out of range"):
-            await tool(query="test", limit=-1)
-
+        result = await tool(query="test", limit=-1)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Limit.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_search_commits_since_invalid_format(
         self, git_tools: dict[str, Any]
     ) -> None:
         """Test that search_commits rejects invalid date format."""
         tool = git_tools["search_commits"]
-        with pytest.raises(ValidationError, match="Invalid date format"):
-            await tool(query="test", since="not-a-date")
-
+        result = await tool(query="test", since="not-a-date")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Invalid date format", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_search_commits_limit_at_boundary_lower(
         self, git_tools: dict[str, Any], mock_git_analyzer: Any
@@ -174,18 +180,20 @@ class TestGetFileHistoryValidation:
     ) -> None:
         """Test that get_file_history rejects limit < 1."""
         tool = git_tools["get_file_history"]
-        with pytest.raises(ValidationError, match="Limit.*out of range"):
-            await tool(path="src/main.py", limit=0)
-
+        result = await tool(path="src/main.py", limit=0)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Limit.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_get_file_history_limit_above_range(
         self, git_tools: dict[str, Any]
     ) -> None:
         """Test that get_file_history rejects limit > 500."""
         tool = git_tools["get_file_history"]
-        with pytest.raises(ValidationError, match="Limit.*out of range"):
-            await tool(path="src/main.py", limit=501)
-
+        result = await tool(path="src/main.py", limit=501)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Limit.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_get_file_history_limit_at_boundary_lower(
         self, git_tools: dict[str, Any], mock_git_analyzer: Any
@@ -215,10 +223,10 @@ class TestGetFileHistoryValidation:
             FileNotFoundError("File not found")
         )
         tool = git_tools["get_file_history"]
-        with pytest.raises(ValidationError, match="File not found"):
-            await tool(path="nonexistent/file.py")
-
-
+        result = await tool(path="nonexistent/file.py")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"File not found", result["error"]["message"])
 class TestGetChurnHotspotsValidation:
     """Validation tests for get_churn_hotspots tool."""
 
@@ -228,45 +236,50 @@ class TestGetChurnHotspotsValidation:
     ) -> None:
         """Test that get_churn_hotspots rejects days < 1."""
         tool = git_tools["get_churn_hotspots"]
-        with pytest.raises(ValidationError, match="Days.*out of range"):
-            await tool(days=0)
-
+        result = await tool(days=0)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Days.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_get_churn_hotspots_days_above_range(
         self, git_tools: dict[str, Any]
     ) -> None:
         """Test that get_churn_hotspots rejects days > 365."""
         tool = git_tools["get_churn_hotspots"]
-        with pytest.raises(ValidationError, match="Days.*out of range"):
-            await tool(days=366)
-
+        result = await tool(days=366)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Days.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_get_churn_hotspots_days_negative(
         self, git_tools: dict[str, Any]
     ) -> None:
         """Test that get_churn_hotspots rejects negative days."""
         tool = git_tools["get_churn_hotspots"]
-        with pytest.raises(ValidationError, match="Days.*out of range"):
-            await tool(days=-1)
-
+        result = await tool(days=-1)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Days.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_get_churn_hotspots_limit_below_range(
         self, git_tools: dict[str, Any]
     ) -> None:
         """Test that get_churn_hotspots rejects limit < 1."""
         tool = git_tools["get_churn_hotspots"]
-        with pytest.raises(ValidationError, match="Limit.*out of range"):
-            await tool(limit=0)
-
+        result = await tool(limit=0)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Limit.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_get_churn_hotspots_limit_above_range(
         self, git_tools: dict[str, Any]
     ) -> None:
         """Test that get_churn_hotspots rejects limit > 50."""
         tool = git_tools["get_churn_hotspots"]
-        with pytest.raises(ValidationError, match="Limit.*out of range"):
-            await tool(limit=51)
-
+        result = await tool(limit=51)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Limit.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_get_churn_hotspots_days_at_boundary_lower(
         self, git_tools: dict[str, Any], mock_git_analyzer: Any
@@ -309,9 +322,10 @@ class TestGetCodeAuthorsValidation:
             FileNotFoundError("File not found")
         )
         tool = git_tools["get_code_authors"]
-        with pytest.raises(ValidationError, match="File not found"):
-            await tool(path="nonexistent/file.py")
-
+        result = await tool(path="nonexistent/file.py")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"File not found", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_get_code_authors_valid_path(
         self, git_tools: dict[str, Any], mock_git_analyzer: Any
@@ -337,9 +351,10 @@ class TestIndexCommitsLimitMaxValidation:
     ) -> None:
         """Limit exceeding 100,000 should error."""
         tool = git_tools["index_commits"]
-        with pytest.raises(ValidationError, match="exceeds maximum"):
-            await tool(limit=100_001)
-
+        result = await tool(limit=100_001)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"exceeds maximum", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_limit_at_maximum(
         self, git_tools: dict[str, Any], mock_git_analyzer: Any
@@ -364,9 +379,10 @@ class TestSearchCommitsQueryLengthValidation:
     async def test_query_too_long(self, git_tools: dict[str, Any]) -> None:
         """Query exceeding 10,000 chars should error."""
         tool = git_tools["search_commits"]
-        with pytest.raises(ValidationError, match="too long"):
-            await tool(query="x" * 10_001)
-
+        result = await tool(query="x" * 10_001)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"too long", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_query_at_max_length(
         self, git_tools: dict[str, Any], mock_git_analyzer: Any
@@ -384,12 +400,10 @@ class TestSearchCommitsQueryLengthValidation:
     ) -> None:
         """Error should show actual and maximum length."""
         tool = git_tools["search_commits"]
-        with pytest.raises(ValidationError) as exc_info:
-            await tool(query="x" * 10_001)
-        assert "10001" in str(exc_info.value)
-        assert "10000" in str(exc_info.value)
-
-
+        result = await tool(query="x" * 10_001)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert "10001" in result["error"]["message"]
 class TestSearchCommitsAuthorValidation:
     """SPEC-057: Author name validation tests for search_commits."""
 
@@ -397,9 +411,10 @@ class TestSearchCommitsAuthorValidation:
     async def test_author_too_long(self, git_tools: dict[str, Any]) -> None:
         """Author name exceeding 200 chars should error."""
         tool = git_tools["search_commits"]
-        with pytest.raises(ValidationError, match="Author name too long"):
-            await tool(query="test", author="x" * 201)
-
+        result = await tool(query="test", author="x" * 201)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Author name too long", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_author_at_max_length(
         self, git_tools: dict[str, Any], mock_git_analyzer: Any
@@ -436,7 +451,7 @@ class TestSearchCommitsAuthorValidation:
     ) -> None:
         """Error should show actual and maximum length."""
         tool = git_tools["search_commits"]
-        with pytest.raises(ValidationError) as exc_info:
-            await tool(query="test", author="x" * 250)
-        assert "250" in str(exc_info.value)
-        assert "200" in str(exc_info.value)
+        result = await tool(query="test", author="x" * 250)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert "250" in result["error"]["message"]

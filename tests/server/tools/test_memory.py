@@ -1,11 +1,11 @@
 """Tests for memory MCP tools."""
 
+import re
 from uuid import UUID
 
 import pytest
 
 from calm.tools.memory import get_memory_tools
-from calm.tools.validation import ValidationError
 
 
 @pytest.mark.asyncio
@@ -43,10 +43,10 @@ async def test_store_memory_invalid_category(mock_services):
     tools = get_memory_tools(mock_services.vector_store, mock_services.semantic_embedder)
     store_memory = tools["store_memory"]
 
-    with pytest.raises(ValidationError, match="Invalid category"):
-        await store_memory(content="Test", category="invalid")
-
-
+    result = await store_memory(content="Test", category="invalid")
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Invalid category", result["error"]["message"])
 @pytest.mark.asyncio
 async def test_store_memory_content_too_long(mock_services):
     """Test validation error for content that's too long (no silent truncation)."""
@@ -54,23 +54,24 @@ async def test_store_memory_content_too_long(mock_services):
     store_memory = tools["store_memory"]
 
     long_content = "x" * 15_000
-    with pytest.raises(ValidationError, match="Content too long"):
-        await store_memory(content=long_content, category="fact")
-
-
+    result = await store_memory(content=long_content, category="fact")
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Content too long", result["error"]["message"])
 @pytest.mark.asyncio
 async def test_store_memory_importance_out_of_range(mock_services):
     """Test validation error for importance out of range (no silent clamping)."""
     tools = get_memory_tools(mock_services.vector_store, mock_services.semantic_embedder)
     store_memory = tools["store_memory"]
 
-    with pytest.raises(ValidationError, match="Importance.*out of range"):
-        await store_memory(content="Test", category="fact", importance=1.5)
-
-    with pytest.raises(ValidationError, match="Importance.*out of range"):
-        await store_memory(content="Test", category="fact", importance=-0.1)
-
-
+    result = await store_memory(content="Test", category="fact", importance=1.5)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Importance.*out of range", result["error"]["message"])
+    result = await store_memory(content="Test", category="fact", importance=-0.1)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Importance.*out of range", result["error"]["message"])
 @pytest.mark.asyncio
 async def test_store_memory_default_values(mock_services):
     """Test store_memory with default values."""
@@ -143,10 +144,10 @@ async def test_retrieve_memories_invalid_category(mock_services):
     tools = get_memory_tools(mock_services.vector_store, mock_services.semantic_embedder)
     retrieve_memories = tools["retrieve_memories"]
 
-    with pytest.raises(ValidationError, match="Invalid category"):
-        await retrieve_memories(query="test", category="invalid")
-
-
+    result = await retrieve_memories(query="test", category="invalid")
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Invalid category", result["error"]["message"])
 @pytest.mark.asyncio
 async def test_retrieve_memories_limit_validation(mock_services):
     """Test limit validation."""
@@ -154,14 +155,15 @@ async def test_retrieve_memories_limit_validation(mock_services):
     retrieve_memories = tools["retrieve_memories"]
 
     # Too small
-    with pytest.raises(ValidationError, match="Limit.*out of range"):
-        await retrieve_memories(query="test", limit=0)
-
+    result = await retrieve_memories(query="test", limit=0)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Limit.*out of range", result["error"]["message"])
     # Too large
-    with pytest.raises(ValidationError, match="Limit.*out of range"):
-        await retrieve_memories(query="test", limit=101)
-
-
+    result = await retrieve_memories(query="test", limit=101)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Limit.*out of range", result["error"]["message"])
 @pytest.mark.asyncio
 async def test_list_memories_success(mock_services, mock_search_result):
     """Test successful memory listing."""
@@ -225,23 +227,24 @@ async def test_list_memories_invalid_offset(mock_services):
     tools = get_memory_tools(mock_services.vector_store, mock_services.semantic_embedder)
     list_memories = tools["list_memories"]
 
-    with pytest.raises(ValidationError, match="Offset.*must be >= 0"):
-        await list_memories(offset=-1)
-
-
+    result = await list_memories(offset=-1)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Offset.*must be >= 0", result["error"]["message"])
 @pytest.mark.asyncio
 async def test_list_memories_limit_validation(mock_services):
     """Test limit validation."""
     tools = get_memory_tools(mock_services.vector_store, mock_services.semantic_embedder)
     list_memories = tools["list_memories"]
 
-    with pytest.raises(ValidationError, match="Limit.*out of range"):
-        await list_memories(limit=0)
-
-    with pytest.raises(ValidationError, match="Limit.*out of range"):
-        await list_memories(limit=201)
-
-
+    result = await list_memories(limit=0)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Limit.*out of range", result["error"]["message"])
+    result = await list_memories(limit=201)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Limit.*out of range", result["error"]["message"])
 @pytest.mark.asyncio
 async def test_delete_memory_success(mock_services):
     """Test successful memory deletion."""

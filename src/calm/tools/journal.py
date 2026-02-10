@@ -8,13 +8,17 @@ import structlog
 
 from calm.orchestration import journal as journal_ops
 
-from .errors import MCPError
 from .validation import ValidationError, validate_uuid
 
 logger = structlog.get_logger()
 
 # Type alias for tool functions
 ToolFunc = Callable[..., Coroutine[Any, Any, dict[str, Any]]]
+
+
+def _error_response(error_type: str, message: str) -> dict[str, Any]:
+    """Create a standardized error response."""
+    return {"error": {"type": error_type, "message": message}}
 
 
 def get_journal_tools(
@@ -39,21 +43,21 @@ def get_journal_tools(
         """Store a new session journal entry with optional log capture."""
         logger.info("journal.store", working_directory=working_directory)
 
-        # Validate inputs
-        if not summary or not summary.strip():
-            raise ValidationError("Summary is required and cannot be empty")
-        if len(summary) > 10000:
-            raise ValidationError(
-                f"Summary too long ({len(summary)} chars). Maximum is 10000."
-            )
-        if not working_directory or not working_directory.strip():
-            raise ValidationError("Working directory is required")
-        if friction_points and len(friction_points) > 50:
-            raise ValidationError("Maximum 50 friction points allowed")
-        if next_steps and len(next_steps) > 50:
-            raise ValidationError("Maximum 50 next steps allowed")
-
         try:
+            # Validate inputs
+            if not summary or not summary.strip():
+                raise ValidationError("Summary is required and cannot be empty")
+            if len(summary) > 10000:
+                raise ValidationError(
+                    f"Summary too long ({len(summary)} chars). Maximum is 10000."
+                )
+            if not working_directory or not working_directory.strip():
+                raise ValidationError("Working directory is required")
+            if friction_points and len(friction_points) > 50:
+                raise ValidationError("Maximum 50 friction points allowed")
+            if next_steps and len(next_steps) > 50:
+                raise ValidationError("Maximum 50 next steps allowed")
+
             entry_id, session_log_path = journal_ops.store_journal_entry(
                 summary=summary,
                 working_directory=working_directory,
@@ -70,9 +74,14 @@ def get_journal_tools(
                 "session_log_path": session_log_path,
             }
 
+        except ValidationError as e:
+            logger.warning("journal.validation_error", error=str(e))
+            return _error_response("validation_error", str(e))
         except Exception as e:
             logger.error("journal.store_failed", error=str(e), exc_info=True)
-            raise MCPError(f"Failed to store journal entry: {e}") from e
+            return _error_response(
+                "internal_error", f"Failed to store journal entry: {e}"
+            )
 
     async def list_journal_entries(
         unreflected_only: bool = False,
@@ -85,13 +94,13 @@ def get_journal_tools(
             "journal.list", unreflected_only=unreflected_only, limit=limit
         )
 
-        # Validate limit
-        if not 1 <= limit <= 200:
-            raise ValidationError(
-                f"Limit {limit} out of range. Must be between 1 and 200."
-            )
-
         try:
+            # Validate limit
+            if not 1 <= limit <= 200:
+                raise ValidationError(
+                    f"Limit {limit} out of range. Must be between 1 and 200."
+                )
+
             entries = journal_ops.list_journal_entries(
                 unreflected_only=unreflected_only,
                 project_name=project_name,
@@ -118,9 +127,14 @@ def get_journal_tools(
 
             return {"entries": formatted, "count": len(formatted)}
 
+        except ValidationError as e:
+            logger.warning("journal.validation_error", error=str(e))
+            return _error_response("validation_error", str(e))
         except Exception as e:
             logger.error("journal.list_failed", error=str(e), exc_info=True)
-            raise MCPError(f"Failed to list journal entries: {e}") from e
+            return _error_response(
+                "internal_error", f"Failed to list journal entries: {e}"
+            )
 
     async def get_journal_entry(
         entry_id: str,
@@ -131,10 +145,10 @@ def get_journal_tools(
             "journal.get", entry_id=entry_id, include_log=include_log
         )
 
-        # Validate UUID format
-        validate_uuid(entry_id, "entry_id")
-
         try:
+            # Validate UUID format
+            validate_uuid(entry_id, "entry_id")
+
             entry = journal_ops.get_journal_entry(
                 entry_id=entry_id,
                 include_log=include_log,
@@ -166,11 +180,14 @@ def get_journal_tools(
 
             return result
 
-        except ValidationError:
-            raise
+        except ValidationError as e:
+            logger.warning("journal.validation_error", error=str(e))
+            return _error_response("validation_error", str(e))
         except Exception as e:
             logger.error("journal.get_failed", error=str(e), exc_info=True)
-            raise MCPError(f"Failed to get journal entry: {e}") from e
+            return _error_response(
+                "internal_error", f"Failed to get journal entry: {e}"
+            )
 
     async def mark_entries_reflected(
         entry_ids: list[str],
@@ -184,15 +201,15 @@ def get_journal_tools(
             delete_logs=delete_logs,
         )
 
-        # Validate inputs
-        if not entry_ids:
-            raise ValidationError("At least one entry ID is required")
-        for eid in entry_ids:
-            validate_uuid(eid, "entry_id")
-        if memories_created is not None and memories_created < 0:
-            raise ValidationError("memories_created must be >= 0")
-
         try:
+            # Validate inputs
+            if not entry_ids:
+                raise ValidationError("At least one entry ID is required")
+            for eid in entry_ids:
+                validate_uuid(eid, "entry_id")
+            if memories_created is not None and memories_created < 0:
+                raise ValidationError("memories_created must be >= 0")
+
             marked_count, logs_deleted = journal_ops.mark_entries_reflected(
                 entry_ids=entry_ids,
                 memories_created=memories_created,
@@ -211,11 +228,16 @@ def get_journal_tools(
                 "logs_deleted": logs_deleted,
             }
 
+        except ValidationError as e:
+            logger.warning("journal.validation_error", error=str(e))
+            return _error_response("validation_error", str(e))
         except Exception as e:
             logger.error(
                 "journal.mark_reflected_failed", error=str(e), exc_info=True
             )
-            raise MCPError(f"Failed to mark entries reflected: {e}") from e
+            return _error_response(
+                "internal_error", f"Failed to mark entries reflected: {e}"
+            )
 
     return {
         "store_journal_entry": store_journal_entry,

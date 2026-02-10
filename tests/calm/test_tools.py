@@ -1,5 +1,7 @@
 """Tests for CALM tools."""
 
+import re
+
 import pytest
 
 from calm.embedding import MockEmbeddingService
@@ -94,72 +96,71 @@ class TestGitTools:
         self, setup: tuple[MemoryStore, MockEmbeddingService]
     ) -> None:
         """Test index_commits raises error when git_analyzer not available."""
-        from calm.tools.errors import MCPError
         from calm.tools.git import get_git_tools
 
         store, embedder = setup
         tools = get_git_tools(store, embedder)
 
-        with pytest.raises(MCPError, match="Git commit indexing not available"):
-            await tools["index_commits"]()
-
+        result = await tools["index_commits"]()
+        assert "error" in result
+        assert result["error"]["type"] == "not_available"
+        assert re.search(r"Git commit indexing not available", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_search_commits_empty_query(
         self, setup: tuple[MemoryStore, MockEmbeddingService]
     ) -> None:
         """Test search_commits raises error when git_analyzer not available."""
-        from calm.tools.errors import MCPError
         from calm.tools.git import get_git_tools
 
         store, embedder = setup
         tools = get_git_tools(store, embedder)
 
-        with pytest.raises(MCPError, match="Git commit search not available"):
-            await tools["search_commits"](query="")
-
+        result = await tools["search_commits"](query="")
+        assert "error" in result
+        assert result["error"]["type"] == "not_available"
+        assert re.search(r"Git commit search not available", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_get_file_history_placeholder(
         self, setup: tuple[MemoryStore, MockEmbeddingService]
     ) -> None:
         """Test get_file_history raises error when git_analyzer not available."""
-        from calm.tools.errors import MCPError
         from calm.tools.git import get_git_tools
 
         store, embedder = setup
         tools = get_git_tools(store, embedder)
 
-        with pytest.raises(MCPError, match="Git file history not available"):
-            await tools["get_file_history"](path="test.py")
-
+        result = await tools["get_file_history"](path="test.py")
+        assert "error" in result
+        assert result["error"]["type"] == "not_available"
+        assert re.search(r"Git file history not available", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_get_churn_hotspots_placeholder(
         self, setup: tuple[MemoryStore, MockEmbeddingService]
     ) -> None:
         """Test get_churn_hotspots raises error when git_analyzer not available."""
-        from calm.tools.errors import MCPError
         from calm.tools.git import get_git_tools
 
         store, embedder = setup
         tools = get_git_tools(store, embedder)
 
-        with pytest.raises(MCPError, match="Git churn analysis not available"):
-            await tools["get_churn_hotspots"]()
-
+        result = await tools["get_churn_hotspots"]()
+        assert "error" in result
+        assert result["error"]["type"] == "not_available"
+        assert re.search(r"Git churn analysis not available", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_get_code_authors_placeholder(
         self, setup: tuple[MemoryStore, MockEmbeddingService]
     ) -> None:
         """Test get_code_authors raises error when git_analyzer not available."""
-        from calm.tools.errors import MCPError
         from calm.tools.git import get_git_tools
 
         store, embedder = setup
         tools = get_git_tools(store, embedder)
 
-        with pytest.raises(MCPError, match="Git author analysis not available"):
-            await tools["get_code_authors"](path="test.py")
-
-
+        result = await tools["get_code_authors"](path="test.py")
+        assert "error" in result
+        assert result["error"]["type"] == "not_available"
+        assert re.search(r"Git author analysis not available", result["error"]["message"])
 class TestLearningTools:
     """Test learning tools."""
 
@@ -298,16 +299,15 @@ class TestContextTools:
     ) -> None:
         """Test assemble_context validates context_types."""
         from calm.tools.context import get_context_tools
-        from calm.tools.validation import ValidationError
 
         store, embedder = setup
         tools = get_context_tools(store, embedder)
 
-        with pytest.raises(ValidationError):
-            await tools["assemble_context"](
+        result = await tools["assemble_context"](
                 query="test", context_types=["invalid_type"]
             )
-
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
     @pytest.mark.asyncio
     async def test_assemble_context_no_results(
         self, setup: tuple[MemoryStore, MockEmbeddingService]

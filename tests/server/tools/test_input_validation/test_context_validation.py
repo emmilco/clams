@@ -10,11 +10,10 @@ SPEC-057 additions:
 - Empty query returns empty result gracefully
 """
 
+import re
 from typing import Any
 
 import pytest
-
-from calm.tools.validation import ValidationError
 
 
 class TestAssembleContextValidation:
@@ -82,20 +81,20 @@ class TestAssembleContextValidation:
         SPEC-057: Invalid context_type should error, not silently ignore.
         """
         tool = context_tools["assemble_context"]
-        with pytest.raises(ValidationError, match="Invalid context types"):
-            await tool(query="test", context_types=["invalid"])
-
+        result = await tool(query="test", context_types=["invalid"])
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Invalid context types", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_assemble_context_invalid_context_type_lists_valid_options(
         self, context_tools: dict[str, Any]
     ) -> None:
         """Test that error message lists valid options."""
         tool = context_tools["assemble_context"]
-        with pytest.raises(ValidationError) as exc_info:
-            await tool(query="test", context_types=["wrong"])
-        assert "values" in str(exc_info.value)
-        assert "experiences" in str(exc_info.value)
-
+        result = await tool(query="test", context_types=["wrong"])
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert "values" in result["error"]["message"]
     @pytest.mark.asyncio
     async def test_assemble_context_custom_limit(
         self, context_tools: dict[str, Any]
@@ -123,16 +122,18 @@ class TestAssembleContextLimitValidation:
     async def test_limit_below_range(self, context_tools: dict[str, Any]) -> None:
         """limit=0 should error."""
         tool = context_tools["assemble_context"]
-        with pytest.raises(ValidationError, match="Limit.*out of range"):
-            await tool(query="test", limit=0)
-
+        result = await tool(query="test", limit=0)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Limit.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_limit_above_range(self, context_tools: dict[str, Any]) -> None:
         """limit=100 should error (max is 50)."""
         tool = context_tools["assemble_context"]
-        with pytest.raises(ValidationError, match="Limit.*out of range"):
-            await tool(query="test", limit=100)
-
+        result = await tool(query="test", limit=100)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Limit.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_limit_at_boundary_lower(
         self, context_tools: dict[str, Any]
@@ -161,18 +162,20 @@ class TestAssembleContextMaxTokensValidation:
     ) -> None:
         """max_tokens=50 should error (min is 100)."""
         tool = context_tools["assemble_context"]
-        with pytest.raises(ValidationError, match="Max_tokens.*out of range"):
-            await tool(query="test", max_tokens=50)
-
+        result = await tool(query="test", max_tokens=50)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Max_tokens.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_max_tokens_above_range(
         self, context_tools: dict[str, Any]
     ) -> None:
         """max_tokens=20000 should error (max is 10000)."""
         tool = context_tools["assemble_context"]
-        with pytest.raises(ValidationError, match="Max_tokens.*out of range"):
-            await tool(query="test", max_tokens=20000)
-
+        result = await tool(query="test", max_tokens=20000)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Max_tokens.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_max_tokens_at_boundary_lower(
         self, context_tools: dict[str, Any]
@@ -257,9 +260,10 @@ class TestAssembleContextQueryLengthValidation:
     async def test_query_too_long(self, context_tools: dict[str, Any]) -> None:
         """Query exceeding 10,000 chars should error."""
         tool = context_tools["assemble_context"]
-        with pytest.raises(ValidationError, match="too long"):
-            await tool(query="x" * 10_001)
-
+        result = await tool(query="x" * 10_001)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"too long", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_query_at_max_length(
         self, context_tools: dict[str, Any]
@@ -277,7 +281,7 @@ class TestAssembleContextQueryLengthValidation:
     ) -> None:
         """Error should show actual and maximum length."""
         tool = context_tools["assemble_context"]
-        with pytest.raises(ValidationError) as exc_info:
-            await tool(query="x" * 10_001)
-        assert "10001" in str(exc_info.value)
-        assert "10000" in str(exc_info.value)
+        result = await tool(query="x" * 10_001)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert "10001" in result["error"]["message"]

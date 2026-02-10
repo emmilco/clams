@@ -30,6 +30,11 @@ CALM_DIR = settings.calm_dir
 JOURNAL_DIR = settings.journal_dir
 
 
+def _error_response(error_type: str, message: str) -> dict[str, Any]:
+    """Create a standardized error response."""
+    return {"error": {"type": error_type, "message": message}}
+
+
 def validate_frequency(value: int) -> None:
     """Validate frequency parameter.
 
@@ -172,7 +177,7 @@ def get_session_tools(session_manager: SessionManager) -> dict[str, Any]:
 
         return {"has_orphan": False}
 
-    async def should_check_in(frequency: int = 10) -> dict[str, bool]:
+    async def should_check_in(frequency: int = 10) -> dict[str, Any]:
         """Check if GHAP reminder is due.
 
         Args:
@@ -180,11 +185,13 @@ def get_session_tools(session_manager: SessionManager) -> dict[str, Any]:
 
         Returns:
             Dict with should_check_in boolean
-
-        Raises:
-            ValidationError: If frequency is out of range (1-1000)
         """
-        validate_frequency(frequency)
+        try:
+            validate_frequency(frequency)
+        except ValidationError as e:
+            logger.warning("session.validation_error", error=str(e))
+            return _error_response("validation_error", str(e))
+
         should_remind = session_manager._tool_count >= frequency
         return {"should_check_in": should_remind}
 

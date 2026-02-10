@@ -22,7 +22,6 @@ from .enums import (
     validate_root_cause_category,
     validate_strategy,
 )
-from .errors import MCPError
 from .validation import ValidationError
 
 logger = structlog.get_logger()
@@ -356,11 +355,12 @@ def get_ghap_tools(
                             attempts=max_retries,
                             error=str(e),
                         )
-                        raise MCPError(
+                        return _error_response(
+                            "internal_error",
                             f"Failed to persist GHAP entry after "
                             f"{max_retries} attempts. Local resolution saved, "
-                            f"but embedding/storage failed. Error: {e}"
-                        ) from e
+                            f"but embedding/storage failed. Error: {e}",
+                        )
 
             return {"ok": True, "id": resolved.id}
 
