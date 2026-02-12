@@ -2,6 +2,7 @@
 
 import click
 
+from calm.config import settings
 from calm.orchestration import backups as backup_ops
 
 
@@ -46,11 +47,14 @@ def create(name: str | None) -> None:
 def list_cmd() -> None:
     """List available backups."""
     backups = backup_ops.list_backups()
+    max_backups = settings.max_backups
 
     if not backups:
-        click.echo("No backups found.")
+        click.echo(f"No backups found. (max: {max_backups})")
         return
 
+    click.echo(f"{len(backups)} of {max_backups} backups (max: {max_backups})")
+    click.echo()
     click.echo(f"{'Name':<30} {'Size':<10} {'Qdrant':<8} {'Created'}")
     click.echo("-" * 70)
 

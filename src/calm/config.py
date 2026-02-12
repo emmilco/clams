@@ -179,6 +179,12 @@ class CalmSettings(BaseSettings):
         description="Maximum length for memory content",
     )
 
+    # Backup settings
+    max_backups: int = Field(
+        default=10,
+        description="Maximum number of database backups to retain",
+    )
+
     # Gate settings
     gate_test_timeout: int = Field(
         default=600,
