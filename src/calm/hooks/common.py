@@ -232,3 +232,29 @@ def is_server_running() -> bool:
         return True
     except (ValueError, OSError, ProcessLookupError):
         return False
+
+
+def check_server_health(timeout: float = 2.0) -> bool:
+    """Check if CALM server HTTP endpoint is responding.
+
+    Unlike is_server_running() which only checks the PID, this function
+    makes an actual HTTP request to the server's /health endpoint to verify
+    the server is fully operational and accepting requests.
+
+    Args:
+        timeout: HTTP request timeout in seconds (default 2.0)
+
+    Returns:
+        True if the server responds with HTTP 200, False otherwise
+    """
+    try:
+        import urllib.request
+
+        from calm.config import settings
+
+        health_url = f"http://{settings.server_host}:{settings.server_port}/health"
+        req = urllib.request.Request(health_url, method="GET")
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            return bool(response.status == 200)
+    except Exception:
+        return False

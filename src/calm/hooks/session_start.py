@@ -16,6 +16,7 @@ import time
 from pathlib import Path
 
 from calm.hooks.common import (
+    check_server_health,
     get_db_path,
     is_server_running,
     log_hook_error,
@@ -137,6 +138,7 @@ def format_output(
     orphan: dict[str, str] | None,
     tasks: list[tuple[str, str]],
     server_available: bool,
+    server_unhealthy: bool = False,
 ) -> str:
     """Format the output message.
 
@@ -144,6 +146,7 @@ def format_output(
         orphan: Orphaned GHAP info or None
         tasks: List of (task_id, phase) tuples
         server_available: Whether server is running
+        server_unhealthy: Whether server process is alive but HTTP endpoint unresponsive
 
     Returns:
         Formatted output string
@@ -153,6 +156,12 @@ def format_output(
     # Server warning if unavailable
     if not server_available:
         lines.append("CALM available (server starting...).")
+    elif server_unhealthy:
+        lines.append("CALM available (server unresponsive).")
+        lines.append(
+            "[WARNING] MCP server process is running but not responding. "
+            "Run `calm server restart` and start a new Claude Code session."
+        )
     else:
         lines.append("CALM (Claude Agent Learning & Management) is available.")
 
@@ -213,6 +222,12 @@ def main() -> None:
     # Ensure server is running (non-blocking)
     server_available = ensure_server_running()
 
+    # Check server HTTP health (only if process appears running)
+    server_unhealthy = False
+    if server_available:
+        if not check_server_health():
+            server_unhealthy = True
+
     # Get orphaned GHAP
     orphan = get_orphaned_ghap(db_path)
 
@@ -220,7 +235,7 @@ def main() -> None:
     tasks = get_active_tasks(db_path, working_directory)
 
     # Format and write output
-    output = format_output(orphan, tasks, server_available)
+    output = format_output(orphan, tasks, server_available, server_unhealthy)
     output = truncate_output(output, MAX_OUTPUT_CHARS)
     write_output(output)
 

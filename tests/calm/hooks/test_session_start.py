@@ -110,6 +110,30 @@ class TestFormatOutput:
         output = format_output(orphan=None, tasks=[], server_available=False)
         assert "CALM available (server starting...)" in output
 
+    def test_server_unhealthy_warning(self) -> None:
+        """Test output includes warning when server is unresponsive."""
+        output = format_output(
+            orphan=None,
+            tasks=[],
+            server_available=True,
+            server_unhealthy=True,
+        )
+        assert "server unresponsive" in output
+        assert "[WARNING]" in output
+        assert "calm server restart" in output
+        assert "new Claude Code session" in output
+
+    def test_server_unhealthy_not_shown_when_healthy(self) -> None:
+        """Test unhealthy warning is not shown when server is healthy."""
+        output = format_output(
+            orphan=None,
+            tasks=[],
+            server_available=True,
+            server_unhealthy=False,
+        )
+        assert "[WARNING]" not in output
+        assert "server unresponsive" not in output
+
     def test_with_tasks(self) -> None:
         """Test output with tasks."""
         tasks = [("SPEC-001", "IMPLEMENT"), ("BUG-002", "FIXED")]
@@ -171,6 +195,7 @@ class TestMain:
         monkeypatch.setattr("calm.hooks.session_start.get_db_path", lambda: db_with_tasks)
         # Skip server start check
         monkeypatch.setattr("calm.hooks.session_start.ensure_server_running", lambda: True)
+        monkeypatch.setattr("calm.hooks.session_start.check_server_health", lambda: True)
 
         stdin = io.StringIO(json.dumps({"working_directory": "/test/project"}))
         stdout = io.StringIO()
@@ -193,6 +218,7 @@ class TestMain:
         # Use the tasks database
         monkeypatch.setattr("calm.hooks.session_start.get_db_path", lambda: db_with_tasks)
         monkeypatch.setattr("calm.hooks.session_start.ensure_server_running", lambda: True)
+        monkeypatch.setattr("calm.hooks.session_start.check_server_health", lambda: True)
 
         stdin = io.StringIO(json.dumps({"working_directory": "/test/project"}))
         stdout = io.StringIO()
@@ -211,6 +237,7 @@ class TestMain:
         """Test that empty working_directory falls back to cwd."""
         monkeypatch.setattr("calm.hooks.session_start.get_db_path", lambda: temp_db)
         monkeypatch.setattr("calm.hooks.session_start.ensure_server_running", lambda: True)
+        monkeypatch.setattr("calm.hooks.session_start.check_server_health", lambda: True)
 
         stdin = io.StringIO(json.dumps({"working_directory": ""}))
         stdout = io.StringIO()
@@ -221,3 +248,52 @@ class TestMain:
 
         output = stdout.getvalue()
         assert "CALM" in output
+
+    def test_main_with_unhealthy_server(
+        self,
+        db_with_tasks: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test main output includes health warning when server is unresponsive."""
+        monkeypatch.setattr("calm.hooks.session_start.get_db_path", lambda: db_with_tasks)
+        # Server process is running but health check fails
+        monkeypatch.setattr("calm.hooks.session_start.ensure_server_running", lambda: True)
+        monkeypatch.setattr("calm.hooks.session_start.check_server_health", lambda: False)
+
+        stdin = io.StringIO(json.dumps({"working_directory": "/test/project"}))
+        stdout = io.StringIO()
+
+        with patch.object(sys, "stdin", stdin), patch.object(sys, "stdout", stdout):
+            main()
+
+        output = stdout.getvalue()
+        assert "server unresponsive" in output
+        assert "calm server restart" in output
+
+    def test_main_skips_health_check_when_server_not_running(
+        self,
+        db_with_tasks: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test health check is skipped when server process is not running."""
+        monkeypatch.setattr("calm.hooks.session_start.get_db_path", lambda: db_with_tasks)
+        monkeypatch.setattr("calm.hooks.session_start.ensure_server_running", lambda: False)
+
+        # check_server_health should NOT be called -- if it were, it would raise
+        def health_should_not_be_called() -> bool:
+            raise AssertionError("check_server_health should not be called")
+
+        monkeypatch.setattr(
+            "calm.hooks.session_start.check_server_health",
+            health_should_not_be_called,
+        )
+
+        stdin = io.StringIO(json.dumps({"working_directory": "/test/project"}))
+        stdout = io.StringIO()
+
+        with patch.object(sys, "stdin", stdin), patch.object(sys, "stdout", stdout):
+            main()
+
+        output = stdout.getvalue()
+        assert "server starting" in output
+        assert "[WARNING]" not in output

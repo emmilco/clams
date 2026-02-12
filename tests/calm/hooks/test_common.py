@@ -5,10 +5,12 @@ from __future__ import annotations
 import io
 import os
 import sys
+import unittest.mock
 from pathlib import Path
 from unittest.mock import patch
 
 from calm.hooks.common import (
+    check_server_health,
     get_calm_home,
     get_db_path,
     get_pid_path,
@@ -163,3 +165,83 @@ class TestIsServerRunning:
         pid_file.write_text(str(os.getpid()))
         with patch("calm.hooks.common.get_pid_path", return_value=pid_file):
             assert is_server_running() is True
+
+
+class TestCheckServerHealth:
+    """Tests for check_server_health function."""
+
+    def test_returns_true_when_server_responds(self) -> None:
+        """Test returns True when server health endpoint responds with 200."""
+        mock_response = unittest.mock.MagicMock()
+        mock_response.status = 200
+        mock_response.__enter__ = lambda s: s
+        mock_response.__exit__ = unittest.mock.MagicMock(return_value=False)
+
+        with patch("urllib.request.urlopen", return_value=mock_response):
+            assert check_server_health() is True
+
+    def test_returns_false_when_server_down(self) -> None:
+        """Test returns False when server is not responding."""
+        with patch(
+            "urllib.request.urlopen",
+            side_effect=ConnectionRefusedError("Connection refused"),
+        ):
+            assert check_server_health() is False
+
+    def test_returns_false_on_timeout(self) -> None:
+        """Test returns False when request times out."""
+        import urllib.error
+
+        with patch(
+            "urllib.request.urlopen",
+            side_effect=urllib.error.URLError("timeout"),
+        ):
+            assert check_server_health() is False
+
+    def test_returns_false_on_non_200_status(self) -> None:
+        """Test returns False when server responds with non-200 status."""
+        mock_response = unittest.mock.MagicMock()
+        mock_response.status = 500
+        mock_response.__enter__ = lambda s: s
+        mock_response.__exit__ = unittest.mock.MagicMock(return_value=False)
+
+        with patch("urllib.request.urlopen", return_value=mock_response):
+            assert check_server_health() is False
+
+    def test_uses_configured_host_and_port(self) -> None:
+        """Test health check uses server_host and server_port from settings."""
+        mock_response = unittest.mock.MagicMock()
+        mock_response.status = 200
+        mock_response.__enter__ = lambda s: s
+        mock_response.__exit__ = unittest.mock.MagicMock(return_value=False)
+
+        mock_settings = unittest.mock.MagicMock()
+        mock_settings.server_host = "10.0.0.1"
+        mock_settings.server_port = 9999
+
+        with (
+            patch("urllib.request.urlopen", return_value=mock_response) as mock_urlopen,
+            patch("calm.config.settings", mock_settings),
+        ):
+            check_server_health()
+
+            # Verify the URL was constructed with the right host/port
+            call_args = mock_urlopen.call_args
+            request_obj = call_args[0][0]
+            assert "10.0.0.1" in request_obj.full_url
+            assert "9999" in request_obj.full_url
+            assert "/health" in request_obj.full_url
+
+    def test_custom_timeout(self) -> None:
+        """Test health check respects custom timeout parameter."""
+        mock_response = unittest.mock.MagicMock()
+        mock_response.status = 200
+        mock_response.__enter__ = lambda s: s
+        mock_response.__exit__ = unittest.mock.MagicMock(return_value=False)
+
+        with patch("urllib.request.urlopen", return_value=mock_response) as mock_urlopen:
+            check_server_health(timeout=5.0)
+
+            # Verify timeout was passed
+            call_args = mock_urlopen.call_args
+            assert call_args[1].get("timeout") == 5.0 or call_args[0][1] == 5.0
