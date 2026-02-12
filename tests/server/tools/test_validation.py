@@ -24,7 +24,6 @@ from calm.tools.context import (
     validate_limit_range,
 )
 from calm.tools.git import validate_author_name
-from calm.tools.session import validate_frequency
 from calm.tools.validation import (
     ValidationError,
     validate_importance_range,
@@ -355,35 +354,6 @@ class TestValidateQueryString:
         with pytest.raises(ValidationError) as exc_info:
             validate_query_string("x" * 100, max_length=50, field_name="search_query")
         assert "search_query" in str(exc_info.value)
-
-
-class TestValidateFrequency:
-    """Tests for validate_frequency function."""
-
-    def test_valid_default_range(self) -> None:
-        """Value in default range should pass."""
-        validate_frequency(10)  # Should not raise
-        validate_frequency(1)  # Should not raise
-        validate_frequency(1000)  # Should not raise
-
-    def test_valid_middle_value(self) -> None:
-        """Middle value should pass."""
-        validate_frequency(500)  # Should not raise
-
-    def test_zero_raises(self) -> None:
-        """Zero should raise ValidationError."""
-        with pytest.raises(ValidationError):
-            validate_frequency(0)
-
-    def test_negative_raises(self) -> None:
-        """Negative value should raise ValidationError."""
-        with pytest.raises(ValidationError):
-            validate_frequency(-1)
-
-    def test_too_large_raises(self) -> None:
-        """Value above max should raise ValidationError."""
-        with pytest.raises(ValidationError):
-            validate_frequency(1001)
 
 
 class TestValidateAuthorName:

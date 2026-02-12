@@ -33,7 +33,7 @@ Verify the server is running:
 calm server status
 ```
 
-Then verify all 34 MCP tools are available by calling:
+Then verify all 29 MCP tools are available by calling:
 ```
 mcp__calm__ping
 ```
@@ -72,13 +72,6 @@ Then verify each tool category works by calling these tools (use the MCP tool ca
 
 **Context tools:**
 - `mcp__calm__assemble_context` with query="test verification"
-
-**Session tools:**
-- `mcp__calm__start_session`
-- `mcp__calm__get_orphaned_ghap`
-- `mcp__calm__should_check_in`
-- `mcp__calm__increment_tool_count`
-- `mcp__calm__reset_tool_count`
 
 **Journal tools:**
 - `mcp__calm__store_journal_entry` with summary="Verification test session", working_directory=(current working directory)
@@ -165,7 +158,6 @@ Produce a summary table:
 | MCP Tools | Clustering tools (1) | PASS/FAIL |
 | MCP Tools | Values tools (1) | PASS/FAIL |
 | MCP Tools | Context tools (1) | PASS/FAIL |
-| MCP Tools | Session tools (5) | PASS/FAIL |
 | MCP Tools | Journal tools (4) | PASS/FAIL |
 | Skills | orchestrate discoverable | PASS/FAIL |
 | Skills | wrapup discoverable | PASS/FAIL |
@@ -181,4 +173,4 @@ Produce a summary table:
 
 After producing the table, clean up any test data you created (delete the verification memory, the test journal entry should already be marked reflected).
 
-**Total: X/25 checks passed.**
+**Total: X/24 checks passed.**
