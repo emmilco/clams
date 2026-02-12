@@ -88,8 +88,8 @@ class TestSearchMemories:
     async def test_invalid_search_mode_raises_error(self, searcher: Searcher):
         """Verify invalid search mode raises InvalidSearchModeError."""
         with pytest.raises(InvalidSearchModeError) as exc_info:
-            await searcher.search_memories("test", search_mode="hybrid")
-        assert "hybrid" in str(exc_info.value).lower()
+            await searcher.search_memories("test", search_mode="invalid_mode")
+        assert "invalid_mode" in str(exc_info.value).lower()
         assert "semantic" in str(exc_info.value).lower()
 
     async def test_embedding_failure_raises_embedding_error(

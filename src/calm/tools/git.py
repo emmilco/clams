@@ -7,6 +7,11 @@ from typing import Any
 import structlog
 
 from calm.embedding.base import EmbeddingService
+from calm.search.searcher import (
+    VALID_SEARCH_MODES,
+    _hybrid_search,
+    _keyword_search,
+)
 from calm.storage.base import VectorStore
 
 from .validation import ValidationError, validate_query_string
@@ -160,14 +165,17 @@ def get_git_tools(
         author: str | None = None,
         since: str | None = None,
         limit: int = 10,
+        search_mode: str = "semantic",
     ) -> dict[str, Any]:
-        """Search git commits semantically.
+        """Search git commits semantically, by keyword, or hybrid.
 
         Args:
             query: Search query
             author: Optional author name filter
             since: Optional date filter (ISO format YYYY-MM-DD)
             limit: Max results (1-50, default 10)
+            search_mode: Search mode - "semantic", "keyword", or "hybrid"
+                         (default "semantic")
 
         Returns:
             Matching commits with scores
@@ -185,6 +193,13 @@ def get_git_tools(
             if not 1 <= limit <= 50:
                 raise ValidationError(
                     f"Limit {limit} out of range. Must be between 1 and 50."
+                )
+
+            # Validate search mode
+            if search_mode not in VALID_SEARCH_MODES:
+                valid = ", ".join(f"'{m}'" for m in VALID_SEARCH_MODES)
+                raise ValidationError(
+                    f"Invalid search_mode '{search_mode}'. Must be one of: {valid}"
                 )
 
             # Validate query length
@@ -207,36 +222,80 @@ def get_git_tools(
             if not query.strip():
                 return {"results": [], "count": 0}
 
-            # Use git_analyzer to search commits
-            results = await git_analyzer.search_commits(
-                query=query,
-                author=author,
-                since=since_dt,
-                limit=limit,
-            )
-
-            # Format results
-            formatted = []
-            for result in results:
-                # Convert timestamp to ISO format if present
-                timestamp = result.commit.timestamp
-                if timestamp:
-                    timestamp = timestamp.isoformat()
-
-                formatted.append(
-                    {
-                        "sha": result.commit.sha,
-                        "message": result.commit.message,
-                        "author": result.commit.author,
-                        "author_email": result.commit.author_email,
-                        "timestamp": timestamp,
-                        "files_changed": result.commit.files_changed,
-                        "file_count": len(result.commit.files_changed),
-                        "insertions": result.commit.insertions,
-                        "deletions": result.commit.deletions,
-                        "score": result.score,
-                    }
+            if search_mode == "semantic":
+                # Use git_analyzer for semantic search (existing path)
+                results = await git_analyzer.search_commits(
+                    query=query,
+                    author=author,
+                    since=since_dt,
+                    limit=limit,
                 )
+
+                # Format results from CommitSearchResult objects
+                formatted = []
+                for result in results:
+                    timestamp = result.commit.timestamp
+                    if timestamp:
+                        timestamp = timestamp.isoformat()
+
+                    formatted.append(
+                        {
+                            "sha": result.commit.sha,
+                            "message": result.commit.message,
+                            "author": result.commit.author,
+                            "author_email": result.commit.author_email,
+                            "timestamp": timestamp,
+                            "files_changed": result.commit.files_changed,
+                            "file_count": len(result.commit.files_changed),
+                            "insertions": result.commit.insertions,
+                            "deletions": result.commit.deletions,
+                            "score": result.score,
+                        }
+                    )
+            else:
+                # keyword or hybrid: use searcher functions on vector store
+                collection = "commits"
+                text_fields = ["message"]
+
+                # Build filters for vector store
+                filters: dict[str, Any] = {}
+                if author:
+                    filters["author"] = author
+                if since_dt:
+                    filters["timestamp"] = {"$gte": since_dt.timestamp()}
+
+                if search_mode == "keyword":
+                    raw_results = await _keyword_search(
+                        vector_store, collection, query, limit,
+                        filters if filters else None, text_fields,
+                    )
+                else:  # hybrid
+                    raw_results = await _hybrid_search(
+                        semantic_embedder, vector_store, collection,
+                        query, limit,
+                        filters if filters else None, text_fields,
+                    )
+
+                # Format results from raw SearchResult payloads
+                formatted = []
+                for r in raw_results:
+                    p = r.payload
+                    timestamp_iso = p.get("timestamp_iso") or p.get("timestamp")
+                    files = p.get("files_changed", [])
+                    formatted.append(
+                        {
+                            "sha": p.get("sha", ""),
+                            "message": p.get("message", ""),
+                            "author": p.get("author", ""),
+                            "author_email": p.get("author_email", ""),
+                            "timestamp": timestamp_iso,
+                            "files_changed": files,
+                            "file_count": len(files),
+                            "insertions": p.get("insertions", 0),
+                            "deletions": p.get("deletions", 0),
+                            "score": r.score,
+                        }
+                    )
 
             logger.info("git.commits_found", count=len(formatted))
 

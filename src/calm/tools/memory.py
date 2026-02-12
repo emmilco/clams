@@ -9,6 +9,12 @@ import structlog
 
 from calm.config import settings
 from calm.embedding.base import EmbeddingService
+from calm.search.searcher import (
+    VALID_SEARCH_MODES,
+    _hybrid_search,
+    _keyword_search,
+    _semantic_search,
+)
 from calm.storage.base import VectorStore
 
 from .validation import (
@@ -174,8 +180,9 @@ def get_memory_tools(
         limit: int = 10,
         category: str | None = None,
         min_importance: float = 0.0,
+        search_mode: str = "semantic",
     ) -> dict[str, Any]:
-        """Search memories semantically."""
+        """Search memories semantically, by keyword, or hybrid."""
         logger.info("memory.retrieve", query=query[:50], limit=limit)
 
         try:
@@ -201,12 +208,16 @@ def get_memory_tools(
             # Validate query length
             validate_query_string(query)
 
+            # Validate search mode
+            if search_mode not in VALID_SEARCH_MODES:
+                valid = ", ".join(f"'{m}'" for m in VALID_SEARCH_MODES)
+                raise ValidationError(
+                    f"Invalid search_mode '{search_mode}'. Must be one of: {valid}"
+                )
+
             # Handle empty query
             if not query.strip():
                 return {"results": [], "count": 0}
-
-            # Generate query embedding
-            query_embedding = await semantic_embedder.embed(query)
 
             # Build filters
             filters: dict[str, Any] = {}
@@ -215,13 +226,25 @@ def get_memory_tools(
             if min_importance > 0.0:
                 filters["importance"] = {"$gte": min_importance}
 
-            # Search
-            results = await vector_store.search(
-                collection="memories",
-                query=query_embedding,
-                limit=limit,
-                filters=filters if filters else None,
-            )
+            # Dispatch search based on mode
+            collection = "memories"
+            text_fields = ["content"]
+
+            if search_mode == "keyword":
+                results = await _keyword_search(
+                    vector_store, collection, query, limit,
+                    filters if filters else None, text_fields,
+                )
+            elif search_mode == "hybrid":
+                results = await _hybrid_search(
+                    semantic_embedder, vector_store, collection, query, limit,
+                    filters if filters else None, text_fields,
+                )
+            else:
+                results = await _semantic_search(
+                    semantic_embedder, vector_store, collection, query, limit,
+                    filters if filters else None,
+                )
 
             # Format results
             formatted = [
