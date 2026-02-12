@@ -8,6 +8,12 @@ import structlog
 
 from calm.embedding.base import EmbeddingService
 from calm.search.collections import CollectionName
+from calm.search.searcher import (
+    VALID_SEARCH_MODES,
+    _hybrid_search,
+    _keyword_search,
+    _semantic_search,
+)
 from calm.storage.base import VectorStore
 
 from .validation import ValidationError, validate_query_string
@@ -220,6 +226,7 @@ def get_code_tools(
         project: str | None = None,
         language: str | None = None,
         limit: int = 10,
+        search_mode: str = "semantic",
     ) -> dict[str, Any]:
         """Search indexed code semantically.
 
@@ -228,6 +235,8 @@ def get_code_tools(
             project: Optional project filter
             language: Optional language filter (python, typescript, etc.)
             limit: Max results (1-50, default 10)
+            search_mode: Search mode - "semantic", "keyword", or "hybrid"
+                         (default "semantic")
 
         Returns:
             Search results with scores
@@ -254,12 +263,16 @@ def get_code_tools(
             # Validate query length
             validate_query_string(query)
 
+            # Validate search mode
+            if search_mode not in VALID_SEARCH_MODES:
+                valid = ", ".join(f"'{m}'" for m in VALID_SEARCH_MODES)
+                raise ValidationError(
+                    f"Invalid search_mode '{search_mode}'. Must be one of: {valid}"
+                )
+
             # Handle empty query
             if not query.strip():
                 return {"results": [], "count": 0}
-
-            # Generate query embedding
-            query_embedding = await code_embedder.embed(query)
 
             # Build filters
             filters: dict[str, Any] = {}
@@ -268,13 +281,25 @@ def get_code_tools(
             if language:
                 filters["language"] = language.lower()
 
-            # Search
-            results = await vector_store.search(
-                collection=CollectionName.CODE_UNITS,
-                query=query_embedding,
-                limit=limit,
-                filters=filters if filters else None,
-            )
+            # Dispatch search based on mode
+            collection = CollectionName.CODE_UNITS
+            text_fields = ["code", "qualified_name", "docstring"]
+
+            if search_mode == "keyword":
+                results = await _keyword_search(
+                    vector_store, collection, query, limit,
+                    filters if filters else None, text_fields,
+                )
+            elif search_mode == "hybrid":
+                results = await _hybrid_search(
+                    code_embedder, vector_store, collection, query, limit,
+                    filters if filters else None, text_fields,
+                )
+            else:
+                results = await _semantic_search(
+                    code_embedder, vector_store, collection, query, limit,
+                    filters if filters else None,
+                )
 
             # Format results
             formatted = [

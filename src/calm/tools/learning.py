@@ -8,6 +8,12 @@ from uuid import uuid4
 import structlog
 
 from calm.embedding.base import EmbeddingService
+from calm.search.searcher import (
+    VALID_SEARCH_MODES,
+    _hybrid_search,
+    _keyword_search,
+    _semantic_search,
+)
 from calm.storage.base import VectorStore
 
 from .enums import validate_domain, validate_outcome_status
@@ -100,8 +106,9 @@ def get_learning_tools(
         domain: str | None = None,
         outcome: str | None = None,
         limit: int = 10,
+        search_mode: str = "semantic",
     ) -> dict[str, Any]:
-        """Search experiences semantically across axes.
+        """Search experiences semantically, by keyword, or hybrid.
 
         Args:
             query: Search query
@@ -109,6 +116,8 @@ def get_learning_tools(
             domain: Filter by domain (optional)
             outcome: Filter by outcome status (optional)
             limit: Maximum results (default 10, max 50)
+            search_mode: Search mode - "semantic", "keyword", or "hybrid"
+                         (default "semantic")
 
         Returns:
             List of matching experiences with scores
@@ -123,6 +132,13 @@ def get_learning_tools(
 
             # Validate axis
             validate_axis(axis)
+
+            # Validate search mode
+            if search_mode not in VALID_SEARCH_MODES:
+                valid = ", ".join(f"'{m}'" for m in VALID_SEARCH_MODES)
+                raise ValidationError(
+                    f"Invalid search_mode '{search_mode}'. Must be one of: {valid}"
+                )
 
             # Validate domain if provided
             if domain is not None:
@@ -141,9 +157,6 @@ def get_learning_tools(
             # Determine collection name based on axis
             collection = f"ghap_{axis}"
 
-            # Generate query embedding
-            query_embedding = await semantic_embedder.embed(query)
-
             # Build filters
             filters: dict[str, Any] = {}
             if domain:
@@ -151,14 +164,31 @@ def get_learning_tools(
             if outcome:
                 filters["outcome_status"] = outcome
 
+            text_fields = [
+                "goal", "hypothesis", "action", "prediction", "outcome_result",
+            ]
+            if axis == "surprise":
+                text_fields.append("surprise")
+
             try:
-                # Search
-                results = await vector_store.search(
-                    collection=collection,
-                    query=query_embedding,
-                    limit=limit,
-                    filters=filters if filters else None,
-                )
+                # Dispatch search based on mode
+                if search_mode == "keyword":
+                    results = await _keyword_search(
+                        vector_store, collection, query, limit,
+                        filters if filters else None, text_fields,
+                    )
+                elif search_mode == "hybrid":
+                    results = await _hybrid_search(
+                        semantic_embedder, vector_store, collection,
+                        query, limit,
+                        filters if filters else None, text_fields,
+                    )
+                else:
+                    results = await _semantic_search(
+                        semantic_embedder, vector_store, collection,
+                        query, limit,
+                        filters if filters else None,
+                    )
             except Exception as search_error:
                 # Handle missing collection gracefully
                 error_msg = str(search_error).lower()
