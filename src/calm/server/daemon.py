@@ -14,6 +14,41 @@ from pathlib import Path
 from calm.config import settings
 
 
+def get_python_executable() -> str:
+    """Get the correct Python executable, preferring the virtualenv Python.
+
+    When the CLI is invoked from global Python (outside a virtualenv),
+    sys.executable points to the system Python which may not have CALM's
+    dependencies installed. This function resolves the correct interpreter:
+
+    1. If VIRTUAL_ENV env var is set, use ``{VIRTUAL_ENV}/bin/python``.
+    2. If sys.executable lives inside a venv (detected via ``pyvenv.cfg``
+       in a parent directory), use sys.executable as-is.
+    3. Fall back to sys.executable when neither heuristic matches.
+
+    Returns:
+        Absolute path to the Python interpreter that should be used
+        to spawn CALM subprocesses.
+    """
+    # Strategy 1: VIRTUAL_ENV environment variable
+    virtual_env = os.environ.get("VIRTUAL_ENV")
+    if virtual_env:
+        venv_python = Path(virtual_env) / "bin" / "python"
+        if venv_python.is_file():
+            return str(venv_python)
+
+    # Strategy 2: Walk up from sys.executable looking for pyvenv.cfg
+    exe_path = Path(sys.executable).resolve()
+    # In a typical venv layout the executable is at
+    # <venv>/bin/python  and  pyvenv.cfg sits at <venv>/pyvenv.cfg
+    for parent in exe_path.parents:
+        if (parent / "pyvenv.cfg").is_file():
+            return str(exe_path)
+
+    # Strategy 3: Fallback
+    return sys.executable
+
+
 def get_pid_file() -> Path:
     """Get the PID file path."""
     return Path(settings.pid_file).expanduser()
@@ -69,7 +104,7 @@ def start_daemon() -> None:
 
     # Build command to run the server
     cmd = [
-        sys.executable,
+        get_python_executable(),
         "-m", "calm.server.main",
         "--host", settings.server_host,
         "--port", str(settings.server_port),

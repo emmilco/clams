@@ -11,7 +11,6 @@ from __future__ import annotations
 import os
 import sqlite3
 import subprocess
-import sys
 import time
 from pathlib import Path
 
@@ -41,8 +40,10 @@ def ensure_server_running() -> bool:
 
     # Try to start server
     try:
+        from calm.server.daemon import get_python_executable
+
         subprocess.Popen(
-            [sys.executable, "-m", "calm", "server", "start"],
+            [get_python_executable(), "-m", "calm", "server", "start"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             start_new_session=True,
