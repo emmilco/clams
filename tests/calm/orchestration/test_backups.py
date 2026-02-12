@@ -19,6 +19,7 @@ from calm.orchestration.backups import (
     list_backups,
     restore_backup,
     restore_qdrant_snapshot,
+    rotate_backups,
 )
 
 
@@ -761,3 +762,239 @@ class TestRestoreQdrantSnapshotUnit:
         )
 
         assert result is False
+
+
+# ============================================================================
+# Tests for SPEC-059: Backup rotation with configurable max count
+# ============================================================================
+
+
+class TestRotateBackups:
+    """Tests for the rotate_backups function."""
+
+    def test_rotate_deletes_oldest_when_over_limit(
+        self,
+        tmp_path: Path,
+        test_db: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Create 12 backups with max=10, verify only 10 remain."""
+        import os
+
+        import calm.orchestration.backups
+        from calm.config import CalmSettings
+
+        calm_home = tmp_path / ".calm"
+        # Set max_backups high enough that create_backup's internal
+        # rotation doesn't interfere while we're creating backups
+        new_settings = CalmSettings(home=calm_home, db_path=test_db, max_backups=100)
+        monkeypatch.setattr(calm.orchestration.backups, "settings", new_settings)
+
+        # Mock Qdrant as unreachable
+        async def mock_no_qdrant(url: str, name: str) -> Path | None:
+            return None
+
+        monkeypatch.setattr(
+            calm.orchestration.backups,
+            "create_qdrant_snapshot",
+            mock_no_qdrant,
+        )
+
+        # Create 12 backups, set distinct mtimes so ordering is deterministic
+        for i in range(12):
+            backup = create_backup(name=f"rot_{i:03d}", db_path=test_db)
+            # Set mtime to i seconds in the past (0 = newest)
+            mtime = 1_000_000 + i
+            os.utime(backup.path, (mtime, mtime))
+
+        assert len(list_backups()) == 12
+
+        # Now rotate down to 10
+        deleted = rotate_backups(max_backups=10)
+
+        remaining = list_backups()
+        assert len(remaining) == 10
+        assert len(deleted) == 2
+
+    def test_rotate_preserves_newest(
+        self,
+        tmp_path: Path,
+        test_db: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Verify the 10 remaining after rotation are the most recent."""
+        import os
+
+        import calm.orchestration.backups
+        from calm.config import CalmSettings
+
+        calm_home = tmp_path / ".calm"
+        new_settings = CalmSettings(home=calm_home, db_path=test_db, max_backups=100)
+        monkeypatch.setattr(calm.orchestration.backups, "settings", new_settings)
+
+        async def mock_no_qdrant(url: str, name: str) -> Path | None:
+            return None
+
+        monkeypatch.setattr(
+            calm.orchestration.backups,
+            "create_qdrant_snapshot",
+            mock_no_qdrant,
+        )
+
+        # Create 12 backups with deterministic timestamps
+        # Higher index = newer (higher mtime)
+        for i in range(12):
+            backup = create_backup(name=f"keep_{i:03d}", db_path=test_db)
+            mtime = 1_000_000 + i  # Increasing mtime = newer
+            os.utime(backup.path, (mtime, mtime))
+
+        deleted = rotate_backups(max_backups=10)
+
+        # The oldest 2 (keep_000, keep_001) should be deleted
+        remaining_names = [b.name for b in list_backups()]
+        assert "keep_000" in deleted
+        assert "keep_001" in deleted
+        assert "keep_000" not in remaining_names
+        assert "keep_001" not in remaining_names
+
+        # The newest 10 should remain
+        for i in range(2, 12):
+            assert f"keep_{i:03d}" in remaining_names
+
+    def test_rotate_no_op_when_under_limit(
+        self,
+        backup_setup: Path,
+    ) -> None:
+        """Rotation does nothing when count is at or below limit."""
+        create_backup(name="under_1", db_path=backup_setup)
+        create_backup(name="under_2", db_path=backup_setup)
+
+        deleted = rotate_backups(max_backups=10)
+
+        assert deleted == []
+        assert len(list_backups()) == 2
+
+    def test_rotate_raises_on_invalid_max(
+        self,
+        backup_setup: Path,
+    ) -> None:
+        """rotate_backups raises ValueError if max_backups < 1."""
+        with pytest.raises(ValueError, match="max_backups must be at least 1"):
+            rotate_backups(max_backups=0)
+
+    def test_rotate_removes_qdrant_snapshots(
+        self,
+        tmp_path: Path,
+        test_db: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Rotation also removes Qdrant snapshot directories."""
+        import os
+
+        import calm.orchestration.backups
+        from calm.config import CalmSettings
+
+        calm_home = tmp_path / ".calm"
+        new_settings = CalmSettings(home=calm_home, db_path=test_db, max_backups=100)
+        monkeypatch.setattr(calm.orchestration.backups, "settings", new_settings)
+
+        # Mock Qdrant to create snapshot directories
+        async def mock_with_qdrant(url: str, name: str) -> Path | None:
+            backups_dir = calm_home / "backups"
+            backups_dir.mkdir(parents=True, exist_ok=True)
+            snap_dir = backups_dir / f"{name}{QDRANT_SNAPSHOT_SUFFIX}"
+            snap_dir.mkdir(parents=True, exist_ok=True)
+            (snap_dir / "memories.snapshot").write_bytes(b"data")
+            return snap_dir
+
+        monkeypatch.setattr(
+            calm.orchestration.backups,
+            "create_qdrant_snapshot",
+            mock_with_qdrant,
+        )
+
+        # Create 4 backups with Qdrant snapshots and deterministic timestamps
+        for i in range(4):
+            backup = create_backup(name=f"qdrot_{i:03d}", db_path=test_db)
+            mtime = 1_000_000 + i
+            os.utime(backup.path, (mtime, mtime))
+
+        # All 4 should have snapshot dirs
+        backups_dir = calm_home / "backups"
+        assert (backups_dir / f"qdrot_000{QDRANT_SNAPSHOT_SUFFIX}").exists()
+
+        deleted = rotate_backups(max_backups=2)
+
+        assert len(deleted) == 2
+        # Oldest snapshot dirs should be gone
+        assert not (backups_dir / f"qdrot_000{QDRANT_SNAPSHOT_SUFFIX}").exists()
+        assert not (backups_dir / f"qdrot_001{QDRANT_SNAPSHOT_SUFFIX}").exists()
+        # Newest should remain
+        assert (backups_dir / f"qdrot_002{QDRANT_SNAPSHOT_SUFFIX}").exists()
+        assert (backups_dir / f"qdrot_003{QDRANT_SNAPSHOT_SUFFIX}").exists()
+
+
+class TestCreateBackupWithRotation:
+    """Tests that create_backup triggers rotation via settings.max_backups."""
+
+    def test_create_backup_rotates_automatically(
+        self,
+        tmp_path: Path,
+        test_db: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """create_backup enforces settings.max_backups after creation."""
+        import calm.orchestration.backups
+        from calm.config import CalmSettings
+
+        calm_home = tmp_path / ".calm"
+        new_settings = CalmSettings(home=calm_home, db_path=test_db, max_backups=3)
+        monkeypatch.setattr(calm.orchestration.backups, "settings", new_settings)
+
+        async def mock_no_qdrant(url: str, name: str) -> Path | None:
+            return None
+
+        monkeypatch.setattr(
+            calm.orchestration.backups,
+            "create_qdrant_snapshot",
+            mock_no_qdrant,
+        )
+
+        # Create 5 backups -- each create_backup call rotates to max=3
+        for i in range(5):
+            create_backup(name=f"auto_rot_{i:03d}", db_path=test_db)
+
+        remaining = list_backups()
+        # After 5 creates with max=3, at most 3 should remain
+        assert len(remaining) <= 3
+        # The most recently created (auto_rot_004) must survive
+        remaining_names = {b.name for b in remaining}
+        assert "auto_rot_004" in remaining_names
+
+
+class TestMaxBackupsConfig:
+    """Tests for the max_backups configuration setting."""
+
+    def test_default_max_backups(self) -> None:
+        """Default max_backups is 10."""
+        from calm.config import CalmSettings
+
+        s = CalmSettings()
+        assert s.max_backups == 10
+
+    def test_max_backups_configurable(self) -> None:
+        """max_backups can be set to a custom value."""
+        from calm.config import CalmSettings
+
+        s = CalmSettings(max_backups=25)
+        assert s.max_backups == 25
+
+    def test_max_backups_env_override(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """max_backups can be overridden via CALM_MAX_BACKUPS env var."""
+        from calm.config import CalmSettings
+
+        monkeypatch.setenv("CALM_MAX_BACKUPS", "42")
+        s = CalmSettings()
+        assert s.max_backups == 42

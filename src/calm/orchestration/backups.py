@@ -305,6 +305,9 @@ def create_backup(
 ) -> Backup:
     """Create a named backup of SQLite database and Qdrant vector store.
 
+    After creation, rotates old backups to enforce the configured max_backups
+    limit from settings.
+
     Args:
         name: Backup name (auto-generated if not provided)
         db_path: Path to database file (defaults to settings.db_path)
@@ -316,7 +319,9 @@ def create_backup(
     Raises:
         FileNotFoundError: If database file not found
     """
-    return asyncio.run(_create_backup_async(name, db_path, qdrant_url))
+    backup = asyncio.run(_create_backup_async(name, db_path, qdrant_url))
+    rotate_backups(settings.max_backups)
+    return backup
 
 
 def list_backups() -> list[Backup]:
@@ -346,6 +351,44 @@ def list_backups() -> list[Backup]:
     # Sort by creation time, newest first
     backups.sort(key=lambda b: b.created_at, reverse=True)
     return backups
+
+
+def rotate_backups(max_backups: int) -> list[str]:
+    """Delete the oldest backups if total count exceeds max_backups.
+
+    Lists all backups sorted by creation time and removes the oldest
+    ones (both SQLite file and Qdrant snapshot directory) until the
+    count equals max_backups.
+
+    Args:
+        max_backups: Maximum number of backups to retain. Must be >= 1.
+
+    Returns:
+        List of deleted backup names.
+
+    Raises:
+        ValueError: If max_backups is less than 1.
+    """
+    if max_backups < 1:
+        raise ValueError("max_backups must be at least 1")
+
+    all_backups = list_backups()  # sorted newest-first
+    if len(all_backups) <= max_backups:
+        return []
+
+    # The oldest backups are at the end of the list (newest-first order)
+    to_delete = all_backups[max_backups:]
+    deleted_names: list[str] = []
+
+    for backup in to_delete:
+        backup.path.unlink(missing_ok=True)
+        qdrant_path = _qdrant_snapshot_path_for(backup.name)
+        if qdrant_path.exists() and qdrant_path.is_dir():
+            shutil.rmtree(qdrant_path)
+        deleted_names.append(backup.name)
+        logger.info("Rotated old backup: %s", backup.name)
+
+    return deleted_names
 
 
 async def _restore_backup_async(

@@ -271,3 +271,55 @@ class TestBackupDelete:
 
         assert result.exit_code != 0
         assert "not found" in result.output.lower()
+
+
+# ============================================================================
+# Tests for SPEC-059: CLI list shows count and configured limit
+# ============================================================================
+
+
+class TestBackupListCountLimit:
+    """Tests that backup list shows count and configured limit."""
+
+    def test_list_shows_count_and_max(self, cli_env: Path) -> None:
+        """List output shows 'N of M backups (max: M)'."""
+        runner = CliRunner()
+
+        # Create 2 backups
+        runner.invoke(cli, ["backup", "create", "cl_1"])
+        runner.invoke(cli, ["backup", "create", "cl_2"])
+
+        result = runner.invoke(cli, ["backup", "list"])
+
+        assert result.exit_code == 0
+        assert "2 of 10 backups (max: 10)" in result.output
+
+    def test_list_empty_shows_max(self, cli_env: Path) -> None:
+        """Empty list shows max configuration."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["backup", "list"])
+
+        assert result.exit_code == 0
+        assert "No backups found." in result.output
+        assert "(max: 10)" in result.output
+
+    def test_list_shows_custom_max(
+        self, cli_env: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """List reflects custom max_backups setting."""
+        import calm.cli.backup as cli_backup_mod
+        from calm.config import CalmSettings
+
+        # Need to patch settings in both calm.config AND calm.cli.backup
+        # because the CLI module does: from calm.config import settings
+        new_settings = CalmSettings(max_backups=25)
+        monkeypatch.setattr(calm.config, "settings", new_settings)
+        monkeypatch.setattr(cli_backup_mod, "settings", new_settings)
+
+        runner = CliRunner()
+        runner.invoke(cli, ["backup", "create", "custom_1"])
+
+        result = runner.invoke(cli, ["backup", "list"])
+
+        assert result.exit_code == 0
+        assert "1 of 25 backups (max: 25)" in result.output
