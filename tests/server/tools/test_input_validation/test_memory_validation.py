@@ -15,11 +15,10 @@ This test module verifies that all validation constraints are enforced
 with informative error messages.
 """
 
+import re
 from typing import Any
 
 import pytest
-
-from calm.tools.validation import ValidationError
 
 
 class TestStoreMemoryValidation:
@@ -66,20 +65,22 @@ class TestStoreMemoryValidation:
     ) -> None:
         """Test that store_memory rejects invalid category enum value."""
         tool = memory_tools["store_memory"]
-        with pytest.raises(ValidationError, match="Invalid category"):
-            await tool(content="Test", category="invalid")
-
+        result = await tool(content="Test", category="invalid")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Invalid category", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_store_memory_invalid_category_lists_valid_options(
         self, memory_tools: dict[str, Any]
     ) -> None:
         """Test that error message lists valid category options."""
         tool = memory_tools["store_memory"]
-        with pytest.raises(ValidationError) as exc_info:
-            await tool(content="Test", category="invalid")
+        result = await tool(content="Test", category="invalid")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
         # Should list valid categories
-        assert "fact" in str(exc_info.value)
-        assert "preference" in str(exc_info.value)
+        assert "fact" in result["error"]["message"]
+        assert "preference" in result["error"]["message"]
 
     @pytest.mark.asyncio
     async def test_store_memory_content_too_long(
@@ -88,9 +89,10 @@ class TestStoreMemoryValidation:
         """Test that store_memory rejects content exceeding 10,000 chars."""
         tool = memory_tools["store_memory"]
         long_content = "x" * 15_000
-        with pytest.raises(ValidationError, match="Content too long"):
-            await tool(content=long_content, category="fact")
-
+        result = await tool(content=long_content, category="fact")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Content too long", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_store_memory_content_too_long_shows_limit(
         self, memory_tools: dict[str, Any]
@@ -98,28 +100,30 @@ class TestStoreMemoryValidation:
         """Test that content length error shows the limit."""
         tool = memory_tools["store_memory"]
         long_content = "x" * 15_000
-        with pytest.raises(ValidationError) as exc_info:
-            await tool(content=long_content, category="fact")
-        assert "10000" in str(exc_info.value) or "10,000" in str(exc_info.value)
-
+        result = await tool(content=long_content, category="fact")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert "10000" in result["error"]["message"]
     @pytest.mark.asyncio
     async def test_store_memory_importance_below_range(
         self, memory_tools: dict[str, Any]
     ) -> None:
         """Test that store_memory rejects importance < 0.0."""
         tool = memory_tools["store_memory"]
-        with pytest.raises(ValidationError, match="Importance.*out of range"):
-            await tool(content="Test", category="fact", importance=-0.1)
-
+        result = await tool(content="Test", category="fact", importance=-0.1)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Importance.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_store_memory_importance_above_range(
         self, memory_tools: dict[str, Any]
     ) -> None:
         """Test that store_memory rejects importance > 1.0."""
         tool = memory_tools["store_memory"]
-        with pytest.raises(ValidationError, match="Importance.*out of range"):
-            await tool(content="Test", category="fact", importance=1.5)
-
+        result = await tool(content="Test", category="fact", importance=1.5)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Importance.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_store_memory_importance_at_boundary_lower(
         self, memory_tools: dict[str, Any]
@@ -168,36 +172,40 @@ class TestRetrieveMemoriesValidation:
     ) -> None:
         """Test that retrieve_memories rejects invalid category."""
         tool = memory_tools["retrieve_memories"]
-        with pytest.raises(ValidationError, match="Invalid category"):
-            await tool(query="test", category="invalid")
-
+        result = await tool(query="test", category="invalid")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Invalid category", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_retrieve_memories_limit_below_range(
         self, memory_tools: dict[str, Any]
     ) -> None:
         """Test that retrieve_memories rejects limit < 1."""
         tool = memory_tools["retrieve_memories"]
-        with pytest.raises(ValidationError, match="Limit.*out of range"):
-            await tool(query="test", limit=0)
-
+        result = await tool(query="test", limit=0)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Limit.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_retrieve_memories_limit_above_range(
         self, memory_tools: dict[str, Any]
     ) -> None:
         """Test that retrieve_memories rejects limit > 100."""
         tool = memory_tools["retrieve_memories"]
-        with pytest.raises(ValidationError, match="Limit.*out of range"):
-            await tool(query="test", limit=101)
-
+        result = await tool(query="test", limit=101)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Limit.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_retrieve_memories_limit_negative(
         self, memory_tools: dict[str, Any]
     ) -> None:
         """Test that retrieve_memories rejects negative limit."""
         tool = memory_tools["retrieve_memories"]
-        with pytest.raises(ValidationError, match="Limit.*out of range"):
-            await tool(query="test", limit=-1)
-
+        result = await tool(query="test", limit=-1)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Limit.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_retrieve_memories_limit_at_boundary_lower(
         self, memory_tools: dict[str, Any]
@@ -226,18 +234,20 @@ class TestListMemoriesValidation:
     ) -> None:
         """Test that list_memories rejects invalid category."""
         tool = memory_tools["list_memories"]
-        with pytest.raises(ValidationError, match="Invalid category"):
-            await tool(category="invalid")
-
+        result = await tool(category="invalid")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Invalid category", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_list_memories_offset_negative(
         self, memory_tools: dict[str, Any]
     ) -> None:
         """Test that list_memories rejects negative offset."""
         tool = memory_tools["list_memories"]
-        with pytest.raises(ValidationError, match="Offset.*must be >= 0"):
-            await tool(offset=-1)
-
+        result = await tool(offset=-1)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Offset.*must be >= 0", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_list_memories_offset_zero(
         self, memory_tools: dict[str, Any]
@@ -253,18 +263,20 @@ class TestListMemoriesValidation:
     ) -> None:
         """Test that list_memories rejects limit < 1."""
         tool = memory_tools["list_memories"]
-        with pytest.raises(ValidationError, match="Limit.*out of range"):
-            await tool(limit=0)
-
+        result = await tool(limit=0)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Limit.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_list_memories_limit_above_range(
         self, memory_tools: dict[str, Any]
     ) -> None:
         """Test that list_memories rejects limit > 200."""
         tool = memory_tools["list_memories"]
-        with pytest.raises(ValidationError, match="Limit.*out of range"):
-            await tool(limit=201)
-
+        result = await tool(limit=201)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Limit.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_list_memories_limit_at_boundary_lower(
         self, memory_tools: dict[str, Any]
@@ -303,19 +315,20 @@ class TestDeleteMemoryValidation:
     ) -> None:
         """SPEC-057: Non-UUID string should error."""
         tool = memory_tools["delete_memory"]
-        with pytest.raises(ValidationError, match="Invalid UUID format"):
-            await tool(memory_id="not-a-uuid")
-
+        result = await tool(memory_id="not-a-uuid")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Invalid UUID format", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_delete_memory_invalid_uuid_shows_value(
         self, memory_tools: dict[str, Any]
     ) -> None:
         """SPEC-057: Error should show the invalid value."""
         tool = memory_tools["delete_memory"]
-        with pytest.raises(ValidationError) as exc_info:
-            await tool(memory_id="bad-id")
-        assert "bad-id" in str(exc_info.value)
-
+        result = await tool(memory_id="bad-id")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert "bad-id" in result["error"]["message"]
     @pytest.mark.asyncio
     async def test_delete_memory_valid_uuid_accepted(
         self, memory_tools: dict[str, Any]
@@ -367,18 +380,20 @@ class TestRetrieveMemoriesMinImportanceValidation:
     ) -> None:
         """min_importance=-0.5 should error."""
         tool = memory_tools["retrieve_memories"]
-        with pytest.raises(ValidationError, match="min_importance.*out of range"):
-            await tool(query="test", min_importance=-0.5)
-
+        result = await tool(query="test", min_importance=-0.5)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"min_importance.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_min_importance_above_range(
         self, memory_tools: dict[str, Any]
     ) -> None:
         """min_importance=1.5 should error."""
         tool = memory_tools["retrieve_memories"]
-        with pytest.raises(ValidationError, match="min_importance.*out of range"):
-            await tool(query="test", min_importance=1.5)
-
+        result = await tool(query="test", min_importance=1.5)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"min_importance.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_min_importance_at_boundaries(
         self, memory_tools: dict[str, Any]
@@ -400,24 +415,34 @@ class TestStoreMemoryTagsValidation:
     async def test_too_many_tags(self, memory_tools: dict[str, Any]) -> None:
         """More than 20 tags should error."""
         tool = memory_tools["store_memory"]
-        with pytest.raises(ValidationError, match="Too many tags"):
-            await tool(
-                content="test",
-                category="fact",
-                tags=["tag"] * 25,
-            )
+        result = await tool(
 
+    content="test",
+
+    category="fact",
+
+    tags=["tag"] * 25,
+
+)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Too many tags", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_tag_too_long(self, memory_tools: dict[str, Any]) -> None:
         """Tag longer than 50 chars should error."""
         tool = memory_tools["store_memory"]
-        with pytest.raises(ValidationError, match="too long"):
-            await tool(
-                content="test",
-                category="fact",
-                tags=["x" * 60],
-            )
+        result = await tool(
 
+    content="test",
+
+    category="fact",
+
+    tags=["x" * 60],
+
+)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"too long", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_tags_at_limits_accepted(
         self, memory_tools: dict[str, Any]
@@ -461,16 +486,18 @@ class TestListMemoriesTagsValidation:
     async def test_too_many_tags(self, memory_tools: dict[str, Any]) -> None:
         """More than 20 tags should error."""
         tool = memory_tools["list_memories"]
-        with pytest.raises(ValidationError, match="Too many tags"):
-            await tool(tags=["tag"] * 25)
-
+        result = await tool(tags=["tag"] * 25)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Too many tags", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_tag_too_long(self, memory_tools: dict[str, Any]) -> None:
         """Tag longer than 50 chars should error."""
         tool = memory_tools["list_memories"]
-        with pytest.raises(ValidationError, match="too long"):
-            await tool(tags=["x" * 60])
-
+        result = await tool(tags=["x" * 60])
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"too long", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_valid_tags_accepted(self, memory_tools: dict[str, Any]) -> None:
         """Valid tags should be accepted."""
@@ -486,9 +513,10 @@ class TestRetrieveMemoriesQueryLengthValidation:
     async def test_query_too_long(self, memory_tools: dict[str, Any]) -> None:
         """Query exceeding 10,000 chars should error."""
         tool = memory_tools["retrieve_memories"]
-        with pytest.raises(ValidationError, match="too long"):
-            await tool(query="x" * 10_001)
-
+        result = await tool(query="x" * 10_001)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"too long", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_query_at_max_length(self, memory_tools: dict[str, Any]) -> None:
         """Query at exactly 10,000 chars should be accepted."""
@@ -504,7 +532,7 @@ class TestRetrieveMemoriesQueryLengthValidation:
     ) -> None:
         """Error should show actual and maximum length."""
         tool = memory_tools["retrieve_memories"]
-        with pytest.raises(ValidationError) as exc_info:
-            await tool(query="x" * 10_001)
-        assert "10001" in str(exc_info.value)
-        assert "10000" in str(exc_info.value)
+        result = await tool(query="x" * 10_001)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert "10001" in result["error"]["message"]

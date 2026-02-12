@@ -1,5 +1,6 @@
 """Tests for CALM journal MCP tools."""
 
+import re
 from pathlib import Path
 
 import pytest
@@ -7,7 +8,6 @@ import pytest
 import calm.config
 from calm.db.schema import init_database
 from calm.tools.journal import get_journal_tools
-from calm.tools.validation import ValidationError
 
 
 @pytest.fixture
@@ -77,45 +77,49 @@ class TestStoreJournalEntryTool:
         """Test that empty summary raises validation error."""
         tools = get_journal_tools(db_path=test_db)
 
-        with pytest.raises(ValidationError, match="Summary is required"):
-            await tools["store_journal_entry"](
+        result = await tools["store_journal_entry"](
                 summary="",
                 working_directory="/test/project",
             )
-
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Summary is required", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_store_whitespace_summary_fails(self, test_db: Path) -> None:
         """Test that whitespace-only summary raises validation error."""
         tools = get_journal_tools(db_path=test_db)
 
-        with pytest.raises(ValidationError, match="Summary is required"):
-            await tools["store_journal_entry"](
+        result = await tools["store_journal_entry"](
                 summary="   ",
                 working_directory="/test/project",
             )
-
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Summary is required", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_store_empty_working_directory_fails(self, test_db: Path) -> None:
         """Test that empty working directory raises validation error."""
         tools = get_journal_tools(db_path=test_db)
 
-        with pytest.raises(ValidationError, match="Working directory"):
-            await tools["store_journal_entry"](
+        result = await tools["store_journal_entry"](
                 summary="Test summary",
                 working_directory="",
             )
-
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Working directory", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_store_summary_too_long_fails(self, test_db: Path) -> None:
         """Test that overly long summary raises validation error."""
         tools = get_journal_tools(db_path=test_db)
 
-        with pytest.raises(ValidationError, match="too long"):
-            await tools["store_journal_entry"](
+        result = await tools["store_journal_entry"](
                 summary="x" * 10001,
                 working_directory="/test/project",
             )
-
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"too long", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_store_too_many_friction_points_fails(
         self, test_db: Path
@@ -123,13 +127,14 @@ class TestStoreJournalEntryTool:
         """Test that too many friction points raises validation error."""
         tools = get_journal_tools(db_path=test_db)
 
-        with pytest.raises(ValidationError, match="Maximum 50"):
-            await tools["store_journal_entry"](
+        result = await tools["store_journal_entry"](
                 summary="Test summary",
                 working_directory="/test/project",
                 friction_points=[f"Point {i}" for i in range(51)],
             )
-
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Maximum 50", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_store_too_many_next_steps_fails(
         self, test_db: Path
@@ -137,14 +142,14 @@ class TestStoreJournalEntryTool:
         """Test that too many next steps raises validation error."""
         tools = get_journal_tools(db_path=test_db)
 
-        with pytest.raises(ValidationError, match="Maximum 50"):
-            await tools["store_journal_entry"](
+        result = await tools["store_journal_entry"](
                 summary="Test summary",
                 working_directory="/test/project",
                 next_steps=[f"Step {i}" for i in range(51)],
             )
-
-
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Maximum 50", result["error"]["message"])
 class TestListJournalEntriesTool:
     """Tests for list_journal_entries MCP tool."""
 
@@ -199,12 +204,14 @@ class TestListJournalEntriesTool:
         """Test that invalid limit raises validation error."""
         tools = get_journal_tools(db_path=test_db)
 
-        with pytest.raises(ValidationError, match="out of range"):
-            await tools["list_journal_entries"](limit=0)
-
-        with pytest.raises(ValidationError, match="out of range"):
-            await tools["list_journal_entries"](limit=201)
-
+        result = await tools["list_journal_entries"](limit=0)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"out of range", result["error"]["message"])
+        result = await tools["list_journal_entries"](limit=201)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_list_unreflected_only(self, test_db: Path) -> None:
         """Test filtering for unreflected entries."""
@@ -277,19 +284,21 @@ class TestGetJournalEntryTool:
         """Test getting nonexistent entry raises error."""
         tools = get_journal_tools(db_path=test_db)
 
-        with pytest.raises(ValidationError, match="not found"):
-            await tools["get_journal_entry"](
+        result = await tools["get_journal_entry"](
                 entry_id="00000000-0000-0000-0000-000000000000"
             )
-
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"not found", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_get_invalid_uuid_fails(self, test_db: Path) -> None:
         """Test getting with invalid UUID raises error."""
         tools = get_journal_tools(db_path=test_db)
 
-        with pytest.raises(ValidationError, match="Invalid UUID"):
-            await tools["get_journal_entry"](entry_id="invalid")
-
+        result = await tools["get_journal_entry"](entry_id="invalid")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Invalid UUID", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_get_with_log(
         self, test_db: Path, mock_sessions_dir: Path
@@ -340,21 +349,23 @@ class TestMarkEntriesReflectedTool:
         """Test marking empty list raises error."""
         tools = get_journal_tools(db_path=test_db)
 
-        with pytest.raises(ValidationError, match="At least one"):
-            await tools["mark_entries_reflected"](
+        result = await tools["mark_entries_reflected"](
                 entry_ids=[], delete_logs=False
             )
-
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"At least one", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_mark_invalid_uuid_fails(self, test_db: Path) -> None:
         """Test marking with invalid UUID raises error."""
         tools = get_journal_tools(db_path=test_db)
 
-        with pytest.raises(ValidationError, match="Invalid UUID"):
-            await tools["mark_entries_reflected"](
+        result = await tools["mark_entries_reflected"](
                 entry_ids=["invalid"], delete_logs=False
             )
-
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Invalid UUID", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_mark_with_memories_created(self, test_db: Path) -> None:
         """Test marking with memories_created count."""
@@ -384,13 +395,14 @@ class TestMarkEntriesReflectedTool:
             working_directory="/test/project",
         )
 
-        with pytest.raises(ValidationError, match="memories_created"):
-            await tools["mark_entries_reflected"](
+        result = await tools["mark_entries_reflected"](
                 entry_ids=[store_result["id"]],
                 memories_created=-1,
                 delete_logs=False,
             )
-
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"memories_created", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_mark_deletes_logs(
         self, test_db: Path, mock_sessions_dir: Path

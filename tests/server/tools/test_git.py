@@ -1,5 +1,6 @@
 """Tests for git MCP tools."""
 
+import re
 from datetime import datetime
 from unittest.mock import AsyncMock, Mock
 
@@ -12,9 +13,7 @@ from calm.git.base import (
     IndexingError,
     IndexingStats,
 )
-from calm.tools.errors import MCPError
 from calm.tools.git import get_git_tools
-from calm.tools.validation import ValidationError
 
 
 @pytest.mark.asyncio
@@ -23,11 +22,10 @@ async def test_search_commits_not_available(mock_services):
     tools = get_git_tools(mock_services.vector_store, mock_services.semantic_embedder)
     search_commits = tools["search_commits"]
 
-    with pytest.raises(
-        MCPError,
-        match="Git commit search not available.*GitAnalyzer",
-    ):
-        await search_commits(query="test")
+    result = await search_commits(query="test")
+    assert "error" in result
+    assert result["error"]["type"] == "not_available"
+    assert "Git commit search not available" in result["error"]["message"]
 
 
 @pytest.mark.asyncio
@@ -36,11 +34,10 @@ async def test_get_file_history_not_available(mock_services):
     tools = get_git_tools(mock_services.vector_store, mock_services.semantic_embedder)
     get_file_history = tools["get_file_history"]
 
-    with pytest.raises(
-        MCPError,
-        match="Git file history not available.*GitAnalyzer",
-    ):
-        await get_file_history(path="test.py")
+    result = await get_file_history(path="test.py")
+    assert "error" in result
+    assert result["error"]["type"] == "not_available"
+    assert "Git file history not available" in result["error"]["message"]
 
 
 @pytest.mark.asyncio
@@ -49,11 +46,10 @@ async def test_get_churn_hotspots_not_available(mock_services):
     tools = get_git_tools(mock_services.vector_store, mock_services.semantic_embedder)
     get_churn_hotspots = tools["get_churn_hotspots"]
 
-    with pytest.raises(
-        MCPError,
-        match="Git churn analysis not available.*GitAnalyzer",
-    ):
-        await get_churn_hotspots()
+    result = await get_churn_hotspots()
+    assert "error" in result
+    assert result["error"]["type"] == "not_available"
+    assert "Git churn analysis not available" in result["error"]["message"]
 
 
 @pytest.mark.asyncio
@@ -62,11 +58,10 @@ async def test_get_code_authors_not_available(mock_services):
     tools = get_git_tools(mock_services.vector_store, mock_services.semantic_embedder)
     get_code_authors = tools["get_code_authors"]
 
-    with pytest.raises(
-        MCPError,
-        match="Git author analysis not available.*GitAnalyzer",
-    ):
-        await get_code_authors(path="test.py")
+    result = await get_code_authors(path="test.py")
+    assert "error" in result
+    assert result["error"]["type"] == "not_available"
+    assert "Git author analysis not available" in result["error"]["message"]
 
 
 # Tests for when GitAnalyzer IS available
@@ -94,13 +89,14 @@ async def test_search_commits_limit_validation(mock_services):
     tools = get_git_tools(mock_services.vector_store, mock_services.semantic_embedder, git_analyzer=mock_services.git_analyzer)
     search_commits = tools["search_commits"]
 
-    with pytest.raises(ValidationError, match="Limit.*out of range"):
-        await search_commits(query="test", limit=0)
-
-    with pytest.raises(ValidationError, match="Limit.*out of range"):
-        await search_commits(query="test", limit=51)
-
-
+    result = await search_commits(query="test", limit=0)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Limit.*out of range", result["error"]["message"])
+    result = await search_commits(query="test", limit=51)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Limit.*out of range", result["error"]["message"])
 @pytest.mark.asyncio
 async def test_search_commits_invalid_date_format(mock_services):
     """Test validation error for invalid date format."""
@@ -109,10 +105,10 @@ async def test_search_commits_invalid_date_format(mock_services):
     tools = get_git_tools(mock_services.vector_store, mock_services.semantic_embedder, git_analyzer=mock_services.git_analyzer)
     search_commits = tools["search_commits"]
 
-    with pytest.raises(ValidationError, match="Invalid date format"):
-        await search_commits(query="test", since="not-a-date")
-
-
+    result = await search_commits(query="test", since="not-a-date")
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Invalid date format", result["error"]["message"])
 @pytest.mark.asyncio
 async def test_get_file_history_limit_validation(mock_services):
     """Test limit validation for get_file_history."""
@@ -121,13 +117,14 @@ async def test_get_file_history_limit_validation(mock_services):
     tools = get_git_tools(mock_services.vector_store, mock_services.semantic_embedder, git_analyzer=mock_services.git_analyzer)
     get_file_history = tools["get_file_history"]
 
-    with pytest.raises(ValidationError, match="Limit.*out of range"):
-        await get_file_history(path="test.py", limit=0)
-
-    with pytest.raises(ValidationError, match="Limit.*out of range"):
-        await get_file_history(path="test.py", limit=501)
-
-
+    result = await get_file_history(path="test.py", limit=0)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Limit.*out of range", result["error"]["message"])
+    result = await get_file_history(path="test.py", limit=501)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Limit.*out of range", result["error"]["message"])
 @pytest.mark.asyncio
 async def test_get_file_history_file_not_found(mock_services):
     """Test validation error when file not found in repository."""
@@ -140,10 +137,10 @@ async def test_get_file_history_file_not_found(mock_services):
     tools = get_git_tools(mock_services.vector_store, mock_services.semantic_embedder, git_analyzer=mock_services.git_analyzer)
     get_file_history = tools["get_file_history"]
 
-    with pytest.raises(ValidationError, match="File not found in repository"):
-        await get_file_history(path="nonexistent.py")
-
-
+    result = await get_file_history(path="nonexistent.py")
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"File not found in repository", result["error"]["message"])
 @pytest.mark.asyncio
 async def test_get_churn_hotspots_days_validation(mock_services):
     """Test days validation for get_churn_hotspots."""
@@ -152,13 +149,14 @@ async def test_get_churn_hotspots_days_validation(mock_services):
     tools = get_git_tools(mock_services.vector_store, mock_services.semantic_embedder, git_analyzer=mock_services.git_analyzer)
     get_churn_hotspots = tools["get_churn_hotspots"]
 
-    with pytest.raises(ValidationError, match="Days.*out of range"):
-        await get_churn_hotspots(days=0)
-
-    with pytest.raises(ValidationError, match="Days.*out of range"):
-        await get_churn_hotspots(days=366)
-
-
+    result = await get_churn_hotspots(days=0)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Days.*out of range", result["error"]["message"])
+    result = await get_churn_hotspots(days=366)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Days.*out of range", result["error"]["message"])
 @pytest.mark.asyncio
 async def test_get_churn_hotspots_limit_validation(mock_services):
     """Test limit validation for get_churn_hotspots."""
@@ -167,13 +165,14 @@ async def test_get_churn_hotspots_limit_validation(mock_services):
     tools = get_git_tools(mock_services.vector_store, mock_services.semantic_embedder, git_analyzer=mock_services.git_analyzer)
     get_churn_hotspots = tools["get_churn_hotspots"]
 
-    with pytest.raises(ValidationError, match="Limit.*out of range"):
-        await get_churn_hotspots(limit=0)
-
-    with pytest.raises(ValidationError, match="Limit.*out of range"):
-        await get_churn_hotspots(limit=51)
-
-
+    result = await get_churn_hotspots(limit=0)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Limit.*out of range", result["error"]["message"])
+    result = await get_churn_hotspots(limit=51)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Limit.*out of range", result["error"]["message"])
 @pytest.mark.asyncio
 async def test_get_churn_hotspots_formats_churn_records(mock_services):
     """Regression test for BUG-073: verify correct ChurnRecord attribute access."""
@@ -220,10 +219,10 @@ async def test_get_code_authors_file_not_found(mock_services):
     tools = get_git_tools(mock_services.vector_store, mock_services.semantic_embedder, git_analyzer=mock_services.git_analyzer)
     get_code_authors = tools["get_code_authors"]
 
-    with pytest.raises(ValidationError, match="File not found in repository"):
-        await get_code_authors(path="nonexistent.py")
-
-
+    result = await get_code_authors(path="nonexistent.py")
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"File not found in repository", result["error"]["message"])
 # Regression test for BUG-011
 
 
@@ -233,11 +232,10 @@ async def test_index_commits_not_available(mock_services):
     tools = get_git_tools(mock_services.vector_store, mock_services.semantic_embedder, git_analyzer=mock_services.git_analyzer)
     index_commits = tools["index_commits"]
 
-    with pytest.raises(
-        MCPError,
-        match="Git commit indexing not available.*GitAnalyzer",
-    ):
-        await index_commits()
+    result = await index_commits()
+    assert "error" in result
+    assert result["error"]["type"] == "not_available"
+    assert "Git commit indexing not available" in result["error"]["message"]
 
 
 @pytest.mark.asyncio
@@ -248,10 +246,10 @@ async def test_index_commits_invalid_date_format(mock_services):
     tools = get_git_tools(mock_services.vector_store, mock_services.semantic_embedder, git_analyzer=mock_services.git_analyzer)
     index_commits = tools["index_commits"]
 
-    with pytest.raises(ValidationError, match="Invalid date format"):
-        await index_commits(since="not-a-date")
-
-
+    result = await index_commits(since="not-a-date")
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Invalid date format", result["error"]["message"])
 @pytest.mark.asyncio
 async def test_index_commits_invalid_limit(mock_services):
     """Test validation error for invalid limit in index_commits."""
@@ -260,10 +258,10 @@ async def test_index_commits_invalid_limit(mock_services):
     tools = get_git_tools(mock_services.vector_store, mock_services.semantic_embedder, git_analyzer=mock_services.git_analyzer)
     index_commits = tools["index_commits"]
 
-    with pytest.raises(ValidationError, match="Limit must be positive"):
-        await index_commits(limit=0)
-
-
+    result = await index_commits(limit=0)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Limit must be positive", result["error"]["message"])
 @pytest.mark.asyncio
 async def test_index_and_search_commits_workflow(mock_services):
     """Test that commits must be indexed before they can be searched (BUG-011 regression test).

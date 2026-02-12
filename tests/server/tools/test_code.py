@@ -1,11 +1,11 @@
 """Tests for code MCP tools."""
 
+import re
 from unittest.mock import Mock
 
 import pytest
 
 from calm.tools.code import get_code_tools
-from calm.tools.validation import ValidationError
 
 
 @pytest.mark.asyncio
@@ -48,13 +48,14 @@ async def test_search_code_limit_validation(mock_services):
     )
     search_code = tools["search_code"]
 
-    with pytest.raises(ValidationError, match="Limit.*out of range"):
-        await search_code(query="test", limit=0)
-
-    with pytest.raises(ValidationError, match="Limit.*out of range"):
-        await search_code(query="test", limit=51)
-
-
+    result = await search_code(query="test", limit=0)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Limit.*out of range", result["error"]["message"])
+    result = await search_code(query="test", limit=51)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Limit.*out of range", result["error"]["message"])
 @pytest.mark.asyncio
 async def test_find_similar_code_snippet_too_long(mock_services):
     """Test validation for snippet that's too long (no silent truncation)."""
@@ -67,10 +68,10 @@ async def test_find_similar_code_snippet_too_long(mock_services):
     find_similar_code = tools["find_similar_code"]
 
     long_snippet = "x" * 6000
-    with pytest.raises(ValidationError, match="Snippet too long"):
-        await find_similar_code(snippet=long_snippet)
-
-
+    result = await find_similar_code(snippet=long_snippet)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Snippet too long", result["error"]["message"])
 @pytest.mark.asyncio
 async def test_find_similar_code_empty_snippet(mock_services):
     """Test that empty snippet returns empty results."""
@@ -99,13 +100,14 @@ async def test_find_similar_code_limit_validation(mock_services):
     )
     find_similar_code = tools["find_similar_code"]
 
-    with pytest.raises(ValidationError, match="Limit.*out of range"):
-        await find_similar_code(snippet="test", limit=0)
-
-    with pytest.raises(ValidationError, match="Limit.*out of range"):
-        await find_similar_code(snippet="test", limit=51)
-
-
+    result = await find_similar_code(snippet="test", limit=0)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Limit.*out of range", result["error"]["message"])
+    result = await find_similar_code(snippet="test", limit=51)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Limit.*out of range", result["error"]["message"])
 @pytest.mark.asyncio
 async def test_index_codebase_directory_not_found(mock_services, tmp_path):
     """Test validation error when directory doesn't exist."""
@@ -117,13 +119,16 @@ async def test_index_codebase_directory_not_found(mock_services, tmp_path):
     )
     index_codebase = tools["index_codebase"]
 
-    with pytest.raises(ValidationError, match="Directory not found"):
-        await index_codebase(
-            directory=str(tmp_path / "nonexistent"),
-            project="test",
-        )
+    result = await index_codebase(
 
+    directory=str(tmp_path / "nonexistent"),
 
+    project="test",
+
+)
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Directory not found", result["error"]["message"])
 @pytest.mark.asyncio
 async def test_index_codebase_not_a_directory(mock_services, tmp_path):
     """Test validation error when path is not a directory."""
@@ -139,10 +144,10 @@ async def test_index_codebase_not_a_directory(mock_services, tmp_path):
     )
     index_codebase = tools["index_codebase"]
 
-    with pytest.raises(ValidationError, match="Not a directory"):
-        await index_codebase(directory=str(test_file), project="test")
-
-
+    result = await index_codebase(directory=str(test_file), project="test")
+    assert "error" in result
+    assert result["error"]["type"] == "validation_error"
+    assert re.search(r"Not a directory", result["error"]["message"])
 @pytest.mark.asyncio
 async def test_search_code_with_filters(mock_services, mock_search_result):
     """Test search_code with project and language filters."""

@@ -13,12 +13,11 @@ This test module verifies that all validation constraints are enforced
 with informative error messages.
 """
 
+import re
 from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
-
-from calm.tools.validation import ValidationError
 
 
 class TestIndexCodebaseValidation:
@@ -48,12 +47,16 @@ class TestIndexCodebaseValidation:
     ) -> None:
         """Test that index_codebase rejects non-existent directory."""
         tool = code_tools["index_codebase"]
-        with pytest.raises(ValidationError, match="Directory not found"):
-            await tool(
-                directory="/nonexistent/path/to/directory",
-                project="test-project",
-            )
+        result = await tool(
 
+    directory="/nonexistent/path/to/directory",
+
+    project="test-project",
+
+)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Directory not found", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_index_codebase_invalid_directory_is_file(
         self, code_tools: dict[str, Any], tmp_path: Any
@@ -64,12 +67,16 @@ class TestIndexCodebaseValidation:
         file_path.write_text("test")
 
         tool = code_tools["index_codebase"]
-        with pytest.raises(ValidationError, match="Not a directory"):
-            await tool(
-                directory=str(file_path),
-                project="test-project",
-            )
+        result = await tool(
 
+    directory=str(file_path),
+
+    project="test-project",
+
+)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Not a directory", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_index_codebase_valid_directory(
         self, code_tools: dict[str, Any], mock_code_indexer: Any, tmp_path: Any
@@ -120,27 +127,30 @@ class TestSearchCodeValidation:
     ) -> None:
         """Test that search_code rejects limit < 1."""
         tool = code_tools["search_code"]
-        with pytest.raises(ValidationError, match="Limit.*out of range"):
-            await tool(query="test", limit=0)
-
+        result = await tool(query="test", limit=0)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Limit.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_search_code_limit_above_range(
         self, code_tools: dict[str, Any]
     ) -> None:
         """Test that search_code rejects limit > 50."""
         tool = code_tools["search_code"]
-        with pytest.raises(ValidationError, match="Limit.*out of range"):
-            await tool(query="test", limit=51)
-
+        result = await tool(query="test", limit=51)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Limit.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_search_code_limit_negative(
         self, code_tools: dict[str, Any]
     ) -> None:
         """Test that search_code rejects negative limit."""
         tool = code_tools["search_code"]
-        with pytest.raises(ValidationError, match="Limit.*out of range"):
-            await tool(query="test", limit=-1)
-
+        result = await tool(query="test", limit=-1)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Limit.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_search_code_limit_at_boundary_lower(
         self, code_tools: dict[str, Any]
@@ -189,9 +199,10 @@ class TestFindSimilarCodeValidation:
         """Test that find_similar_code rejects snippet exceeding 5,000 chars."""
         tool = code_tools["find_similar_code"]
         long_snippet = "x" * 6000
-        with pytest.raises(ValidationError, match="Snippet too long"):
-            await tool(snippet=long_snippet)
-
+        result = await tool(snippet=long_snippet)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Snippet too long", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_find_similar_code_snippet_too_long_shows_limit(
         self, code_tools: dict[str, Any]
@@ -199,28 +210,30 @@ class TestFindSimilarCodeValidation:
         """Test that snippet length error shows the limit."""
         tool = code_tools["find_similar_code"]
         long_snippet = "x" * 6000
-        with pytest.raises(ValidationError) as exc_info:
-            await tool(snippet=long_snippet)
-        assert "5000" in str(exc_info.value) or "5,000" in str(exc_info.value)
-
+        result = await tool(snippet=long_snippet)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert "5000" in result["error"]["message"]
     @pytest.mark.asyncio
     async def test_find_similar_code_limit_below_range(
         self, code_tools: dict[str, Any]
     ) -> None:
         """Test that find_similar_code rejects limit < 1."""
         tool = code_tools["find_similar_code"]
-        with pytest.raises(ValidationError, match="Limit.*out of range"):
-            await tool(snippet="test code", limit=0)
-
+        result = await tool(snippet="test code", limit=0)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Limit.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_find_similar_code_limit_above_range(
         self, code_tools: dict[str, Any]
     ) -> None:
         """Test that find_similar_code rejects limit > 50."""
         tool = code_tools["find_similar_code"]
-        with pytest.raises(ValidationError, match="Limit.*out of range"):
-            await tool(snippet="test code", limit=51)
-
+        result = await tool(snippet="test code", limit=51)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Limit.*out of range", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_find_similar_code_limit_at_boundary_lower(
         self, code_tools: dict[str, Any]
@@ -252,20 +265,20 @@ class TestSearchCodeLanguageValidation:
     async def test_invalid_language(self, code_tools: dict[str, Any]) -> None:
         """Unsupported language should error."""
         tool = code_tools["search_code"]
-        with pytest.raises(ValidationError, match="Unsupported language"):
-            await tool(query="test", language="brainfuck")
-
+        result = await tool(query="test", language="brainfuck")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Unsupported language", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_invalid_language_lists_supported(
         self, code_tools: dict[str, Any]
     ) -> None:
         """Error message should list supported languages."""
         tool = code_tools["search_code"]
-        with pytest.raises(ValidationError) as exc_info:
-            await tool(query="test", language="invalid")
-        assert "python" in str(exc_info.value)
-        assert "typescript" in str(exc_info.value)
-
+        result = await tool(query="test", language="invalid")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert "python" in result["error"]["message"]
     @pytest.mark.asyncio
     @pytest.mark.parametrize("language", ["python", "Python", "PYTHON"])
     async def test_valid_language_case_insensitive(
@@ -322,45 +335,50 @@ class TestIndexCodebaseProjectValidation:
     ) -> None:
         """Project with spaces should error."""
         tool = code_tools["index_codebase"]
-        with pytest.raises(ValidationError, match="Invalid project identifier"):
-            await tool(directory=str(tmp_path), project="has spaces")
-
+        result = await tool(directory=str(tmp_path), project="has spaces")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Invalid project identifier", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_project_with_special_chars(
         self, code_tools: dict[str, Any], tmp_path: Any
     ) -> None:
         """Project with special chars should error."""
         tool = code_tools["index_codebase"]
-        with pytest.raises(ValidationError, match="Invalid project identifier"):
-            await tool(directory=str(tmp_path), project="has@special!")
-
+        result = await tool(directory=str(tmp_path), project="has@special!")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Invalid project identifier", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_project_too_long(
         self, code_tools: dict[str, Any], tmp_path: Any
     ) -> None:
         """Project > 100 chars should error."""
         tool = code_tools["index_codebase"]
-        with pytest.raises(ValidationError, match="too long"):
-            await tool(directory=str(tmp_path), project="x" * 101)
-
+        result = await tool(directory=str(tmp_path), project="x" * 101)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"too long", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_project_empty(
         self, code_tools: dict[str, Any], tmp_path: Any
     ) -> None:
         """Empty project should error."""
         tool = code_tools["index_codebase"]
-        with pytest.raises(ValidationError, match="cannot be empty"):
-            await tool(directory=str(tmp_path), project="")
-
+        result = await tool(directory=str(tmp_path), project="")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"cannot be empty", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_project_starts_with_dash(
         self, code_tools: dict[str, Any], tmp_path: Any
     ) -> None:
         """Project starting with dash should error."""
         tool = code_tools["index_codebase"]
-        with pytest.raises(ValidationError, match="Invalid project identifier"):
-            await tool(directory=str(tmp_path), project="-starts-with-dash")
-
+        result = await tool(directory=str(tmp_path), project="-starts-with-dash")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Invalid project identifier", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_valid_project_identifiers(
         self, code_tools: dict[str, Any], mock_code_indexer: Any, tmp_path: Any
@@ -405,9 +423,10 @@ class TestSearchCodeQueryLengthValidation:
     async def test_query_too_long(self, code_tools: dict[str, Any]) -> None:
         """Query exceeding 10,000 chars should error."""
         tool = code_tools["search_code"]
-        with pytest.raises(ValidationError, match="too long"):
-            await tool(query="x" * 10_001)
-
+        result = await tool(query="x" * 10_001)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"too long", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_query_at_max_length(self, code_tools: dict[str, Any]) -> None:
         """Query at exactly 10,000 chars should be accepted."""
@@ -422,12 +441,10 @@ class TestSearchCodeQueryLengthValidation:
     ) -> None:
         """Error should show actual and maximum length."""
         tool = code_tools["search_code"]
-        with pytest.raises(ValidationError) as exc_info:
-            await tool(query="x" * 10_001)
-        assert "10001" in str(exc_info.value)
-        assert "10000" in str(exc_info.value)
-
-
+        result = await tool(query="x" * 10_001)
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert "10001" in result["error"]["message"]
 class TestSearchCodeOptionalProjectValidation:
     """SPEC-057: Optional project filter validation tests for search_code."""
 
@@ -437,18 +454,20 @@ class TestSearchCodeOptionalProjectValidation:
     ) -> None:
         """Project filter with spaces should error."""
         tool = code_tools["search_code"]
-        with pytest.raises(ValidationError, match="Invalid project identifier"):
-            await tool(query="test", project="has spaces")
-
+        result = await tool(query="test", project="has spaces")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Invalid project identifier", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_invalid_project_with_special_chars(
         self, code_tools: dict[str, Any]
     ) -> None:
         """Project filter with special chars should error."""
         tool = code_tools["search_code"]
-        with pytest.raises(ValidationError, match="Invalid project identifier"):
-            await tool(query="test", project="has@special!")
-
+        result = await tool(query="test", project="has@special!")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Invalid project identifier", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_none_project_accepted(self, code_tools: dict[str, Any]) -> None:
         """None project should be accepted (no filter)."""
@@ -473,18 +492,20 @@ class TestFindSimilarCodeOptionalProjectValidation:
     ) -> None:
         """Project filter with spaces should error."""
         tool = code_tools["find_similar_code"]
-        with pytest.raises(ValidationError, match="Invalid project identifier"):
-            await tool(snippet="def foo(): pass", project="has spaces")
-
+        result = await tool(snippet="def foo(): pass", project="has spaces")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Invalid project identifier", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_invalid_project_with_special_chars(
         self, code_tools: dict[str, Any]
     ) -> None:
         """Project filter with special chars should error."""
         tool = code_tools["find_similar_code"]
-        with pytest.raises(ValidationError, match="Invalid project identifier"):
-            await tool(snippet="def foo(): pass", project="has@special!")
-
+        result = await tool(snippet="def foo(): pass", project="has@special!")
+        assert "error" in result
+        assert result["error"]["type"] == "validation_error"
+        assert re.search(r"Invalid project identifier", result["error"]["message"])
     @pytest.mark.asyncio
     async def test_none_project_accepted(self, code_tools: dict[str, Any]) -> None:
         """None project should be accepted (no filter)."""

@@ -9,7 +9,6 @@ import structlog
 from calm.embedding.base import EmbeddingService
 from calm.storage.base import VectorStore
 
-from .errors import MCPError
 from .validation import ValidationError, validate_query_string
 
 logger = structlog.get_logger()
@@ -19,6 +18,11 @@ ToolFunc = Callable[..., Coroutine[Any, Any, dict[str, Any]]]
 
 # Track whether collection has been ensured
 _commits_collection_ensured = False
+
+
+def _error_response(error_type: str, message: str) -> dict[str, Any]:
+    """Create a standardized error response."""
+    return {"error": {"type": error_type, "message": message}}
 
 
 def validate_author_name(author: str | None, max_length: int = 200) -> None:
@@ -98,49 +102,58 @@ def get_git_tools(
         """
         logger.info("git.index_commits", since=since, limit=limit, force=force)
 
-        if git_analyzer is None:
-            raise MCPError(
-                "Git commit indexing not available. GitAnalyzer not initialized."
+        try:
+            if git_analyzer is None:
+                return _error_response(
+                    "not_available",
+                    "Git commit indexing not available. GitAnalyzer not initialized.",
+                )
+
+            # Validate since date if provided
+            if since:
+                try:
+                    datetime.fromisoformat(since)
+                except ValueError as e:
+                    raise ValidationError(
+                        f"Invalid date format '{since}'. Use ISO format: YYYY-MM-DD"
+                    ) from e
+
+            # Validate limit if provided
+            if limit is not None:
+                if limit < 1:
+                    raise ValidationError(f"Limit must be positive, got {limit}")
+                if limit > 100_000:
+                    raise ValidationError(f"Limit {limit} exceeds maximum of 100000")
+
+            stats = await git_analyzer.index_commits(
+                since=since,
+                limit=limit,
+                force=force,
             )
 
-        # Validate since date if provided
-        if since:
-            try:
-                datetime.fromisoformat(since)
-            except ValueError as e:
-                raise ValidationError(
-                    f"Invalid date format '{since}'. Use ISO format: YYYY-MM-DD"
-                ) from e
+            result = {
+                "status": "success",
+                "commits_indexed": stats.commits_indexed,
+                "commits_skipped": stats.commits_skipped,
+                "duration_ms": stats.duration_ms,
+                "errors": [
+                    {
+                        "sha": err.sha,
+                        "error_type": err.error_type,
+                        "message": err.message,
+                    }
+                    for err in stats.errors
+                ],
+            }
 
-        # Validate limit if provided
-        if limit is not None:
-            if limit < 1:
-                raise ValidationError(f"Limit must be positive, got {limit}")
-            if limit > 100_000:
-                raise ValidationError(f"Limit {limit} exceeds maximum of 100000")
+            return result
 
-        stats = await git_analyzer.index_commits(
-            since=since,
-            limit=limit,
-            force=force,
-        )
-
-        result = {
-            "status": "success",
-            "commits_indexed": stats.commits_indexed,
-            "commits_skipped": stats.commits_skipped,
-            "duration_ms": stats.duration_ms,
-            "errors": [
-                {
-                    "sha": err.sha,
-                    "error_type": err.error_type,
-                    "message": err.message,
-                }
-                for err in stats.errors
-            ],
-        }
-
-        return result
+        except ValidationError as e:
+            logger.warning("git.validation_error", error=str(e))
+            return _error_response("validation_error", str(e))
+        except Exception as e:
+            logger.error("git.index_commits_failed", error=str(e), exc_info=True)
+            return _error_response("internal_error", f"Failed to index commits: {e}")
 
     async def search_commits(
         query: str,
@@ -161,71 +174,80 @@ def get_git_tools(
         """
         logger.info("git.search_commits", query=query[:50], author=author)
 
-        if git_analyzer is None:
-            raise MCPError(
-                "Git commit search not available. GitAnalyzer not initialized."
-            )
+        try:
+            if git_analyzer is None:
+                return _error_response(
+                    "not_available",
+                    "Git commit search not available. GitAnalyzer not initialized.",
+                )
 
-        # Validate limit
-        if not 1 <= limit <= 50:
-            raise ValidationError(
-                f"Limit {limit} out of range. Must be between 1 and 50."
-            )
-
-        # Validate query length
-        validate_query_string(query)
-
-        # Validate author name if provided
-        validate_author_name(author)
-
-        # Parse date if provided
-        since_dt = None
-        if since:
-            try:
-                since_dt = datetime.fromisoformat(since)
-            except ValueError as e:
+            # Validate limit
+            if not 1 <= limit <= 50:
                 raise ValidationError(
-                    f"Invalid date format '{since}'. Use ISO format: YYYY-MM-DD"
-                ) from e
+                    f"Limit {limit} out of range. Must be between 1 and 50."
+                )
 
-        # Handle empty query
-        if not query.strip():
-            return {"results": [], "count": 0}
+            # Validate query length
+            validate_query_string(query)
 
-        # Use git_analyzer to search commits
-        results = await git_analyzer.search_commits(
-            query=query,
-            author=author,
-            since=since_dt,
-            limit=limit,
-        )
+            # Validate author name if provided
+            validate_author_name(author)
 
-        # Format results
-        formatted = []
-        for result in results:
-            # Convert timestamp to ISO format if present
-            timestamp = result.commit.timestamp
-            if timestamp:
-                timestamp = timestamp.isoformat()
+            # Parse date if provided
+            since_dt = None
+            if since:
+                try:
+                    since_dt = datetime.fromisoformat(since)
+                except ValueError as e:
+                    raise ValidationError(
+                        f"Invalid date format '{since}'. Use ISO format: YYYY-MM-DD"
+                    ) from e
 
-            formatted.append(
-                {
-                    "sha": result.commit.sha,
-                    "message": result.commit.message,
-                    "author": result.commit.author,
-                    "author_email": result.commit.author_email,
-                    "timestamp": timestamp,
-                    "files_changed": result.commit.files_changed,
-                    "file_count": len(result.commit.files_changed),
-                    "insertions": result.commit.insertions,
-                    "deletions": result.commit.deletions,
-                    "score": result.score,
-                }
+            # Handle empty query
+            if not query.strip():
+                return {"results": [], "count": 0}
+
+            # Use git_analyzer to search commits
+            results = await git_analyzer.search_commits(
+                query=query,
+                author=author,
+                since=since_dt,
+                limit=limit,
             )
 
-        logger.info("git.commits_found", count=len(formatted))
+            # Format results
+            formatted = []
+            for result in results:
+                # Convert timestamp to ISO format if present
+                timestamp = result.commit.timestamp
+                if timestamp:
+                    timestamp = timestamp.isoformat()
 
-        return {"results": formatted, "count": len(formatted)}
+                formatted.append(
+                    {
+                        "sha": result.commit.sha,
+                        "message": result.commit.message,
+                        "author": result.commit.author,
+                        "author_email": result.commit.author_email,
+                        "timestamp": timestamp,
+                        "files_changed": result.commit.files_changed,
+                        "file_count": len(result.commit.files_changed),
+                        "insertions": result.commit.insertions,
+                        "deletions": result.commit.deletions,
+                        "score": result.score,
+                    }
+                )
+
+            logger.info("git.commits_found", count=len(formatted))
+
+            return {"results": formatted, "count": len(formatted)}
+
+        except ValidationError as e:
+            logger.warning("git.validation_error", error=str(e))
+            return _error_response("validation_error", str(e))
+        except Exception as e:
+            logger.error("git.search_commits_failed", error=str(e), exc_info=True)
+            return _error_response("internal_error", f"Failed to search commits: {e}")
 
     async def get_file_history(
         path: str,
@@ -242,39 +264,48 @@ def get_git_tools(
         """
         logger.info("git.file_history", path=path, limit=limit)
 
-        if git_analyzer is None:
-            raise MCPError(
-                "Git file history not available. GitAnalyzer not initialized."
-            )
-
-        # Validate limit
-        if not 1 <= limit <= 500:
-            raise ValidationError(
-                f"Limit {limit} out of range. Must be between 1 and 500."
-            )
-
         try:
-            commits = await git_analyzer.git_reader.get_file_history(
-                path=path, limit=limit
-            )
-        except FileNotFoundError as e:
-            raise ValidationError(f"File not found in repository: {path}") from e
+            if git_analyzer is None:
+                return _error_response(
+                    "not_available",
+                    "Git file history not available. GitAnalyzer not initialized.",
+                )
 
-        formatted = [
-            {
-                "sha": c.sha,
-                "message": c.message,
-                "author": c.author,
-                "author_email": c.author_email,
-                "timestamp": c.committed_at.isoformat() if c.committed_at else None,
-                "files_changed": c.files_changed,
-                "insertions": c.insertions,
-                "deletions": c.deletions,
-            }
-            for c in commits
-        ]
+            # Validate limit
+            if not 1 <= limit <= 500:
+                raise ValidationError(
+                    f"Limit {limit} out of range. Must be between 1 and 500."
+                )
 
-        return {"commits": formatted, "count": len(formatted), "path": path}
+            try:
+                commits = await git_analyzer.git_reader.get_file_history(
+                    path=path, limit=limit
+                )
+            except FileNotFoundError as e:
+                raise ValidationError(f"File not found in repository: {path}") from e
+
+            formatted = [
+                {
+                    "sha": c.sha,
+                    "message": c.message,
+                    "author": c.author,
+                    "author_email": c.author_email,
+                    "timestamp": c.committed_at.isoformat() if c.committed_at else None,
+                    "files_changed": c.files_changed,
+                    "insertions": c.insertions,
+                    "deletions": c.deletions,
+                }
+                for c in commits
+            ]
+
+            return {"commits": formatted, "count": len(formatted), "path": path}
+
+        except ValidationError as e:
+            logger.warning("git.validation_error", error=str(e))
+            return _error_response("validation_error", str(e))
+        except Exception as e:
+            logger.error("git.file_history_failed", error=str(e), exc_info=True)
+            return _error_response("internal_error", f"Failed to get file history: {e}")
 
     async def get_churn_hotspots(
         days: int = 90,
@@ -291,35 +322,46 @@ def get_git_tools(
         """
         logger.info("git.churn_hotspots", days=days, limit=limit)
 
-        if git_analyzer is None:
-            raise MCPError(
-                "Git churn analysis not available. GitAnalyzer not initialized."
+        try:
+            if git_analyzer is None:
+                return _error_response(
+                    "not_available",
+                    "Git churn analysis not available. GitAnalyzer not initialized.",
+                )
+
+            # Validate parameters
+            if not 1 <= days <= 365:
+                raise ValidationError(
+                    f"Days {days} out of range. Must be between 1 and 365."
+                )
+            if not 1 <= limit <= 50:
+                raise ValidationError(
+                    f"Limit {limit} out of range. Must be between 1 and 50."
+                )
+
+            hotspots = await git_analyzer.get_churn_hotspots(days=days, limit=limit)
+
+            formatted = [
+                {
+                    "path": h.file_path,
+                    "commit_count": h.change_count,
+                    "total_insertions": h.total_insertions,
+                    "total_deletions": h.total_deletions,
+                    "authors": h.authors,
+                }
+                for h in hotspots
+            ]
+
+            return {"hotspots": formatted, "count": len(formatted)}
+
+        except ValidationError as e:
+            logger.warning("git.validation_error", error=str(e))
+            return _error_response("validation_error", str(e))
+        except Exception as e:
+            logger.error("git.churn_hotspots_failed", error=str(e), exc_info=True)
+            return _error_response(
+                "internal_error", f"Failed to get churn hotspots: {e}"
             )
-
-        # Validate parameters
-        if not 1 <= days <= 365:
-            raise ValidationError(
-                f"Days {days} out of range. Must be between 1 and 365."
-            )
-        if not 1 <= limit <= 50:
-            raise ValidationError(
-                f"Limit {limit} out of range. Must be between 1 and 50."
-            )
-
-        hotspots = await git_analyzer.get_churn_hotspots(days=days, limit=limit)
-
-        formatted = [
-            {
-                "path": h.file_path,
-                "commit_count": h.change_count,
-                "total_insertions": h.total_insertions,
-                "total_deletions": h.total_deletions,
-                "authors": h.authors,
-            }
-            for h in hotspots
-        ]
-
-        return {"hotspots": formatted, "count": len(formatted)}
 
     async def get_code_authors(path: str) -> dict[str, Any]:
         """Get author statistics for a file.
@@ -332,28 +374,37 @@ def get_git_tools(
         """
         logger.info("git.code_authors", path=path)
 
-        if git_analyzer is None:
-            raise MCPError(
-                "Git author analysis not available. GitAnalyzer not initialized."
-            )
-
         try:
-            authors = await git_analyzer.get_file_authors(path=path)
-        except FileNotFoundError as e:
-            raise ValidationError(f"File not found in repository: {path}") from e
+            if git_analyzer is None:
+                return _error_response(
+                    "not_available",
+                    "Git author analysis not available. GitAnalyzer not initialized.",
+                )
 
-        formatted = [
-            {
-                "author": a.author,
-                "email": a.email,
-                "line_count": a.line_count,
-                "percentage": a.percentage,
-                "last_commit": a.last_commit.isoformat() if a.last_commit else None,
-            }
-            for a in authors
-        ]
+            try:
+                authors = await git_analyzer.get_file_authors(path=path)
+            except FileNotFoundError as e:
+                raise ValidationError(f"File not found in repository: {path}") from e
 
-        return {"authors": formatted, "count": len(formatted), "path": path}
+            formatted = [
+                {
+                    "author": a.author,
+                    "email": a.email,
+                    "line_count": a.line_count,
+                    "percentage": a.percentage,
+                    "last_commit": a.last_commit.isoformat() if a.last_commit else None,
+                }
+                for a in authors
+            ]
+
+            return {"authors": formatted, "count": len(formatted), "path": path}
+
+        except ValidationError as e:
+            logger.warning("git.validation_error", error=str(e))
+            return _error_response("validation_error", str(e))
+        except Exception as e:
+            logger.error("git.code_authors_failed", error=str(e), exc_info=True)
+            return _error_response("internal_error", f"Failed to get code authors: {e}")
 
     return {
         "index_commits": index_commits,

@@ -11,7 +11,6 @@ from calm.config import settings
 from calm.embedding.base import EmbeddingService
 from calm.storage.base import VectorStore
 
-from .errors import MCPError
 from .validation import (
     ValidationError,
     validate_importance_range,
@@ -38,6 +37,11 @@ ToolFunc = Callable[..., Coroutine[Any, Any, dict[str, Any]]]
 
 # Track whether collection has been ensured (lazy initialization)
 _memories_collection_ensured = False
+
+
+def _error_response(error_type: str, message: str) -> dict[str, Any]:
+    """Create a standardized error response."""
+    return {"error": {"type": error_type, "message": message}}
 
 
 async def _ensure_memories_collection(
@@ -91,37 +95,37 @@ def get_memory_tools(
         """Store a new memory with semantic embedding."""
         logger.info("memory.store", category=category, importance=importance)
 
-        # Ensure collection exists (lazy initialization)
-        await _ensure_memories_collection(vector_store, semantic_embedder)
-
-        # Validate category
-        if category not in VALID_CATEGORIES:
-            raise ValidationError(
-                f"Invalid category '{category}'. "
-                f"Must be one of: {', '.join(sorted(VALID_CATEGORIES))}"
-            )
-
-        # Validate content length (no silent truncation per spec)
-        max_length = settings.memory_content_max_length
-        if len(content) > max_length:
-            raise ValidationError(
-                f"Content too long ({len(content)} chars). "
-                f"Maximum allowed is {max_length} characters."
-            )
-
-        # Validate importance range (no silent clamping per spec)
-        if not 0.0 <= importance <= 1.0:
-            raise ValidationError(
-                f"Importance {importance} out of range. "
-                f"Must be between 0.0 and 1.0."
-            )
-
-        # Validate tags array
-        validate_tags(tags, max_count=20, max_length=50)
-
-        tags = tags or []
-
         try:
+            # Ensure collection exists (lazy initialization)
+            await _ensure_memories_collection(vector_store, semantic_embedder)
+
+            # Validate category
+            if category not in VALID_CATEGORIES:
+                raise ValidationError(
+                    f"Invalid category '{category}'. "
+                    f"Must be one of: {', '.join(sorted(VALID_CATEGORIES))}"
+                )
+
+            # Validate content length (no silent truncation per spec)
+            max_length = settings.memory_content_max_length
+            if len(content) > max_length:
+                raise ValidationError(
+                    f"Content too long ({len(content)} chars). "
+                    f"Maximum allowed is {max_length} characters."
+                )
+
+            # Validate importance range (no silent clamping per spec)
+            if not 0.0 <= importance <= 1.0:
+                raise ValidationError(
+                    f"Importance {importance} out of range. "
+                    f"Must be between 0.0 and 1.0."
+                )
+
+            # Validate tags array
+            validate_tags(tags, max_count=20, max_length=50)
+
+            tags = tags or []
+
             # Generate ID and timestamp
             memory_id = str(uuid4())
             created_at = datetime.now(UTC)
@@ -158,9 +162,12 @@ def get_memory_tools(
                 "created_at": created_at.isoformat(),
             }
 
+        except ValidationError as e:
+            logger.warning("memory.validation_error", error=str(e))
+            return _error_response("validation_error", str(e))
         except Exception as e:
             logger.error("memory.store_failed", error=str(e), exc_info=True)
-            raise MCPError(f"Failed to store memory: {e}") from e
+            return _error_response("internal_error", f"Failed to store memory: {e}")
 
     async def retrieve_memories(
         query: str,
@@ -171,33 +178,33 @@ def get_memory_tools(
         """Search memories semantically."""
         logger.info("memory.retrieve", query=query[:50], limit=limit)
 
-        # Ensure collection exists (lazy initialization)
-        await _ensure_memories_collection(vector_store, semantic_embedder)
-
-        # Validate category
-        if category and category not in VALID_CATEGORIES:
-            raise ValidationError(
-                f"Invalid category '{category}'. "
-                f"Must be one of: {', '.join(sorted(VALID_CATEGORIES))}"
-            )
-
-        # Validate limit
-        if not 1 <= limit <= 100:
-            raise ValidationError(
-                f"Limit {limit} out of range. Must be between 1 and 100."
-            )
-
-        # Validate min_importance range
-        validate_importance_range(min_importance, "min_importance")
-
-        # Validate query length
-        validate_query_string(query)
-
-        # Handle empty query
-        if not query.strip():
-            return {"results": [], "count": 0}
-
         try:
+            # Ensure collection exists (lazy initialization)
+            await _ensure_memories_collection(vector_store, semantic_embedder)
+
+            # Validate category
+            if category and category not in VALID_CATEGORIES:
+                raise ValidationError(
+                    f"Invalid category '{category}'. "
+                    f"Must be one of: {', '.join(sorted(VALID_CATEGORIES))}"
+                )
+
+            # Validate limit
+            if not 1 <= limit <= 100:
+                raise ValidationError(
+                    f"Limit {limit} out of range. Must be between 1 and 100."
+                )
+
+            # Validate min_importance range
+            validate_importance_range(min_importance, "min_importance")
+
+            # Validate query length
+            validate_query_string(query)
+
+            # Handle empty query
+            if not query.strip():
+                return {"results": [], "count": 0}
+
             # Generate query embedding
             query_embedding = await semantic_embedder.embed(query)
 
@@ -229,9 +236,14 @@ def get_memory_tools(
 
             return {"results": formatted, "count": len(formatted)}
 
+        except ValidationError as e:
+            logger.warning("memory.validation_error", error=str(e))
+            return _error_response("validation_error", str(e))
         except Exception as e:
             logger.error("memory.retrieve_failed", error=str(e), exc_info=True)
-            raise MCPError(f"Failed to retrieve memories: {e}") from e
+            return _error_response(
+                "internal_error", f"Failed to retrieve memories: {e}"
+            )
 
     async def list_memories(
         category: str | None = None,
@@ -242,30 +254,30 @@ def get_memory_tools(
         """List memories with filters (non-semantic)."""
         logger.info("memory.list", category=category, limit=limit, offset=offset)
 
-        # Ensure collection exists (lazy initialization)
-        await _ensure_memories_collection(vector_store, semantic_embedder)
-
-        # Validate category
-        if category and category not in VALID_CATEGORIES:
-            raise ValidationError(
-                f"Invalid category '{category}'. "
-                f"Must be one of: {', '.join(sorted(VALID_CATEGORIES))}"
-            )
-
-        # Validate offset
-        if offset < 0:
-            raise ValidationError(f"Offset {offset} must be >= 0.")
-
-        # Validate limit
-        if not 1 <= limit <= 200:
-            raise ValidationError(
-                f"Limit {limit} out of range. Must be between 1 and 200."
-            )
-
-        # Validate tags array
-        validate_tags(tags, max_count=20, max_length=50)
-
         try:
+            # Ensure collection exists (lazy initialization)
+            await _ensure_memories_collection(vector_store, semantic_embedder)
+
+            # Validate category
+            if category and category not in VALID_CATEGORIES:
+                raise ValidationError(
+                    f"Invalid category '{category}'. "
+                    f"Must be one of: {', '.join(sorted(VALID_CATEGORIES))}"
+                )
+
+            # Validate offset
+            if offset < 0:
+                raise ValidationError(f"Offset {offset} must be >= 0.")
+
+            # Validate limit
+            if not 1 <= limit <= 200:
+                raise ValidationError(
+                    f"Limit {limit} out of range. Must be between 1 and 200."
+                )
+
+            # Validate tags array
+            validate_tags(tags, max_count=20, max_length=50)
+
             # Build filters
             filters: dict[str, Any] = {}
             if category:
@@ -320,16 +332,23 @@ def get_memory_tools(
                 "total": total,
             }
 
+        except ValidationError as e:
+            logger.warning("memory.validation_error", error=str(e))
+            return _error_response("validation_error", str(e))
         except Exception as e:
             logger.error("memory.list_failed", error=str(e), exc_info=True)
-            raise MCPError(f"Failed to list memories: {e}") from e
+            return _error_response("internal_error", f"Failed to list memories: {e}")
 
-    async def delete_memory(memory_id: str) -> dict[str, bool]:
+    async def delete_memory(memory_id: str) -> dict[str, Any]:
         """Delete a memory by ID."""
         logger.info("memory.delete", memory_id=memory_id)
 
-        # Validate UUID format
-        validate_uuid(memory_id, "memory_id")
+        try:
+            # Validate UUID format
+            validate_uuid(memory_id, "memory_id")
+        except ValidationError as e:
+            logger.warning("memory.validation_error", error=str(e))
+            return _error_response("validation_error", str(e))
 
         try:
             await vector_store.delete(

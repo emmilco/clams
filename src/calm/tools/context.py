@@ -23,6 +23,11 @@ ToolFunc = Callable[..., Coroutine[Any, Any, dict[str, Any]]]
 VALID_CONTEXT_TYPES = ["values", "experiences", "memories", "code", "commits"]
 
 
+def _error_response(error_type: str, message: str) -> dict[str, Any]:
+    """Create a standardized error response."""
+    return {"error": {"type": error_type, "message": message}}
+
+
 def validate_context_types(context_types: list[str]) -> None:
     """Validate context types for assemble_context.
 
@@ -103,119 +108,127 @@ def get_context_tools(
             - item_count: Total items included
             - truncated: Whether content was truncated
         """
-        # Validate parameters
-        if context_types is not None:
-            validate_context_types(context_types)
-        else:
-            context_types = ["values", "experiences"]
+        try:
+            # Validate parameters
+            if context_types is not None:
+                validate_context_types(context_types)
+            else:
+                context_types = ["values", "experiences"]
 
-        validate_limit_range(limit, min_val=1, max_val=50, param_name="limit")
-        validate_limit_range(
-            max_tokens, min_val=100, max_val=10000, param_name="max_tokens"
-        )
+            validate_limit_range(limit, min_val=1, max_val=50, param_name="limit")
+            validate_limit_range(
+                max_tokens, min_val=100, max_val=10000, param_name="max_tokens"
+            )
 
-        # Validate query length
-        validate_query_string(query)
+            # Validate query length
+            validate_query_string(query)
 
-        # Empty query returns empty result gracefully (not error)
-        if not query.strip():
+            # Empty query returns empty result gracefully (not error)
+            if not query.strip():
+                return {
+                    "markdown": "",
+                    "token_count": 0,
+                    "item_count": 0,
+                    "truncated": False,
+                }
+
+            # If context assembler is available, delegate to it
+            if context_assembler is not None:
+                try:
+                    result = await context_assembler.assemble_context(
+                        query=query,
+                        context_types=context_types,
+                        limit=limit,
+                        max_tokens=max_tokens,
+                    )
+                    return {
+                        "markdown": result.markdown,
+                        "token_count": result.token_count,
+                        "item_count": len(result.items),
+                        "truncated": result.budget_exceeded,
+                        "sources_used": result.sources_used,
+                    }
+                except Exception as e:
+                    logger.warning("context.assembler_failed", error=str(e))
+                    # Fall through to inline implementation
+
+            sections: list[str] = []
+            total_items = 0
+
+            # Get values (distilled learnings)
+            if "values" in context_types:
+                try:
+                    # Query values collection
+                    results = await vector_store.scroll(
+                        collection="values",
+                        limit=limit,
+                        filters=None,
+                        with_vectors=False,
+                    )
+
+                    if results:
+                        value_lines = [
+                            f"- {r.payload.get('text', '')}" for r in results
+                        ]
+                        sections.append("## Learned Values\n" + "\n".join(value_lines))
+                        total_items += len(results)
+                except Exception as e:
+                    error_msg = str(e).lower()
+                    if "not found" not in error_msg and "404" not in str(e):
+                        logger.warning("context.values_failed", error=str(e))
+
+            # Get relevant experiences
+            if "experiences" in context_types and query:
+                try:
+                    # Generate query embedding
+                    query_embedding = await semantic_embedder.embed(query)
+
+                    # Search experiences (fewer, they're verbose)
+                    exp_limit = min(limit, 5)
+
+                    results = await vector_store.search(
+                        collection="ghap_full",
+                        query=query_embedding,
+                        limit=exp_limit,
+                        filters=None,
+                    )
+
+                    if results:
+                        exp_lines = []
+                        for r in results:
+                            domain = r.payload.get("domain", "unknown")
+                            goal = r.payload.get("goal", "")
+                            outcome = r.payload.get("outcome_status", "unknown")
+                            exp_lines.append(f"- **{domain}**: {goal} ({outcome})")
+
+                        sections.append(
+                            "## Relevant Experiences\n" + "\n".join(exp_lines)
+                        )
+                        total_items += len(results)
+                except Exception as e:
+                    error_msg = str(e).lower()
+                    if "not found" not in error_msg and "404" not in str(e):
+                        logger.warning("context.experiences_failed", error=str(e))
+
+            # Build markdown
+            markdown = "\n\n".join(sections) if sections else ""
+
+            # Rough token estimate (4 chars per token)
+            token_count = len(markdown) // 4
+
             return {
-                "markdown": "",
-                "token_count": 0,
-                "item_count": 0,
-                "truncated": False,
+                "markdown": markdown,
+                "token_count": token_count,
+                "item_count": total_items,
+                "truncated": token_count > max_tokens,
             }
 
-        # If context assembler is available, delegate to it
-        if context_assembler is not None:
-            try:
-                result = await context_assembler.assemble_context(
-                    query=query,
-                    context_types=context_types,
-                    limit=limit,
-                    max_tokens=max_tokens,
-                )
-                return {
-                    "markdown": result.markdown,
-                    "token_count": result.token_count,
-                    "item_count": len(result.items),
-                    "truncated": result.budget_exceeded,
-                    "sources_used": result.sources_used,
-                }
-            except Exception as e:
-                logger.warning("context.assembler_failed", error=str(e))
-                # Fall through to inline implementation
-
-        sections: list[str] = []
-        total_items = 0
-
-        # Get values (distilled learnings)
-        if "values" in context_types:
-            try:
-                # Query values collection
-                results = await vector_store.scroll(
-                    collection="values",
-                    limit=limit,
-                    filters=None,
-                    with_vectors=False,
-                )
-
-                if results:
-                    value_lines = [
-                        f"- {r.payload.get('text', '')}" for r in results
-                    ]
-                    sections.append("## Learned Values\n" + "\n".join(value_lines))
-                    total_items += len(results)
-            except Exception as e:
-                error_msg = str(e).lower()
-                if "not found" not in error_msg and "404" not in str(e):
-                    logger.warning("context.values_failed", error=str(e))
-
-        # Get relevant experiences
-        if "experiences" in context_types and query:
-            try:
-                # Generate query embedding
-                query_embedding = await semantic_embedder.embed(query)
-
-                # Search experiences (fewer, they're verbose)
-                exp_limit = min(limit, 5)
-
-                results = await vector_store.search(
-                    collection="ghap_full",
-                    query=query_embedding,
-                    limit=exp_limit,
-                    filters=None,
-                )
-
-                if results:
-                    exp_lines = []
-                    for r in results:
-                        domain = r.payload.get("domain", "unknown")
-                        goal = r.payload.get("goal", "")
-                        outcome = r.payload.get("outcome_status", "unknown")
-                        exp_lines.append(f"- **{domain}**: {goal} ({outcome})")
-
-                    sections.append(
-                        "## Relevant Experiences\n" + "\n".join(exp_lines)
-                    )
-                    total_items += len(results)
-            except Exception as e:
-                error_msg = str(e).lower()
-                if "not found" not in error_msg and "404" not in str(e):
-                    logger.warning("context.experiences_failed", error=str(e))
-
-        # Build markdown
-        markdown = "\n\n".join(sections) if sections else ""
-
-        # Rough token estimate (4 chars per token)
-        token_count = len(markdown) // 4
-
-        return {
-            "markdown": markdown,
-            "token_count": token_count,
-            "item_count": total_items,
-            "truncated": token_count > max_tokens,
-        }
+        except ValidationError as e:
+            logger.warning("context.validation_error", error=str(e))
+            return _error_response("validation_error", str(e))
+        except Exception as e:
+            logger.error("context.assemble_failed", error=str(e), exc_info=True)
+            return _error_response("internal_error", f"Failed to assemble context: {e}")
 
     return {
         "assemble_context": assemble_context,
