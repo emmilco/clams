@@ -405,10 +405,11 @@ def install_claude_code_skills(
     force: bool = False,
     dry_run: bool = False,
 ) -> tuple[list[str], list[str], list[str]]:
-    """Install CALM skill wrappers into ~/.claude/skills/.
+    """Install CALM skill wrappers into ~/.claude/skills/ as symlinks.
 
-    Creates thin SKILL.md wrappers that Claude Code can discover,
-    pointing back to the CALM skill system.
+    Creates symlinks from ~/.claude/skills/<name>/SKILL.md to the
+    template files in the calm package, so skills stay in sync with
+    the codebase automatically.
 
     Args:
         claude_skills_dir: Path to ~/.claude/skills/
@@ -418,36 +419,44 @@ def install_claude_code_skills(
     Returns:
         Tuple of (installed, skipped, errors)
     """
-    from calm.install.templates import read_template
+    from calm.install.templates import get_templates_path
 
     installed: list[str] = []
     skipped: list[str] = []
     errors: list[str] = []
 
+    templates_dir = get_templates_path()
+
     for skill_name, dir_name, _keywords, _patterns in CALM_SKILLS:
         skill_dir = claude_skills_dir / dir_name
         skill_file = skill_dir / "SKILL.md"
+        source = templates_dir / "claude_skills" / f"{skill_name}_SKILL.md"
 
-        if skill_file.exists() and not force:
-            skipped.append(f"Skipped (exists): {skill_file}")
+        # Already a correct symlink — nothing to do
+        if skill_file.is_symlink() and skill_file.resolve() == source.resolve():
+            skipped.append(f"Skipped (symlink correct): {skill_file}")
             continue
 
+        # Exists (regular file or wrong symlink) — skip unless force
+        if skill_file.exists() or skill_file.is_symlink():
+            if not force:
+                skipped.append(f"Skipped (exists): {skill_file}")
+                continue
+
         if dry_run:
-            if skill_file.exists():
-                installed.append(f"Would overwrite: {skill_file}")
+            if skill_file.exists() or skill_file.is_symlink():
+                installed.append(f"Would overwrite with symlink: {skill_file}")
             else:
-                installed.append(f"Would install: {skill_file}")
+                installed.append(f"Would symlink: {skill_file} -> {source}")
             continue
 
         try:
-            # Read the template
-            template_path = f"claude_skills/{skill_name}_SKILL.md"
-            content = read_template(template_path)
-
-            # Create directory and write file
             skill_dir.mkdir(parents=True, exist_ok=True)
-            skill_file.write_text(content, encoding="utf-8")
-            installed.append(f"Installed: {skill_file}")
+            # Remove existing file/symlink before creating new symlink
+            if skill_file.exists() or skill_file.is_symlink():
+                skill_file.unlink()
+            skill_file.symlink_to(source)
+            installed.append(f"Symlinked: {skill_file} -> {source}")
         except (FileNotFoundError, OSError) as e:
             errors.append(f"Error installing {skill_name} skill: {e}")
 

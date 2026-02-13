@@ -97,14 +97,15 @@ class TestInstallClaudeCodeSkills:
     """Tests for install_claude_code_skills."""
 
     def test_installs_all_skill_wrappers(self, tmp_path: Path) -> None:
-        """Should create SKILL.md for all three skills."""
+        """Should create SKILL.md symlinks for all three skills."""
         installed, skipped, errors = install_claude_code_skills(tmp_path)
 
         assert len(errors) == 0, f"Errors: {errors}"
         assert len(installed) == 3
-        assert (tmp_path / "orchestrate" / "SKILL.md").exists()
-        assert (tmp_path / "wrapup" / "SKILL.md").exists()
-        assert (tmp_path / "reflection" / "SKILL.md").exists()
+        for name in ("orchestrate", "wrapup", "reflection"):
+            skill_file = tmp_path / name / "SKILL.md"
+            assert skill_file.exists()
+            assert skill_file.is_symlink(), f"{name} should be a symlink"
 
     def test_skill_wrapper_has_frontmatter(self, tmp_path: Path) -> None:
         """Skill wrappers should have YAML frontmatter."""
@@ -138,38 +139,48 @@ class TestInstallClaudeCodeSkills:
         assert "GHAP" in content
         assert "mcp__calm__" in content
 
-    def test_skips_existing_without_force(self, tmp_path: Path) -> None:
-        """Should skip existing skill files without --force."""
+    def test_skips_correct_symlinks(self, tmp_path: Path) -> None:
+        """Should skip skill files that are already correct symlinks."""
         # First install
         install_claude_code_skills(tmp_path)
 
-        # Modify a file
-        skill_file = tmp_path / "orchestrate" / "SKILL.md"
-        skill_file.write_text("custom content")
-
-        # Second install without force
+        # Second install — symlinks are already correct
         installed, skipped, errors = install_claude_code_skills(tmp_path)
 
         assert len(installed) == 0
         assert len(skipped) == 3
-        assert skill_file.read_text() == "custom content"
+        assert "symlink correct" in skipped[0]
 
-    def test_force_overwrites(self, tmp_path: Path) -> None:
-        """Should overwrite existing files with --force."""
-        # First install
-        install_claude_code_skills(tmp_path)
-
-        # Modify a file
-        skill_file = tmp_path / "orchestrate" / "SKILL.md"
+    def test_skips_existing_regular_file_without_force(
+        self, tmp_path: Path
+    ) -> None:
+        """Should skip existing regular files without --force."""
+        skill_dir = tmp_path / "orchestrate"
+        skill_dir.mkdir(parents=True)
+        skill_file = skill_dir / "SKILL.md"
         skill_file.write_text("custom content")
 
-        # Second install with force
+        installed, skipped, errors = install_claude_code_skills(tmp_path)
+
+        assert len(skipped) >= 1
+        assert skill_file.read_text() == "custom content"
+        assert not skill_file.is_symlink()
+
+    def test_force_replaces_regular_file_with_symlink(
+        self, tmp_path: Path
+    ) -> None:
+        """Should replace existing regular files with symlinks when --force."""
+        skill_dir = tmp_path / "orchestrate"
+        skill_dir.mkdir(parents=True)
+        skill_file = skill_dir / "SKILL.md"
+        skill_file.write_text("custom content")
+
         installed, skipped, errors = install_claude_code_skills(
             tmp_path, force=True
         )
 
-        assert len(installed) == 3
-        assert skill_file.read_text() != "custom content"
+        assert len(errors) == 0
+        assert skill_file.is_symlink()
         assert skill_file.read_text().startswith("---")
 
     def test_dry_run_no_changes(self, tmp_path: Path) -> None:
@@ -179,7 +190,7 @@ class TestInstallClaudeCodeSkills:
         )
 
         assert len(installed) == 3
-        assert "Would install" in installed[0]
+        assert "Would symlink" in installed[0]
         assert not (tmp_path / "orchestrate" / "SKILL.md").exists()
 
 
@@ -205,7 +216,7 @@ class TestRegisterClaudeCodeSkills:
         assert "calm-wrapup" in rules["skills"]
         assert "calm-reflection" in rules["skills"]
 
-        assert "Installed" in message
+        assert "Symlinked" in message
 
     def test_preserves_existing_rules(self, tmp_path: Path) -> None:
         """Should preserve existing entries in skill-rules.json."""
