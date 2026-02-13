@@ -66,7 +66,11 @@ echo ""
 if [ "$FORCE" = false ]; then
     echo "This will remove CALM from Claude Code configuration."
     if [ "$REMOVE_DATA" = true ]; then
-        warning "This will also DELETE ~/.calm/ (all memories, GHAP data, etc.)"
+        warning "This will also DELETE ~/.calm/ including:"
+        warning "  - metadata.db (tasks, workers, reviews, counters)"
+        warning "  - All memories, GHAP entries, and journal data"
+        warning "  - Role, workflow, and skill templates"
+        warning "  - Server logs and config"
     fi
     echo ""
     read -p "Continue? (y/N) " -n 1 -r

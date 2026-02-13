@@ -55,7 +55,15 @@ def step_check_dependencies(
             output(f"  [OK] {check.name}{version_str}")
         else:
             found = check.found_version
-            version_str = f" (found {found})" if found else ""
+            required = check.required_version
+            if found and required:
+                version_str = f" (found {found}, need {required})"
+            elif found:
+                version_str = f" (found {found})"
+            elif required:
+                version_str = f" (need {required})"
+            else:
+                version_str = ""
             output(f"  [MISSING] {check.name}{version_str}")
             output(f"    {check.install_hint}")
 
@@ -84,7 +92,7 @@ def step_create_directories(
     for msg in created:
         output(f"  {msg}")
 
-    if not created and not options.dry_run:
+    if not created:
         output("  All directories already exist")
 
     result.add_completed(InstallStep.CREATE_DIRS)

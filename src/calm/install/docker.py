@@ -210,7 +210,7 @@ def wait_for_qdrant_healthy(
     while time.time() - start_time < timeout_seconds:
         try:
             response = httpx.get(
-                f"{qdrant_url}/readiness",
+                f"{qdrant_url}/healthz",
                 timeout=5.0,
             )
             if response.status_code == 200:
