@@ -444,3 +444,144 @@ Created skill wrapper templates for orchestrate, wrapup, and reflection; added s
 
 #### BUG-073: get_churn_hotspots uses wrong attribute names on ChurnRecord
 Changed h.path to h.file_path and h.commit_count to h.change_count in git tools.
+
+---
+
+## Post-Consolidation (2026-02-08 through 2026-02-12)
+
+Changes merged after the initial changelog consolidation.
+
+---
+
+### Features
+
+#### SPEC-059: Backup Rotation with Configurable Max Count
+Prevent unbounded backup accumulation by enforcing a maximum backup count and automatically deleting the oldest backups when the limit is exceeded.
+- Added `max_backups` setting to `CalmSettings` (default: 10, configurable via `CALM_MAX_BACKUPS` env var)
+- Added `rotate_backups(max_backups)` function that deletes oldest backups (both SQLite and Qdrant snapshots) when count exceeds limit
+- `create_backup()` now calls `rotate_backups()` after each backup creation
+- Updated `calm backup list` CLI to show "N of M backups (max: M)" header
+- Added tests for rotation logic, config setting, and CLI output
+
+#### SPEC-060: Add keyword/lexical search fallback to Searcher
+Added keyword and hybrid search modes alongside the existing semantic search, enabling reliable exact-match queries for function names, error messages, and identifiers.
+- Added `search_mode` parameter ("semantic", "keyword", "hybrid") to all search methods in the Searcher class
+- Implemented keyword search via case-insensitive text substring matching on payload fields
+- Implemented hybrid search that merges semantic and keyword results with score boosting
+- Added `search_mode` parameter to MCP tool functions: `search_code`, `retrieve_memories`, `search_commits`, `search_experiences`
+- Updated MCP tool schemas in `app.py` to expose the `search_mode` enum
+- Added 36 tests covering keyword scoring, keyword search per collection, hybrid search, backward compatibility, validation, and error handling
+
+#### SPEC-061-02: Hardcoded Path and Machine-Specific Audit
+Audited all source code, scripts, templates, and configuration files for hardcoded paths or machine-specific values.
+- Confirmed zero hardcoded paths in `src/`, `scripts/`, `src/calm/templates/`, and `.claude/` config
+- Confirmed hook registrations use relative `python -m` invocations
+- No code changes required (audit-only task)
+
+---
+
+### Bug Fixes
+
+#### BUG-074: Fix `calm task list --include-done` crash with JSONDecodeError
+Fixed a crash in `_row_to_task()` where malformed `blocked_by` values (bare strings written without JSON serialization) caused a `JSONDecodeError` when listing tasks with `--include-done`.
+- Added defensive `try/except json.JSONDecodeError` parsing in `_row_to_task()` to gracefully handle non-JSON `blocked_by` values by falling back to comma-separated string parsing
+- Repaired two corrupted rows in the database (SPEC-058-02 and SPEC-058-03) that had bare string `blocked_by` values instead of JSON arrays
+- Added regression tests covering bare strings, comma-separated values, NULL, empty strings, valid JSON arrays, and empty JSON arrays
+
+#### BUG-075: Editable install conflicts between worktrees
+Fixed PEP 660 editable install causing worktree tests to import from the main repo instead of the worktree's own code. Workers' code changes are now correctly tested during gate checks.
+- Added sys.path injection at the top of `tests/conftest.py` to ensure the project's own `src/` takes priority over the `.pth` file from the editable install
+- Added `PYTHONPATH` override in `src/calm/orchestration/gates.py` for subprocess calls (pytest, mypy) so gate check subprocesses also resolve imports from the worktree's `src/`
+- Added regression tests in `tests/test_import_isolation.py` verifying that `calm` imports from the correct `src/` directory
+
+#### BUG-076: MCP client does not reconnect after server restart
+Migrated the CALM MCP server from the deprecated SSE transport to the Streamable HTTP transport, enabling automatic client reconnection after server restarts.
+- Replaced `SseServerTransport` with `StreamableHTTPSessionManager` in `src/calm/server/main.py`
+- Changed the MCP endpoint from `/sse` to `/mcp` using Starlette `Mount`
+- Added a lifespan context manager to manage the session manager lifecycle
+- Updated `src/calm/install/config_merge.py` to register the server with `type: "http"` instead of `type: "sse"`
+- Updated CORS middleware to allow DELETE method for session termination
+- Added regression tests verifying the transport migration
+
+#### BUG-077: Code indexer crawls .venv directory
+Fixed the code indexer unnecessarily traversing `.venv`, `node_modules`, and other excluded directories during file discovery, causing significant I/O overhead and polluted search results.
+- Replaced `Path.glob("**/*")` with `os.walk()` + in-place directory pruning in `CodeIndexer._find_files` so the walker never descends into excluded directories
+- Added `DEFAULT_EXCLUDED_DIRS` class attribute to `CodeIndexer` with 19 common directories to skip
+- Updated `DEFAULT_EXCLUSIONS` in `src/calm/tools/code.py` to include previously missing patterns
+- Added 4 regression tests verifying directory pruning behavior
+
+#### BUG-078: Fix Qdrant backup/restore to use per-collection snapshots
+Fixed backup system to use per-collection Qdrant snapshots instead of full-storage snapshots. The previous implementation used `create_full_snapshot()` for backup (which worked) but `POST /snapshots/upload` for restore (a non-existent Qdrant API endpoint). Switched to per-collection `create_snapshot()` and `POST /collections/{name}/snapshots/upload` which are both valid Qdrant API endpoints.
+- Changed `create_qdrant_snapshot()` from full-storage to per-collection snapshots, iterating over all known collections
+- Changed `restore_qdrant_snapshot()` from non-existent endpoint to valid per-collection endpoint
+- Changed `QDRANT_SNAPSHOT_SUFFIX` from `.qdrant.snapshot` (single file) to `.qdrant` (directory with per-collection files)
+- Updated all tests to use directory-based mocks and verify per-collection API calls
+
+#### BUG-079: Fix CollectionName.CODE naming mismatch
+Fixed `CollectionName.CODE` constant to use `"code_units"` (matching the actual Qdrant collection name) instead of `"code"`, which caused `Searcher.search_code()` and `ContextAssembler` code queries to fail with `CollectionNotFoundError`.
+- Fixed `CollectionName.CODE` from `"code"` to `"code_units"` in `src/calm/search/collections.py`
+- Replaced all hardcoded `"code_units"` strings with `CollectionName.CODE` in indexer, tools, and backups
+- Added regression tests to prevent future naming drift
+
+#### BUG-080: Remove 5 dead MCP session/counter tools
+Removed 5 MCP tools that were made obsolete when hooks were rewritten to use file-based state instead of MCP calls. The hooks now use direct file I/O and SQLite queries, making these tools dead code.
+- Removed `start_session`, `get_orphaned_ghap`, `should_check_in`, `increment_tool_count`, `reset_tool_count` tool definitions from `app.py`
+- Deleted `src/calm/tools/session.py` (SessionManager class, validate_frequency, get_session_tools)
+- Removed `get_session_tools` from `src/calm/tools/__init__.py`
+- Removed associated test files and test classes
+- Updated `scripts/verify_calm_setup.md` to reflect 29 tools (was 34)
+- Added regression test (`test_bug_080_regression.py`) verifying removed tools stay removed
+
+#### BUG-081: Consolidate dual session ID systems
+Fixed conflicting session ID systems where SessionManager (UUID format), ObservationCollector (timestamped format), and CLAUDE_SESSION_ID env var operated independently, causing session tracking inconsistencies.
+- Added unified get_session_id() function that checks CLAUDE_SESSION_ID env var first, then falls back to .session_id file
+- Updated SessionManager.get_current_session_id() to delegate to get_session_id()
+- Changed start_session() to use env var when available, falling back to ObservationCollector format instead of UUID
+- Added regression tests for env var priority, file fallback, and consistency
+
+#### BUG-082: Restore pre-commit hooks deleted during CALM migration
+Restored pre-commit hook scripts that were accidentally deleted by SPEC-058-08 during the CLAMS-to-CALM migration. Updated `clams` path references to `calm` in the heavy imports checker.
+- Restored `.claude/hooks/check_heavy_imports.py` with `clams` to `calm` path updates in ALLOWED_MODULES
+- Restored `.claude/hooks/check_subprocess.py` (no path changes needed)
+- Added 10 regression tests verifying hook existence, functionality, and path correctness
+
+#### BUG-083: Consistent error handling across all MCP tool categories
+Standardized error handling across all MCP tool categories to return structured error dicts `{"error": {"type": "...", "message": "..."}}` instead of raising exceptions that the server dispatcher catches generically.
+- Converted memory, code, git, context, session, and journal tools to return error dicts
+- Removed MCPError import from ghap.py, converted persist failure to error dict
+- Updated 16 test files to check for error dicts instead of raised exceptions
+- Added 24 regression tests covering all tool categories
+
+#### BUG-084: Daemon uses sys.executable (global Python) instead of venv
+Fixed the daemon and session-start hook to detect and use the virtualenv Python interpreter instead of blindly using `sys.executable`, which could point to a global Python lacking CALM's dependencies.
+- Added `get_python_executable()` helper to `src/calm/server/daemon.py` that resolves the correct Python via VIRTUAL_ENV env var, pyvenv.cfg detection, or sys.executable fallback
+- Updated `daemon.start_daemon()` to use the helper
+- Updated `hooks/session_start.ensure_server_running()` to use the helper
+- Added 11 regression tests covering all resolution strategies
+
+#### BUG-085: Add MCP server health detection to session_start hook
+Added HTTP health check to detect when the MCP server process is alive but not responding, and warn users to restart.
+- Added `check_server_health()` helper to `src/calm/hooks/common.py` that pings the server's `/health` endpoint
+- Updated `session_start.py` to perform HTTP health check after PID-based liveness check
+- When server is unresponsive, hook output now includes health warning
+- Added 8 regression tests covering health check success/failure and hook integration
+
+#### BUG-086: Gate check pytest timeout too tight for growing test suite
+Increased the gate check pytest timeout from a hardcoded 300s to a configurable 600s default, preventing spurious gate failures as the test suite grows.
+- Added `gate_test_timeout` setting to `CalmSettings` (default: 600s, configurable via `CALM_GATE_TEST_TIMEOUT` env var)
+- Replaced hardcoded `timeout=300` in `_check_tests_pass` with `settings.gate_test_timeout`
+- Added `timeout=settings.gate_test_timeout` to both pytest calls in `_check_no_skipped`
+- Added regression tests verifying default value, env var configurability, and usage in gate check functions
+
+#### BUG-087: Fix CollectionName.CODE naming inconsistency
+Renamed `CollectionName.CODE` to `CollectionName.CODE_UNITS` so the Python constant name matches the Qdrant collection name (`"code_units"`), consistent with all other non-experience collection constants.
+- Renamed `CollectionName.CODE` to `CollectionName.CODE_UNITS` in `src/calm/search/collections.py`
+- Updated all 9 references across searcher, tools, indexer, backups, and tests
+- Added regression tests ensuring all collection constant names match their values
+
+#### BUG-088: Hooks fail silently with no logging or visibility
+Added file-based error logging to all Claude Code hooks so that hook failures are recorded in ~/.calm/hook_errors.log instead of being silently discarded.
+- Added `log_hook_error()` helper and `get_hook_error_log_path()` to `common.py`
+- Added log rotation (1 MB max, keeps 1 backup as hook_errors.log.1)
+- Updated all 10 exception handlers across session_start.py, user_prompt_submit.py, pre_tool_use.py, and post_tool_use.py to log errors
+- Added 19 regression tests covering log creation, content format, rotation, stdout silence, and per-hook logging
