@@ -84,3 +84,35 @@ class TestDeadSessionToolsRemoved:
             f"Expected 29 tools after removing 5 session tools, "
             f"but found {len(tool_defs)}"
         )
+
+
+class TestPingTool:
+    """Verify ping tool returns real health check data."""
+
+    @pytest.mark.asyncio
+    async def test_ping_returns_healthy_status(self) -> None:
+        """Ping tool should return status, server name, and version."""
+        from calm.server.app import create_server
+
+        _server, tool_registry = await create_server(use_mock=True)
+        ping = tool_registry["ping"]
+
+        result = await ping()
+
+        assert result["status"] == "healthy"
+        assert result["server"] == "calm"
+        assert "version" in result
+        assert result["version"]  # Not empty
+
+    @pytest.mark.asyncio
+    async def test_ping_is_not_stub(self) -> None:
+        """Ping tool must not return not_implemented or stub response."""
+        from calm.server.app import create_server
+
+        _server, tool_registry = await create_server(use_mock=True)
+        ping = tool_registry["ping"]
+
+        result = await ping()
+
+        assert result.get("status") != "not_implemented"
+        assert "error" not in result

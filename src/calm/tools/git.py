@@ -349,7 +349,7 @@ def get_git_tools(
                     "message": c.message,
                     "author": c.author,
                     "author_email": c.author_email,
-                    "timestamp": c.committed_at.isoformat() if c.committed_at else None,
+                    "timestamp": c.timestamp.isoformat() if c.timestamp else None,
                     "files_changed": c.files_changed,
                     "insertions": c.insertions,
                     "deletions": c.deletions,
@@ -445,12 +445,15 @@ def get_git_tools(
             except FileNotFoundError as e:
                 raise ValidationError(f"File not found in repository: {path}") from e
 
+            total_commits = sum(a.commit_count for a in authors) or 1
             formatted = [
                 {
                     "author": a.author,
-                    "email": a.email,
-                    "line_count": a.line_count,
-                    "percentage": a.percentage,
+                    "email": a.author_email,
+                    "commit_count": a.commit_count,
+                    "lines_added": a.lines_added,
+                    "lines_removed": a.lines_removed,
+                    "percentage": round(a.commit_count / total_commits * 100, 1),
                     "last_commit": a.last_commit.isoformat() if a.last_commit else None,
                 }
                 for a in authors
