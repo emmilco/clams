@@ -43,7 +43,7 @@ CALM operates in two modes:
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/calm.git
+   git clone <your-repo-url>   # Replace with your actual repo URL
    cd calm
    ```
 
@@ -278,6 +278,15 @@ python3 --version  # Must be 3.12+
 ```bash
 # macOS: Open Docker Desktop
 # Linux: sudo systemctl start docker
+```
+
+**MCP server not responding**:
+```bash
+# Check server status
+calm server status
+
+# Restart the server
+calm server restart
 ```
 
 **CALM not recognized in Claude Code**:

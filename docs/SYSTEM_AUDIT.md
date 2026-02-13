@@ -24,7 +24,7 @@
 
 CALM is a development productivity system that gives Claude Code persistent memory, structured problem-solving, and multi-agent orchestration capabilities. It consists of:
 
-- **MCP Server**: HTTP server (port 6335) exposing 42 tools via the Model Context Protocol
+- **MCP Server**: HTTP server (port 6335) exposing 29 tools via the Model Context Protocol
 - **CLI**: `calm` command for orchestration management (tasks, worktrees, gates, reviews, sessions)
 - **Hooks**: 4 Claude Code hook points for automatic context injection and GHAP tracking
 - **Vector Database**: Qdrant for semantic search across 8 collections
@@ -32,7 +32,7 @@ CALM is a development productivity system that gives Claude Code persistent memo
 
 **Language**: Python 3.12+, async-first architecture
 **Package Manager**: uv
-**Test Framework**: pytest (1852 tests passing)
+**Test Framework**: pytest (1941 tests passing)
 **Source Layout**: `src/calm/` with 14 subpackages, ~100 Python modules
 
 ---
@@ -74,7 +74,7 @@ Entry points:
 │  ├─ SessionStart                   ├─ mcp__calm__store_memory    │
 │  ├─ UserPromptSubmit               ├─ mcp__calm__search_code     │
 │  ├─ PreToolUse                     ├─ mcp__calm__start_ghap      │
-│  └─ PostToolUse                    └─ ... (42 tools total)       │
+│  └─ PostToolUse                    └─ ... (29 tools total)       │
 └────────┬──────────────────────────────────────┬──────────────────┘
          │                                      │
          │ (subprocess, stdin/stdout)            │ (HTTP POST /mcp)
@@ -293,7 +293,7 @@ GHAP (Goal-Hypothesis-Action-Prediction) provides structured problem-solving tra
 - `search_values(query, axis, limit)`
 - `search_commits(query, author, since, limit)`
 - All methods: embed query → vector search with filters → typed result objects
-- Only "semantic" search mode supported
+- Three search modes: "semantic" (vector similarity), "keyword" (text matching), "hybrid" (both)
 
 **Results** (`results.py`): Typed dataclasses for each search type (MemoryResult, CodeResult, ExperienceResult, ValueResult, CommitResult), each with `.from_search_result()` factory.
 
@@ -360,7 +360,7 @@ Value ID format: `value_{axis}_{label}_{uuid8}`
 - Collects tool implementations from all `get_*_tools()` functions
 - Returns `(Server, tool_registry)` tuple
 
-### 42 MCP Tools
+### 29 MCP Tools
 
 | Category | Count | Tool Names |
 |----------|-------|------------|
@@ -370,7 +370,6 @@ Value ID format: `value_{axis}_{label}_{uuid8}`
 | GHAP | 5 | `start_ghap`, `update_ghap`, `resolve_ghap`, `get_active_ghap`, `list_ghap_entries` |
 | Learning | 6 | `search_experiences`, `get_clusters`, `get_cluster_members`, `validate_value`, `store_value`, `list_values` |
 | Context | 1 | `assemble_context` |
-| Session | 5 | `start_session`, `get_orphaned_ghap`, `should_check_in`, `increment_tool_count`, `reset_tool_count` |
 | Journal | 4 | `store_journal_entry`, `list_journal_entries`, `get_journal_entry`, `mark_entries_reflected` |
 | Health | 1 | `ping` |
 
@@ -596,7 +595,7 @@ Claude Code Session Start
 
 ## Test Suite
 
-**1852 tests** organized by package, mirroring source structure:
+**1941 tests** organized by package, mirroring source structure:
 
 ```
 tests/

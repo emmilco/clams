@@ -33,7 +33,7 @@ Verify the server is running:
 calm server status
 ```
 
-Then verify all 29 MCP tools are available by calling:
+Then verify all 29 MCP tools are available by calling the ping tool:
 ```
 mcp__calm__ping
 ```
