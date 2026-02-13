@@ -13,7 +13,7 @@ from __future__ import annotations
 import os
 import signal
 from pathlib import Path
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from click.testing import CliRunner
@@ -28,7 +28,6 @@ from calm.server.daemon import (
     start_daemon,
     stop_server,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -445,8 +444,6 @@ class TestLogFileSetup:
         self, daemon_env: Path
     ) -> None:
         """start_daemon passes log file as stdout for the child process."""
-        log_file = daemon_env / "server.log"
-
         with (
             patch("calm.server.daemon.get_python_executable", return_value="/usr/bin/python"),
             patch("calm.server.daemon.subprocess.Popen") as mock_popen,
