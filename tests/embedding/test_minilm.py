@@ -106,7 +106,7 @@ async def test_semantic_similarity(minilm_service: MiniLMEmbedding) -> None:
 @pytest.mark.asyncio
 async def test_invalid_model_name() -> None:
     """Test that invalid model name raises error."""
-    with pytest.raises(EmbeddingModelError, match="Failed to load model"):
+    with pytest.raises(EmbeddingModelError, match="Failed to (download/)?load model"):
         MiniLMEmbedding(model_name="invalid/model/name/that/does/not/exist")
 
 

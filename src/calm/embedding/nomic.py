@@ -48,9 +48,17 @@ class NomicEmbedding(EmbeddingService):
             # that cause severe memory accumulation during batch embeddings
             if torch.backends.mps.is_available():
                 self.model = self.model.to(torch.device("cpu"))
+        except OSError as e:
+            # OSError covers network issues (ConnectionError, TimeoutError)
+            # and file-not-found when model isn't cached
+            raise EmbeddingModelError(
+                f"Failed to download/load model '{model_name}': {e}. "
+                f"If this is the first run, check your network connection. "
+                f"Models are downloaded from HuggingFace Hub on first use."
+            ) from e
         except Exception as e:
             raise EmbeddingModelError(
-                f"Failed to load model {model_name}: {e}"
+                f"Failed to load model '{model_name}': {e}"
             ) from e
 
     async def embed(self, text: str) -> Vector:

@@ -48,9 +48,14 @@ class EmbeddingRegistry:
             # Lazy import: PyTorch must not be loaded before fork()
             from .minilm import MiniLMEmbedding
 
+            logger.info(
+                "code_embedder.loading",
+                model=self._code_model,
+                hint="first load may download the model (~90 MB)",
+            )
             self._code_embedder = MiniLMEmbedding(model_name=self._code_model)
             logger.info(
-                "code_embedder.loaded",
+                "code_embedder.ready",
                 model=self._code_model,
                 dimension=self._code_embedder.dimension,
             )
@@ -66,9 +71,14 @@ class EmbeddingRegistry:
             # Lazy import: PyTorch must not be loaded before fork()
             from .nomic import NomicEmbedding
 
+            logger.info(
+                "semantic_embedder.loading",
+                model=self._semantic_model,
+                hint="first load may download the model (~275 MB)",
+            )
             self._semantic_embedder = NomicEmbedding(model_name=self._semantic_model)
             logger.info(
-                "semantic_embedder.loaded",
+                "semantic_embedder.ready",
                 model=self._semantic_model,
                 dimension=self._semantic_embedder.dimension,
             )
