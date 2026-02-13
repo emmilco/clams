@@ -148,3 +148,100 @@ class TestTaskTransition:
 
         assert result.exit_code != 0
         assert "Invalid transition" in result.output
+
+
+class TestTaskUpdate:
+    """Tests for calm task update command."""
+
+    def test_update_notes(self, cli_env: Path) -> None:
+        """Test updating task notes."""
+        runner = CliRunner()
+
+        runner.invoke(cli, ["task", "create", "SPEC-001", "Test"])
+        result = runner.invoke(
+            cli, ["task", "update", "SPEC-001", "--notes", "Some notes"]
+        )
+
+        assert result.exit_code == 0
+
+    def test_update_specialist(self, cli_env: Path) -> None:
+        """Test updating task specialist."""
+        runner = CliRunner()
+
+        runner.invoke(cli, ["task", "create", "SPEC-001", "Test"])
+        result = runner.invoke(
+            cli, ["task", "update", "SPEC-001", "--specialist", "backend"]
+        )
+
+        assert result.exit_code == 0
+
+    def test_update_nonexistent_task(self, cli_env: Path) -> None:
+        """Test updating nonexistent task fails cleanly."""
+        runner = CliRunner()
+        result = runner.invoke(
+            cli, ["task", "update", "NONEXISTENT", "--notes", "test"]
+        )
+
+        assert result.exit_code != 0
+        assert "Traceback" not in result.output
+
+
+class TestTaskDelete:
+    """Tests for calm task delete command."""
+
+    def test_delete_task(self, cli_env: Path) -> None:
+        """Test deleting a task."""
+        runner = CliRunner()
+
+        runner.invoke(cli, ["task", "create", "SPEC-001", "Test"])
+        result = runner.invoke(cli, ["task", "delete", "SPEC-001", "--yes"])
+
+        assert result.exit_code == 0
+        assert "Deleted" in result.output
+
+    def test_delete_nonexistent_task(self, cli_env: Path) -> None:
+        """Test deleting nonexistent task fails cleanly."""
+        runner = CliRunner()
+        result = runner.invoke(
+            cli, ["task", "delete", "NONEXISTENT", "--yes"]
+        )
+
+        assert result.exit_code != 0
+        assert "Traceback" not in result.output
+
+
+class TestTaskNextId:
+    """Tests for calm task next-id command."""
+
+    def test_next_spec_id(self, cli_env: Path) -> None:
+        """Test getting next SPEC ID."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["task", "next-id", "SPEC"])
+
+        assert result.exit_code == 0
+        assert "SPEC-" in result.output
+
+    def test_next_bug_id(self, cli_env: Path) -> None:
+        """Test getting next BUG ID."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["task", "next-id", "BUG"])
+
+        assert result.exit_code == 0
+        assert "BUG-" in result.output
+
+    def test_next_id_increments(self, cli_env: Path) -> None:
+        """Test that next-id increments after task creation."""
+        runner = CliRunner()
+
+        # Get first ID
+        result1 = runner.invoke(cli, ["task", "next-id", "SPEC"])
+        first_id = result1.output.strip()
+
+        # Create task with that ID
+        runner.invoke(cli, ["task", "create", first_id, "Test"])
+
+        # Get next ID - should be different
+        result2 = runner.invoke(cli, ["task", "next-id", "SPEC"])
+        second_id = result2.output.strip()
+
+        assert first_id != second_id

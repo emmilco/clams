@@ -1,5 +1,7 @@
 """CALM review CLI commands."""
 
+import sqlite3
+
 import click
 
 from calm.orchestration import reviews as review_ops
@@ -44,6 +46,10 @@ def record(
             click.echo("Previous reviews cleared - review cycle restarted")
     except ValueError as e:
         raise click.ClickException(str(e))
+    except sqlite3.IntegrityError:
+        msg = f"Task '{task_id}' not found. "
+        msg += "Create the task first with 'calm task create'."
+        raise click.ClickException(msg)
 
 
 @review.command("list")
