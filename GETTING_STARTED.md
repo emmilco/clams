@@ -12,6 +12,36 @@ CALM runs as an MCP server that enhances Claude Code sessions with memory and or
 
 2. **Orchestration Mode** (opt-in): Full task management, phase gates, worktrees, and worker dispatch. Activate per-session with `/orchestrate`.
 
+## First Run After Installation
+
+After running the installer (`./scripts/install.sh`), the very first Claude Code session will:
+
+1. **SessionStart hook fires**: You will see a message like:
+   ```
+   CALM (Claude Agent Learning & Management) is available.
+
+   Always active: /wrapup, /reflection, memory tools
+   ```
+   If the server is still starting, you may briefly see "CALM available (server starting...)" instead. This is normal.
+
+2. **Embedding models download on first use**: CALM uses two local embedding models for semantic search. These are downloaded from HuggingFace Hub the first time an MCP tool needs them:
+   - `sentence-transformers/all-MiniLM-L6-v2` (~90 MB) -- for code search
+   - `nomic-ai/nomic-embed-text-v1.5` (~275 MB) -- for memories and experiences
+
+   The first tool call that requires embeddings (e.g., `store_memory`, `index_codebase`) will take longer than usual while the models download and load. Subsequent calls use the cached models and are fast.
+
+   Download progress is logged to `~/.calm/server.log`. If you suspect a download is stalling, check that file for status.
+
+3. **Verify everything works**: Ask Claude to run the `ping` tool (`mcp__calm__ping`). If it returns `{"status": "healthy"}`, CALM is fully operational.
+
+### If Model Download Fails
+
+If you have no network connection or the download is interrupted:
+- The error message will indicate a download/network failure
+- CALM tools that require embeddings will return errors, but the server itself stays running
+- Non-embedding tools (like `ping`, `list_memories`, journal tools) continue to work
+- Retry the operation once your network connection is restored; the download will resume
+
 ## Memory Mode: Daily Usage
 
 ### Automatic Context Injection
@@ -289,6 +319,13 @@ Don't skip gate checks. They catch:
 Fix issues before transitioning rather than accumulating debt.
 
 ## Troubleshooting
+
+### First Tool Call Is Slow or Times Out
+
+On the very first use, embedding models (~365 MB total) must download from HuggingFace Hub. This can take a few minutes depending on your connection speed. Check `~/.calm/server.log` for download progress. If the download fails:
+- Verify your network connection
+- Retry the tool call -- downloads resume where they left off
+- If behind a proxy, set `HTTPS_PROXY` in your MCP server environment
 
 ### Memories Not Being Retrieved
 
