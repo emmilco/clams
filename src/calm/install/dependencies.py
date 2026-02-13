@@ -47,7 +47,10 @@ def check_docker() -> DependencyCheck:
             required_version=None,
             found_version=None,
             available=False,
-            install_hint="Install Docker Desktop from docker.com",
+            install_hint=(
+                "Install Docker Desktop from docker.com, "
+                "or use --skip-qdrant to install without Qdrant"
+            ),
         )
 
     # Check docker version
@@ -64,7 +67,10 @@ def check_docker() -> DependencyCheck:
                 required_version=None,
                 found_version=None,
                 available=False,
-                install_hint="Install Docker Desktop from docker.com",
+                install_hint=(
+                    "Install Docker Desktop from docker.com, "
+                    "or use --skip-qdrant to install without Qdrant"
+                ),
             )
 
         # Parse version from output like "Docker version 24.0.7, build afdd53b"
@@ -93,7 +99,8 @@ def check_docker() -> DependencyCheck:
                 available=False,
                 install_hint=(
                     "Docker daemon is not running. "
-                    "Start Docker Desktop or run: sudo systemctl start docker"
+                    "Start Docker Desktop or run: sudo systemctl start docker. "
+                    "Or use --skip-qdrant to install without Qdrant."
                 ),
             )
 
@@ -102,7 +109,10 @@ def check_docker() -> DependencyCheck:
             required_version=None,
             found_version=version,
             available=True,
-            install_hint="Install Docker Desktop from docker.com",
+            install_hint=(
+                "Install Docker Desktop from docker.com, "
+                "or use --skip-qdrant to install without Qdrant"
+            ),
         )
 
     except subprocess.TimeoutExpired:
@@ -113,7 +123,8 @@ def check_docker() -> DependencyCheck:
             available=False,
             install_hint=(
                 "Docker command timed out. "
-                "Ensure Docker daemon is running."
+                "Ensure Docker daemon is running. "
+                "Or use --skip-qdrant to install without Qdrant."
             ),
         )
     except FileNotFoundError:
@@ -122,7 +133,10 @@ def check_docker() -> DependencyCheck:
             required_version=None,
             found_version=None,
             available=False,
-            install_hint="Install Docker Desktop from docker.com",
+            install_hint=(
+                "Install Docker Desktop from docker.com, "
+                "or use --skip-qdrant to install without Qdrant"
+            ),
         )
 
 

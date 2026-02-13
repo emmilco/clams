@@ -576,7 +576,7 @@ Claude Code Session Start
 
 **Docker** (`install/docker.py`):
 - Container: `calm-qdrant` with volume `calm_qdrant_data`
-- Health check: Polls `/readiness` with exponential backoff (0.5s → 2.0s)
+- Health check: Polls `/healthz` with exponential backoff (0.5s → 2.0s)
 - Production image: `qdrant/qdrant:v1.12.1`
 
 **Dependencies** (`install/dependencies.py`):
