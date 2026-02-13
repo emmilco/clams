@@ -8,28 +8,36 @@ from calm.orchestration import worktrees as worktree_ops
 from calm.orchestration.project import detect_main_repo
 
 
-def _warn_if_cwd_inside_worktree(task_id: str) -> None:
-    """Warn if the caller's cwd was inside the removed worktree."""
+def _refuse_if_cwd_inside_worktree(task_id: str) -> None:
+    """Refuse to proceed if the caller's cwd is inside the target worktree.
+
+    Deleting a worktree while the shell's cwd is inside it leaves the shell
+    in an unrecoverable state (every subsequent command fails with exit 1,
+    and even ``cd /`` won't work).  The only fix is restarting the session.
+
+    By raising an error *before* the destructive operation we keep the shell
+    healthy and give the caller a clear remediation command.
+    """
     try:
         main_repo = Path(detect_main_repo())
         worktree_path = main_repo / ".worktrees" / task_id
         cwd = Path.cwd()
         if cwd == worktree_path or worktree_path in cwd.parents:
-            click.echo(
-                f"Warning: your shell is inside the removed worktree. "
-                f"Run: cd {main_repo}",
-                err=True,
+            raise click.ClickException(
+                f"Cannot proceed: your shell is inside the worktree "
+                f"({worktree_path}). Run:\n  cd {main_repo}\nthen retry."
             )
+    except click.ClickException:
+        raise
     except OSError:
-        # cwd already invalid
+        # cwd already invalid (deleted by a prior operation)
         try:
             main_repo = Path(detect_main_repo())
         except Exception:
             main_repo = Path.home()
-        click.echo(
-            f"Warning: your shell is in a deleted directory. "
-            f"Run: cd {main_repo}",
-            err=True,
+        raise click.ClickException(
+            f"Cannot proceed: your shell is in a deleted directory. Run:\n"
+            f"  cd {main_repo}\nthen retry."
         )
 
 
@@ -86,7 +94,7 @@ def path(task_id: str) -> None:
 @click.option("--force", is_flag=True, help="Force merge even if merge_lock is set")
 def merge(task_id: str, skip_sync: bool, force: bool) -> None:
     """Merge worktree to main and cleanup."""
-    _warn_if_cwd_inside_worktree(task_id)
+    _refuse_if_cwd_inside_worktree(task_id)
     try:
         sha = worktree_ops.merge_worktree(
             task_id,
@@ -104,7 +112,7 @@ def merge(task_id: str, skip_sync: bool, force: bool) -> None:
 @click.confirmation_option(prompt="Are you sure you want to remove this worktree?")
 def remove(task_id: str) -> None:
     """Remove a worktree without merging."""
-    _warn_if_cwd_inside_worktree(task_id)
+    _refuse_if_cwd_inside_worktree(task_id)
     try:
         worktree_ops.remove_worktree(task_id)
         click.echo(f"Removed worktree for {task_id}")
