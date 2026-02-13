@@ -141,6 +141,126 @@ class TestWorktreeCreate:
         assert "not found" in result.output.lower()
 
 
+class TestWorktreeCwdProtection:
+    """Tests for BUG-089: refuse merge/remove when CWD is inside worktree."""
+
+    def test_merge_refused_when_cwd_inside_worktree(
+        self, cli_env: Path, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """Merge must fail if the shell's CWD is inside the target worktree."""
+        main_repo = tmp_path / "repo"
+        main_repo.mkdir()
+        worktree_dir = main_repo / ".worktrees" / "TASK-001"
+        worktree_dir.mkdir(parents=True)
+
+        monkeypatch.setattr(
+            "calm.cli.worktree.detect_main_repo", lambda: str(main_repo)
+        )
+        monkeypatch.chdir(worktree_dir)
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["worktree", "merge", "TASK-001"])
+
+        assert result.exit_code != 0
+        assert "Cannot proceed" in result.output
+        assert str(main_repo) in result.output
+
+    def test_merge_refused_when_cwd_in_subdirectory(
+        self, cli_env: Path, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """Merge must also fail if CWD is in a subdirectory of the worktree."""
+        main_repo = tmp_path / "repo"
+        main_repo.mkdir()
+        worktree_dir = main_repo / ".worktrees" / "TASK-002"
+        sub_dir = worktree_dir / "src" / "deep"
+        sub_dir.mkdir(parents=True)
+
+        monkeypatch.setattr(
+            "calm.cli.worktree.detect_main_repo", lambda: str(main_repo)
+        )
+        monkeypatch.chdir(sub_dir)
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["worktree", "merge", "TASK-002"])
+
+        assert result.exit_code != 0
+        assert "Cannot proceed" in result.output
+
+    def test_merge_allowed_from_main_repo(
+        self, cli_env: Path, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """Merge should proceed when CWD is the main repo (not inside worktree)."""
+        main_repo = tmp_path / "repo"
+        main_repo.mkdir()
+
+        monkeypatch.setattr(
+            "calm.cli.worktree.detect_main_repo", lambda: str(main_repo)
+        )
+        monkeypatch.chdir(main_repo)
+
+        # Mock the actual merge operation to verify it gets called
+        merge_called = False
+
+        def mock_merge(*args: object, **kwargs: object) -> str:
+            nonlocal merge_called
+            merge_called = True
+            return "abc123"
+
+        monkeypatch.setattr(
+            "calm.orchestration.worktrees.merge_worktree", mock_merge
+        )
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["worktree", "merge", "TASK-003"])
+
+        assert result.exit_code == 0
+        assert merge_called
+
+    def test_remove_refused_when_cwd_inside_worktree(
+        self, cli_env: Path, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """Remove must fail if the shell's CWD is inside the target worktree."""
+        main_repo = tmp_path / "repo"
+        main_repo.mkdir()
+        worktree_dir = main_repo / ".worktrees" / "TASK-004"
+        worktree_dir.mkdir(parents=True)
+
+        monkeypatch.setattr(
+            "calm.cli.worktree.detect_main_repo", lambda: str(main_repo)
+        )
+        monkeypatch.chdir(worktree_dir)
+
+        runner = CliRunner()
+        # --yes to skip confirmation prompt
+        result = runner.invoke(cli, ["worktree", "remove", "TASK-004", "--yes"])
+
+        assert result.exit_code != 0
+        assert "Cannot proceed" in result.output
+
+    def test_cwd_in_deleted_directory_refused(
+        self, cli_env: Path, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """If CWD is already a deleted directory, refuse with actionable message."""
+        main_repo = tmp_path / "repo"
+        main_repo.mkdir()
+
+        monkeypatch.setattr(
+            "calm.cli.worktree.detect_main_repo", lambda: str(main_repo)
+        )
+
+        # Simulate deleted CWD by making Path.cwd() raise OSError
+        def broken_cwd() -> Path:
+            raise OSError("No such file or directory")
+
+        monkeypatch.setattr(Path, "cwd", staticmethod(broken_cwd))
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["worktree", "merge", "TASK-005"])
+
+        assert result.exit_code != 0
+        assert "deleted directory" in result.output
+
+
 class TestWorktreeCheckConflicts:
     """Tests for calm worktree check-conflicts command."""
 
