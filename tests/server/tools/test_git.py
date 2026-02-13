@@ -442,3 +442,119 @@ async def test_search_commits_includes_scores(mock_services):
     assert second_result["sha"] == "def456"
     assert second_result["message"] == "Update documentation"
     assert second_result["score"] == 0.82
+
+
+# === Happy-path tests for get_file_history and get_code_authors ===
+
+
+@pytest.mark.asyncio
+async def test_get_file_history_returns_commits(mock_services):
+    """Test get_file_history returns formatted commit data when commits exist."""
+    from datetime import UTC
+
+    mock_services.git_analyzer = Mock()
+    mock_reader = Mock()
+
+    mock_commits = [
+        Commit(
+            sha="aaa111",
+            message="Add feature X",
+            author="Alice",
+            author_email="alice@example.com",
+            timestamp=datetime(2026, 1, 15, 10, 0, 0, tzinfo=UTC),
+            files_changed=["src/feature.py"],
+            insertions=50,
+            deletions=3,
+        ),
+        Commit(
+            sha="bbb222",
+            message="Fix typo in feature X",
+            author="Bob",
+            author_email="bob@example.com",
+            timestamp=datetime(2026, 1, 16, 14, 30, 0, tzinfo=UTC),
+            files_changed=["src/feature.py"],
+            insertions=1,
+            deletions=1,
+        ),
+    ]
+    mock_reader.get_file_history = AsyncMock(return_value=mock_commits)
+    mock_services.git_analyzer.git_reader = mock_reader
+
+    tools = get_git_tools(
+        mock_services.vector_store,
+        mock_services.semantic_embedder,
+        git_analyzer=mock_services.git_analyzer,
+    )
+    get_file_history = tools["get_file_history"]
+    result = await get_file_history(path="src/feature.py", limit=10)
+
+    assert result["count"] == 2
+    assert result["path"] == "src/feature.py"
+    assert len(result["commits"]) == 2
+
+    first = result["commits"][0]
+    assert first["sha"] == "aaa111"
+    assert first["message"] == "Add feature X"
+    assert first["author"] == "Alice"
+    assert first["author_email"] == "alice@example.com"
+    assert first["timestamp"] == "2026-01-15T10:00:00+00:00"
+    assert first["files_changed"] == ["src/feature.py"]
+    assert first["insertions"] == 50
+    assert first["deletions"] == 3
+
+
+@pytest.mark.asyncio
+async def test_get_code_authors_returns_author_stats(mock_services):
+    """Test get_code_authors returns formatted author statistics."""
+    from datetime import UTC
+
+    from calm.git.base import AuthorStats
+
+    mock_services.git_analyzer = Mock()
+    mock_services.git_analyzer.get_file_authors = AsyncMock(
+        return_value=[
+            AuthorStats(
+                author="Alice",
+                author_email="alice@example.com",
+                commit_count=15,
+                lines_added=500,
+                lines_removed=100,
+                first_commit=datetime(2025, 6, 1, tzinfo=UTC),
+                last_commit=datetime(2026, 1, 20, tzinfo=UTC),
+            ),
+            AuthorStats(
+                author="Bob",
+                author_email="bob@example.com",
+                commit_count=5,
+                lines_added=80,
+                lines_removed=20,
+                first_commit=datetime(2025, 9, 1, tzinfo=UTC),
+                last_commit=datetime(2026, 1, 10, tzinfo=UTC),
+            ),
+        ]
+    )
+
+    tools = get_git_tools(
+        mock_services.vector_store,
+        mock_services.semantic_embedder,
+        git_analyzer=mock_services.git_analyzer,
+    )
+    get_code_authors = tools["get_code_authors"]
+    result = await get_code_authors(path="src/main.py")
+
+    assert result["count"] == 2
+    assert result["path"] == "src/main.py"
+    assert len(result["authors"]) == 2
+
+    first = result["authors"][0]
+    assert first["author"] == "Alice"
+    assert first["email"] == "alice@example.com"
+    assert first["commit_count"] == 15
+    assert first["lines_added"] == 500
+    assert first["lines_removed"] == 100
+    assert first["percentage"] == 75.0  # 15/20 * 100
+    assert first["last_commit"] == "2026-01-20T00:00:00+00:00"
+
+    second = result["authors"][1]
+    assert second["author"] == "Bob"
+    assert second["percentage"] == 25.0  # 5/20 * 100

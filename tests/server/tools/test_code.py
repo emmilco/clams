@@ -1,7 +1,8 @@
 """Tests for code MCP tools."""
 
 import re
-from unittest.mock import Mock
+from dataclasses import dataclass, field
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
@@ -207,3 +208,50 @@ async def test_find_similar_code_with_project_filter(mock_services):
     call_args = mock_services.vector_store.search.call_args
     filters = call_args.kwargs["filters"]
     assert filters == {"project": "my-project"}
+
+
+@dataclass
+class _MockIndexingStats:
+    """Minimal mock for CodeIndexer.index_directory return value."""
+
+    files_indexed: int
+    units_indexed: int
+    files_skipped: int
+    errors: list[str] = field(default_factory=list)
+    duration_ms: int = 0
+
+
+@pytest.mark.asyncio
+async def test_index_codebase_success_with_indexer(mock_services, tmp_path):
+    """Test successful index_codebase when CodeIndexer is available."""
+    mock_indexer = Mock()
+    mock_indexer.index_directory = AsyncMock(
+        return_value=_MockIndexingStats(
+            files_indexed=12,
+            units_indexed=45,
+            files_skipped=3,
+            errors=[],
+            duration_ms=1500,
+        )
+    )
+
+    tools = get_code_tools(
+        mock_services.vector_store,
+        mock_services.code_embedder,
+        code_indexer=mock_indexer,
+    )
+    index_codebase = tools["index_codebase"]
+
+    result = await index_codebase(
+        directory=str(tmp_path),
+        project="test-project",
+        recursive=True,
+    )
+
+    assert result["status"] == "success"
+    assert result["project"] == "test-project"
+    assert result["files_indexed"] == 12
+    assert result["units_indexed"] == 45
+    assert result["files_skipped"] == 3
+    assert result["errors"] == 0
+    assert result["duration_ms"] == 1500
