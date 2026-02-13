@@ -74,6 +74,60 @@ class TestReviewRecord:
         assert "Recorded spec review: changes_requested" in result.output
         assert "review cycle restarted" in result.output
 
+    def test_record_nonexistent_task(self, cli_env: Path) -> None:
+        """Test recording review for nonexistent task shows clean error."""
+        runner = CliRunner()
+        result = runner.invoke(
+            cli, ["review", "record", "NONEXISTENT", "spec", "approved"]
+        )
+
+        assert result.exit_code != 0
+        assert "not found" in result.output.lower()
+        # Must not show raw Python traceback
+        assert "Traceback" not in result.output
+
+    def test_record_with_worker_id(self, cli_with_task: Path) -> None:
+        """Test recording review with worker ID."""
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            [
+                "review", "record", "SPEC-001", "code", "approved",
+                "--worker", "W-test-123",
+            ],
+        )
+
+        assert result.exit_code == 0
+        assert "Recorded code review: approved" in result.output
+
+    def test_record_missing_args(self) -> None:
+        """Test recording review with missing arguments shows clean error."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["review", "record"])
+
+        assert result.exit_code != 0
+        assert "Missing argument" in result.output
+
+    def test_record_invalid_review_type(self, cli_with_task: Path) -> None:
+        """Test recording review with invalid type shows clean error."""
+        runner = CliRunner()
+        result = runner.invoke(
+            cli, ["review", "record", "SPEC-001", "invalid_type", "approved"]
+        )
+
+        assert result.exit_code != 0
+        assert "Traceback" not in result.output
+
+    def test_record_invalid_result(self, cli_with_task: Path) -> None:
+        """Test recording review with invalid result shows clean error."""
+        runner = CliRunner()
+        result = runner.invoke(
+            cli, ["review", "record", "SPEC-001", "spec", "invalid_result"]
+        )
+
+        assert result.exit_code != 0
+        assert "Traceback" not in result.output
+
 
 class TestReviewList:
     """Tests for calm review list command."""
